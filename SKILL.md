@@ -1,4 +1,9 @@
+---
+name: client-report
+description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health snapshot and monthly trends, alerts raised vs resolved, assignee leaderboard, and key wins — styled per the CIM design system in DESIGN.md. Use when the user runs the /client-report slash command or asks for a client report, quarterly building performance review, or site performance report from PEAK data. Do not auto-trigger on general PEAK questions or ticket workflows.
+---
 
+# Client Report
 
 ## Sections
 

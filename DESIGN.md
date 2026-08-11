@@ -262,7 +262,7 @@ Navy is identity, blue is interaction, green and red are *only* ever measurement
 
 One grotesque does everything; hierarchy comes from weight and size, not from a second family. Headings are 600 with tight tracking; body is 400 at 1.55; metrics are 600 with tabular numerals so columns align. `eyebrow` is a single word above a headline — 13px, 600, uppercase, 0.1em, in primary blue. `mono` (IBM Plex Mono) is reserved for BMS point names, rule IDs and table micro-labels.
 
-> **Substitution flagged:** CIM's licensed webfont was unavailable; Inter is the nearest match to the type in PEAK's own product screenshots. Swap `fontFamily` when the real font is supplied.
+> **Verified (cim.io/au/home, Aug 2026):** Inter is CIM's production typeface — the site loads it from Google Fonts (weights 300–700) and applies it to `body` and every heading/text utility class. Manrope, Poppins and Roboto are also loaded but effectively unused. The Inter variable font (one file covers all weights) is bundled at `assets/fonts/Inter-Variable-latin.woff2` and `assets/fonts/Inter-Variable-latin-ext.woff2` — embed it (e.g. as a base64 `data:` URI in `@font-face`) so reports render offline, with `sans-serif` as fallback. IBM Plex Mono (`mono` token) is not bundled; fall back to system monospace if unavailable.
 
 ## Layout
 
