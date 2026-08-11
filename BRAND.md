@@ -1,52 +1,25 @@
 ---
-# BRAND.md — partner branding overlay for the client report.
-#
-# Leave this file untouched and every report renders in CIM's default brand.
-# To rebrand, uncomment only the keys you change; anything left commented
-# (or this file missing entirely) falls back to the CIM defaults in
-# DESIGN.md and SKILL.md. Only the keys below are honored — any other key
-# is ignored at generation time.
-#
-# The values shown are a worked example for a fictional partner,
-# "Automated Controls". A live copy of this file with every key filled in
-# sits at assets/brand-example/BRAND.example.md.
+name: Hoffman Building Technologies
+service-name: Building Automation & Smart Buildings
 
-# ── Identity ────────────────────────────────────────────────────────────
-# name: Automated Controls
-# service-name: Smart Building Operations
+colors:
+  primary: "#08b06d"              # HBT green — the single accent
+  primary-container: "#e4f7ee"    # light green tint (tags)
+  on-primary-container: "#0a6b3c" # readable on primary-container (AA)
+  secondary: "#011659"            # HBT navy — masthead, rules
+  on-secondary: "#FFFFFF"
+  on-secondary-muted: "#b6c2df"   # muted labels on navy masthead
+  chart-benchmark: "#c9d3e8"      # comparison series (navy tint)
+  text-heading: "#011659"
 
-# ── Colors — identity tokens only ───────────────────────────────────────
-# These eight tokens are the brand surface. Neutrals (surface*, outline*,
-# text-body, text-muted) and measurement colors (success/warning/error and
-# their containers) are part of the design system and stay upstream-owned.
-# colors:
-#   primary: "#7C3AED"              # the single accent
-#   primary-container: "#EDE7FD"    # light tint of primary (tags)
-#   on-primary-container: "#6427CE" # readable on primary-container
-#   secondary: "#221A44"            # identity anchor — masthead, rules
-#   on-secondary: "#FFFFFF"         # text on the masthead
-#   on-secondary-muted: "#CBC3F2"   # muted labels on the masthead
-#   chart-benchmark: "#D9D2F7"      # comparison chart series
-#   text-heading: "#221A44"         # headings — normally tracks secondary
+fonts:
+  display: Figtree
+  text: Figtree
+  # mono: left commented — no HBT mono family, keep CIM's JetBrains Mono
 
-# ── Fonts — family swaps only ───────────────────────────────────────────
-# Three slots mapped onto the DESIGN.md typography roles. Sizes, weights
-# and line-heights are locked upstream. Families on Google Fonts load
-# CDN-first with an assets/fonts fallback; for licensed families, drop
-# woff2 files in assets/fonts and they load locally only.
-# fonts:
-#   display: Space Grotesk          # h1, h2, card-title, metric
-#   text: Inter                     # body, body-sm, label, eyebrow
-#   mono: JetBrains Mono            # table headers, IDs, footer
-
-# ── Logos — paths to files you add ──────────────────────────────────────
-# Put your logo files in assets/brand/ (never overwrite assets/logo*.svg).
-# The reversed (white) variant is required for the dark masthead; SVG
-# preferred, PNG accepted (inlined as a data URI). Don't recolor, re-space
-# or rebuild logos to fit — supply proper variants.
-# logos:
-#   reversed: assets/brand/automated-controls-white.svg
-#   full-color: assets/brand/automated-controls.svg
+logos:
+  reversed: assets/brand/logo-hbt-white.png     # 926×300, transparent
+  full-color: assets/brand/logo-hbt-color.png   # 851×218, transparent
 ---
 
 ## How to rebrand
