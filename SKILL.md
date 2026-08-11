@@ -75,7 +75,7 @@ Unique rules scored (by priority) last 3 months x annual mins saved per rule x (
 | P4-5 | 4 | 1.00 | 4.0 | $100 | $10.00 |
 
 *Footnote:*  
-Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the period, valued at $150/hr.
+Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the period.
 
 ### 
 
@@ -203,3 +203,23 @@ Exclude actions resolved by stopping, tuning or ignoring a rule, platform, integ
 * Link the action ticket with PEAK url for quick reference evidence  
 * Where several tickets form one win link them all  
 * Where win appears in the equipment health snapshot say so.
+
+## Data recipes {#data-recipes}
+
+Site facts — `search_sites` omits these, use GraphQL:
+`platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
+
+Counts — never fetch rows. Call with `limit:1`, read `pagination.total`:
+`search_rules(task_state:running)`, `search_favourites`, `search_equipment`
+(subtract system types 21,37,69,70,87,105,114), `search_alert_tickets`.
+
+Status ids: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing.
+
+Scores/executions/rule counts — one call each, already aggregated:
+`search_equipment_health_scores(aggregate_entities:[site|metadata_type|priority], aggregate_period:[month|all])`
+
+Raised vs resolved + leaderboard — `tickets.tickets`, `type:"escalated"`,
+`ticket_archived:false`, `limit:400`, date bounds `*_at_local_*`.
+Fields: `ticket_id, created_at, resolved_at, status_id, assignees{id,firstname,lastname}, ticket_links{ticket(type:alert){ticket_id}}`.
+Bucket by site-local month; drop `status_id:8`; weight by linked-alert count (min 1).
+Flag any action closing many alerts at once — it distorts the month.

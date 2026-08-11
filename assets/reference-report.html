@@ -116,7 +116,7 @@ tr.total td{border-bottom:0;border-top:2px solid var(--secondary);font-weight:60
 /* Inline score bars — fixed-width column, semantic colour stays on the chip */
 .scorecell{display:flex;align-items:center;gap:10px}
 .track{flex:none;width:88px;height:6px;border-radius:999px;background:var(--outline);overflow:hidden}
-.fill{height:100%;border-radius:999px;background:var(--primary)}
+.fill{display:block;height:100%;border-radius:999px;background:var(--primary)}
 .sval{flex:none;width:56px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text-heading)}
 .chg{font-variant-numeric:tabular-nums;font-weight:500}
 .chg.up{color:var(--on-success-container)}
@@ -158,7 +158,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 @media print{
   body{background:#fff}
   .sheet{max-width:none;width:210mm;box-shadow:none}
-  section,.win,table,.chartblock{page-break-inside:avoid}
+  .win,table,.chartblock,.statgrid,.irow{page-break-inside:avoid}
+  thead{display:table-header-group}
+  h2{page-break-after:avoid}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
