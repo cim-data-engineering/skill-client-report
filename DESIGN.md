@@ -195,7 +195,7 @@ This file is a theme. Every rule below is written against token roles (`primary`
 
 ## Typography
 
-Two families split the work. **Archivo** carries display — the report title, section headings, card titles and metric figures — at 600–700 with tight tracking in `text-heading`, so the numbers land with weight. **IBM Plex Sans** carries everything read at length: body at 400 and 1.55, labels at 500, the eyebrow at 600 uppercase. **IBM Plex Mono** is reserved for table headers, equipment/point IDs, and the footer (400 for rest, 500 for emphasis). Metrics use tabular numerals so columns align. Set the root at 14px so 1rem body prints near 10.5pt on A4. All three families ship as woff2 in `assets/fonts` — embed them with `@font-face` so the exported report never depends on a CDN.
+Two families split the work. **Archivo** carries display — the report title, section headings, card titles and metric figures — at 600–700 with tight tracking in `text-heading`, so the numbers land with weight. **IBM Plex Sans** carries everything read at length: body at 400 and 1.55, labels at 500, the eyebrow at 600 uppercase. **IBM Plex Mono** is reserved for table headers, equipment/point IDs, and the footer (400 for rest, 500 for emphasis). Metrics use tabular numerals so columns align. Set the root at 14px so 1rem body prints near 10.5pt on A4. Load fonts CDN-first with a local fallback: each `@font-face` lists the Google Fonts woff2 URL first in its `src` chain and the matching file from `assets/fonts` second, so the report uses the CDN when online and still renders identically offline. Never rely on the CDN alone.
 
 ## Layout & Print
 
@@ -210,7 +210,7 @@ The page is flat — hierarchy comes from rules and whitespace, not shadows. On 
 - **masthead:** `secondary` field with an `eyebrow` in `on-secondary-muted`, the report title in `h1`, then a metadata row (period, comparison, site, issue date) as `masthead-label` over values, split from the title by a hairline at 18% `on-secondary`.
 - **metric row:** `metric-value` with a plain caption beside it, a one-line `body-sm` explanation in `text-muted` beneath, and a rating or delta chip.
 - **delta chip:** `delta-positive` / `delta-negative` chosen by whether the change is *good*, not by its sign, always with a direction glyph and words.
-- **rating chip:** benchmark-band label (e.g. Excellent / Good / Average / Poor) in the matching `rating-*` container — always words, never colour alone.
+- **rating chip:** benchmark-band label in the matching `rating-*` container — always words, never colour alone. Excellent and Good are both `rating-positive`; Average is `rating-warning`; Poor is `rating-negative`; `rating-neutral` is for non-benchmark labels (e.g. Continuous, Modelled).
 - **table:** `table-rule-strong` on top and above the total row; `table-header` in mono uppercase; numerals right-aligned and tabular; hairline row rules. Inline 0–100 score bars use an `outline` track with a `primary` fill and the value beside them — semantic colour stays on the rating chip, never the bar.
 - **chart:** first series `primary`, comparison `chart-benchmark`; values labelled directly on points/bars; axis labels in `mono` and `text-muted`; gridlines in `outline`. A `body-sm` note in `text-muted` under each chart states the one thing the reader should take from it.
 - **notes band:** a `surface-dim` section for methodology and footnotes, numbered, in `body-sm`.

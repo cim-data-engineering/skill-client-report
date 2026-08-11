@@ -46,7 +46,7 @@ Date: last 3 months
 | See below equipment score benchmark | \[x.x\]% equipment health maintained | Site equipment health score last 3 months | Up \[x.x\] pp vs \[y.y\]% over the last 12 months |
 | Continuous | \[x\] automated equipment health checks ran 24/7 | Total executions last 3 months | Averaging \[x\] monthly checks across \[y\] scored rules |
 | Modelled | $\[x\] labor cost avoided | See below labor cost avoided model | \[x\] hours and \[y.y\] working days of inspection time |
-| See below alert recovery benchmark  | \[x\] faults resolved with \[x\]% verified recovery | Resolved alerts with current status closed last 3 months | Median time to resolve of \[x\] days. Based on alert’s linked action creation and resolution date, do not use the alert creation and resolution date. |
+| See below alert recovery benchmark  | \[x\] faults resolved with \[x\]% verified recovery | Resolved alerts with current status closed last 3 months and current rule status is running | Median time to resolve of \[x\] days. Based on alert’s linked action creation and resolution date, do not use the alert creation and resolution date. |
 
 **Links:**
 

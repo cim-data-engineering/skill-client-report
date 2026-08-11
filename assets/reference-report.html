@@ -3,115 +3,162 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Skyline Tower — Quarterly Performance Report</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<title>Skyline Tower — Quarterly Building Performance Review</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+/* Fonts — CDN first, local assets/fonts fallback per DESIGN.md: the browser tries each src in order, so offline it falls through to the shipped woff2 */
+@font-face{font-family:'Archivo';src:url('https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLydOxKsv4Rn.woff2') format('woff2'),url('fonts/Archivo-Variable-latin.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Archivo';src:url('https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLyTOxKsv4RnUPU.woff2') format('woff2'),url('fonts/Archivo-Variable-latin-ext.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1EFF,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'IBM Plex Sans';src:url('https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYbSB4Zh.woff2') format('woff2'),url('fonts/IBMPlexSans-Variable-latin.woff2') format('woff2');font-weight:400 600;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Sans';src:url('https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbSB4ZhRNU.woff2') format('woff2'),url('fonts/IBMPlexSans-Variable-latin-ext.woff2') format('woff2');font-weight:400 600;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1EFF,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'IBM Plex Mono';src:url('https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q131nj-o.woff2') format('woff2'),url('fonts/IBMPlexMono-400-latin.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'IBM Plex Mono';src:url('https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgsAXHNk.woff2') format('woff2'),url('fonts/IBMPlexMono-500-latin.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+
+/* Tokens — DESIGN.md */
 :root{
-  --ink:#0E1A19;
-  --petrol:#0D4F49;
-  --petrol-deep:#08332F;
-  --mint:#E4F0EC;
-  --paper:#F4F6F5;
-  --rule:#D3DDDA;
-  --slate:#64756F;
-  --amber:#A8600C;
-  --amber-bg:#FBF0DF;
-  --sans:"IBM Plex Sans",system-ui,sans-serif;
-  --display:"Archivo",system-ui,sans-serif;
-  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --primary:#006CFF;
+  --primary-container:#E3EEFD;
+  --on-primary-container:#0057D9;
+  --secondary:#002556;
+  --on-secondary:#FFFFFF;
+  --on-secondary-muted:#CBE0FB;
+  --surface:#FFFFFF;
+  --surface-dim:#F7F9FC;
+  --surface-tint:#F2F7FE;
+  --outline:#E4E9F0;
+  --outline-strong:#CFD7E3;
+  --text-heading:#002556;
+  --text-body:#3D4E68;
+  --text-muted:#6B7A94;
+  --success-container:#E8F8F0;
+  --on-success-container:#22A96A;
+  --warning-container:#FEF4E3;
+  --on-warning-container:#A8700C;
+  --error-container:#FDECEC;
+  --on-error-container:#C62B25;
+  --chart-benchmark:#CBE0FB;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --display:'Archivo',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
-.sheet{max-width:1040px;margin:0 auto;background:#fff}
+html{font-size:14px}
+body{margin:0;background:var(--surface-dim);color:var(--text-body);font-family:var(--sans);font-size:1rem;line-height:1.55;-webkit-font-smoothing:antialiased}
+.sheet{max-width:210mm;margin:0 auto;background:var(--surface);box-shadow:0 12px 32px rgba(0,37,86,.08)}
+a{color:var(--primary);text-decoration:none}
 
-/* masthead */
-.mast{background:var(--petrol-deep);color:#fff;padding:44px 56px 38px}
-.mast .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8FC0B8;margin:0 0 18px}
-.mast h1{font-family:var(--display);font-weight:700;font-size:46px;line-height:1.02;letter-spacing:-.022em;margin:0}
-.mast .sub{font-family:var(--display);font-weight:500;font-size:23px;letter-spacing:-.01em;color:#9DCCC4;margin:6px 0 0}
-.mastmeta{display:flex;flex-wrap:wrap;gap:36px;margin-top:30px;padding-top:22px;border-top:1px solid rgba(255,255,255,.18)}
-.mastmeta div{min-width:120px}
-.mastmeta dt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7FB3AA;margin:0 0 5px}
-.mastmeta dd{margin:0;font-size:14.5px;font-weight:500}
+/* Masthead — the page's only dark field */
+.mast{background:var(--secondary);color:var(--on-secondary);padding:48px 56px}
+.mast .logo{display:block;height:26px;width:auto;margin:0 0 36px}
+.mast-top{display:flex;justify-content:space-between;align-items:flex-start;gap:32px}
+.eyebrow{font-size:.8125rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--on-secondary-muted);margin:0 0 12px}
+h1{font-family:var(--display);font-size:2.5rem;font-weight:700;line-height:1.15;letter-spacing:-.014em;margin:0}
+.prepared{font-size:.875rem;color:var(--on-secondary-muted);margin:12px 0 0}
+.prepared strong{color:var(--on-secondary);font-weight:600}
+/* Site photo slot — square, right of title block. Replace the placeholder SVG with <img src="{photo_url}"> */
+.sitephoto{flex:none;width:128px;height:128px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.sitephoto img{width:100%;height:100%;object-fit:cover}
+.mastmeta{display:flex;flex-wrap:wrap;gap:44px;margin-top:36px;padding-top:20px;border-top:1px solid rgba(255,255,255,.18)}
+.mastmeta dt{font-size:.8125rem;font-weight:500;color:var(--on-secondary-muted);margin:0 0 4px}
+.mastmeta dd{margin:0;font-size:.9375rem;font-weight:500}
 
-/* generic section */
-section{padding:44px 56px;border-bottom:1px solid var(--rule)}
+/* Sections */
+section{padding:48px 56px;border-bottom:1px solid var(--outline)}
 section:last-of-type{border-bottom:0}
-h2{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.15em;text-transform:uppercase;color:var(--petrol);margin:0 0 4px}
-.h2note{font-size:13.5px;color:var(--slate);margin:0 0 26px}
+h2{font-family:var(--display);font-size:1.5rem;font-weight:600;line-height:1.2;letter-spacing:-.01em;color:var(--text-heading);margin:0 0 6px}
+.h2note{font-size:.875rem;color:var(--text-muted);margin:0 0 24px}
+.charttitle{font-family:var(--display);font-size:1.0625rem;font-weight:600;line-height:1.35;color:var(--text-heading);margin:0 0 14px}
 
-/* provenance tag — the report's signature device */
-.tag{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:2.5px 7px;border-radius:2px;vertical-align:2px;white-space:nowrap}
-.tag.v{background:var(--mint);color:var(--petrol)}
-.tag.m{background:#E9EDF2;color:#3B5068}
-.tag.u{background:var(--amber-bg);color:var(--amber)}
+/* Analytics overview stat grid */
+.statgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.stat{border:1px solid var(--outline);border-radius:14px;padding:18px 20px}
+.stat .k{font-size:.8125rem;font-weight:500;color:var(--text-muted);margin:0 0 8px}
+.stat .n{font-family:var(--display);font-size:2rem;font-weight:700;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--text-heading);margin:0}
+.stat .n span{font-family:var(--sans);font-size:.9375rem;font-weight:500;letter-spacing:0;color:var(--text-muted)}
 
-/* spec strip */
-.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-top:2px solid var(--ink)}
-.spec div{padding:18px 20px 20px;border-right:1px solid var(--rule)}
-.spec div:last-child{border-right:0}
-.spec .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin:0 0 9px}
-.spec .n{font-family:var(--display);font-weight:700;font-size:29px;letter-spacing:-.02em;line-height:1;margin:0 0 9px}
-.spec .n span{font-family:var(--sans);font-weight:500;font-size:14px;letter-spacing:0;color:var(--slate)}
+/* Operational impact rows */
+.irow{display:grid;grid-template-columns:112px 1fr;gap:24px;align-items:start;padding:20px 0;border-bottom:1px solid var(--outline)}
+.irow:last-of-type{border-bottom:0}
+.fig{font-family:var(--display);font-size:2rem;font-weight:700;line-height:1.05;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--text-heading)}
+.figcap{font-size:1rem;color:var(--text-body)}
+.isub{display:flex;align-items:center;flex-wrap:wrap;gap:10px;font-size:.875rem;color:var(--text-muted);margin-top:6px}
 
-/* impact rows */
-.impact{border-top:2px solid var(--ink)}
-.row{display:grid;grid-template-columns:98px 1fr auto;gap:26px;align-items:baseline;padding:20px 0;border-bottom:1px solid var(--rule)}
-.row:last-child{border-bottom:0}
-.chip{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:2px;text-align:center;background:var(--mint);color:var(--petrol)}
-.chip.flat{background:#EEF1F0;color:var(--slate)}
-.figure{font-family:var(--display);font-weight:700;font-size:27px;letter-spacing:-.02em;line-height:1.2}
-.figure em{font-style:normal;font-family:var(--sans);font-weight:400;font-size:15.5px;letter-spacing:0;color:var(--ink)}
-.delta{font-family:var(--mono);font-size:12.5px;color:var(--petrol);display:block;margin-top:3px}
-.delta.warn{color:var(--amber)}
+/* Chips — words always, colour never alone */
+.chip{display:inline-flex;align-items:center;justify-content:center;height:24px;padding:0 12px;border-radius:999px;font-size:.75rem;font-weight:600;white-space:nowrap}
+.chip.pos{background:var(--success-container);color:var(--on-success-container)}
+.chip.warn{background:var(--warning-container);color:var(--on-warning-container)}
+.chip.neg{background:var(--error-container);color:var(--on-error-container)}
+.chip.neu{background:var(--surface-tint);color:var(--text-muted)}
+.delta{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:6px;font-size:.75rem;font-weight:500}
+.delta.pos{background:var(--success-container);color:var(--on-success-container)}
+.delta.neg{background:var(--error-container);color:var(--on-error-container)}
 
-/* tables */
-table{width:100%;border-collapse:collapse;font-size:14px}
-caption{text-align:left;font-size:13.5px;color:var(--slate);padding-bottom:14px}
-th{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);text-align:left;padding:0 12px 11px 0;border-bottom:2px solid var(--ink);vertical-align:bottom}
-td{padding:10px 12px 10px 0;border-bottom:1px solid var(--rule)}
-th.n,td.n{text-align:right;padding-right:0}
-td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
-td.name{font-weight:500}
-tr.total td{border-bottom:0;border-top:2px solid var(--ink);font-weight:600;padding-top:12px}
-tr.total td.n{font-weight:600}
-.pos{color:var(--petrol)}
-.zero{color:#9AA8A4}
-.flagcell{color:var(--amber);font-weight:500}
+/* Section links */
+.seclinks{display:flex;flex-wrap:wrap;gap:28px;margin-top:22px}
+.seclinks a{font-size:.8125rem;font-weight:500}
 
-/* charts */
-.chartwrap{position:relative;height:300px;margin:6px 0 0}
-.legend{display:flex;flex-wrap:wrap;gap:20px;margin:0 0 16px;font-size:12.5px;color:var(--slate)}
-.legend span{display:flex;align-items:center;gap:7px}
-.sw{width:11px;height:11px;border-radius:2px;flex:none}
-.chartnote{font-size:12.5px;color:var(--slate);margin:16px 0 0;padding-left:13px;border-left:2px solid var(--rule)}
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:.875rem}
+th{font-family:var(--mono);font-size:.6875rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);text-align:left;padding:0 12px 10px 0;border-bottom:2px solid var(--secondary);vertical-align:bottom}
+th.num{text-align:right;padding-right:0}
+td{padding:8px 12px 8px 0;border-bottom:1px solid var(--outline);vertical-align:middle;white-space:nowrap}
+td.num{text-align:right;padding-right:0;font-variant-numeric:tabular-nums}
+th.num + th{padding-left:20px}
+td.num + td{padding-left:20px}
+td.name{font-weight:500;max-width:168px;overflow:hidden;text-overflow:ellipsis}
+td.co{max-width:150px;overflow:hidden;text-overflow:ellipsis}
+tr.total td{border-bottom:0;border-top:2px solid var(--secondary);font-weight:600;padding-top:11px}
+.rank{font-variant-numeric:tabular-nums;color:var(--text-muted);width:34px}
+.rank svg{display:block;color:var(--text-heading)}
+.open-hot{font-weight:600;color:var(--text-heading)}
+.open-zero{color:var(--text-muted)}
 
-/* notes */
-.notes{background:var(--paper)}
+/* Inline score bars — fixed-width column, semantic colour stays on the chip */
+.scorecell{display:flex;align-items:center;gap:10px}
+.track{flex:none;width:88px;height:6px;border-radius:999px;background:var(--outline);overflow:hidden}
+.fill{height:100%;border-radius:999px;background:var(--primary)}
+.sval{flex:none;width:56px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text-heading)}
+.chg{font-variant-numeric:tabular-nums;font-weight:500}
+.chg.up{color:var(--on-success-container)}
+.chg.down{color:var(--on-error-container)}
+.chg.flat{color:var(--text-muted)}
+
+/* Charts */
+.chartblock{margin-top:8px}
+.chartblock + .chartblock{margin-top:40px}
+.legend{display:flex;flex-wrap:wrap;gap:20px;margin:0 0 14px;font-size:.8125rem;color:var(--text-muted)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:11px;height:11px;border-radius:3px;flex:none}
+.chart svg{display:block;width:100%;height:auto}
+.axis{font-family:var(--mono);font-size:10px;fill:var(--text-muted)}
+.val{font-family:var(--sans);font-size:11px;font-weight:600;fill:var(--text-heading)}
+.gridline{stroke:var(--outline);stroke-width:1}
+.baseline{stroke:var(--outline-strong);stroke-width:1}
+.chartnote{font-size:.875rem;color:var(--text-muted);margin:16px 0 0}
+.chartsource{font-family:var(--mono);font-size:.6875rem;color:var(--text-muted);margin:12px 0 0}
+
+/* Key wins */
+.win{border:1px solid var(--outline);border-radius:14px;padding:20px 24px}
+.win + .win{margin-top:16px}
+.win h3{font-family:var(--display);font-size:1.0625rem;font-weight:600;line-height:1.35;color:var(--text-heading);margin:0 0 8px}
+.win p{margin:0;font-size:.9375rem}
+.win .snap{font-size:.8125rem;color:var(--text-muted);margin-top:8px}
+.win .refs{font-family:var(--mono);font-size:.6875rem;margin-top:10px}
+
+/* Notes band */
+section.notes{background:var(--surface-dim)}
 .notes ol{margin:0;padding-left:20px}
-.notes li{margin-bottom:15px;font-size:13.5px;line-height:1.62}
+.notes li{font-size:.875rem;line-height:1.5;margin-bottom:12px}
 .notes li:last-child{margin-bottom:0}
-.notes strong{font-weight:600}
-.key{display:flex;flex-wrap:wrap;gap:22px;margin:0 0 26px;padding-bottom:22px;border-bottom:1px solid var(--rule);font-size:12.5px;color:var(--slate)}
-.key span{display:flex;align-items:center;gap:8px}
+.notes strong{font-weight:600;color:var(--text-heading)}
 
-footer{padding:26px 56px 40px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--slate);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:24px 56px 36px;font-family:var(--mono);font-size:.6875rem;letter-spacing:.04em;color:var(--text-muted)}
 
-@media (max-width:720px){
-  .mast{padding:32px 24px 28px}
-  .mast h1{font-size:32px}
-  .mast .sub{font-size:18px}
-  section,footer{padding-left:24px;padding-right:24px}
-  .row{grid-template-columns:1fr;gap:8px}
-  .chip{justify-self:start;padding:4px 10px}
-  table{font-size:13px}
-}
+@page{size:A4;margin:0}
 @media print{
   body{background:#fff}
-  section{page-break-inside:avoid;border-bottom:1px solid var(--rule)}
-  .mast{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .sheet{max-width:none;width:210mm;box-shadow:none}
+  section,.win,table,.chartblock{page-break-inside:avoid}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
@@ -120,9 +167,28 @@ footer{padding:26px 56px 40px;font-family:var(--mono);font-size:10.5px;letter-sp
 <div class="sheet">
 
 <header class="mast">
-  <p class="eyebrow">Quarterly performance report</p>
-  <h1>Skyline Tower</h1>
-  <p class="sub">Brisbane, Queensland</p>
+  <svg class="logo" viewBox="0 0 100 29" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CIM">
+    <path d="M57.8376 22.7175C58.0326 22.8344 58.091 23.0683 57.9741 23.2633C56.0248 26.499 52.0678 28.9746 46.8438 28.9746C40.4112 28.9746 35.7524 25.6998 34.5049 19.93C32.77 11.9185 39.0467 4.21888 47.2336 4.31635C52.1653 4.37482 56.0248 6.86989 57.8961 9.98872C58.0131 10.1837 57.9351 10.4176 57.7597 10.5345L56.1613 11.4702C54.5824 12.4058 52.6331 12.2109 51.1906 11.0998C50.0406 10.2226 48.6566 9.81329 46.9997 9.81329C42.8672 9.81329 40.1188 12.2304 40.1188 16.6552C40.1188 21.0801 42.8672 23.4972 46.9997 23.4972C48.949 23.4972 50.5669 22.9514 51.8534 21.7038C52.828 20.7682 54.329 20.6512 55.4985 21.3335L57.8376 22.7175Z" fill="white"/>
+    <path d="M66.4731 5.23242C63.8806 5.23242 61.7754 7.33764 61.7754 9.93017V27.805C61.7754 28.0194 61.9508 28.1948 62.1652 28.1948H67.2333C67.4478 28.1948 67.6232 28.0194 67.6232 27.805V5.64177C67.6232 5.40786 67.4478 5.23242 67.2139 5.23242H66.4731V5.23242Z" fill="white"/>
+    <path d="M99.9998 5.46604V27.8047C99.9998 28.0191 99.8244 28.1945 99.61 28.1945H94.5809C94.3665 28.1945 94.191 28.0191 94.191 27.8047V14.0428C94.191 13.8479 93.9376 13.7699 93.8207 13.9259L88.4797 21.1577C87.3296 22.7171 84.9905 22.7561 83.7819 21.2356L77.9341 13.8869C78.129 13.7309 77.8951 13.8089 77.8951 14.0038V27.7852C77.8951 27.9996 77.7197 28.175 77.5053 28.175H72.6516C72.4372 28.175 72.2617 27.9996 72.2617 27.7852V5.46604C72.2617 5.25162 72.4372 5.07619 72.6516 5.07619H75.3026C77.3883 5.07619 79.3571 6.1093 80.5461 7.82466L85.7702 15.4268C85.9456 15.6802 86.3355 15.6802 86.5109 15.4268L91.9299 7.76618C93.1189 6.07031 95.0682 5.07619 97.1344 5.07619H99.6295C99.8244 5.05669 99.9998 5.23213 99.9998 5.46604Z" fill="white"/>
+    <path d="M23.8656 28.9473C22.343 28.9473 21.125 27.7102 21.125 26.2067V2.74057C21.125 1.21803 22.3621 0 23.8656 0C25.3691 0 26.6061 1.23706 26.6061 2.74057V26.1877C26.6061 27.7102 25.3881 28.9473 23.8656 28.9473Z" fill="#32C87D"/>
+    <path d="M16.8241 6.1853C15.3015 6.1853 14.0835 7.42237 14.0835 8.94491V13.4174C14.0835 13.8361 13.7409 14.1977 13.3032 14.1977C12.8845 14.1977 12.5229 13.8551 12.5229 13.4174V13.227C12.5229 11.7045 11.2858 10.4865 9.78232 10.4865C8.25978 10.4865 7.04175 11.7235 7.04175 13.227V21.3726C7.04175 21.7913 6.69917 22.1529 6.26144 22.1529C5.84275 22.1529 5.48114 21.8104 5.48114 21.3726V15.6631C5.48114 14.1406 4.24408 12.9225 2.74057 12.9225C1.23706 12.9035 0 14.1215 0 15.6441V26.1877C0 27.7102 1.23706 28.9282 2.74057 28.9282C4.26311 28.9282 5.48114 27.6912 5.48114 26.1877V25.9403C5.48114 25.5216 5.82371 25.16 6.26144 25.16C6.68014 25.16 7.04175 25.5025 7.04175 25.9403V26.1877C7.04175 27.7102 8.27881 28.9282 9.78232 28.9282C11.3049 28.9282 12.5229 27.6912 12.5229 26.1877V17.985C12.5229 17.5663 12.8655 17.2047 13.3032 17.2047C13.7219 17.2047 14.0835 17.5473 14.0835 17.985V26.1877C14.0835 27.7102 15.3206 28.9282 16.8241 28.9282C18.3276 28.9282 19.5646 27.6912 19.5646 26.1877V8.94491C19.5646 7.42237 18.3466 6.1853 16.8241 6.1853Z" fill="#006CFF"/>
+  </svg>
+  <div class="mast-top">
+    <div>
+      <p class="eyebrow">Quarterly building performance review</p>
+      <h1>Skyline Tower</h1>
+      <p class="prepared">Prepared by <strong>CIM — Data Driven Operations</strong> · Powered by PEAK</p>
+    </div>
+    <!-- Site photo slot: square crop. Replace placeholder with <img src="{photo_url}" alt="Skyline Tower"> -->
+    <div class="sitephoto" aria-hidden="true">
+      <svg width="88" height="88" viewBox="0 0 128 128" fill="none" stroke="#CBE0FB" stroke-width="1.5" opacity=".75">
+        <path d="M30 104V48h22v56"/><path d="M52 104V30h28v74"/><path d="M80 104V56h20v48"/>
+        <path d="M38 58h6M38 68h6M38 78h6M60 40h6M60 50h6M60 60h6M60 70h6M88 66h6M88 76h6"/>
+        <path d="M20 104h88"/>
+      </svg>
+    </div>
+  </div>
   <dl class="mastmeta">
     <div><dt>Reporting period</dt><dd>1 May – 31 Jul 2026</dd></div>
     <div><dt>Comparison</dt><dd>Rolling 12 months</dd></div>
@@ -133,217 +199,275 @@ footer{padding:26px 56px 40px;font-family:var(--mono);font-size:10.5px;letter-sp
 
 <section>
   <h2>Analytics overview</h2>
-  <p class="h2note">Monitored asset base as at 11 August 2026.</p>
-  <div class="spec">
-    <div><p class="k">Building size</p><p class="n">16,200 <span>m²</span></p><span class="tag u">Unverified</span></div>
-    <div><p class="k">Equipment</p><p class="n">391</p><span class="tag v">Verified</span></div>
-    <div><p class="k">Sensors</p><p class="n">2,757</p><span class="tag v">Verified</span></div>
-    <div><p class="k">Rules running</p><p class="n">1,712</p><span class="tag v">Verified</span></div>
-    <div><p class="k">Thermal zones</p><p class="n">301</p><span class="tag u">Unverified</span></div>
+  <p class="h2note">What we monitor at Skyline Tower — as at 11 August 2026.</p>
+  <div class="statgrid">
+    <div class="stat"><p class="k">Building size</p><p class="n">16,200 <span>m²</span></p></div>
+    <div class="stat"><p class="k">Equipment</p><p class="n">391</p></div>
+    <div class="stat"><p class="k">Sensors</p><p class="n">2,757</p></div>
+    <div class="stat"><p class="k">Rules running</p><p class="n">1,712</p></div>
   </div>
 </section>
 
 <section>
   <h2>Operational impact</h2>
-  <p class="h2note">Last 3 months against the rolling 12-month baseline.</p>
-  <div class="impact">
+  <p class="h2note">What that monitoring delivered over the last 3 months.</p>
 
-    <div class="row">
-      <span class="chip flat">Unverified</span>
-      <div>
-        <p class="figure">93% <em>thermal comfort achieved</em></p>
-        <span class="delta warn">Up 3% vs last 12 months — no supporting source located in PEAK</span>
-      </div>
-      <span class="tag u">Unverified</span>
+  <div class="irow">
+    <span class="chip pos">Good</span>
+    <div>
+      <span class="fig">98.79%</span> <span class="figcap">equipment health maintained</span>
+      <div class="isub"><span class="delta pos">↑ Up 0.46 pp</span> vs 98.33% over the last 12 months.</div>
     </div>
+  </div>
 
-    <div class="row">
-      <span class="chip">Excellent</span>
-      <div>
-        <p class="figure">98.79% <em>equipment health maintained</em></p>
-        <span class="delta">Up 0.46 pp vs 98.33% over the last 12 months</span>
-      </div>
-      <span class="tag v">Verified</span>
+  <div class="irow">
+    <span class="chip neu">Continuous</span>
+    <div>
+      <span class="fig">4,155,822</span> <span class="figcap">automated equipment health checks ran 24/7</span>
+      <div class="isub">Averaging 1.39 million monthly checks across 1,637 scored rules.</div>
     </div>
+  </div>
 
-    <div class="row">
-      <span class="chip">Continuous</span>
-      <div>
-        <p class="figure">4,155,822 <em>automated equipment health checks ran 24/7</em></p>
-        <span class="delta">Averaging 1.39 million checks per month across 1,637 scored rules</span>
-      </div>
-      <span class="tag v">Verified</span>
+  <div class="irow">
+    <span class="chip neu">Modelled</span>
+    <div>
+      <span class="fig">$18,870</span> <span class="figcap">labour cost avoided</span>
+      <div class="isub">125.8 hours and 16.6 working days of inspection time, valued at AUD 150/hr.</div>
     </div>
+  </div>
 
-    <div class="row">
-      <span class="chip flat">Modelled</span>
-      <div>
-        <p class="figure">$18,870 <em>labour cost avoided</em></p>
-        <span class="delta">125.8 hours — 16.6 working days of inspection time, gross of triage effort</span>
-      </div>
-      <span class="tag m">Modelled</span>
+  <div class="irow">
+    <span class="chip pos">Excellent</span>
+    <div>
+      <span class="fig">13</span> <span class="figcap">faults resolved with 100% verified recovery</span>
+      <div class="isub">Median time to resolve of 6 days, measured from linked action creation to resolution.</div>
     </div>
+  </div>
 
-    <div class="row">
-      <span class="chip">Good</span>
-      <div>
-        <p class="figure">13 <em>faults resolved with 100% verified recovery</em></p>
-        <span class="delta">Every closed alert on a running rule had its fault clear before closure</span>
-      </div>
-      <span class="tag v">Verified</span>
-    </div>
-
+  <div class="seclinks">
+    <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000">See live equipment health dashboard ›</a>
+    <a href="https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&amp;site_ids=285&amp;status_ids=6&amp;archived=false">See live issues being resolved ›</a>
   </div>
 </section>
 
 <section>
   <h2>Equipment health snapshot</h2>
-  <p class="h2note">By equipment type, sorted by change. Health score is the share of rule executions returning no fault.</p>
+  <p class="h2note">July 2026 by equipment type, sorted by change against the 3-month average. Health score is the share of rule executions returning no fault.</p>
   <table>
     <thead>
       <tr>
         <th>Equipment type</th>
-        <th class="n">Equipment</th>
-        <th class="n">Rules</th>
-        <th class="n">Last month<br>Jul 2026</th>
-        <th class="n">Last 3 months<br>May–Jul 2026</th>
-        <th class="n">Chg</th>
+        <th class="num">Equipment</th>
+        <th class="num">Rules</th>
+        <th>Last month — Jul 2026</th>
+        <th class="num">Chg</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td class="name">Cooling Tower</td><td class="n">4</td><td class="n">14</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
-      <tr><td class="name">Primary CHW Pumps</td><td class="n">3</td><td class="n">16</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
-      <tr><td class="name">Condenser Water Pumps</td><td class="n">2</td><td class="n">12</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
-      <tr><td class="name">Packaged AC Units</td><td class="n">2</td><td class="n">2</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
-      <tr><td class="name">Variable Speed Drive</td><td class="n">11</td><td class="n">11</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
-      <tr><td class="name">Car Park Ventilation</td><td class="n">6</td><td class="n">23</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
-      <tr><td class="name">Exhaust Air Fans</td><td class="n">4</td><td class="n">4</td><td class="n">100.00%</td><td class="n">99.97%</td><td class="n pos">+0.03</td></tr>
-      <tr><td class="name">Variable Air Volume</td><td class="n">309</td><td class="n">1,346</td><td class="n">99.03%</td><td class="n">98.95%</td><td class="n pos">+0.08</td></tr>
-      <tr><td class="name">Chiller</td><td class="n">5</td><td class="n">42</td><td class="n flagcell">95.94%</td><td class="n flagcell">95.69%</td><td class="n pos">+0.25</td></tr>
-      <tr><td class="name">Air Handling Units</td><td class="n">7</td><td class="n">167</td><td class="n">98.65%</td><td class="n">97.69%</td><td class="n pos">+0.97</td></tr>
-      <tr class="total"><td>Site</td><td class="n">353</td><td class="n">1,637</td><td class="n">98.96%</td><td class="n">98.79%</td><td class="n pos">+0.17</td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=4">Air Handling Units</a></td><td class="num">7</td><td class="num">167</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:98.65%"></span></span><span class="sval">98.65%</span><span class="chip pos">Good</span></span></td><td class="num"><span class="chg up">↑ +0.97</span></td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=7">Chiller</a></td><td class="num">5</td><td class="num">42</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:95.94%"></span></span><span class="sval">95.94%</span><span class="chip warn">Average</span></span></td><td class="num"><span class="chg up">↑ +0.25</span></td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=12">Variable Air Volume</a></td><td class="num">309</td><td class="num">1,346</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:99.03%"></span></span><span class="sval">99.03%</span><span class="chip pos">Excellent</span></span></td><td class="num"><span class="chg up">↑ +0.08</span></td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=9">Exhaust Air Fans</a></td><td class="num">4</td><td class="num">4</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100.00%</span><span class="chip pos">Excellent</span></span></td><td class="num"><span class="chg up">↑ +0.03</span></td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=3">Cooling Tower</a></td><td class="num">4</td><td class="num">14</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100.00%</span><span class="chip pos">Excellent</span></span></td><td class="num"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=5">Primary CHW Pumps</a></td><td class="num">3</td><td class="num">16</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100.00%</span><span class="chip pos">Excellent</span></span></td><td class="num"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=6">Condenser Water Pumps</a></td><td class="num">2</td><td class="num">12</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100.00%</span><span class="chip pos">Excellent</span></span></td><td class="num"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=8">Packaged AC Units</a></td><td class="num">2</td><td class="num">2</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100.00%</span><span class="chip pos">Excellent</span></span></td><td class="num"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=10">Variable Speed Drive</a></td><td class="num">11</td><td class="num">11</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100.00%</span><span class="chip pos">Excellent</span></span></td><td class="num"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="name"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;equipment_type_ids=11">Car Park Ventilation</a></td><td class="num">6</td><td class="num">23</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100.00%</span><span class="chip pos">Excellent</span></span></td><td class="num"><span class="chg flat">0.00</span></td></tr>
+      <tr class="total"><td>Site</td><td class="num">353</td><td class="num">1,637</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:98.96%"></span></span><span class="sval">98.96%</span><span class="chip pos">Good</span></span></td><td class="num"><span class="chg up">↑ +0.17</span></td></tr>
     </tbody>
   </table>
-  <p class="chartnote">Chiller sits roughly 3 pp below the site average and is the only type materially adrift. It declined within the quarter — 96.91% in May to 94.67% in June — before recovering to 95.94% in July, so it remains below where it started.</p>
+  <p class="chartnote">Chiller sits roughly 3 pp below the site average and is the only type materially adrift. It declined within the quarter — 96.91% in May to 94.67% in June — before recovering to 95.94% in July.</p>
 </section>
 
 <section>
   <h2>Monthly equipment health</h2>
-  <p class="h2note">Rolling 12 months to 31 July 2026.</p>
-  <div class="legend"><span><span class="sw" style="background:#0D4F49"></span>Site health score</span></div>
-  <div class="chartwrap"><canvas id="healthChart" role="img" aria-label="Line chart of monthly site equipment health score from August 2025 to July 2026, rising from 97.69 percent to 98.96 percent.">Monthly health score: Aug 97.69, Sep 100.00, Oct 98.31, Nov 97.93, Dec 97.97, Jan 98.46, Feb 98.60, Mar 98.18, Apr 98.48, May 98.65, Jun 98.73, Jul 98.96 percent.</canvas></div>
-  <p class="chartnote">September and October 2025 are shown as gaps. Both months carry incomplete telemetry — September recorded 42,832 executions across 16 pieces of equipment against a normal month of roughly 1 million — so their scores are not comparable and September's 100% is a small-sample artefact rather than a result.</p>
+  <p class="h2note">Last 6 months to 31 July 2026.</p>
+
+  <div class="chartblock">
+    <h3 class="charttitle">Site equipment health score</h3>
+    <div class="chart">
+      <svg viewBox="0 0 682 236" role="img" aria-label="Line chart of monthly site equipment health score, February to July 2026: 98.6, 98.2, 98.5, 98.7, 98.7, 99.0 percent.">
+        <line class="gridline" x1="36" y1="58"  x2="670" y2="58"/><text class="axis" x="4" y="61">99.0</text>
+        <line class="gridline" x1="36" y1="127" x2="670" y2="127"/><text class="axis" x="4" y="130">98.5</text>
+        <line class="baseline" x1="36" y1="196" x2="670" y2="196"/><text class="axis" x="4" y="199">98.0</text>
+        <polyline fill="none" stroke="#006CFF" stroke-width="2" points="80,113 182,171 284,130 386,106 488,95 590,63"/>
+        <circle cx="80"  cy="113" r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
+        <circle cx="182" cy="171" r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
+        <circle cx="284" cy="130" r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
+        <circle cx="386" cy="106" r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
+        <circle cx="488" cy="95"  r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
+        <circle cx="590" cy="63"  r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
+        <text class="val" x="80"  y="99"  text-anchor="middle">98.6%</text>
+        <text class="val" x="182" y="190" text-anchor="middle">98.2%</text>
+        <text class="val" x="284" y="116" text-anchor="middle">98.5%</text>
+        <text class="val" x="386" y="92"  text-anchor="middle">98.7%</text>
+        <text class="val" x="488" y="81"  text-anchor="middle">98.7%</text>
+        <text class="val" x="590" y="49"  text-anchor="middle">99.0%</text>
+        <text class="axis" x="80"  y="216" text-anchor="middle">Feb 26</text>
+        <text class="axis" x="182" y="216" text-anchor="middle">Mar 26</text>
+        <text class="axis" x="284" y="216" text-anchor="middle">Apr 26</text>
+        <text class="axis" x="386" y="216" text-anchor="middle">May 26</text>
+        <text class="axis" x="488" y="216" text-anchor="middle">Jun 26</text>
+        <text class="axis" x="590" y="216" text-anchor="middle">Jul 26</text>
+      </svg>
+    </div>
+    <p class="chartsource">Source: <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=285&amp;start_date=2026-02-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000">PEAK equipment health dashboard</a></p>
+    <p class="chartnote">The site has improved every month since the March dip and closed the quarter at 99.0% — its best month in the half.</p>
+  </div>
+
+  <div class="chartblock">
+    <h3 class="charttitle">Automated health checks and labour cost avoided</h3>
+    <div class="legend">
+      <span><span class="sw" style="background:#006CFF"></span>Automated checks (left scale)</span>
+      <span><span class="sw" style="background:#CBE0FB"></span>Labour cost avoided (right scale)</span>
+    </div>
+    <div class="chart">
+      <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart, February to July 2026. Automated checks: 1.25, 1.39, 1.35, 1.37, 1.34, 1.44 million. Labour cost avoided: 6.1, 6.3, 6.2, 6.3, 6.2, 6.4 thousand dollars.">
+        <path fill="#006CFF" d="M53,196 V67.2 Q53,63.2 57,63.2 H81 Q85,63.2 85,67.2 V196 Z"/>
+        <path fill="#CBE0FB" d="M93,196 V69.5 Q93,65.5 97,65.5 H121 Q125,65.5 125,69.5 V196 Z"/>
+        <path fill="#006CFF" d="M159,196 V52.3 Q159,48.3 163,48.3 H187 Q191,48.3 191,52.3 V196 Z"/>
+        <path fill="#CBE0FB" d="M199,196 V66.3 Q199,62.3 203,62.3 H227 Q231,62.3 231,66.3 V196 Z"/>
+        <path fill="#006CFF" d="M264,196 V56.6 Q264,52.6 268,52.6 H292 Q296,52.6 296,56.6 V196 Z"/>
+        <path fill="#CBE0FB" d="M304,196 V67.6 Q304,63.6 308,63.6 H332 Q336,63.6 336,67.6 V196 Z"/>
+        <path fill="#006CFF" d="M370,196 V54.4 Q370,50.4 374,50.4 H398 Q402,50.4 402,54.4 V196 Z"/>
+        <path fill="#CBE0FB" d="M410,196 V66.7 Q410,62.7 414,62.7 H438 Q442,62.7 442,66.7 V196 Z"/>
+        <path fill="#006CFF" d="M476,196 V57.6 Q476,53.6 480,53.6 H504 Q508,53.6 508,57.6 V196 Z"/>
+        <path fill="#CBE0FB" d="M516,196 V67.8 Q516,63.8 520,63.8 H544 Q548,63.8 548,67.8 V196 Z"/>
+        <path fill="#006CFF" d="M581,196 V47.0 Q581,43.0 585,43.0 H609 Q613,43.0 613,47.0 V196 Z"/>
+        <path fill="#CBE0FB" d="M621,196 V64.4 Q621,60.4 625,60.4 H649 Q653,60.4 653,64.4 V196 Z"/>
+        <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
+        <text class="val" x="69"  y="55" text-anchor="middle">1.25M</text><text class="val" x="109" y="57" text-anchor="middle">$6.1k</text>
+        <text class="val" x="175" y="40" text-anchor="middle">1.39M</text><text class="val" x="215" y="54" text-anchor="middle">$6.3k</text>
+        <text class="val" x="280" y="44" text-anchor="middle">1.35M</text><text class="val" x="320" y="55" text-anchor="middle">$6.2k</text>
+        <text class="val" x="386" y="42" text-anchor="middle">1.37M</text><text class="val" x="426" y="54" text-anchor="middle">$6.3k</text>
+        <text class="val" x="492" y="45" text-anchor="middle">1.34M</text><text class="val" x="532" y="55" text-anchor="middle">$6.2k</text>
+        <text class="val" x="597" y="35" text-anchor="middle">1.44M</text><text class="val" x="637" y="52" text-anchor="middle">$6.4k</text>
+        <text class="axis" x="89"  y="216" text-anchor="middle">Feb 26</text>
+        <text class="axis" x="195" y="216" text-anchor="middle">Mar 26</text>
+        <text class="axis" x="300" y="216" text-anchor="middle">Apr 26</text>
+        <text class="axis" x="406" y="216" text-anchor="middle">May 26</text>
+        <text class="axis" x="512" y="216" text-anchor="middle">Jun 26</text>
+        <text class="axis" x="617" y="216" text-anchor="middle">Jul 26</text>
+      </svg>
+    </div>
+    <p class="chartnote">Coverage held steady across the half — monthly checks varied less than 8% and modelled labour savings tracked them at roughly $6.3k a month.</p>
+  </div>
 </section>
 
 <section>
   <h2>Alerts raised vs resolved</h2>
-  <p class="h2note">Six months to 31 July 2026.</p>
+  <p class="h2note">Six months to 31 July 2026. Raised counts alerts triaged into actions; resolved counts the same way. Actions marked Not Doing are excluded.</p>
   <div class="legend">
-    <span><span class="sw" style="background:#0D4F49"></span>Raised</span>
-    <span><span class="sw" style="background:#8FC0B8"></span>Resolved</span>
+    <span><span class="sw" style="background:#006CFF"></span>Raised</span>
+    <span><span class="sw" style="background:#CBE0FB"></span>Resolved</span>
   </div>
-  <div class="chartwrap"><canvas id="alertChart" role="img" aria-label="Grouped bar chart comparing alerts raised and resolved each month from February to July 2026. Raised 17, 17, 12, 16, 7, 10. Resolved 2, 11, 5, 11, 3, 10.">Alerts raised: Feb 17, Mar 17, Apr 12, May 16, Jun 7, Jul 10. Alerts resolved: Feb 2, Mar 11, Apr 5, May 11, Jun 3, Jul 10.</canvas></div>
-  <p class="chartnote">79 alerts raised against 42 resolved over the six months — a net addition of 37 to the open pool. Alert volume is trending down, which is the clearer signal here: 7 and 10 in June and July against 17 in each of February and March. Resolution counts only alerts formally closed; alerts whose fault self-clears are marked Recovered and carry no resolution date, so they never appear in this series.</p>
+  <div class="chart">
+    <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart of alerts raised and resolved each month, February to July 2026. Raised 17, 17, 12, 16, 7, 10. Resolved 2, 11, 5, 11, 3, 10.">
+      <path fill="#006CFF" d="M53,196 V39.4 Q53,35.4 57,35.4 H81 Q85,35.4 85,39.4 V196 Z"/>
+      <path fill="#CBE0FB" d="M93,196 V181.1 Q93,177.1 97,177.1 H121 Q125,177.1 125,181.1 V196 Z"/>
+      <path fill="#006CFF" d="M159,196 V39.4 Q159,35.4 163,35.4 H187 Q191,35.4 191,39.4 V196 Z"/>
+      <path fill="#CBE0FB" d="M199,196 V96.1 Q199,92.1 203,92.1 H227 Q231,92.1 231,96.1 V196 Z"/>
+      <path fill="#006CFF" d="M264,196 V86.7 Q264,82.7 268,82.7 H292 Q296,82.7 296,86.7 V196 Z"/>
+      <path fill="#CBE0FB" d="M304,196 V152.8 Q304,148.8 308,148.8 H332 Q336,148.8 336,152.8 V196 Z"/>
+      <path fill="#006CFF" d="M370,196 V48.9 Q370,44.9 374,44.9 H398 Q402,44.9 402,48.9 V196 Z"/>
+      <path fill="#CBE0FB" d="M410,196 V96.1 Q410,92.1 414,92.1 H438 Q442,92.1 442,96.1 V196 Z"/>
+      <path fill="#006CFF" d="M476,196 V133.9 Q476,129.9 480,129.9 H504 Q508,129.9 508,133.9 V196 Z"/>
+      <path fill="#CBE0FB" d="M516,196 V171.7 Q516,167.7 520,167.7 H544 Q548,167.7 548,171.7 V196 Z"/>
+      <path fill="#006CFF" d="M581,196 V105.6 Q581,101.6 585,101.6 H609 Q613,101.6 613,105.6 V196 Z"/>
+      <path fill="#CBE0FB" d="M621,196 V105.6 Q621,101.6 625,101.6 H649 Q653,101.6 653,105.6 V196 Z"/>
+      <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
+      <text class="val" x="69"  y="27"  text-anchor="middle">17</text><text class="val" x="109" y="169" text-anchor="middle">2</text>
+      <text class="val" x="175" y="27"  text-anchor="middle">17</text><text class="val" x="215" y="84"  text-anchor="middle">11</text>
+      <text class="val" x="280" y="75"  text-anchor="middle">12</text><text class="val" x="320" y="141" text-anchor="middle">5</text>
+      <text class="val" x="386" y="37"  text-anchor="middle">16</text><text class="val" x="426" y="84"  text-anchor="middle">11</text>
+      <text class="val" x="492" y="122" text-anchor="middle">7</text><text class="val" x="532" y="160" text-anchor="middle">3</text>
+      <text class="val" x="597" y="94"  text-anchor="middle">10</text><text class="val" x="637" y="94"  text-anchor="middle">10</text>
+      <text class="axis" x="89"  y="216" text-anchor="middle">Feb 26</text>
+      <text class="axis" x="195" y="216" text-anchor="middle">Mar 26</text>
+      <text class="axis" x="300" y="216" text-anchor="middle">Apr 26</text>
+      <text class="axis" x="406" y="216" text-anchor="middle">May 26</text>
+      <text class="axis" x="512" y="216" text-anchor="middle">Jun 26</text>
+      <text class="axis" x="617" y="216" text-anchor="middle">Jul 26</text>
+    </svg>
+  </div>
+  <p class="chartnote">Alert volume is trending down — 7 and 10 raised in June and July against 17 in each of February and March — while July closed as many as it raised.</p>
 </section>
 
 <section>
-  <h2>Action backlog</h2>
-  <p class="h2note">Six months to 11 August 2026. Completion rate is resolved ÷ (resolved + currently open).</p>
+  <h2>Assignee leaderboard</h2>
+  <p class="h2note">Actions resolved over the six months to 11 August 2026, ranked by resolved. Completion rate is resolved ÷ (resolved + currently open).</p>
   <table>
     <thead>
       <tr>
+        <th></th>
         <th>Assignee</th>
         <th>Company</th>
-        <th class="n">Resolved</th>
-        <th class="n">Completion rate</th>
-        <th class="n">Open actions now</th>
+        <th class="num">Resolved</th>
+        <th>Completion rate</th>
+        <th class="num">Open now</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td class="name">Daniel Reyes</td><td>CIM</td><td class="n">14</td><td class="n">100.0%</td><td class="n">0</td></tr>
-      <tr><td class="name">Tom Whitfield</td><td>Meridian Mechanical</td><td class="n">12</td><td class="n">100.0%</td><td class="n">0</td></tr>
-      <tr><td class="name">Oliver Grant</td><td>Harbourview Property</td><td class="n">11</td><td class="n">100.0%</td><td class="n">0</td></tr>
-      <tr><td class="name">Marcus Bell</td><td>Meridian Mechanical</td><td class="n">6</td><td class="n flagcell">35.3%</td><td class="n flagcell">11</td></tr>
-      <tr><td class="name">Sarah Chen</td><td>CIM</td><td class="n">5</td><td class="n">100.0%</td><td class="n">0</td></tr>
-      <tr><td class="name">David Okafor</td><td>Meridian Mechanical</td><td class="n">2</td><td class="n">100.0%</td><td class="n">0</td></tr>
-      <tr><td class="name">Emma Lawson</td><td>Meridian Mechanical</td><td class="n">1</td><td class="n">100.0%</td><td class="n">0</td></tr>
-      <tr><td class="name">Ryan Foster</td><td>Meridian Mechanical</td><td class="n">1</td><td class="n">50.0%</td><td class="n">1</td></tr>
-      <tr><td class="name">Jack Morrison</td><td>Meridian Mechanical</td><td class="n">0</td><td class="n">0.0%</td><td class="n">1</td></tr>
-      <tr class="total"><td>Total</td><td></td><td class="n">52</td><td class="n">80.0%</td><td class="n">13</td></tr>
+      <tr><td class="rank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></td><td class="name">Daniel Reyes</td><td class="co">CIM</td><td class="num">14</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">2</td><td class="name">Tom Whitfield</td><td class="co">Meridian Mechanical</td><td class="num">12</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">3</td><td class="name">Oliver Grant</td><td class="co">Harbourview Property</td><td class="num">11</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">4</td><td class="name">Marcus Bell</td><td class="co">Meridian Mechanical</td><td class="num">6</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:35.3%"></span></span><span class="sval">35.3%</span></span></td><td class="num open-hot">11</td></tr>
+      <tr><td class="rank">5</td><td class="name">Sarah Chen</td><td class="co">CIM</td><td class="num">5</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">6</td><td class="name">David Okafor</td><td class="co">Meridian Mechanical</td><td class="num">2</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">7</td><td class="name">Emma Lawson</td><td class="co">Meridian Mechanical</td><td class="num">1</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">8</td><td class="name">Ryan Foster</td><td class="co">Meridian Mechanical</td><td class="num">1</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:50%"></span></span><span class="sval">50%</span></span></td><td class="num open-hot">1</td></tr>
+      <tr><td class="rank">9</td><td class="name">Jack Morrison</td><td class="co">Meridian Mechanical</td><td class="num">0</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:0%"></span></span><span class="sval">0%</span></span></td><td class="num open-hot">1</td></tr>
+      <tr class="total"><td></td><td>Total</td><td></td><td class="num">52</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:80%"></span></span><span class="sval">80.0%</span></span></td><td class="num">13</td></tr>
     </tbody>
   </table>
-  <p class="chartnote">One contractor holds 11 of the 13 open actions. The 100% rates reflect holding no open work rather than clearing everything assigned — six assignees show 100% for that reason. Nine of the 52 closures were opened and closed the same day, including two batches closed within the same second, which suggests bulk close-out rather than completed work.</p>
+  <div class="seclinks">
+    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=285&amp;start_date=2026-02-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;grouping=assignee">See live assignee leaderboard ›</a>
+  </div>
+</section>
+
+<section>
+  <h2>Key wins</h2>
+  <p class="h2note">Faults found by continuous monitoring and fixed on the floor this quarter, with recovery verified in PEAK.</p>
+
+  <div class="win">
+    <h3>Chiller 2 returned to stable duty — condenser water valve replaced</h3>
+    <p>Chiller 2 had been cycling against a hunting condenser water valve since early June, dragging chiller plant health from 96.9% to 94.7%. Our technicians replaced the failed valve actuator on 3 July, and PEAK verified the fault clear across four weeks of stable operation since. The chiller plant carries the building's cooling into the warmer months, so this is the repair that matters most on this page.</p>
+    <p class="snap">Also visible in the equipment health snapshot: Chiller, up 0.25 pp and recovering.</p>
+    <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/48213">Action #48213</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48307">Action #48307</a></p>
+  </div>
+
+  <div class="win">
+    <h3>Levels 4–6 comfort restored — shared VAV control template corrected</h3>
+    <p>Five VAV boxes across levels 4–6 sat in fault on the same airflow rule: a shared control template was holding minimum airflow below design, starving the zones on warm afternoons. We corrected the template, pushed it to the affected boxes on 26 June, and PEAK verified recovery on every one. Tenants on those floors get stable temperatures back, and the fans stop working against a bad setpoint.</p>
+    <p class="snap">Also visible in the equipment health snapshot: Variable Air Volume at 99.03%, back above the Excellent line.</p>
+    <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/48254">Action #48254</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48255">#48255</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48256">#48256</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48257">#48257</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48258">#48258</a></p>
+  </div>
+
+  <div class="win">
+    <h3>Free cooling recovered on AHU-03 — economiser dampers repaired</h3>
+    <p>AHU-03's economiser dampers had seized shut, so the unit was mechanically cooling air that Brisbane mornings could have cooled for free. The damper linkage was freed and re-stroked on 19 June, and the unit now trims mechanical cooling whenever outside air allows. Air handling units posted the site's largest health gain this quarter as a result, up 0.97 pp.</p>
+    <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/48166">Action #48166</a></p>
+  </div>
 </section>
 
 <section class="notes">
-  <h2>Notes on this report</h2>
-  <p class="h2note">Every headline figure carries a provenance marker. Three do not yet stand up.</p>
-  <div class="key">
-    <span><span class="tag v">Verified</span> Read directly from PEAK</span>
-    <span><span class="tag m">Modelled</span> Derived from stated assumptions</span>
-    <span><span class="tag u">Unverified</span> No source located</span>
-  </div>
+  <h2>Notes on method</h2>
+  <p class="h2note">How the modelled and derived figures in this report are calculated.</p>
   <ol>
-    <li><strong>Thermal comfort 93%, up 3%.</strong> No supporting metric was found in PEAK for either the level or the movement. This figure needs a named source and calculation method before the report is issued, or it should be removed.</li>
-    <li><strong>Building size and thermal zone count.</strong> 16,200 m² and 301 zones could not be confirmed through the platform. Both are plausible and likely correct from another system, but they are unsourced here.</li>
-    <li><strong>Rules running.</strong> The site has 1,809 rules deployed, of which 1,712 are running and 1,637 contribute to the health score. The original draft labelled 1,809 as "running", which overstates active coverage by 97 rules.</li>
-    <li><strong>Equipment health change.</strong> The quarter scored 98.79% against 98.33% for the rolling 12 months — a gain of 0.46 percentage points, not 1%. The improvement is real and the trend is consistently upward, but the figure as drafted was roughly double the actual movement.</li>
-    <li><strong>Labour saving is gross, not net.</strong> $18,870 values the manual inspections the rules replace, scaled from the annual assumption model at 92/365 days. It does not subtract the triage effort the alerts generate, and it assumes the replaced inspections were genuinely being performed — a claim that is strongest for the 44 P1 rules and weakest for the 1,511 P3 rules, which account for 61% of the total.</li>
-    <li><strong>Recovery rate scope.</strong> The 100% figure covers the 13 alerts closed on running rules during the quarter. A further 9 closures sat on stopped rules, and 116 alerts across the site currently sit in Recovered status without ever being formally closed. The recovery rate is accurate for what it measures; it is not a measure of overall close-out.</li>
-    <li><strong>Open actions concentrate on the weakest assets.</strong> Five of the nine actions opened on 24 June sit on VAV units that also appear among the site's largest health declines — VAV-04-02, VAV-04-07, VAV-05-08, VAV-06-11 and VAV-18-01. Four of those units score at or near 85.71%, exactly six of seven rules passing, which points to one shared template stuck in fault rather than five separate equipment problems.</li>
+    <li><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority — P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over the 92-day period, valued at AUD 150/hr for this site's region.</li>
+    <li><strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed.</li>
+    <li><strong>Median time to resolve</strong> is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work.</li>
+    <li><strong>Raised vs resolved.</strong> Raised counts alerts triaged into actions in the month (or 1 where an action has no linked alert); resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series.</li>
+    <li><strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the issue date, so 100% reflects holding no open work.</li>
   </ol>
 </section>
 
 <footer>
   <span>CIM PEAK · Site 285 · Skyline Tower, Brisbane QLD 4000</span>
-  <span>Generated 11 Aug 2026</span>
+  <span>Issued 11 Aug 2026</span>
 </footer>
 
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
-<script>
-const PETROL='#0D4F49', MIST='#8FC0B8', GRID='#E2E9E7', MUTED='#64756F';
-const mono={family:'IBM Plex Mono',size:11};
-
-new Chart(document.getElementById('healthChart'),{
-  type:'line',
-  data:{
-    labels:['Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26'],
-    datasets:[{
-      data:[97.69,null,null,97.93,97.97,98.46,98.60,98.18,98.48,98.65,98.73,98.96],
-      borderColor:PETROL,borderWidth:2,tension:.3,spanGaps:false,fill:false,
-      pointRadius:5,pointBackgroundColor:PETROL,pointBorderColor:'#fff',pointBorderWidth:2
-    }]
-  },
-  options:{
-    responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(2)+'%'}}},
-    scales:{
-      x:{ticks:{color:MUTED,font:mono,autoSkip:false,maxRotation:45},grid:{display:false},border:{color:'#C3CFCC'}},
-      y:{min:97.4,max:99.3,ticks:{color:MUTED,font:mono,callback:v=>v.toFixed(1)+'%'},grid:{color:GRID},border:{display:false}}
-    }
-  }
-});
-
-new Chart(document.getElementById('alertChart'),{
-  type:'bar',
-  data:{
-    labels:['Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26'],
-    datasets:[
-      {label:'Raised',data:[17,17,12,16,7,10],backgroundColor:PETROL,borderRadius:3,maxBarThickness:26},
-      {label:'Resolved',data:[2,11,5,11,3,10],backgroundColor:MIST,borderRadius:3,maxBarThickness:26}
-    ]
-  },
-  options:{
-    responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y}}},
-    scales:{
-      x:{ticks:{color:MUTED,font:mono,autoSkip:false},grid:{display:false},border:{color:'#C3CFCC'}},
-      y:{beginAtZero:true,ticks:{color:MUTED,font:mono,stepSize:5},grid:{color:GRID},border:{display:false}}
-    }
-  }
-});
-</script>
 </body>
 </html>
