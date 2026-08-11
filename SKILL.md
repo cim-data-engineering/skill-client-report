@@ -139,6 +139,7 @@ Date: last complete month vs last 3 months
 **Links:**
 
 * Hyperlink equipment type name to PEAK with last 3 month custom date range selected   
+* Add visual signifier to equipment type name that indicates links to PEAK, e.g. > or chevron
 * https://ace.cimenviro.com/dashboard/equipment-health?site\_ids={{site\_id}}\&start\_date=2026-05-01T00:00:00.000\&end\_date=2026-07-31T00:00:00.000\&equipment\_type\_ids={{equipment\_type\_id}} 
 
 ## Monthly equipment health {#monthly-equipment-health}
