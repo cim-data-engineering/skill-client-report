@@ -108,6 +108,7 @@ Date: last complete month vs last 3 months
 * Rating chip beside the score, per equipment score benchmark  
 * Chg signed with a direction glyph. Green up, red down, muted when flat  
 * Equipment and Rules as plain numerals. No bars.  
+* Equipment health rules count can differ to overall site rules count as rules can trigger alerts but not score
 * Sort by biggest positive Chg signed then by biggest negative Chg signed  
 * Close with a site row, separated from the sort  
 * Display all equipment types, not a sample  
