@@ -37,10 +37,10 @@ typography:
     letterSpacing: -0.014em
   h2:
     fontFamily: Archivo
-    fontSize: 1.5rem
+    fontSize: 2rem
     fontWeight: 600
     lineHeight: 1.2
-    letterSpacing: -0.01em
+    letterSpacing: -0.014em
   card-title:
     fontFamily: Archivo
     fontSize: 1.0625rem
@@ -216,6 +216,7 @@ Radii climb with size: 4px chart-bar tops (top corners only), 6px delta chips, 1
 ## Components
 
 - **masthead:** `secondary` field with an `eyebrow` in `on-secondary-muted`, the report title in `h1`, then a metadata row (period, comparison, site, issue date) as `masthead-label` over values, split from the title by a hairline at 18% `on-secondary`.
+- **section header:** three stacked lines — an `eyebrow` in `primary` naming the section, a statement in `h2` saying what the section shows ("What we monitor at {site}"), and an optional `body-sm` byline in `text-muted` carrying the as-at date or period — with 24px clear before the content. The statement is the headline, never the section name.
 - **metric row:** `metric-value` with a plain caption beside it, a one-line `body-sm` explanation in `text-muted` beneath, and a rating or delta chip.
 - **delta chip:** `delta-positive` / `delta-negative` chosen by whether the change is *good*, not by its sign, always with a direction glyph and words.
 - **rating chip:** benchmark-band label in the matching `rating-*` container — always words, never colour alone. Excellent and Good are both `rating-positive`; Average is `rating-warning`; Poor is `rating-negative`; `rating-neutral` is for non-benchmark labels (e.g. Continuous, Modelled).
