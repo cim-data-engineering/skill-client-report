@@ -30,13 +30,17 @@
   --text-heading:#002556;
   --text-body:#3D4E68;
   --text-muted:#6B7A94;
+  --success:#35C881;
   --success-container:#E8F8F0;
   --on-success-container:#22A96A;
+  --warning:#F5A623;
   --warning-container:#FEF4E3;
   --on-warning-container:#A8700C;
+  --error:#E5484D;
   --error-container:#FDECEC;
   --on-error-container:#C62B25;
   --chart-benchmark:#CBE0FB;
+  --shadow:rgba(0,37,86,.08);
   --sans:'IBM Plex Sans',system-ui,sans-serif;
   --display:'Archivo',system-ui,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,monospace;
@@ -44,7 +48,7 @@
 *{box-sizing:border-box}
 html{font-size:14px}
 body{margin:0;background:var(--surface-dim);color:var(--text-body);font-family:var(--sans);font-size:1rem;line-height:1.55;-webkit-font-smoothing:antialiased}
-.sheet{max-width:210mm;margin:0 auto;background:var(--surface);box-shadow:0 12px 32px rgba(0,37,86,.08)}
+.sheet{max-width:210mm;margin:0 auto;background:var(--surface);box-shadow:0 12px 32px var(--shadow)}
 a{color:var(--primary);text-decoration:none}
 
 /* Masthead — the page's only dark field */
@@ -130,6 +134,14 @@ tr.total td{border-bottom:0;border-top:2px solid var(--secondary);font-weight:60
 .legend span{display:inline-flex;align-items:center;gap:7px}
 .sw{width:11px;height:11px;border-radius:3px;flex:none}
 .chart svg{display:block;width:100%;height:auto}
+/* Chart series — tokens only; SVG presentation attributes can't read var(), so series colour lives in these classes */
+.series-line{fill:none;stroke:var(--primary);stroke-width:2}
+.pt{fill:var(--primary);stroke:var(--surface);stroke-width:2}
+.bar-primary{fill:var(--primary)}
+.bar-benchmark{fill:var(--chart-benchmark)}
+.sw-primary{background:var(--primary)}
+.sw-benchmark{background:var(--chart-benchmark)}
+.sketch{stroke:var(--on-secondary-muted)}
 .axis{font-family:var(--mono);font-size:10px;fill:var(--text-muted)}
 .val{font-family:var(--sans);font-size:11px;font-weight:600;fill:var(--text-heading)}
 .gridline{stroke:var(--outline);stroke-width:1}
@@ -156,7 +168,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 
 @page{size:A4;margin:0}
 @media print{
-  body{background:#fff}
+  body{background:var(--surface)}
   .sheet{max-width:none;width:210mm;box-shadow:none}
   .win,table,.chartblock,.statgrid,.irow{page-break-inside:avoid}
   thead{display:table-header-group}
@@ -169,6 +181,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 <div class="sheet">
 
 <header class="mast">
+  <!-- Masthead logo: the reversed (white) variant, inlined so the file is self-contained.
+       Default: contents of assets/logo-white.svg. Rebranded: inline the file at BRAND.md logos.reversed instead.
+       Keep the rendered height at 26px (.logo); never recolour or rebuild a logo to fit. -->
   <svg class="logo" viewBox="0 0 100 29" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CIM">
     <path d="M57.8376 22.7175C58.0326 22.8344 58.091 23.0683 57.9741 23.2633C56.0248 26.499 52.0678 28.9746 46.8438 28.9746C40.4112 28.9746 35.7524 25.6998 34.5049 19.93C32.77 11.9185 39.0467 4.21888 47.2336 4.31635C52.1653 4.37482 56.0248 6.86989 57.8961 9.98872C58.0131 10.1837 57.9351 10.4176 57.7597 10.5345L56.1613 11.4702C54.5824 12.4058 52.6331 12.2109 51.1906 11.0998C50.0406 10.2226 48.6566 9.81329 46.9997 9.81329C42.8672 9.81329 40.1188 12.2304 40.1188 16.6552C40.1188 21.0801 42.8672 23.4972 46.9997 23.4972C48.949 23.4972 50.5669 22.9514 51.8534 21.7038C52.828 20.7682 54.329 20.6512 55.4985 21.3335L57.8376 22.7175Z" fill="white"/>
     <path d="M66.4731 5.23242C63.8806 5.23242 61.7754 7.33764 61.7754 9.93017V27.805C61.7754 28.0194 61.9508 28.1948 62.1652 28.1948H67.2333C67.4478 28.1948 67.6232 28.0194 67.6232 27.805V5.64177C67.6232 5.40786 67.4478 5.23242 67.2139 5.23242H66.4731V5.23242Z" fill="white"/>
@@ -184,7 +199,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     </div>
     <!-- Site photo slot: square crop. Replace placeholder with <img src="{photo_url}" alt="Skyline Tower"> -->
     <div class="sitephoto" aria-hidden="true">
-      <svg width="88" height="88" viewBox="0 0 128 128" fill="none" stroke="#CBE0FB" stroke-width="1.5" opacity=".75">
+      <svg class="sketch" width="88" height="88" viewBox="0 0 128 128" fill="none" stroke-width="1.5" opacity=".75">
         <path d="M30 104V48h22v56"/><path d="M52 104V30h28v74"/><path d="M80 104V56h20v48"/>
         <path d="M38 58h6M38 68h6M38 78h6M60 40h6M60 50h6M60 60h6M60 70h6M88 66h6M88 76h6"/>
         <path d="M20 104h88"/>
@@ -293,13 +308,13 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
         <line class="gridline" x1="36" y1="58"  x2="670" y2="58"/><text class="axis" x="4" y="61">99.0</text>
         <line class="gridline" x1="36" y1="127" x2="670" y2="127"/><text class="axis" x="4" y="130">98.5</text>
         <line class="baseline" x1="36" y1="196" x2="670" y2="196"/><text class="axis" x="4" y="199">98.0</text>
-        <polyline fill="none" stroke="#006CFF" stroke-width="2" points="80,113 182,171 284,130 386,106 488,95 590,63"/>
-        <circle cx="80"  cy="113" r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
-        <circle cx="182" cy="171" r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
-        <circle cx="284" cy="130" r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
-        <circle cx="386" cy="106" r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
-        <circle cx="488" cy="95"  r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
-        <circle cx="590" cy="63"  r="4.5" fill="#006CFF" stroke="#fff" stroke-width="2"/>
+        <polyline class="series-line" points="80,113 182,171 284,130 386,106 488,95 590,63"/>
+        <circle cx="80"  cy="113" r="4.5" class="pt"/>
+        <circle cx="182" cy="171" r="4.5" class="pt"/>
+        <circle cx="284" cy="130" r="4.5" class="pt"/>
+        <circle cx="386" cy="106" r="4.5" class="pt"/>
+        <circle cx="488" cy="95"  r="4.5" class="pt"/>
+        <circle cx="590" cy="63"  r="4.5" class="pt"/>
         <text class="val" x="80"  y="99"  text-anchor="middle">98.6%</text>
         <text class="val" x="182" y="190" text-anchor="middle">98.2%</text>
         <text class="val" x="284" y="116" text-anchor="middle">98.5%</text>
@@ -321,23 +336,23 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   <div class="chartblock">
     <h3 class="charttitle">Automated health checks and labour cost avoided</h3>
     <div class="legend">
-      <span><span class="sw" style="background:#006CFF"></span>Automated checks (left scale)</span>
-      <span><span class="sw" style="background:#CBE0FB"></span>Labour cost avoided (right scale)</span>
+      <span><span class="sw sw-primary"></span>Automated checks (left scale)</span>
+      <span><span class="sw sw-benchmark"></span>Labour cost avoided (right scale)</span>
     </div>
     <div class="chart">
       <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart, February to July 2026. Automated checks: 1.25, 1.39, 1.35, 1.37, 1.34, 1.44 million. Labour cost avoided: 6.1, 6.3, 6.2, 6.3, 6.2, 6.4 thousand dollars.">
-        <path fill="#006CFF" d="M53,196 V67.2 Q53,63.2 57,63.2 H81 Q85,63.2 85,67.2 V196 Z"/>
-        <path fill="#CBE0FB" d="M93,196 V69.5 Q93,65.5 97,65.5 H121 Q125,65.5 125,69.5 V196 Z"/>
-        <path fill="#006CFF" d="M159,196 V52.3 Q159,48.3 163,48.3 H187 Q191,48.3 191,52.3 V196 Z"/>
-        <path fill="#CBE0FB" d="M199,196 V66.3 Q199,62.3 203,62.3 H227 Q231,62.3 231,66.3 V196 Z"/>
-        <path fill="#006CFF" d="M264,196 V56.6 Q264,52.6 268,52.6 H292 Q296,52.6 296,56.6 V196 Z"/>
-        <path fill="#CBE0FB" d="M304,196 V67.6 Q304,63.6 308,63.6 H332 Q336,63.6 336,67.6 V196 Z"/>
-        <path fill="#006CFF" d="M370,196 V54.4 Q370,50.4 374,50.4 H398 Q402,50.4 402,54.4 V196 Z"/>
-        <path fill="#CBE0FB" d="M410,196 V66.7 Q410,62.7 414,62.7 H438 Q442,62.7 442,66.7 V196 Z"/>
-        <path fill="#006CFF" d="M476,196 V57.6 Q476,53.6 480,53.6 H504 Q508,53.6 508,57.6 V196 Z"/>
-        <path fill="#CBE0FB" d="M516,196 V67.8 Q516,63.8 520,63.8 H544 Q548,63.8 548,67.8 V196 Z"/>
-        <path fill="#006CFF" d="M581,196 V47.0 Q581,43.0 585,43.0 H609 Q613,43.0 613,47.0 V196 Z"/>
-        <path fill="#CBE0FB" d="M621,196 V64.4 Q621,60.4 625,60.4 H649 Q653,60.4 653,64.4 V196 Z"/>
+        <path class="bar-primary"d="M53,196 V67.2 Q53,63.2 57,63.2 H81 Q85,63.2 85,67.2 V196 Z"/>
+        <path class="bar-benchmark"d="M93,196 V69.5 Q93,65.5 97,65.5 H121 Q125,65.5 125,69.5 V196 Z"/>
+        <path class="bar-primary"d="M159,196 V52.3 Q159,48.3 163,48.3 H187 Q191,48.3 191,52.3 V196 Z"/>
+        <path class="bar-benchmark"d="M199,196 V66.3 Q199,62.3 203,62.3 H227 Q231,62.3 231,66.3 V196 Z"/>
+        <path class="bar-primary"d="M264,196 V56.6 Q264,52.6 268,52.6 H292 Q296,52.6 296,56.6 V196 Z"/>
+        <path class="bar-benchmark"d="M304,196 V67.6 Q304,63.6 308,63.6 H332 Q336,63.6 336,67.6 V196 Z"/>
+        <path class="bar-primary"d="M370,196 V54.4 Q370,50.4 374,50.4 H398 Q402,50.4 402,54.4 V196 Z"/>
+        <path class="bar-benchmark"d="M410,196 V66.7 Q410,62.7 414,62.7 H438 Q442,62.7 442,66.7 V196 Z"/>
+        <path class="bar-primary"d="M476,196 V57.6 Q476,53.6 480,53.6 H504 Q508,53.6 508,57.6 V196 Z"/>
+        <path class="bar-benchmark"d="M516,196 V67.8 Q516,63.8 520,63.8 H544 Q548,63.8 548,67.8 V196 Z"/>
+        <path class="bar-primary"d="M581,196 V47.0 Q581,43.0 585,43.0 H609 Q613,43.0 613,47.0 V196 Z"/>
+        <path class="bar-benchmark"d="M621,196 V64.4 Q621,60.4 625,60.4 H649 Q653,60.4 653,64.4 V196 Z"/>
         <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
         <text class="val" x="69"  y="55" text-anchor="middle">1.25M</text><text class="val" x="109" y="57" text-anchor="middle">$6.1k</text>
         <text class="val" x="175" y="40" text-anchor="middle">1.39M</text><text class="val" x="215" y="54" text-anchor="middle">$6.3k</text>
@@ -361,23 +376,23 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   <h2>Alerts raised vs resolved</h2>
   <p class="h2note">Six months to 31 July 2026. Raised counts alerts triaged into actions; resolved counts the same way. Actions marked Not Doing are excluded.</p>
   <div class="legend">
-    <span><span class="sw" style="background:#006CFF"></span>Raised</span>
-    <span><span class="sw" style="background:#CBE0FB"></span>Resolved</span>
+    <span><span class="sw sw-primary"></span>Raised</span>
+    <span><span class="sw sw-benchmark"></span>Resolved</span>
   </div>
   <div class="chart">
     <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart of alerts raised and resolved each month, February to July 2026. Raised 17, 17, 12, 16, 7, 10. Resolved 2, 11, 5, 11, 3, 10.">
-      <path fill="#006CFF" d="M53,196 V39.4 Q53,35.4 57,35.4 H81 Q85,35.4 85,39.4 V196 Z"/>
-      <path fill="#CBE0FB" d="M93,196 V181.1 Q93,177.1 97,177.1 H121 Q125,177.1 125,181.1 V196 Z"/>
-      <path fill="#006CFF" d="M159,196 V39.4 Q159,35.4 163,35.4 H187 Q191,35.4 191,39.4 V196 Z"/>
-      <path fill="#CBE0FB" d="M199,196 V96.1 Q199,92.1 203,92.1 H227 Q231,92.1 231,96.1 V196 Z"/>
-      <path fill="#006CFF" d="M264,196 V86.7 Q264,82.7 268,82.7 H292 Q296,82.7 296,86.7 V196 Z"/>
-      <path fill="#CBE0FB" d="M304,196 V152.8 Q304,148.8 308,148.8 H332 Q336,148.8 336,152.8 V196 Z"/>
-      <path fill="#006CFF" d="M370,196 V48.9 Q370,44.9 374,44.9 H398 Q402,44.9 402,48.9 V196 Z"/>
-      <path fill="#CBE0FB" d="M410,196 V96.1 Q410,92.1 414,92.1 H438 Q442,92.1 442,96.1 V196 Z"/>
-      <path fill="#006CFF" d="M476,196 V133.9 Q476,129.9 480,129.9 H504 Q508,129.9 508,133.9 V196 Z"/>
-      <path fill="#CBE0FB" d="M516,196 V171.7 Q516,167.7 520,167.7 H544 Q548,167.7 548,171.7 V196 Z"/>
-      <path fill="#006CFF" d="M581,196 V105.6 Q581,101.6 585,101.6 H609 Q613,101.6 613,105.6 V196 Z"/>
-      <path fill="#CBE0FB" d="M621,196 V105.6 Q621,101.6 625,101.6 H649 Q653,101.6 653,105.6 V196 Z"/>
+      <path class="bar-primary"d="M53,196 V39.4 Q53,35.4 57,35.4 H81 Q85,35.4 85,39.4 V196 Z"/>
+      <path class="bar-benchmark"d="M93,196 V181.1 Q93,177.1 97,177.1 H121 Q125,177.1 125,181.1 V196 Z"/>
+      <path class="bar-primary"d="M159,196 V39.4 Q159,35.4 163,35.4 H187 Q191,35.4 191,39.4 V196 Z"/>
+      <path class="bar-benchmark"d="M199,196 V96.1 Q199,92.1 203,92.1 H227 Q231,92.1 231,96.1 V196 Z"/>
+      <path class="bar-primary"d="M264,196 V86.7 Q264,82.7 268,82.7 H292 Q296,82.7 296,86.7 V196 Z"/>
+      <path class="bar-benchmark"d="M304,196 V152.8 Q304,148.8 308,148.8 H332 Q336,148.8 336,152.8 V196 Z"/>
+      <path class="bar-primary"d="M370,196 V48.9 Q370,44.9 374,44.9 H398 Q402,44.9 402,48.9 V196 Z"/>
+      <path class="bar-benchmark"d="M410,196 V96.1 Q410,92.1 414,92.1 H438 Q442,92.1 442,96.1 V196 Z"/>
+      <path class="bar-primary"d="M476,196 V133.9 Q476,129.9 480,129.9 H504 Q508,129.9 508,133.9 V196 Z"/>
+      <path class="bar-benchmark"d="M516,196 V171.7 Q516,167.7 520,167.7 H544 Q548,167.7 548,171.7 V196 Z"/>
+      <path class="bar-primary"d="M581,196 V105.6 Q581,101.6 585,101.6 H609 Q613,101.6 613,105.6 V196 Z"/>
+      <path class="bar-benchmark"d="M621,196 V105.6 Q621,101.6 625,101.6 H649 Q653,101.6 653,105.6 V196 Z"/>
       <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
       <text class="val" x="69"  y="27"  text-anchor="middle">17</text><text class="val" x="109" y="169" text-anchor="middle">2</text>
       <text class="val" x="175" y="27"  text-anchor="middle">17</text><text class="val" x="215" y="84"  text-anchor="middle">11</text>

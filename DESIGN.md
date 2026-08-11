@@ -27,6 +27,7 @@ colors:
   error-container: "#FDECEC"
   on-error-container: "#C62B25"
   chart-benchmark: "#CBE0FB"
+  shadow: "rgba(0, 37, 86, 0.08)"
 typography:
   h1:
     fontFamily: Archivo
@@ -97,7 +98,7 @@ components:
     typography: "{typography.body}"
   sheet:
     backgroundColor: "{colors.surface}"
-    maxWidth: 210mm
+    width: 210mm
   masthead:
     backgroundColor: "{colors.secondary}"
     textColor: "{colors.on-secondary}"
@@ -172,6 +173,9 @@ components:
   chart-bar-benchmark:
     backgroundColor: "{colors.chart-benchmark}"
     rounded: "{rounded.xs}"
+  chart-baseline:
+    backgroundColor: "{colors.outline-strong}"
+    height: 1px
   footer:
     textColor: "{colors.text-muted}"
     typography: "{typography.mono}"
@@ -181,7 +185,7 @@ components:
 
 Calm, quantified engineering credibility. The report reads like precise instrumentation, not marketing: a white A4 sheet, one dark masthead, numbers given room to be read, and colour spent only where it measures something. The artefact is an HTML page printed to PDF and handed to a client — everything must hold up on paper, with no hover, tooltip or motion carrying information.
 
-This file is a theme. Every rule below is written against token roles (`primary`, `secondary`, `rating-*`), so rebranding is a token swap; the prose should never need editing.
+This file is a theme. Every rule below is written against token roles (`primary`, `secondary`, `rating-*`), so rebranding is a token swap; the prose should never need editing. Partner rebranding never edits this file at all — brand overrides live in `BRAND.md` at the repo root, and any value not overridden there falls back to the defaults here.
 
 ## Colors
 
@@ -195,15 +199,19 @@ This file is a theme. Every rule below is written against token roles (`primary`
 
 ## Typography
 
-Two families split the work. **Archivo** carries display — the report title, section headings, card titles and metric figures — at 600–700 with tight tracking in `text-heading`, so the numbers land with weight. **IBM Plex Sans** carries everything read at length: body at 400 and 1.55, labels at 500, the eyebrow at 600 uppercase. **IBM Plex Mono** is reserved for table headers, equipment/point IDs, and the footer (400 for rest, 500 for emphasis). Metrics use tabular numerals so columns align. Set the root at 14px so 1rem body prints near 10.5pt on A4. Load fonts CDN-first with a local fallback: each `@font-face` lists the Google Fonts woff2 URL first in its `src` chain and the matching file from `assets/fonts` second, so the report uses the CDN when online and still renders identically offline. Never rely on the CDN alone.
+Three family roles split the work; the families themselves are brand, named only in the `typography` tokens. The **display family** (`h1`, `h2`, `card-title`, `metric`) carries display — the report title, section headings, card titles and metric figures — at 600–700 with tight tracking in `text-heading`, so the numbers land with weight. The **text family** (`body`, `body-sm`, `label`, `eyebrow`) carries everything read at length: body at 400 and 1.55, labels at 500, the eyebrow at 600 uppercase. The **mono family** (`mono`) is reserved for table headers, equipment/point IDs, and the footer (400 for rest, 500 for emphasis). Metrics use tabular numerals so columns align. Set the root at 14px so 1rem body prints near 10.5pt on A4. Load fonts CDN-first with a local fallback when the family is on Google Fonts: each `@font-face` lists the Google Fonts woff2 URL first in its `src` chain and the matching file from `assets/fonts` second, so the report uses the CDN when online and still renders identically offline. Never rely on the CDN alone. Families not on Google Fonts load from `assets/fonts` only.
 
-## Layout & Print
+## Layout
 
 The sheet is A4 portrait (210mm, ≈794px), centred on `page` for screen preview. Sections pad 48px 56px and are separated by `divider` hairlines; the 8px spacing scale governs everything inside, with 24px card padding. For export: `@page { size: A4; margin: 0 }` with margins carried by section padding so the masthead bleeds; `print-color-adjust: exact` everywhere; `page-break-inside: avoid` on sections, tables and figures; `thead` repeats across page breaks.
 
-## Depth & Shape
+## Elevation & Depth
 
-The page is flat — hierarchy comes from rules and whitespace, not shadows. On screen the sheet may float on one soft `secondary`-tinted shadow (`rgba(0,37,86,.08)`); in print there are none. Radii climb with size: 4px chart-bar tops (top corners only), 6px delta chips, 14px cards, `full` for rating chips and tags. Borders are 1px hairlines in `outline`; 2px rules belong to `secondary` alone — opening a table and closing its total row.
+The page is flat — hierarchy comes from rules and whitespace, not shadows. On screen the sheet may float on one soft shadow in `shadow` — the `secondary` hue at 8% opacity, re-derived whenever `secondary` changes; in print there are none.
+
+## Shapes
+
+Radii climb with size: 4px chart-bar tops (top corners only), 6px delta chips, 14px cards, `full` for rating chips and tags. Borders are 1px hairlines in `outline`; 2px rules belong to `secondary` alone — opening a table and closing its total row.
 
 ## Components
 

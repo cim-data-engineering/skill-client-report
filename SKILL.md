@@ -1,9 +1,29 @@
 ---
 name: client-report
-description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health snapshot and monthly trends, alerts raised vs resolved, assignee leaderboard, and key wins — styled per the CIM design system in DESIGN.md. Use when the user runs the /client-report slash command or asks for a client report, quarterly building performance review, or site performance report from PEAK data. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health snapshot and monthly trends, alerts raised vs resolved, assignee leaderboard, and key wins — styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use when the user runs the /client-report slash command or asks for a client report, quarterly building performance review, or site performance report from PEAK data. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
+
+## Output & theming
+
+The deliverable is a single self-contained A4 print-first HTML file — all CSS inline, charts as hand-authored inline SVG, no JS — modelled on `assets/reference-report.html`. Copy its structure, classes and chart techniques; replace the sample data. Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex — SVG presentation attributes cannot read `var()`.
+
+Resolve the theme in this order:
+
+1. **`DESIGN.md`** — all tokens and rules. Every value defaults from here.
+2. **`BRAND.md`** (repo root) — if present, apply overrides from its YAML frontmatter. Honor only these keys and ignore everything else:
+   * `name`, `service-name` — replace the company name and service name defaults in [Report title](#report-title)
+   * `colors:` — `primary`, `primary-container`, `on-primary-container`, `secondary`, `on-secondary`, `on-secondary-muted`, `chart-benchmark`, `text-heading` only
+   * `fonts:` — `display`, `text`, `mono` family swaps mapped onto the DESIGN.md typography roles (display → h1/h2/card-title/metric; text → body/body-sm/label/eyebrow; mono → mono). Sizes, weights and line-heights always keep DESIGN.md values. Families on Google Fonts load CDN-first with `assets/fonts` fallback per DESIGN.md; otherwise local `assets/fonts` only.
+   * `logos:` — `reversed` (masthead) and `full-color`, paths to partner files. Inline the referenced SVG contents (data URI for PNG) so the report stays self-contained.
+3. A missing BRAND.md, or any key left commented or absent, keeps the CIM default — an untouched fork must render identically to CIM's own output.
+
+Derived rules when overrides are active:
+
+* `secondary` overridden → re-derive the `shadow` token as the new `secondary` hue at 8% opacity.
+* Any brand override active → platform strings read `PEAK · Site {id}` (drop the CIM prefix) in the masthead metadata row and footer. `Powered by PEAK` is always kept, in every brand.
+* No overrides → keep `CIM PEAK` and the CIM masthead logo inlined from `assets/logo-white.svg`.
 
 ## Sections
 
@@ -22,8 +42,8 @@ description: Generates a client-facing quarterly building performance review for
   Prepared by: \[Company name\] \- \[Company service name\]. Powered by PEAK  
 * Reporting period: \[last 3 months date range\]  
 * Issue date: \[issue date\]  
-* Company name default “CIM” unless given  
-* Company service name default “Data Driven Operations” 
+* Company name default “CIM” unless `name` is set in `BRAND.md` or given by the user  
+* Company service name default “Data Driven Operations” unless `service-name` is set in `BRAND.md` or given by the user 
 * Site photo_url: square, right of title block
 
 ## Analytics overview {#analytics-overview}
@@ -201,7 +221,7 @@ Exclude actions resolved by stopping, tuning or ignoring a rule, platform, integ
 * Two to three sentences: what was wrong, what was changed, why it matters  
 * Lead with the building outcome: comfort, reliability, energy, tenant experience  
 * Rank by what the owner cares about. Critical plant over terminal units, permanent fixes over one-off resets  
-* Link the action ticket with PEAK url for quick reference evidence  
+* Link the action ticket with PEAK url for quick reference evidence, include action title as link name not id
 * Where several tickets form one win link them all  
 * Where win appears in the equipment health snapshot say so.
 
