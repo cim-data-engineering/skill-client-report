@@ -36,6 +36,8 @@ Derived rules when overrides are active:
 7. [Assignee leaderboard](#assignee-leaderboard)  
 8. [Key wins](#key-wins)
 
+Each section header renders as three stacked lines, per the reference report: the section name as an uppercase eyebrow in `primary`, the statement line beneath it as the `h2` headline, and the date line as a muted byline.
+
 ## Report title {#report-title}
 
 * \[Site name\] Quarterly Building Performance Review  
@@ -110,7 +112,7 @@ Recovery rate is alerts resolved in the period with fault status recovered divid
 | Poor | \< 90% |
 
 ## Equipment health snapshot {#equipment-health-snapshot}
-
+Health by equipment type
 Date: last complete month vs last 3 months
 
 | Column | Reference |
@@ -143,7 +145,7 @@ Date: last complete month vs last 3 months
 * https://ace.cimenviro.com/dashboard/equipment-health?site\_ids={{site\_id}}\&start\_date=2026-05-01T00:00:00.000\&end\_date=2026-07-31T00:00:00.000\&equipment\_type\_ids={{equipment\_type\_id}} 
 
 ## Monthly equipment health {#monthly-equipment-health}
-
+Six months of trend
 Date: last 6 months
 
 Chart 1: Site equipment health score  
@@ -160,7 +162,7 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 * Add chart titles
 
 ## Alerts raised vs resolved {#alerts-raised-vs-resolved}
-
+Faulted triaged and resolved
 Date: 6 months
 
 Grouped bars by month.
@@ -175,7 +177,7 @@ Grouped bars by month.
 * Filter on rule state is running. If an action is not linked to an alert still count it.
 
 ## Assignee leaderboard {#assignee-leaderboard}
-
+Who closed the work
 Date: last 6 months
 
 | Column | Reference |
@@ -203,7 +205,7 @@ Date: last 6 months
 * https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date=2026-02-01T00:00:00.000&end_date=2026-07-31T00:00:00.000&grouping=assignee
 
 ## Key wins {#key-wins}
-
+What changed in the building this quarter
 Date: last 3 months
 
 Highlight resolved or open actions, written for the facilities manager or building owner.

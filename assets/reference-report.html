@@ -55,7 +55,8 @@ a{color:var(--primary);text-decoration:none}
 .mast{background:var(--secondary);color:var(--on-secondary);padding:48px 56px}
 .mast .logo{display:block;height:26px;width:auto;margin:0 0 36px}
 .mast-top{display:flex;justify-content:space-between;align-items:flex-start;gap:32px}
-.eyebrow{font-size:.8125rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--on-secondary-muted);margin:0 0 12px}
+.eyebrow{font-size:.8125rem;font-weight:600;line-height:1.35;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin:0 0 8px}
+.mast .eyebrow{color:var(--on-secondary-muted);margin:0 0 12px}
 h1{font-family:var(--display);font-size:2.5rem;font-weight:700;line-height:1.15;letter-spacing:-.014em;margin:0}
 .prepared{font-size:.875rem;color:var(--on-secondary-muted);margin:12px 0 0}
 .prepared strong{color:var(--on-secondary);font-weight:600}
@@ -69,8 +70,10 @@ h1{font-family:var(--display);font-size:2.5rem;font-weight:700;line-height:1.15;
 /* Sections */
 section{padding:48px 56px;border-bottom:1px solid var(--outline)}
 section:last-of-type{border-bottom:0}
-h2{font-family:var(--display);font-size:1.5rem;font-weight:600;line-height:1.2;letter-spacing:-.01em;color:var(--text-heading);margin:0 0 6px}
-.h2note{font-size:.875rem;color:var(--text-muted);margin:0 0 24px}
+/* Section header — eyebrow names the section, h2 states what it shows, h2note carries the as-at date or period */
+.sechead{margin:0 0 24px}
+h2{font-family:var(--display);font-size:2rem;font-weight:600;line-height:1.2;letter-spacing:-.014em;color:var(--text-heading);margin:0}
+.h2note{font-size:.875rem;color:var(--text-muted);margin:6px 0 0}
 .charttitle{font-family:var(--display);font-size:1.0625rem;font-weight:600;line-height:1.35;color:var(--text-heading);margin:0 0 14px}
 
 /* Analytics overview stat grid */
@@ -172,7 +175,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   .sheet{max-width:none;width:210mm;box-shadow:none}
   .win,table,.chartblock,.statgrid,.irow{page-break-inside:avoid}
   thead{display:table-header-group}
-  h2{page-break-after:avoid}
+  .sechead{page-break-after:avoid;page-break-inside:avoid}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
@@ -215,8 +218,11 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 </header>
 
 <section>
-  <h2>Analytics overview</h2>
-  <p class="h2note">What we monitor at Skyline Tower — as at 11 August 2026.</p>
+  <div class="sechead">
+    <p class="eyebrow">Analytics overview</p>
+    <h2>What we monitor at Skyline Tower</h2>
+    <p class="h2note">As at 11 August 2026</p>
+  </div>
   <div class="statgrid">
     <div class="stat"><p class="k">Building size</p><p class="n">16,200 <span>m²</span></p></div>
     <div class="stat"><p class="k">Equipment</p><p class="n">391</p></div>
@@ -226,8 +232,11 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 </section>
 
 <section>
-  <h2>Operational impact</h2>
-  <p class="h2note">What that monitoring delivered over the last 3 months.</p>
+  <div class="sechead">
+    <p class="eyebrow">Operational impact</p>
+    <h2>What that monitoring delivered</h2>
+    <p class="h2note">1 May – 31 July 2026</p>
+  </div>
 
   <div class="irow">
     <span class="chip pos">Good</span>
@@ -268,8 +277,11 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 </section>
 
 <section>
-  <h2>Equipment health snapshot</h2>
-  <p class="h2note">July 2026 by equipment type, sorted by change against the 3-month average. Health score is the share of rule executions returning no fault.</p>
+  <div class="sechead">
+    <p class="eyebrow">Equipment health snapshot</p>
+    <h2>Health by equipment type</h2>
+    <p class="h2note">July 2026, sorted by change against the 3-month average. Health score is the share of rule executions returning no fault.</p>
+  </div>
   <table>
     <thead>
       <tr>
@@ -298,8 +310,11 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 </section>
 
 <section>
-  <h2>Monthly equipment health</h2>
-  <p class="h2note">Last 6 months to 31 July 2026.</p>
+  <div class="sechead">
+    <p class="eyebrow">Monthly equipment health</p>
+    <h2>Six months of trend</h2>
+    <p class="h2note">February – July 2026</p>
+  </div>
 
   <div class="chartblock">
     <h3 class="charttitle">Site equipment health score</h3>
@@ -373,8 +388,11 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 </section>
 
 <section>
-  <h2>Alerts raised vs resolved</h2>
-  <p class="h2note">Six months to 31 July 2026. Raised counts alerts triaged into actions; resolved counts the same way. Actions marked Not Doing are excluded.</p>
+  <div class="sechead">
+    <p class="eyebrow">Alerts raised vs resolved</p>
+    <h2>Faults triaged and resolved</h2>
+    <p class="h2note">February – July 2026. Raised counts alerts triaged into actions; resolved counts the same way. Actions marked Not Doing are excluded.</p>
+  </div>
   <div class="legend">
     <span><span class="sw sw-primary"></span>Raised</span>
     <span><span class="sw sw-benchmark"></span>Resolved</span>
@@ -412,8 +430,11 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 </section>
 
 <section>
-  <h2>Assignee leaderboard</h2>
-  <p class="h2note">Actions resolved over the six months to 11 August 2026, ranked by resolved. Completion rate is resolved ÷ (resolved + currently open).</p>
+  <div class="sechead">
+    <p class="eyebrow">Assignee leaderboard</p>
+    <h2>Who closed the work</h2>
+    <p class="h2note">Actions resolved February – July 2026, ranked by resolved. Completion rate is resolved ÷ (resolved + currently open); open now as at 11 August 2026.</p>
+  </div>
   <table>
     <thead>
       <tr>
@@ -444,33 +465,38 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 </section>
 
 <section>
-  <h2>Key wins</h2>
-  <p class="h2note">Faults found by continuous monitoring and fixed on the floor this quarter, with recovery verified in PEAK.</p>
+  <div class="sechead">
+    <p class="eyebrow">Key wins</p>
+    <h2>What changed in the building this quarter</h2>
+    <p class="h2note">Faults found by continuous monitoring and fixed on the floor, with recovery verified in PEAK.</p>
+  </div>
 
   <div class="win">
     <h3>Chiller 2 returned to stable duty — condenser water valve replaced</h3>
     <p>Chiller 2 had been cycling against a hunting condenser water valve since early June, dragging chiller plant health from 96.9% to 94.7%. Our technicians replaced the failed valve actuator on 3 July, and PEAK verified the fault clear across four weeks of stable operation since. The chiller plant carries the building's cooling into the warmer months, so this is the repair that matters most on this page.</p>
     <p class="snap">Also visible in the equipment health snapshot: Chiller, up 0.25 pp and recovering.</p>
-    <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/48213">Action #48213</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48307">Action #48307</a></p>
+    <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/48213">Action title</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48307">Action #48307</a></p>
   </div>
 
   <div class="win">
     <h3>Levels 4–6 comfort restored — shared VAV control template corrected</h3>
     <p>Five VAV boxes across levels 4–6 sat in fault on the same airflow rule: a shared control template was holding minimum airflow below design, starving the zones on warm afternoons. We corrected the template, pushed it to the affected boxes on 26 June, and PEAK verified recovery on every one. Tenants on those floors get stable temperatures back, and the fans stop working against a bad setpoint.</p>
     <p class="snap">Also visible in the equipment health snapshot: Variable Air Volume at 99.03%, back above the Excellent line.</p>
-    <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/48254">Action #48254</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48255">#48255</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48256">#48256</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48257">#48257</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48258">#48258</a></p>
+    <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/48254">Action title</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48255">#48255</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48256">#48256</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48257">#48257</a> · <a href="https://ace.cimenviro.com/tickets/escalated/48258">#48258</a></p>
   </div>
 
   <div class="win">
     <h3>Free cooling recovered on AHU-03 — economiser dampers repaired</h3>
     <p>AHU-03's economiser dampers had seized shut, so the unit was mechanically cooling air that Brisbane mornings could have cooled for free. The damper linkage was freed and re-stroked on 19 June, and the unit now trims mechanical cooling whenever outside air allows. Air handling units posted the site's largest health gain this quarter as a result, up 0.97 pp.</p>
-    <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/48166">Action #48166</a></p>
+    <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/48166">Action title</a></p>
   </div>
 </section>
 
 <section class="notes">
-  <h2>Notes on method</h2>
-  <p class="h2note">How the modelled and derived figures in this report are calculated.</p>
+  <div class="sechead">
+    <p class="eyebrow">Notes on method</p>
+    <h2>How these numbers are calculated</h2>
+  </div>
   <ol>
     <li><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority — P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over the 92-day period, valued at AUD 150/hr for this site's region.</li>
     <li><strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed.</li>
