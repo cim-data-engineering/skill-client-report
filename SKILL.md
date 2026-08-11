@@ -146,7 +146,7 @@ Date: last complete month vs last 3 months
 Date: last 6 months
 
 Chart 1: Site equipment health score  
-Monthly line chart of equipment health score. Auto scale Y axis.
+Monthly line chart of equipment health score. Add nearest benchmark threshold and label it. Auto scale Y axis.
 
 Add source and link to equipment health dasobard.
 
