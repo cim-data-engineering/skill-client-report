@@ -24,10 +24,11 @@ description: Generates a client-facing quarterly building performance review for
 * Issue date: \[issue date\]  
 * Company name default “CIM” unless given  
 * Company service name default “Data Driven Operations” 
+* Site photo_url: square, right of title block
 
 ## Analytics overview {#analytics-overview}
-
-Date: as at issue date
+What we monitor at {site name}
+Date: As at {issue date}
 
 | Display metric | Reference |
 | :---- | :---- |
@@ -37,7 +38,7 @@ Date: as at issue date
 | Rules | Total rules status running |
 
 ## Operational impact {#operational-impact}
-
+What that monitoring delivered
 Date: last 3 months
 
 | Rating chip | Metric label | Value | Subtitle |
@@ -46,6 +47,13 @@ Date: last 3 months
 | Continuous | \[x\] automated equipment health checks ran 24/7 | Total executions last 3 months | Averaging \[x\] monthly checks across \[y\] scored rules |
 | Modelled | $\[x\] labor cost avoided | See below labor cost avoided model | \[x\] hours and \[y.y\] working days of inspection time |
 | See below alert recovery benchmark  | \[x\] faults resolved with \[x\]% verified recovery | Resolved alerts with current status closed last 3 months | Median time to resolve of \[x\] days. Based on alert’s linked action creation and resolution date, do not use the alert creation and resolution date. |
+
+**Links:**
+
+* Equipment score link: Add link to live equipment health dashboard with last 3 month custom date range selected. Label "See live equipment health dashboard".
+* https://ace.cimenviro.com/dashboard/equipment-health?site\_ids={{site\_id}}\&start\_date=2026-05-01T00:00:00.000\&end\_date=2026-07-31T00:00:00.000\&equipment\_type\_ids={{equipment\_type\_id}} 
+* Alerts resolved link: Add link to actions manager table with filtered list of all closed actions no date range filter. Label "See live issues being resolved".
+* https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&site_ids={{site_id}}&status_ids=6&archived=false
 
 **Equipment score benchmark:**
 
@@ -57,14 +65,14 @@ Date: last 3 months
 | Poor | \< 90% |
 
 **Labor cost avoided model:**  
-Unique rules scored (by priority) last 3 months x annual mins saved per rule x (days in window / 365\) x labor cost per minute. Convert labor cost per hour to GBP, EUR or AUD based on site country and currency.
+Unique rules scored (by priority) last 3 months x annual mins saved per rule x (days in window / 365\) x labor cost per minute. Assumed labor rates based on site region: USD 100/hr, AUD 150/hr, NZD 150/hr, GBP 75/hr, CAD 150/hr, EUR 100/hr.
 
 | Priority | Annual checks | Mins per check | Annual mins saved per rule | Labor cost per hour ($US) | Annual cost saved per rule ($US) |
 | :---- | :---- | :---- | :---- | :---- | :---- |
-| P1 | 365 | 0.50 | 182.5 | $150 | $456.25 |
-| P2 | 52 | 1.00 | 52.0 | $150 | $130.00 |
-| P3 | 12 | 1.00 | 12.0 | $150 | $30.00 |
-| P4-5 | 4 | 1.00 | 4.0 | $150 | $10.00 |
+| P1 | 365 | 0.50 | 182.5 | $100 | $456.25 |
+| P2 | 52 | 1.00 | 52.0 | $100 | $130.00 |
+| P3 | 12 | 1.00 | 12.0 | $100 | $30.00 |
+| P4-5 | 4 | 1.00 | 4.0 | $100 | $10.00 |
 
 *Footnote:*  
 Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the period, valued at $150/hr.
@@ -95,13 +103,15 @@ Date: last complete month vs last 3 months
 
 **Display:**
 
-* Score as a bar on a 0-100 scale with the value beside it  
+* Score as a bar on a 0-100 scale with the value beside it
+* Ensure bar column width fixed width with rating chip left aligned  
 * Rating chip beside the score, per equipment score benchmark  
 * Chg signed with a direction glyph. Green up, red down, muted when flat  
 * Equipment and Rules as plain numerals. No bars.  
 * Sort by biggest positive Chg signed then by biggest negative Chg signed  
 * Close with a site row, separated from the sort  
 * Display all equipment types, not a sample  
+* Truncate equipment type name with elipsis do not wrap rows
 * Exclude equipment type BACER or Bacer (System). These are platform health checks  
 * Color the rating, not the bar.
 
@@ -117,8 +127,10 @@ Date: last 6 months
 Chart 1: Site equipment health score  
 Monthly line chart of equipment health score. Auto scale Y axis.
 
-Chart 2: Site automated health checks  
-Monthly bar chart of total automated rule checks.
+Add source and link to equipment health dasobard.
+
+Chart 2: Site automated health checks and labor cost avoided  
+Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avoided (RHS).
 
 **Display**
 
@@ -162,6 +174,11 @@ Date: last 6 months
 * Resolved and Open now as plain numerals. No bars  
 * Close with a total row, separated from the rank  
 * Include assignees with zero resolved but open actions. Exclude actions marked as Not Doing
+* Truncate assignee and company name with elipsis do not wrap rows
+
+**Links:**
+* Add link to PEAK assignee leaderboard with last 6 month custom date range selected
+* https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date=2026-02-01T00:00:00.000&end_date=2026-07-31T00:00:00.000&grouping=assignee
 
 ## Key wins {#key-wins}
 

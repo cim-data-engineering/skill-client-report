@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skyline Tower — Quarterly Performance Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E1A19;
+  --petrol:#0D4F49;
+  --petrol-deep:#08332F;
+  --mint:#E4F0EC;
+  --paper:#F4F6F5;
+  --rule:#D3DDDA;
+  --slate:#64756F;
+  --amber:#A8600C;
+  --amber-bg:#FBF0DF;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --display:"Archivo",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.sheet{max-width:1040px;margin:0 auto;background:#fff}
+
+/* masthead */
+.mast{background:var(--petrol-deep);color:#fff;padding:44px 56px 38px}
+.mast .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8FC0B8;margin:0 0 18px}
+.mast h1{font-family:var(--display);font-weight:700;font-size:46px;line-height:1.02;letter-spacing:-.022em;margin:0}
+.mast .sub{font-family:var(--display);font-weight:500;font-size:23px;letter-spacing:-.01em;color:#9DCCC4;margin:6px 0 0}
+.mastmeta{display:flex;flex-wrap:wrap;gap:36px;margin-top:30px;padding-top:22px;border-top:1px solid rgba(255,255,255,.18)}
+.mastmeta div{min-width:120px}
+.mastmeta dt{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7FB3AA;margin:0 0 5px}
+.mastmeta dd{margin:0;font-size:14.5px;font-weight:500}
+
+/* generic section */
+section{padding:44px 56px;border-bottom:1px solid var(--rule)}
+section:last-of-type{border-bottom:0}
+h2{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:.15em;text-transform:uppercase;color:var(--petrol);margin:0 0 4px}
+.h2note{font-size:13.5px;color:var(--slate);margin:0 0 26px}
+
+/* provenance tag — the report's signature device */
+.tag{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:2.5px 7px;border-radius:2px;vertical-align:2px;white-space:nowrap}
+.tag.v{background:var(--mint);color:var(--petrol)}
+.tag.m{background:#E9EDF2;color:#3B5068}
+.tag.u{background:var(--amber-bg);color:var(--amber)}
+
+/* spec strip */
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-top:2px solid var(--ink)}
+.spec div{padding:18px 20px 20px;border-right:1px solid var(--rule)}
+.spec div:last-child{border-right:0}
+.spec .k{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);margin:0 0 9px}
+.spec .n{font-family:var(--display);font-weight:700;font-size:29px;letter-spacing:-.02em;line-height:1;margin:0 0 9px}
+.spec .n span{font-family:var(--sans);font-weight:500;font-size:14px;letter-spacing:0;color:var(--slate)}
+
+/* impact rows */
+.impact{border-top:2px solid var(--ink)}
+.row{display:grid;grid-template-columns:98px 1fr auto;gap:26px;align-items:baseline;padding:20px 0;border-bottom:1px solid var(--rule)}
+.row:last-child{border-bottom:0}
+.chip{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:2px;text-align:center;background:var(--mint);color:var(--petrol)}
+.chip.flat{background:#EEF1F0;color:var(--slate)}
+.figure{font-family:var(--display);font-weight:700;font-size:27px;letter-spacing:-.02em;line-height:1.2}
+.figure em{font-style:normal;font-family:var(--sans);font-weight:400;font-size:15.5px;letter-spacing:0;color:var(--ink)}
+.delta{font-family:var(--mono);font-size:12.5px;color:var(--petrol);display:block;margin-top:3px}
+.delta.warn{color:var(--amber)}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:14px}
+caption{text-align:left;font-size:13.5px;color:var(--slate);padding-bottom:14px}
+th{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);text-align:left;padding:0 12px 11px 0;border-bottom:2px solid var(--ink);vertical-align:bottom}
+td{padding:10px 12px 10px 0;border-bottom:1px solid var(--rule)}
+th.n,td.n{text-align:right;padding-right:0}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums}
+td.name{font-weight:500}
+tr.total td{border-bottom:0;border-top:2px solid var(--ink);font-weight:600;padding-top:12px}
+tr.total td.n{font-weight:600}
+.pos{color:var(--petrol)}
+.zero{color:#9AA8A4}
+.flagcell{color:var(--amber);font-weight:500}
+
+/* charts */
+.chartwrap{position:relative;height:300px;margin:6px 0 0}
+.legend{display:flex;flex-wrap:wrap;gap:20px;margin:0 0 16px;font-size:12.5px;color:var(--slate)}
+.legend span{display:flex;align-items:center;gap:7px}
+.sw{width:11px;height:11px;border-radius:2px;flex:none}
+.chartnote{font-size:12.5px;color:var(--slate);margin:16px 0 0;padding-left:13px;border-left:2px solid var(--rule)}
+
+/* notes */
+.notes{background:var(--paper)}
+.notes ol{margin:0;padding-left:20px}
+.notes li{margin-bottom:15px;font-size:13.5px;line-height:1.62}
+.notes li:last-child{margin-bottom:0}
+.notes strong{font-weight:600}
+.key{display:flex;flex-wrap:wrap;gap:22px;margin:0 0 26px;padding-bottom:22px;border-bottom:1px solid var(--rule);font-size:12.5px;color:var(--slate)}
+.key span{display:flex;align-items:center;gap:8px}
+
+footer{padding:26px 56px 40px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--slate);display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+
+@media (max-width:720px){
+  .mast{padding:32px 24px 28px}
+  .mast h1{font-size:32px}
+  .mast .sub{font-size:18px}
+  section,footer{padding-left:24px;padding-right:24px}
+  .row{grid-template-columns:1fr;gap:8px}
+  .chip{justify-self:start;padding:4px 10px}
+  table{font-size:13px}
+}
+@media print{
+  body{background:#fff}
+  section{page-break-inside:avoid;border-bottom:1px solid var(--rule)}
+  .mast{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+<header class="mast">
+  <p class="eyebrow">Quarterly performance report</p>
+  <h1>Skyline Tower</h1>
+  <p class="sub">Brisbane, Queensland</p>
+  <dl class="mastmeta">
+    <div><dt>Reporting period</dt><dd>1 May – 31 Jul 2026</dd></div>
+    <div><dt>Comparison</dt><dd>Rolling 12 months</dd></div>
+    <div><dt>Platform</dt><dd>CIM PEAK · Site 285</dd></div>
+    <div><dt>Issued</dt><dd>11 Aug 2026</dd></div>
+  </dl>
+</header>
+
+<section>
+  <h2>Analytics overview</h2>
+  <p class="h2note">Monitored asset base as at 11 August 2026.</p>
+  <div class="spec">
+    <div><p class="k">Building size</p><p class="n">16,200 <span>m²</span></p><span class="tag u">Unverified</span></div>
+    <div><p class="k">Equipment</p><p class="n">391</p><span class="tag v">Verified</span></div>
+    <div><p class="k">Sensors</p><p class="n">2,757</p><span class="tag v">Verified</span></div>
+    <div><p class="k">Rules running</p><p class="n">1,712</p><span class="tag v">Verified</span></div>
+    <div><p class="k">Thermal zones</p><p class="n">301</p><span class="tag u">Unverified</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Operational impact</h2>
+  <p class="h2note">Last 3 months against the rolling 12-month baseline.</p>
+  <div class="impact">
+
+    <div class="row">
+      <span class="chip flat">Unverified</span>
+      <div>
+        <p class="figure">93% <em>thermal comfort achieved</em></p>
+        <span class="delta warn">Up 3% vs last 12 months — no supporting source located in PEAK</span>
+      </div>
+      <span class="tag u">Unverified</span>
+    </div>
+
+    <div class="row">
+      <span class="chip">Excellent</span>
+      <div>
+        <p class="figure">98.79% <em>equipment health maintained</em></p>
+        <span class="delta">Up 0.46 pp vs 98.33% over the last 12 months</span>
+      </div>
+      <span class="tag v">Verified</span>
+    </div>
+
+    <div class="row">
+      <span class="chip">Continuous</span>
+      <div>
+        <p class="figure">4,155,822 <em>automated equipment health checks ran 24/7</em></p>
+        <span class="delta">Averaging 1.39 million checks per month across 1,637 scored rules</span>
+      </div>
+      <span class="tag v">Verified</span>
+    </div>
+
+    <div class="row">
+      <span class="chip flat">Modelled</span>
+      <div>
+        <p class="figure">$18,870 <em>labour cost avoided</em></p>
+        <span class="delta">125.8 hours — 16.6 working days of inspection time, gross of triage effort</span>
+      </div>
+      <span class="tag m">Modelled</span>
+    </div>
+
+    <div class="row">
+      <span class="chip">Good</span>
+      <div>
+        <p class="figure">13 <em>faults resolved with 100% verified recovery</em></p>
+        <span class="delta">Every closed alert on a running rule had its fault clear before closure</span>
+      </div>
+      <span class="tag v">Verified</span>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>Equipment health snapshot</h2>
+  <p class="h2note">By equipment type, sorted by change. Health score is the share of rule executions returning no fault.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Equipment type</th>
+        <th class="n">Equipment</th>
+        <th class="n">Rules</th>
+        <th class="n">Last month<br>Jul 2026</th>
+        <th class="n">Last 3 months<br>May–Jul 2026</th>
+        <th class="n">Chg</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="name">Cooling Tower</td><td class="n">4</td><td class="n">14</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
+      <tr><td class="name">Primary CHW Pumps</td><td class="n">3</td><td class="n">16</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
+      <tr><td class="name">Condenser Water Pumps</td><td class="n">2</td><td class="n">12</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
+      <tr><td class="name">Packaged AC Units</td><td class="n">2</td><td class="n">2</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
+      <tr><td class="name">Variable Speed Drive</td><td class="n">11</td><td class="n">11</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
+      <tr><td class="name">Car Park Ventilation</td><td class="n">6</td><td class="n">23</td><td class="n">100.00%</td><td class="n">100.00%</td><td class="n zero">0.00</td></tr>
+      <tr><td class="name">Exhaust Air Fans</td><td class="n">4</td><td class="n">4</td><td class="n">100.00%</td><td class="n">99.97%</td><td class="n pos">+0.03</td></tr>
+      <tr><td class="name">Variable Air Volume</td><td class="n">309</td><td class="n">1,346</td><td class="n">99.03%</td><td class="n">98.95%</td><td class="n pos">+0.08</td></tr>
+      <tr><td class="name">Chiller</td><td class="n">5</td><td class="n">42</td><td class="n flagcell">95.94%</td><td class="n flagcell">95.69%</td><td class="n pos">+0.25</td></tr>
+      <tr><td class="name">Air Handling Units</td><td class="n">7</td><td class="n">167</td><td class="n">98.65%</td><td class="n">97.69%</td><td class="n pos">+0.97</td></tr>
+      <tr class="total"><td>Site</td><td class="n">353</td><td class="n">1,637</td><td class="n">98.96%</td><td class="n">98.79%</td><td class="n pos">+0.17</td></tr>
+    </tbody>
+  </table>
+  <p class="chartnote">Chiller sits roughly 3 pp below the site average and is the only type materially adrift. It declined within the quarter — 96.91% in May to 94.67% in June — before recovering to 95.94% in July, so it remains below where it started.</p>
+</section>
+
+<section>
+  <h2>Monthly equipment health</h2>
+  <p class="h2note">Rolling 12 months to 31 July 2026.</p>
+  <div class="legend"><span><span class="sw" style="background:#0D4F49"></span>Site health score</span></div>
+  <div class="chartwrap"><canvas id="healthChart" role="img" aria-label="Line chart of monthly site equipment health score from August 2025 to July 2026, rising from 97.69 percent to 98.96 percent.">Monthly health score: Aug 97.69, Sep 100.00, Oct 98.31, Nov 97.93, Dec 97.97, Jan 98.46, Feb 98.60, Mar 98.18, Apr 98.48, May 98.65, Jun 98.73, Jul 98.96 percent.</canvas></div>
+  <p class="chartnote">September and October 2025 are shown as gaps. Both months carry incomplete telemetry — September recorded 42,832 executions across 16 pieces of equipment against a normal month of roughly 1 million — so their scores are not comparable and September's 100% is a small-sample artefact rather than a result.</p>
+</section>
+
+<section>
+  <h2>Alerts raised vs resolved</h2>
+  <p class="h2note">Six months to 31 July 2026.</p>
+  <div class="legend">
+    <span><span class="sw" style="background:#0D4F49"></span>Raised</span>
+    <span><span class="sw" style="background:#8FC0B8"></span>Resolved</span>
+  </div>
+  <div class="chartwrap"><canvas id="alertChart" role="img" aria-label="Grouped bar chart comparing alerts raised and resolved each month from February to July 2026. Raised 17, 17, 12, 16, 7, 10. Resolved 2, 11, 5, 11, 3, 10.">Alerts raised: Feb 17, Mar 17, Apr 12, May 16, Jun 7, Jul 10. Alerts resolved: Feb 2, Mar 11, Apr 5, May 11, Jun 3, Jul 10.</canvas></div>
+  <p class="chartnote">79 alerts raised against 42 resolved over the six months — a net addition of 37 to the open pool. Alert volume is trending down, which is the clearer signal here: 7 and 10 in June and July against 17 in each of February and March. Resolution counts only alerts formally closed; alerts whose fault self-clears are marked Recovered and carry no resolution date, so they never appear in this series.</p>
+</section>
+
+<section>
+  <h2>Action backlog</h2>
+  <p class="h2note">Six months to 11 August 2026. Completion rate is resolved ÷ (resolved + currently open).</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Assignee</th>
+        <th>Company</th>
+        <th class="n">Resolved</th>
+        <th class="n">Completion rate</th>
+        <th class="n">Open actions now</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="name">Daniel Reyes</td><td>CIM</td><td class="n">14</td><td class="n">100.0%</td><td class="n">0</td></tr>
+      <tr><td class="name">Tom Whitfield</td><td>Meridian Mechanical</td><td class="n">12</td><td class="n">100.0%</td><td class="n">0</td></tr>
+      <tr><td class="name">Oliver Grant</td><td>Harbourview Property</td><td class="n">11</td><td class="n">100.0%</td><td class="n">0</td></tr>
+      <tr><td class="name">Marcus Bell</td><td>Meridian Mechanical</td><td class="n">6</td><td class="n flagcell">35.3%</td><td class="n flagcell">11</td></tr>
+      <tr><td class="name">Sarah Chen</td><td>CIM</td><td class="n">5</td><td class="n">100.0%</td><td class="n">0</td></tr>
+      <tr><td class="name">David Okafor</td><td>Meridian Mechanical</td><td class="n">2</td><td class="n">100.0%</td><td class="n">0</td></tr>
+      <tr><td class="name">Emma Lawson</td><td>Meridian Mechanical</td><td class="n">1</td><td class="n">100.0%</td><td class="n">0</td></tr>
+      <tr><td class="name">Ryan Foster</td><td>Meridian Mechanical</td><td class="n">1</td><td class="n">50.0%</td><td class="n">1</td></tr>
+      <tr><td class="name">Jack Morrison</td><td>Meridian Mechanical</td><td class="n">0</td><td class="n">0.0%</td><td class="n">1</td></tr>
+      <tr class="total"><td>Total</td><td></td><td class="n">52</td><td class="n">80.0%</td><td class="n">13</td></tr>
+    </tbody>
+  </table>
+  <p class="chartnote">One contractor holds 11 of the 13 open actions. The 100% rates reflect holding no open work rather than clearing everything assigned — six assignees show 100% for that reason. Nine of the 52 closures were opened and closed the same day, including two batches closed within the same second, which suggests bulk close-out rather than completed work.</p>
+</section>
+
+<section class="notes">
+  <h2>Notes on this report</h2>
+  <p class="h2note">Every headline figure carries a provenance marker. Three do not yet stand up.</p>
+  <div class="key">
+    <span><span class="tag v">Verified</span> Read directly from PEAK</span>
+    <span><span class="tag m">Modelled</span> Derived from stated assumptions</span>
+    <span><span class="tag u">Unverified</span> No source located</span>
+  </div>
+  <ol>
+    <li><strong>Thermal comfort 93%, up 3%.</strong> No supporting metric was found in PEAK for either the level or the movement. This figure needs a named source and calculation method before the report is issued, or it should be removed.</li>
+    <li><strong>Building size and thermal zone count.</strong> 16,200 m² and 301 zones could not be confirmed through the platform. Both are plausible and likely correct from another system, but they are unsourced here.</li>
+    <li><strong>Rules running.</strong> The site has 1,809 rules deployed, of which 1,712 are running and 1,637 contribute to the health score. The original draft labelled 1,809 as "running", which overstates active coverage by 97 rules.</li>
+    <li><strong>Equipment health change.</strong> The quarter scored 98.79% against 98.33% for the rolling 12 months — a gain of 0.46 percentage points, not 1%. The improvement is real and the trend is consistently upward, but the figure as drafted was roughly double the actual movement.</li>
+    <li><strong>Labour saving is gross, not net.</strong> $18,870 values the manual inspections the rules replace, scaled from the annual assumption model at 92/365 days. It does not subtract the triage effort the alerts generate, and it assumes the replaced inspections were genuinely being performed — a claim that is strongest for the 44 P1 rules and weakest for the 1,511 P3 rules, which account for 61% of the total.</li>
+    <li><strong>Recovery rate scope.</strong> The 100% figure covers the 13 alerts closed on running rules during the quarter. A further 9 closures sat on stopped rules, and 116 alerts across the site currently sit in Recovered status without ever being formally closed. The recovery rate is accurate for what it measures; it is not a measure of overall close-out.</li>
+    <li><strong>Open actions concentrate on the weakest assets.</strong> Five of the nine actions opened on 24 June sit on VAV units that also appear among the site's largest health declines — VAV-04-02, VAV-04-07, VAV-05-08, VAV-06-11 and VAV-18-01. Four of those units score at or near 85.71%, exactly six of seven rules passing, which points to one shared template stuck in fault rather than five separate equipment problems.</li>
+  </ol>
+</section>
+
+<footer>
+  <span>CIM PEAK · Site 285 · Skyline Tower, Brisbane QLD 4000</span>
+  <span>Generated 11 Aug 2026</span>
+</footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
+<script>
+const PETROL='#0D4F49', MIST='#8FC0B8', GRID='#E2E9E7', MUTED='#64756F';
+const mono={family:'IBM Plex Mono',size:11};
+
+new Chart(document.getElementById('healthChart'),{
+  type:'line',
+  data:{
+    labels:['Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26'],
+    datasets:[{
+      data:[97.69,null,null,97.93,97.97,98.46,98.60,98.18,98.48,98.65,98.73,98.96],
+      borderColor:PETROL,borderWidth:2,tension:.3,spanGaps:false,fill:false,
+      pointRadius:5,pointBackgroundColor:PETROL,pointBorderColor:'#fff',pointBorderWidth:2
+    }]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(2)+'%'}}},
+    scales:{
+      x:{ticks:{color:MUTED,font:mono,autoSkip:false,maxRotation:45},grid:{display:false},border:{color:'#C3CFCC'}},
+      y:{min:97.4,max:99.3,ticks:{color:MUTED,font:mono,callback:v=>v.toFixed(1)+'%'},grid:{color:GRID},border:{display:false}}
+    }
+  }
+});
+
+new Chart(document.getElementById('alertChart'),{
+  type:'bar',
+  data:{
+    labels:['Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26'],
+    datasets:[
+      {label:'Raised',data:[17,17,12,16,7,10],backgroundColor:PETROL,borderRadius:3,maxBarThickness:26},
+      {label:'Resolved',data:[2,11,5,11,3,10],backgroundColor:MIST,borderRadius:3,maxBarThickness:26}
+    ]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y}}},
+    scales:{
+      x:{ticks:{color:MUTED,font:mono,autoSkip:false},grid:{display:false},border:{color:'#C3CFCC'}},
+      y:{beginAtZero:true,ticks:{color:MUTED,font:mono,stepSize:5},grid:{color:GRID},border:{display:false}}
+    }
+  }
+});
+</script>
+</body>
+</html>
