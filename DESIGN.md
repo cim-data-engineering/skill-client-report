@@ -153,6 +153,17 @@ components:
     textColor: "{colors.text-muted}"
     rounded: "{rounded.full}"
     height: 24px
+  heatmap-cell:
+    textColor: "{colors.text-heading}"
+    typography: "{typography.body-sm}"
+  heatmap-band-excellent:
+    backgroundColor: "#D7F4E6"
+  heatmap-band-good:
+    backgroundColor: "#EFFBF5"
+  heatmap-band-average:
+    backgroundColor: "#FDEDD3"
+  heatmap-band-poor:
+    backgroundColor: "#FADBDC"
   tag:
     backgroundColor: "{colors.primary-container}"
     textColor: "{colors.on-primary-container}"
@@ -203,7 +214,7 @@ Three family roles split the work; the families themselves are brand, named only
 
 ## Layout
 
-The sheet is A4 portrait (210mm, ≈794px), centred on `page` for screen preview. Sections pad 48px 56px and are separated by `divider` hairlines; the 8px spacing scale governs everything inside, with 24px card padding. For export: `@page { size: A4; margin: 0 }` with margins carried by section padding so the masthead bleeds; `print-color-adjust: exact` everywhere; `page-break-inside: avoid` on sections, tables and figures; `thead` repeats across page breaks.
+The sheet is A4 portrait (210mm, ≈794px), centred on `page` for screen preview. Sections pad 48px 56px and are separated by `divider` hairlines; the 8px spacing scale governs everything inside, with 24px card padding. For export: `@page { size: A4; margin: 0 }` with margins carried by section padding so the masthead bleeds; `print-color-adjust: exact` everywhere; `page-break-inside: avoid` on sections, tables and figures; `thead` repeats across page breaks. A table longer than one page is the exception — a `heatmap` with a row per level usually is — and takes `page-break-inside: auto` with the avoid moved down to its rows, so it breaks between rows instead of jumping to a fresh page and stranding a gap.
 
 ## Elevation & Depth
 
@@ -221,6 +232,7 @@ Radii climb with size: 4px chart-bar tops (top corners only), 6px delta chips, 1
 - **delta chip:** `delta-positive` / `delta-negative` chosen by whether the change is *good*, not by its sign, always with a direction glyph and words.
 - **rating chip:** benchmark-band label in the matching `rating-*` container — always words, never colour alone. Excellent and Good are both `rating-positive`; Average is `rating-warning`; Poor is `rating-negative`; `rating-neutral` is for non-benchmark labels (e.g. Continuous, Modelled).
 - **table:** `table-rule-strong` on top and above the total row; `table-header` in mono uppercase; numerals right-aligned and tabular; hairline row rules. Inline 0–100 score bars use an `outline` track with a `primary` fill and the value beside them — semantic colour stays on the rating chip, never the bar.
+- **heatmap:** a table whose score cells are filled by benchmark band — the one place the row itself carries colour, because the grid *is* the reading. The four `heatmap-band-*` fills are mixed from the measurement colours over `surface` at one matched strength — `success`, `warning` and `error` at 22%, with Excellent and Good taking two steps of the same green (22% and 9%) because the `*-container` tokens would put both on one fill and collapse the two bands that hold most of the data. Re-derive all four whenever a measurement colour changes; they are deliberately brand-stable, since what a score *means* does not change with the partner. The numeral stays `heatmap-cell` at every band, so the value is legible without the fill and the page still reads in grayscale — but only the newest column carries weight, at 600 in `text-heading`; earlier columns drop to 400 in `text-body`. A grid of uniformly bold figures reads as noise, and the reader's question is where the building stands *now*, with the history as context. `text-body` rather than `text-muted` is the floor here, because `text-muted` falls under 4.5:1 against the lighter band fills. Cells are separated by `surface` hairlines rather than `outline`, so each column reads as one continuous field. A band key above the table names all four bands in words; count and identifier columns flanking the grid stay uncoloured and keep normal `outline` rules. Every heatmap states its benchmark and picks a score precision fine enough that rounding cannot cross a band edge.
 - **chart:** first series `primary`, comparison `chart-benchmark`; values labelled directly on points/bars; axis labels in `mono` and `text-muted`; gridlines in `outline`. A `body-sm` note in `text-muted` under each chart states the one thing the reader should take from it.
 - **notes band:** a `surface-dim` section for methodology and footnotes, numbered, in `body-sm`.
 - **footer:** single `mono` line in `text-muted` — site identity left, issue date right.
@@ -236,7 +248,7 @@ Radii climb with size: 4px chart-bar tops (top corners only), 6px delta chips, 1
 
 **Don't**
 - No emoji, anywhere. No gradients, no decorative colour, no cards with a coloured left border.
-- Don't use green or red as decoration, and don't tint a whole card or row by status.
+- Don't use green or red as decoration, and don't tint a whole card or row by status. The `heatmap` is the one sanctioned exception: its cells are tinted by measured band, not by status, and the fill *is* the chart.
 - Don't add a second dark field — the masthead is the only one.
 - Don't let hover, tooltips or motion carry information; the deliverable is a PDF.
 - Don't recolour, re-space or rebuild the logo; use the reversed (white) version on the masthead.

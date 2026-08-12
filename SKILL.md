@@ -7,7 +7,7 @@ description: Generates a client-facing quarterly building performance review for
 
 ## Output & theming
 
-The deliverable is a single self-contained A4 print-first HTML file — all CSS inline, charts as hand-authored inline SVG, no JS — modelled on `assets/reference-report.html`. Copy its structure, classes and chart techniques; replace the sample data. Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex — SVG presentation attributes cannot read `var()`.
+The deliverable is a single self-contained A4 print-first HTML file — all CSS inline, charts as hand-authored inline SVG, no JS — modelled on `assets/reference-report.html`. Copy its structure, classes and chart techniques; replace the sample data. Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex — SVG presentation attributes cannot read `var()`. Heatmap band fills are the same deal (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor), so a brand that swaps its measurement containers recolours both heatmaps without touching markup.
 
 Resolve the theme in this order:
 
@@ -64,7 +64,7 @@ Date: As at {issue date}
 
 ## Operational impact
 
-What that monitoring delivered last quarter  
+What that monitoring delivered this quarter  
 Date: last 3 months
 
 | Rating chip                               | Metric label                                 | Value                                                                                       | Subtitle                                                                                                                                          |
@@ -128,54 +128,70 @@ Recovery rate is alerts resolved in the period with fault status recovered divid
 ## Equipment health snapshot
 
 Health by equipment type  
-Date: last complete month vs last 3 months
+Date: last 3 complete months plus the current month to date
 
-| Column         | Reference                                             |
-| -------------- | ----------------------------------------------------- |
-| Equipment type | Equipment types with at least one scored rule         |
-| Equipment      | Total equipment count of that type with a scored rule |
-| Rules          | Total scored rules on that type                       |
-| Last month     | Equipment health score, last month by type x.x%       |
-| Chg            | Last month minus last 3 months in pp x.x              |
+Heatmap table of monthly equipment health scores, built on the same `heatmap` component as [Indoor environment health snapshot](#indoor-environment-health-snapshot). One row per equipment type, four score columns — the last 3 complete months plus the current month to date — cell value the equipment health score, and two count columns the thermal comfort heatmap does not carry.
+
+| Column         | Reference                                                |
+| -------------- | -------------------------------------------------------- |
+| Equipment type | Equipment types with at least one scored rule            |
+| Equipment      | Total equipment count of that type with a scored rule    |
+| Rules          | Total scored rules on that type                          |
+| Month columns  | Equipment health score for that month x.xx%              |
+| Chg            | Current month to date minus the start month in pp x.xx   |
 
 **Display:**
 
-- Score as a bar on a 0-100 scale with the value beside it
-- Ensure bar column width fixed width with rating chip left aligned
-- Rating chip beside the score, per equipment score benchmark
+- Color cells per the equipment score benchmark. Color the cell, not the text
+- Score to 2dp. The benchmark bands sit close together, and 1dp rounds a value across a band edge so the numeral and its color disagree
+- Emphasise only the current month column. Earlier months step back to body weight, per the `heatmap` component — a grid of bold figures reads as noise
+- Equipment and Rules as plain numerals, left of the score columns, never colored and never barred
 - Chg signed with a direction glyph. Green up, red down, muted when flat
-- Equipment and Rules as plain numerals. No bars.
-- Equipment health rules count can differ to overall site rules count as rules can trigger alerts but not score
-- Sort by biggest positive Chg signed then by biggest negative Chg signed
+- Sort by Chg descending, so the biggest improvement leads and any decline closes
 - Close with a site row, separated from the sort
+- Site row comes from the site rollup, so it will not equal the average of the type rows. Do not reconcile them
 - Display all equipment types, not a sample
-- Truncate equipment type name with ellipsis do not wrap rows
+- Truncate equipment type name with ellipsis, do not wrap rows
+- Label the current month column as partial, since it holds fewer days than the rest
+- Equipment health rules count can differ to overall site rules count as rules can trigger alerts but not score
 - Exclude equipment type BACER or Bacer (System). These are platform health checks
-- Color the rating, not the bar.
 
 **Links:**
 
-- Hyperlink equipment type name to PEAK with last 3 month custom date range selected, add chevron indicating link >
-- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date=2026-05-01T00:00:00.000&end_date=2026-07-31T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
+- Hyperlink equipment type name to PEAK with the same 4 month custom date range selected, add chevron indicating link >
+- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date=2026-05-01T00:00:00.000&end_date=2026-08-12T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
 
 ## Indoor environment health snapshot
 
 Thermal comfort by level  
-Date: last 6 months
+Date: last 3 complete months plus the current month to date
 
-Heatmap table of monthly indoor environment thermal comfort scores. One row per site level, one column per month, cell value the thermal comfort score to 1dp.
+Heatmap table of monthly indoor environment thermal comfort scores, built on the same `heatmap` component as [Equipment health snapshot](#equipment-health-snapshot). One row per site level, four score columns — the last 3 complete months plus the current month to date — cell value the thermal comfort score to 1dp, closing with a signed change column.
+
+| Column        | Reference                                                  |
+| ------------- | ---------------------------------------------------------- |
+| Level         | Site levels with at least one thermal zone                 |
+| Zones         | Thermal zones on that level that returned a score          |
+| Month columns | Thermal comfort score for that month x.x%                  |
+| Chg           | Current month to date minus the start month in pp x.x      |
 
 **Display:**
 
 - Color cells per the thermal comfort score benchmark. Color the cell, not the text
-- Sort levels in building order, highest level first, ground last
+- Score to 1dp. The benchmark bands sit far from the data here, so 1dp cannot round across a band edge
+- Emphasise only the current month column, per the `heatmap` component
+- Zones as a plain numeral, left of the score columns, never colored and never barred — it sizes the level, so the reader knows whether a swing covers two zones or twenty
+- Zones counts scored zones, so the site row can fall short of the thermal zones count in [Analytics overview](#analytics-overview), which counts every zone temperature point. Say so in the notes rather than reconciling them
+- Chg signed with a direction glyph. Green up, red down, muted when flat
+- Sort levels in building order, highest level first, ground last — not by Chg. The reader is looking for where in the building comfort is drifting, and the Chg column carries the direction
 - Close with a site row at the bottom similar style as equipment health snapshot
 - Site row comes from the site rollup, so it will not equal the average of the level rows. Do not reconcile them
 - Truncate level name with ellipsis, do not wrap rows
+- Label the current month column as partial, since it holds fewer days than the rest
 
 **Links:**
 
-- Hyperlink level name to PEAK with last 6 month custom date range selected, add chevron indicating link >
+- Hyperlink level name to PEAK with the same 4 month custom date range selected, add chevron indicating link >
 - `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts=2026-08-01&site_ids={{site_id}}&start_date=2026-05-01T00:00:00.000&end_date=2026-08-11T00:00:00.000`
 
 **Notes:**  
@@ -287,8 +303,10 @@ not `metadata_codes`.
 
 Indoor environment — `search_indoor_environment(metric:"temperature")`, two calls:
 `aggregate_entity:"level"` for the grid and `"site"` for the closing row, both
-`aggregate_period:"month"`, `limit:80`. Rows are levels x months, so page when
-levels x 6 exceeds 80. Never use `aggregate_entity:"zone"` for the snapshot —
+`aggregate_period:"month"`, `limit:80`. Window runs from the first of the month
+three complete months back to tomorrow, since `local_end_date` is exclusive and
+the current month is reported to date. Rows are levels x months, so page when
+levels x 4 exceeds 80. Never use `aggregate_entity:"zone"` for the snapshot —
 that is one row per zone per month, hundreds of rows for the same picture.
 Drill to zone only when investigating a named level.
 
@@ -296,6 +314,13 @@ Status ids: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing.
 
 Scores/executions/rule counts — one call each, already aggregated:  
 `search_equipment_health_scores(aggregate_entities:[site|metadata_type|priority], aggregate_period:[month|all])`
+
+The equipment health heatmap needs two calls at `metadata_type` and two at `site`
+over the same 4 month window: `aggregate_period:"month"` fills the cells,
+`"all"` gives the Equipment and Rules counts. Take the counts from the `all`
+call, never by summing or picking a month — it counts distinct equipment and
+rules across the whole window, so it is legitimately higher than any single
+month. The tool takes no `limit`; it returns every group.
 
 Raised vs resolved + leaderboard — `tickets.tickets`, `type:"escalated"`,  
 `ticket_archived:false`, `limit:400`, date bounds `*_at_local_*`.  
