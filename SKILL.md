@@ -97,10 +97,10 @@ Date: last 3 months
 
 | Rating    | Thermal comfort score benchmark |
 | --------- | ------------------------------- |
-| Excellent | >= 95%                          |
-| Good      | >= 76%                          |
-| Average   | >= 55%                          |
-| Poor      | < 55%                           |
+| Excellent | >= 92%                          |
+| Good      | >= 85%                          |
+| Average   | >= 75%                          |
+| Poor      | < 75%                           |
 
 **Labor cost avoided model:**  
 Unique rules scored (by priority) last 3 months x annual mins saved per rule x (days in window / 365) x labor cost per minute. Assumed labor rates based on site region: USD 100/hr, AUD 150/hr, NZD 150/hr, GBP 75/hr, CAD 150/hr, EUR 100/hr.
