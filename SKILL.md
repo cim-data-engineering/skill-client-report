@@ -203,7 +203,7 @@ Six months of trend
 Date: last 6 months
 
 Chart 1: Site equipment health score  
-Monthly line chart of equipment health score. Add nearest benchmark threshold and label it. Auto scale Y axis.
+Monthly line chart of equipment health score. Render the two nearest benchmark thresholds, one above and one below the data, and label them. Auto scale Y axis to fit both.
 
 Add source and link to equipment health dashboard.
 
