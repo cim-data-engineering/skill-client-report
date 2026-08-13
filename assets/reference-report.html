@@ -172,6 +172,8 @@ table.hm{table-layout:fixed}
 .sw-benchmark{background:var(--chart-benchmark)}
 .sketch{stroke:var(--on-secondary-muted)}
 .axis{font-family:var(--mono);font-size:10px;fill:var(--text-muted)}
+/* Sub-label under the current month's axis tick — it holds fewer days than the rest */
+.axis-sub{font-family:var(--mono);font-size:9px;fill:var(--text-muted);opacity:.8}
 .val{font-family:var(--sans);font-size:11px;font-weight:600;fill:var(--text-heading)}
 .gridline{stroke:var(--outline);stroke-width:1}
 .benchline{stroke:var(--outline-strong);stroke-width:1;stroke-dasharray:4 3}
@@ -275,7 +277,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 
   <div class="irow">
-    <span class="chip pos">Good</span>
+    <span class="chip pos">Excellent</span>
     <div>
       <span class="fig">93.43%</span> <span class="figcap">thermal comfort maintained</span>
       <div class="isub"><span class="delta pos">↑ Up 3.88 pp</span> vs 89.55% over the last 12 months.</div>
@@ -365,10 +367,10 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <p class="h2note">May – August 2026. Share of zone readings inside the ASHRAE comfort band during working hours, by level, in building order.</p>
   </div>
   <div class="bandkey">
-    <span><i class="b4"></i>Excellent &ge; 95%</span>
-    <span><i class="b3"></i>Good &ge; 76%</span>
-    <span><i class="b2"></i>Average &ge; 55%</span>
-    <span><i class="b1"></i>Poor &lt; 55%</span>
+    <span><i class="b4"></i>Excellent &ge; 92%</span>
+    <span><i class="b3"></i>Good &ge; 85%</span>
+    <span><i class="b2"></i>Average &ge; 75%</span>
+    <span><i class="b1"></i>Poor &lt; 75%</span>
   </div>
   <table class="hm">
     <thead>
@@ -383,32 +385,32 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       </tr>
     </thead>
     <tbody>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L22 &rsaquo;</a></td><td class="ct">3</td><td class="c b3">80.4</td><td class="c b1">45.5</td><td class="c b1">40.7</td><td class="c b1 now">44.4</td><td class="cg"><span class="chg down">&darr; &minus;36.0</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L21 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">95.9</td><td class="c b4">97.6</td><td class="c b4">96.7</td><td class="c b3 now">94.6</td><td class="cg"><span class="chg down">&darr; &minus;1.4</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L20 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">97.3</td><td class="c b4">95.5</td><td class="c b3">92.8</td><td class="c b3 now">92.6</td><td class="cg"><span class="chg down">&darr; &minus;4.7</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L19 &rsaquo;</a></td><td class="ct">16</td><td class="c b3">92.2</td><td class="c b4">95.8</td><td class="c b4">96.3</td><td class="c b3 now">94.9</td><td class="cg"><span class="chg up">&uarr; +2.8</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L22 &rsaquo;</a></td><td class="ct">3</td><td class="c b2">80.4</td><td class="c b1">45.5</td><td class="c b1">40.7</td><td class="c b1 now">44.4</td><td class="cg"><span class="chg down">&darr; &minus;36.0</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L21 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">95.9</td><td class="c b4">97.6</td><td class="c b4">96.7</td><td class="c b4 now">94.6</td><td class="cg"><span class="chg down">&darr; &minus;1.4</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L20 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">97.3</td><td class="c b4">95.5</td><td class="c b4">92.8</td><td class="c b4 now">92.6</td><td class="cg"><span class="chg down">&darr; &minus;4.7</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L19 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">92.2</td><td class="c b4">95.8</td><td class="c b4">96.3</td><td class="c b4 now">94.9</td><td class="cg"><span class="chg up">&uarr; +2.8</span></td></tr>
       <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L18 &rsaquo;</a></td><td class="ct">20</td><td class="c b3">91.1</td><td class="c b4">97.4</td><td class="c b4">98.1</td><td class="c b4 now">96.7</td><td class="cg"><span class="chg up">&uarr; +5.6</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L17 &rsaquo;</a></td><td class="ct">18</td><td class="c b3">94.1</td><td class="c b3">93.4</td><td class="c b3">90.5</td><td class="c b3 now">92.3</td><td class="cg"><span class="chg down">&darr; &minus;1.8</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L16 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">95.2</td><td class="c b3">92.7</td><td class="c b3">91.5</td><td class="c b3 now">90.7</td><td class="cg"><span class="chg down">&darr; &minus;4.5</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L17 &rsaquo;</a></td><td class="ct">18</td><td class="c b4">94.1</td><td class="c b4">93.4</td><td class="c b3">90.5</td><td class="c b4 now">92.3</td><td class="cg"><span class="chg down">&darr; &minus;1.8</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L16 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">95.2</td><td class="c b4">92.7</td><td class="c b3">91.5</td><td class="c b3 now">90.7</td><td class="cg"><span class="chg down">&darr; &minus;4.5</span></td></tr>
       <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L15 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">95.4</td><td class="c b4">96.9</td><td class="c b4">97.5</td><td class="c b4 now">95.8</td><td class="cg"><span class="chg up">&uarr; +0.5</span></td></tr>
       <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L14 &rsaquo;</a></td><td class="ct">15</td><td class="c b4">97.9</td><td class="c b4">99.7</td><td class="c b4">99.4</td><td class="c b4 now">99.0</td><td class="cg"><span class="chg up">&uarr; +1.1</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L13 &rsaquo;</a></td><td class="ct">15</td><td class="c b3">94.0</td><td class="c b4">96.1</td><td class="c b4">96.9</td><td class="c b3 now">93.6</td><td class="cg"><span class="chg down">&darr; &minus;0.4</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L12 &rsaquo;</a></td><td class="ct">17</td><td class="c b3">92.1</td><td class="c b4">96.0</td><td class="c b4">96.4</td><td class="c b3 now">93.7</td><td class="cg"><span class="chg up">&uarr; +1.6</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L13 &rsaquo;</a></td><td class="ct">15</td><td class="c b4">94.0</td><td class="c b4">96.1</td><td class="c b4">96.9</td><td class="c b4 now">93.6</td><td class="cg"><span class="chg down">&darr; &minus;0.4</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L12 &rsaquo;</a></td><td class="ct">17</td><td class="c b4">92.1</td><td class="c b4">96.0</td><td class="c b4">96.4</td><td class="c b4 now">93.7</td><td class="cg"><span class="chg up">&uarr; +1.6</span></td></tr>
       <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L11 &rsaquo;</a></td><td class="ct">13</td><td class="c b4">98.8</td><td class="c b4">97.7</td><td class="c b4">96.5</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;2.5</span></td></tr>
       <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L10 &rsaquo;</a></td><td class="ct">15</td><td class="c b4">97.2</td><td class="c b4">97.7</td><td class="c b4">97.2</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;0.9</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L09 &rsaquo;</a></td><td class="ct">18</td><td class="c b3">89.8</td><td class="c b3">91.8</td><td class="c b3">93.4</td><td class="c b3 now">94.3</td><td class="cg"><span class="chg up">&uarr; +4.5</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L08 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">97.3</td><td class="c b4">95.6</td><td class="c b3">94.4</td><td class="c b3 now">94.9</td><td class="cg"><span class="chg down">&darr; &minus;2.5</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L07 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">97.9</td><td class="c b4">96.3</td><td class="c b3">94.6</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;1.7</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L06 &rsaquo;</a></td><td class="ct">13</td><td class="c b4">97.1</td><td class="c b3">86.9</td><td class="c b3">84.0</td><td class="c b3 now">86.6</td><td class="cg"><span class="chg down">&darr; &minus;10.4</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L04 &rsaquo;</a></td><td class="ct">19</td><td class="c b3">93.3</td><td class="c b3">90.5</td><td class="c b3">89.4</td><td class="c b3 now">89.2</td><td class="cg"><span class="chg down">&darr; &minus;4.1</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L03 &rsaquo;</a></td><td class="ct">7</td><td class="c b4">99.5</td><td class="c b3">87.5</td><td class="c b3">79.0</td><td class="c b3 now">77.3</td><td class="cg"><span class="chg down">&darr; &minus;22.2</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L02 &rsaquo;</a></td><td class="ct">6</td><td class="c b4">99.5</td><td class="c b4">97.3</td><td class="c b3">92.0</td><td class="c b3 now">91.9</td><td class="cg"><span class="chg down">&darr; &minus;7.6</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L01 &rsaquo;</a></td><td class="ct">11</td><td class="c b3">82.9</td><td class="c b2">71.4</td><td class="c b2">61.2</td><td class="c b2 now">59.1</td><td class="cg"><span class="chg down">&darr; &minus;23.8</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">G &rsaquo;</a></td><td class="ct">2</td><td class="c b4">95.0</td><td class="c b4">98.9</td><td class="c b4">96.0</td><td class="c b3 now">93.9</td><td class="cg"><span class="chg down">&darr; &minus;1.1</span></td></tr>
-      <tr class="total"><td class="lv">Site</td><td class="ct">298</td><td class="c b3">94.4</td><td class="c b3">93.6</td><td class="c b3">92.3</td><td class="c b3 now">91.7</td><td class="cg"><span class="chg down">&darr; &minus;2.7</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L09 &rsaquo;</a></td><td class="ct">18</td><td class="c b3">89.8</td><td class="c b3">91.8</td><td class="c b4">93.4</td><td class="c b4 now">94.3</td><td class="cg"><span class="chg up">&uarr; +4.5</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L08 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">97.3</td><td class="c b4">95.6</td><td class="c b4">94.4</td><td class="c b4 now">94.9</td><td class="cg"><span class="chg down">&darr; &minus;2.5</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L07 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">97.9</td><td class="c b4">96.3</td><td class="c b4">94.6</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;1.7</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L06 &rsaquo;</a></td><td class="ct">13</td><td class="c b4">97.1</td><td class="c b3">86.9</td><td class="c b2">84.0</td><td class="c b3 now">86.6</td><td class="cg"><span class="chg down">&darr; &minus;10.4</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L04 &rsaquo;</a></td><td class="ct">19</td><td class="c b4">93.3</td><td class="c b3">90.5</td><td class="c b3">89.4</td><td class="c b3 now">89.2</td><td class="cg"><span class="chg down">&darr; &minus;4.1</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L03 &rsaquo;</a></td><td class="ct">7</td><td class="c b4">99.5</td><td class="c b3">87.5</td><td class="c b2">79.0</td><td class="c b2 now">77.3</td><td class="cg"><span class="chg down">&darr; &minus;22.2</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L02 &rsaquo;</a></td><td class="ct">6</td><td class="c b4">99.5</td><td class="c b4">97.3</td><td class="c b4">92.0</td><td class="c b3 now">91.9</td><td class="cg"><span class="chg down">&darr; &minus;7.6</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L01 &rsaquo;</a></td><td class="ct">11</td><td class="c b2">82.9</td><td class="c b1">71.4</td><td class="c b1">61.2</td><td class="c b1 now">59.1</td><td class="cg"><span class="chg down">&darr; &minus;23.8</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">G &rsaquo;</a></td><td class="ct">2</td><td class="c b4">95.0</td><td class="c b4">98.9</td><td class="c b4">96.0</td><td class="c b4 now">93.9</td><td class="cg"><span class="chg down">&darr; &minus;1.1</span></td></tr>
+      <tr class="total"><td class="lv">Site</td><td class="ct">298</td><td class="c b4">94.4</td><td class="c b4">93.6</td><td class="c b4">92.3</td><td class="c b3 now">91.7</td><td class="cg"><span class="chg down">&darr; &minus;2.7</span></td></tr>
     </tbody>
   </table>
-  <p class="chartnote">Comfort is drifting cool, not warm. L01 and L22 have given up 23.8 and 36.0 pp since May and now sit around 21 °C, at or under the bottom of the target band; L03 is down 22.2 pp. Six of 22 levels improved, led by L18 and L09, so the site line only eases 2.7 pp to 91.7%.</p>
+  <p class="chartnote">Comfort is drifting cool, not warm. L01 and L22 have given up 23.8 and 36.0 pp since May and now sit around 21 °C, at or under the bottom of the target band; L03 is down 22.2 pp. Six of 22 levels improved, led by L18 and L09, so the site line only eases 2.7 pp to 91.7% — its first month under the 92% Excellent threshold.</p>
   <div class="seclinks">
     <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">See live indoor environment dashboard &rsaquo;</a>
   </div>
@@ -418,41 +420,45 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   <div class="sechead">
     <p class="eyebrow">Monthly equipment health</p>
     <h2>Six months of trend</h2>
-    <p class="h2note">February – July 2026</p>
+    <p class="h2note">February – August 2026, the last six complete months plus August to date.</p>
   </div>
 
   <div class="chartblock">
     <h3 class="charttitle">Site equipment health score</h3>
     <div class="chart">
-      <svg viewBox="0 0 682 236" role="img" aria-label="Line chart of monthly site equipment health score, February to July 2026: 98.6, 98.2, 98.5, 98.7, 98.7, 99.0 percent, held between the 97.0 percent Good threshold below and the 99.0 percent Excellent threshold above.">
+      <svg viewBox="0 0 682 236" role="img" aria-label="Line chart of monthly site equipment health score, February to August 2026: 98.6, 98.2, 98.5, 98.7, 98.7, 99.0 and 99.1 percent, against the 97.0 percent Good threshold below and the 99.0 percent Excellent threshold, which the series reaches in July and clears in August. August is to date.">
         <text class="axis" x="44" y="40">Excellent threshold</text>
         <line class="benchline" x1="36" y1="48"  x2="670" y2="48"/><text class="axis" x="4" y="51">99.0</text>
         <text class="axis" x="44" y="164">Good threshold</text>
         <line class="benchline" x1="36" y1="172" x2="670" y2="172"/><text class="axis" x="4" y="175">97.0</text>
         <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
-        <polyline class="series-line" points="80,73 182,98.9 284,80.1 386,69.6 488,64.5 590,50.4"/>
-        <circle cx="80"  cy="73"   r="4.5" class="pt"/>
-        <circle cx="182" cy="98.9" r="4.5" class="pt"/>
-        <circle cx="284" cy="80.1" r="4.5" class="pt"/>
-        <circle cx="386" cy="69.6" r="4.5" class="pt"/>
-        <circle cx="488" cy="64.5" r="4.5" class="pt"/>
-        <circle cx="590" cy="50.4" r="4.5" class="pt"/>
+        <polyline class="series-line" points="80,72.8 172,97.6 264,79 356,66.6 448,66.6 540,48 632,41.8"/>
+        <circle cx="80"  cy="72.8" r="4.5" class="pt"/>
+        <circle cx="172" cy="97.6" r="4.5" class="pt"/>
+        <circle cx="264" cy="79"   r="4.5" class="pt"/>
+        <circle cx="356" cy="66.6" r="4.5" class="pt"/>
+        <circle cx="448" cy="66.6" r="4.5" class="pt"/>
+        <circle cx="540" cy="48"   r="4.5" class="pt"/>
+        <circle cx="632" cy="41.8" r="4.5" class="pt"/>
         <text class="val" x="80"  y="90"  text-anchor="middle">98.6%</text>
-        <text class="val" x="182" y="116" text-anchor="middle">98.2%</text>
-        <text class="val" x="284" y="97"  text-anchor="middle">98.5%</text>
-        <text class="val" x="386" y="87"  text-anchor="middle">98.7%</text>
-        <text class="val" x="488" y="82"  text-anchor="middle">98.7%</text>
-        <text class="val" x="590" y="67"  text-anchor="middle">99.0%</text>
+        <text class="val" x="172" y="115" text-anchor="middle">98.2%</text>
+        <text class="val" x="264" y="96"  text-anchor="middle">98.5%</text>
+        <text class="val" x="356" y="84"  text-anchor="middle">98.7%</text>
+        <text class="val" x="448" y="84"  text-anchor="middle">98.7%</text>
+        <text class="val" x="540" y="65"  text-anchor="middle">99.0%</text>
+        <text class="val" x="632" y="59"  text-anchor="middle">99.1%</text>
         <text class="axis" x="80"  y="216" text-anchor="middle">Feb 26</text>
-        <text class="axis" x="182" y="216" text-anchor="middle">Mar 26</text>
-        <text class="axis" x="284" y="216" text-anchor="middle">Apr 26</text>
-        <text class="axis" x="386" y="216" text-anchor="middle">May 26</text>
-        <text class="axis" x="488" y="216" text-anchor="middle">Jun 26</text>
-        <text class="axis" x="590" y="216" text-anchor="middle">Jul 26</text>
+        <text class="axis" x="172" y="216" text-anchor="middle">Mar 26</text>
+        <text class="axis" x="264" y="216" text-anchor="middle">Apr 26</text>
+        <text class="axis" x="356" y="216" text-anchor="middle">May 26</text>
+        <text class="axis" x="448" y="216" text-anchor="middle">Jun 26</text>
+        <text class="axis" x="540" y="216" text-anchor="middle">Jul 26</text>
+        <text class="axis" x="632" y="216" text-anchor="middle">Aug 26</text>
+        <text class="axis-sub" x="632" y="228" text-anchor="middle">to date</text>
       </svg>
     </div>
-    <p class="chartsource">Source: <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-02-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000">PEAK equipment health dashboard</a></p>
-    <p class="chartnote">The site sat inside Good all half and never came close to slipping out of it — the 97.0% floor is 0.8 pp under the weakest month. It has improved every month since the March dip and closed the quarter at 99.0%, its best month in the half and level with the Excellent threshold.</p>
+    <p class="chartsource">Source: <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;relative_date=last_6_months&amp;include_today=true">PEAK equipment health dashboard</a></p>
+    <p class="chartnote">The site sat inside Good all half and never came close to slipping out of it — the 97.0% floor is 0.8 pp under the weakest month. It has improved every month since the March dip, reached the 99.0% Excellent threshold in July and is holding just above it at 99.1% in August. A score is a rate, so the short month does not flatter it.</p>
   </div>
 
   <div class="chartblock">
@@ -462,78 +468,134 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <span><span class="sw sw-benchmark"></span>Labour cost avoided (right scale)</span>
     </div>
     <div class="chart">
-      <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart, February to July 2026. Automated checks: 607 thousand, 1.31, 1.25, 1.18, 1.40 and 1.57 million. Labour cost avoided: 5.8, 6.1, 5.9, 6.2, 6.1 and 6.4 thousand dollars.">
-        <path class="bar-primary" d="M53,196 V143.1 Q53,139.1 57,139.1 H81 Q85,139.1 85,143.1 V196 Z"/>
-        <path class="bar-benchmark" d="M93,196 V72.5 Q93,68.5 97,68.5 H121 Q125,68.5 125,72.5 V196 Z"/>
-        <path class="bar-primary" d="M159,196 V77.4 Q159,73.4 163,73.4 H187 Q191,73.4 191,77.4 V196 Z"/>
-        <path class="bar-benchmark" d="M199,196 V65.7 Q199,61.7 203,61.7 H227 Q231,61.7 231,65.7 V196 Z"/>
-        <path class="bar-primary" d="M264,196 V82.9 Q264,78.9 268,78.9 H292 Q296,78.9 296,82.9 V196 Z"/>
-        <path class="bar-benchmark" d="M304,196 V69.1 Q304,65.1 308,65.1 H332 Q336,65.1 336,69.1 V196 Z"/>
-        <path class="bar-primary" d="M370,196 V89.3 Q370,85.3 374,85.3 H398 Q402,85.3 402,89.3 V196 Z"/>
-        <path class="bar-benchmark" d="M410,196 V62.2 Q410,58.2 414,58.2 H438 Q442,58.2 442,62.2 V196 Z"/>
-        <path class="bar-primary" d="M476,196 V68.3 Q476,64.3 480,64.3 H504 Q508,64.3 508,68.3 V196 Z"/>
-        <path class="bar-benchmark" d="M516,196 V64.6 Q516,60.6 520,60.6 H544 Q548,60.6 548,64.6 V196 Z"/>
-        <path class="bar-primary" d="M581,196 V52.8 Q581,48.8 585,48.8 H609 Q613,48.8 613,52.8 V196 Z"/>
-        <path class="bar-benchmark" d="M621,196 V59.9 Q621,55.9 625,55.9 H649 Q653,55.9 653,59.9 V196 Z"/>
+      <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart, February to August 2026. Automated checks: 607 thousand, 1.31, 1.25, 1.18, 1.40 and 1.57 million, then 638 thousand in August to date. Labour cost avoided: 5.8, 6.1, 5.9, 6.2, 6.1 and 6.4 thousand dollars, then 2.5 thousand in August to date.">
+        <path class="bar-primary" d="M47,196 V144.7 Q47,140.7 51,140.7 H73 Q77,140.7 77,144.7 V196 Z"/>
+        <path class="bar-benchmark" d="M83,196 V76.5 Q83,72.5 87,72.5 H109 Q113,72.5 113,76.5 V196 Z"/>
+        <path class="bar-primary" d="M139,196 V80.7 Q139,76.7 143,76.7 H165 Q169,76.7 169,80.7 V196 Z"/>
+        <path class="bar-benchmark" d="M175,196 V70.1 Q175,66.1 179,66.1 H201 Q205,66.1 205,70.1 V196 Z"/>
+        <path class="bar-primary" d="M231,196 V86.1 Q231,82.1 235,82.1 H257 Q261,82.1 261,86.1 V196 Z"/>
+        <path class="bar-benchmark" d="M267,196 V74.3 Q267,70.3 271,70.3 H293 Q297,70.3 297,74.3 V196 Z"/>
+        <path class="bar-primary" d="M323,196 V92.5 Q323,88.5 327,88.5 H349 Q353,88.5 353,92.5 V196 Z"/>
+        <path class="bar-benchmark" d="M359,196 V67.9 Q359,63.9 363,63.9 H385 Q389,63.9 389,67.9 V196 Z"/>
+        <path class="bar-primary" d="M415,196 V72.5 Q415,68.5 419,68.5 H441 Q445,68.5 445,72.5 V196 Z"/>
+        <path class="bar-benchmark" d="M451,196 V70.1 Q451,66.1 455,66.1 H477 Q481,66.1 481,70.1 V196 Z"/>
+        <path class="bar-primary" d="M507,196 V57 Q507,53 511,53 H533 Q537,53 537,57 V196 Z"/>
+        <path class="bar-benchmark" d="M543,196 V63.7 Q543,59.7 547,59.7 H569 Q573,59.7 573,63.7 V196 Z"/>
+        <path class="bar-primary" d="M599,196 V141.9 Q599,137.9 603,137.9 H625 Q629,137.9 629,141.9 V196 Z"/>
+        <path class="bar-benchmark" d="M635,196 V146.7 Q635,142.7 639,142.7 H661 Q665,142.7 665,146.7 V196 Z"/>
         <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
-        <text class="val" x="69"  y="131" text-anchor="middle">607K</text><text class="val" x="109" y="60" text-anchor="middle">$5.8k</text>
-        <text class="val" x="175" y="65"  text-anchor="middle">1.31M</text><text class="val" x="215" y="54" text-anchor="middle">$6.1k</text>
-        <text class="val" x="280" y="71"  text-anchor="middle">1.25M</text><text class="val" x="320" y="57" text-anchor="middle">$5.9k</text>
-        <text class="val" x="386" y="77"  text-anchor="middle">1.18M</text><text class="val" x="426" y="50" text-anchor="middle">$6.2k</text>
-        <text class="val" x="492" y="56"  text-anchor="middle">1.40M</text><text class="val" x="532" y="53" text-anchor="middle">$6.1k</text>
-        <text class="val" x="597" y="41"  text-anchor="middle">1.57M</text><text class="val" x="637" y="48" text-anchor="middle">$6.4k</text>
-        <text class="axis" x="89"  y="216" text-anchor="middle">Feb 26</text>
-        <text class="axis" x="195" y="216" text-anchor="middle">Mar 26</text>
-        <text class="axis" x="300" y="216" text-anchor="middle">Apr 26</text>
-        <text class="axis" x="406" y="216" text-anchor="middle">May 26</text>
-        <text class="axis" x="512" y="216" text-anchor="middle">Jun 26</text>
-        <text class="axis" x="617" y="216" text-anchor="middle">Jul 26</text>
+        <text class="val" x="62"  y="133" text-anchor="middle">607K</text><text class="val" x="98"  y="64"  text-anchor="middle">$5.8k</text>
+        <text class="val" x="154" y="69"  text-anchor="middle">1.31M</text><text class="val" x="190" y="58"  text-anchor="middle">$6.1k</text>
+        <text class="val" x="246" y="74"  text-anchor="middle">1.25M</text><text class="val" x="282" y="62"  text-anchor="middle">$5.9k</text>
+        <text class="val" x="338" y="80"  text-anchor="middle">1.18M</text><text class="val" x="374" y="56"  text-anchor="middle">$6.2k</text>
+        <text class="val" x="430" y="60"  text-anchor="middle">1.40M</text><text class="val" x="466" y="58"  text-anchor="middle">$6.1k</text>
+        <text class="val" x="522" y="45"  text-anchor="middle">1.57M</text><text class="val" x="558" y="52"  text-anchor="middle">$6.4k</text>
+        <text class="val" x="614" y="130" text-anchor="middle">638K</text><text class="val" x="650" y="135" text-anchor="middle">$2.5k</text>
+        <text class="axis" x="80"  y="216" text-anchor="middle">Feb 26</text>
+        <text class="axis" x="172" y="216" text-anchor="middle">Mar 26</text>
+        <text class="axis" x="264" y="216" text-anchor="middle">Apr 26</text>
+        <text class="axis" x="356" y="216" text-anchor="middle">May 26</text>
+        <text class="axis" x="448" y="216" text-anchor="middle">Jun 26</text>
+        <text class="axis" x="540" y="216" text-anchor="middle">Jul 26</text>
+        <text class="axis" x="632" y="216" text-anchor="middle">Aug 26</text>
+        <text class="axis-sub" x="632" y="228" text-anchor="middle">to date</text>
       </svg>
     </div>
-    <p class="chartnote">Check volume has climbed every month since April and reached 1.57 million in July. February is genuinely low — under half of any later month — so treat it as the exception rather than the baseline. Modelled savings sit near $6.1k a month because they track the rule count, which barely moved.</p>
+    <p class="chartnote">Check volume has climbed every month since April and reached 1.57 million in July. February is genuinely low — under half of any later month — so treat it as the exception rather than the baseline. August is short for a different reason: both bars cover 12 days, and at that rate the month is tracking with July. Modelled savings sit near $6.1k a full month because they track the rule count, which barely moved.</p>
   </div>
 </section>
 
 <section>
   <div class="sechead">
-    <p class="eyebrow">Alerts raised vs resolved</p>
+    <p class="eyebrow">Monthly thermal comfort</p>
+    <h2>Where comfort has been heading</h2>
+    <p class="h2note">February – August 2026, the last six complete months plus August to date.</p>
+  </div>
+
+  <div class="chartblock">
+    <h3 class="charttitle">Site thermal comfort score</h3>
+    <div class="chart">
+      <svg viewBox="0 0 682 236" role="img" aria-label="Line chart of monthly site thermal comfort score, February to August 2026: 86.9, 89.4, 92.7, 94.4, 93.6, 92.3 and 91.7 percent, against the 85.0 percent Good threshold below and the 92.0 percent Excellent threshold, which the series clears from April to July and drops back under in August. August is to date.">
+        <text class="axis" x="44" y="64">Excellent threshold</text>
+        <line class="benchline" x1="36" y1="72"  x2="670" y2="72"/><text class="axis" x="4" y="75">92.0</text>
+        <text class="axis" x="44" y="172">Good threshold</text>
+        <line class="benchline" x1="36" y1="180" x2="670" y2="180"/><text class="axis" x="4" y="183">85.0</text>
+        <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
+        <polyline class="series-line" points="80,151 172,112.3 264,61.1 356,34.8 448,47.2 540,67.3 632,76.6"/>
+        <circle cx="80"  cy="151"   r="4.5" class="pt"/>
+        <circle cx="172" cy="112.3" r="4.5" class="pt"/>
+        <circle cx="264" cy="61.1"  r="4.5" class="pt"/>
+        <circle cx="356" cy="34.8"  r="4.5" class="pt"/>
+        <circle cx="448" cy="47.2"  r="4.5" class="pt"/>
+        <circle cx="540" cy="67.3"  r="4.5" class="pt"/>
+        <circle cx="632" cy="76.6"  r="4.5" class="pt"/>
+        <text class="val" x="80"  y="142" text-anchor="middle">86.9%</text>
+        <text class="val" x="172" y="103" text-anchor="middle">89.4%</text>
+        <text class="val" x="264" y="52"  text-anchor="middle">92.7%</text>
+        <text class="val" x="356" y="26"  text-anchor="middle">94.4%</text>
+        <text class="val" x="448" y="38"  text-anchor="middle">93.6%</text>
+        <text class="val" x="540" y="58"  text-anchor="middle">92.3%</text>
+        <text class="val" x="632" y="94"  text-anchor="middle">91.7%</text>
+        <text class="axis" x="80"  y="216" text-anchor="middle">Feb 26</text>
+        <text class="axis" x="172" y="216" text-anchor="middle">Mar 26</text>
+        <text class="axis" x="264" y="216" text-anchor="middle">Apr 26</text>
+        <text class="axis" x="356" y="216" text-anchor="middle">May 26</text>
+        <text class="axis" x="448" y="216" text-anchor="middle">Jun 26</text>
+        <text class="axis" x="540" y="216" text-anchor="middle">Jul 26</text>
+        <text class="axis" x="632" y="216" text-anchor="middle">Aug 26</text>
+        <text class="axis-sub" x="632" y="228" text-anchor="middle">to date</text>
+      </svg>
+    </div>
+    <p class="chartsource">Source: <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;relative_date=last_6_months&amp;include_today=true">PEAK indoor environment dashboard</a></p>
+    <p class="chartnote">Comfort recovered 7.5 pp out of the February heat and peaked at 94.4% in May, then gave back ground through winter as the building drifted cool. August is the first month back under the 92.0% Excellent threshold since March, and the level detail puts most of that on L01, L03 and L22. The 85.0% Good floor has not been in reach since February.</p>
+  </div>
+</section>
+
+<section>
+  <div class="sechead">
+    <p class="eyebrow">Monthly alerts raised vs resolved</p>
     <h2>Faults triaged and resolved</h2>
-    <p class="h2note">February – July 2026. Raised counts alerts triaged into actions; resolved counts the same way. Actions marked Not Doing, and alerts on rules no longer running, are excluded from both series.</p>
+    <p class="h2note">February – August 2026, the last six complete months plus August to date. Raised counts alerts triaged into actions; resolved counts the same way. Actions marked Not Doing, and alerts on rules no longer running, are excluded from both series.</p>
   </div>
   <div class="legend">
     <span><span class="sw sw-primary"></span>Raised</span>
     <span><span class="sw sw-benchmark"></span>Resolved</span>
   </div>
   <div class="chart">
-    <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart of alerts raised and resolved each month, February to July 2026. Raised 1, 2, 3, 5, 18, 1. Resolved 2, 12, 9, 5, 6, 7.">
-      <path class="bar-primary" d="M53,196 V192.5 Q53,188.5 57,188.5 H81 Q85,188.5 85,192.5 V196 Z"/>
-      <path class="bar-benchmark" d="M93,196 V185 Q93,181 97,181 H121 Q125,181 125,185 V196 Z"/>
-      <path class="bar-primary" d="M159,196 V185 Q159,181 163,181 H187 Q191,181 191,185 V196 Z"/>
-      <path class="bar-benchmark" d="M199,196 V110 Q199,106 203,106 H227 Q231,106 231,110 V196 Z"/>
-      <path class="bar-primary" d="M264,196 V177.5 Q264,173.5 268,173.5 H292 Q296,173.5 296,177.5 V196 Z"/>
-      <path class="bar-benchmark" d="M304,196 V132.5 Q304,128.5 308,128.5 H332 Q336,128.5 336,132.5 V196 Z"/>
-      <path class="bar-primary" d="M370,196 V162.5 Q370,158.5 374,158.5 H398 Q402,158.5 402,162.5 V196 Z"/>
-      <path class="bar-benchmark" d="M410,196 V162.5 Q410,158.5 414,158.5 H438 Q442,158.5 442,162.5 V196 Z"/>
-      <path class="bar-primary" d="M476,196 V65 Q476,61 480,61 H504 Q508,61 508,65 V196 Z"/>
-      <path class="bar-benchmark" d="M516,196 V155 Q516,151 520,151 H544 Q548,151 548,155 V196 Z"/>
-      <path class="bar-primary" d="M581,196 V192.5 Q581,188.5 585,188.5 H609 Q613,188.5 613,192.5 V196 Z"/>
-      <path class="bar-benchmark" d="M621,196 V147.5 Q621,143.5 625,143.5 H649 Q653,143.5 653,147.5 V196 Z"/>
+    <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart of alerts raised and resolved each month, February to August 2026. Raised 1, 2, 3, 5, 18, 1 and 2 in August to date. Resolved 2, 12, 9, 5, 6, 7 and 4 in August to date.">
+      <path class="bar-primary" d="M47,196 V192.5 Q47,188.5 51,188.5 H73 Q77,188.5 77,192.5 V196 Z"/>
+      <path class="bar-benchmark" d="M83,196 V185 Q83,181 87,181 H109 Q113,181 113,185 V196 Z"/>
+      <path class="bar-primary" d="M139,196 V185 Q139,181 143,181 H165 Q169,181 169,185 V196 Z"/>
+      <path class="bar-benchmark" d="M175,196 V110 Q175,106 179,106 H201 Q205,106 205,110 V196 Z"/>
+      <path class="bar-primary" d="M231,196 V177.5 Q231,173.5 235,173.5 H257 Q261,173.5 261,177.5 V196 Z"/>
+      <path class="bar-benchmark" d="M267,196 V132.5 Q267,128.5 271,128.5 H293 Q297,128.5 297,132.5 V196 Z"/>
+      <path class="bar-primary" d="M323,196 V162.5 Q323,158.5 327,158.5 H349 Q353,158.5 353,162.5 V196 Z"/>
+      <path class="bar-benchmark" d="M359,196 V162.5 Q359,158.5 363,158.5 H385 Q389,158.5 389,162.5 V196 Z"/>
+      <path class="bar-primary" d="M415,196 V65 Q415,61 419,61 H441 Q445,61 445,65 V196 Z"/>
+      <path class="bar-benchmark" d="M451,196 V155 Q451,151 455,151 H477 Q481,151 481,155 V196 Z"/>
+      <path class="bar-primary" d="M507,196 V192.5 Q507,188.5 511,188.5 H533 Q537,188.5 537,192.5 V196 Z"/>
+      <path class="bar-benchmark" d="M543,196 V147.5 Q543,143.5 547,143.5 H569 Q573,143.5 573,147.5 V196 Z"/>
+      <path class="bar-primary" d="M599,196 V185 Q599,181 603,181 H625 Q629,181 629,185 V196 Z"/>
+      <path class="bar-benchmark" d="M635,196 V170 Q635,166 639,166 H661 Q665,166 665,170 V196 Z"/>
       <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
-      <text class="val" x="69"  y="180" text-anchor="middle">1</text><text class="val" x="109" y="173" text-anchor="middle">2</text>
-      <text class="val" x="175" y="173" text-anchor="middle">2</text><text class="val" x="215" y="98"  text-anchor="middle">12</text>
-      <text class="val" x="280" y="165" text-anchor="middle">3</text><text class="val" x="320" y="120" text-anchor="middle">9</text>
-      <text class="val" x="386" y="150" text-anchor="middle">5</text><text class="val" x="426" y="150" text-anchor="middle">5</text>
-      <text class="val" x="492" y="53"  text-anchor="middle">18</text><text class="val" x="532" y="143" text-anchor="middle">6</text>
-      <text class="val" x="597" y="180" text-anchor="middle">1</text><text class="val" x="637" y="135" text-anchor="middle">7</text>
-      <text class="axis" x="89"  y="216" text-anchor="middle">Feb 26</text>
-      <text class="axis" x="195" y="216" text-anchor="middle">Mar 26</text>
-      <text class="axis" x="300" y="216" text-anchor="middle">Apr 26</text>
-      <text class="axis" x="406" y="216" text-anchor="middle">May 26</text>
-      <text class="axis" x="512" y="216" text-anchor="middle">Jun 26</text>
-      <text class="axis" x="617" y="216" text-anchor="middle">Jul 26</text>
+      <text class="val" x="62"  y="180" text-anchor="middle">1</text><text class="val" x="98"  y="173" text-anchor="middle">2</text>
+      <text class="val" x="154" y="173" text-anchor="middle">2</text><text class="val" x="190" y="98"  text-anchor="middle">12</text>
+      <text class="val" x="246" y="165" text-anchor="middle">3</text><text class="val" x="282" y="120" text-anchor="middle">9</text>
+      <text class="val" x="338" y="150" text-anchor="middle">5</text><text class="val" x="374" y="150" text-anchor="middle">5</text>
+      <text class="val" x="430" y="53"  text-anchor="middle">18</text><text class="val" x="466" y="143" text-anchor="middle">6</text>
+      <text class="val" x="522" y="180" text-anchor="middle">1</text><text class="val" x="558" y="135" text-anchor="middle">7</text>
+      <text class="val" x="614" y="173" text-anchor="middle">2</text><text class="val" x="650" y="158" text-anchor="middle">4</text>
+      <text class="axis" x="80"  y="216" text-anchor="middle">Feb 26</text>
+      <text class="axis" x="172" y="216" text-anchor="middle">Mar 26</text>
+      <text class="axis" x="264" y="216" text-anchor="middle">Apr 26</text>
+      <text class="axis" x="356" y="216" text-anchor="middle">May 26</text>
+      <text class="axis" x="448" y="216" text-anchor="middle">Jun 26</text>
+      <text class="axis" x="540" y="216" text-anchor="middle">Jul 26</text>
+      <text class="axis" x="632" y="216" text-anchor="middle">Aug 26</text>
+      <text class="axis-sub" x="632" y="228" text-anchor="middle">to date</text>
     </svg>
   </div>
-  <p class="chartnote">Resolution ran ahead of triage in five of six months — 41 resolved against 30 raised. June distorts the shape: 13 VAV and AHU actions were raised in a single batch on 24 June for investigation at the next monthly maintenance, so read the spike as one scheduled sweep rather than a month of new faults.</p>
+  <p class="chartnote">Resolution ran ahead of triage in six of seven months — 45 resolved against 32 raised. June distorts the shape: 13 VAV and AHU actions were raised in a single batch on 24 June for investigation at the next monthly maintenance, so read the spike as one scheduled sweep rather than a month of new faults. August covers 12 days, so both bars are short by construction.</p>
 </section>
 
 <section>
@@ -617,6 +679,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <li><strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running.</li>
     <li><strong>Median time to resolve</strong> is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work.</li>
     <li><strong>Raised vs resolved.</strong> Raised counts alerts triaged into actions in the month (or 1 where an action has no linked alert); resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series.</li>
+    <li><strong>The current month.</strong> Every monthly series runs to the issue date, so August holds 12 days rather than a full month. The volume series — automated checks, labour cost avoided, alerts raised and resolved — are short in that column by construction. Scores are rates over whatever days exist, so they are not.</li>
     <li><strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the issue date, so 100% reflects holding no open work.</li>
   </ol>
 </section>

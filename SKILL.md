@@ -1,13 +1,13 @@
 ---
 name: client-report
-description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health snapshot and monthly trends, alerts raised vs resolved, assignee leaderboard, and key wins — styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use when the user runs the /client-report slash command or asks for a client report, quarterly building performance review, or site performance report from PEAK data. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly equipment health, thermal comfort and alerts raised vs resolved trends, assignee leaderboard, and key wins — styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use when the user runs the /client-report slash command or asks for a client report, quarterly building performance review, or site performance report from PEAK data. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
 
 ## Output & theming
 
-The deliverable is a single self-contained A4 print-first HTML file — all CSS inline, charts as hand-authored inline SVG, no JS — modelled on `assets/reference-report.html`. Copy its structure, classes and chart techniques; replace the sample data. Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex — SVG presentation attributes cannot read `var()`. Heatmap band fills are the same deal (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor), so a brand that swaps its measurement containers recolours both heatmaps without touching markup.
+The deliverable is a single self-contained A4 print-first HTML file — all CSS inline, charts as hand-authored inline SVG, no JS — modelled on `assets/reference-report.html`. Copy its structure, classes and chart techniques; replace the sample data. Its chart SVGs are hand-authored at six columns — the monthly trends now run seven, so recompute the x positions across the plot width rather than reusing the reference coordinates and dropping the last month. Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex — SVG presentation attributes cannot read `var()`. Heatmap band fills are the same deal (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor), so a brand that swaps its measurement containers recolours both heatmaps without touching markup.
 
 Resolve the theme in this order:
 
@@ -33,9 +33,10 @@ Derived rules when overrides are active:
 4. [Equipment health snapshot](#equipment-health-snapshot)
 5. [Indoor environment health snapshot](#indoor-environment-health-snapshot)
 6. [Monthly equipment health](#monthly-equipment-health)
-7. [Alerts raised vs resolved](#alerts-raised-vs-resolved)
-8. [Assignee leaderboard](#assignee-leaderboard)
-9. [Key wins](#key-wins)
+7. [Monthly thermal comfort](#monthly-thermal-comfort)
+8. [Monthly alerts raised vs resolved](#monthly-alerts-raised-vs-resolved)
+9. [Assignee leaderboard](#assignee-leaderboard)
+10. [Key wins](#key-wins)
 
 Each section header renders as three stacked lines, per the reference report: the section name as an uppercase eyebrow in `primary`, the statement line beneath it as the `h2` headline, and the date line as a muted byline.
 
@@ -200,10 +201,10 @@ How the score is calculated: Share of zone readings inside the ASHRAE comfort ba
 ## Monthly equipment health
 
 Six months of trend  
-Date: last 6 months
+Date: last 6 complete months plus the current month to date
 
 Chart 1: Site equipment health score  
-Monthly line chart of equipment health score. Render the two nearest benchmark thresholds, one above and one below the data, and label them. Auto scale Y axis to fit both.
+Monthly line chart of equipment health score. Render the two nearest benchmark thresholds and label them — one either side where the series sits inside a band, otherwise the threshold it crosses plus the next one out, so the reader can see which months fall on which side. Auto scale Y axis to fit both.
 
 Add source and link to equipment health dashboard.
 
@@ -214,11 +215,41 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 
 - Display values on points. Chart 1 display 1dp x.x% and Chart 2 compact number formatting
 - Add chart titles
+- Score comes from the site rollup, the same series as the site row in [Equipment health snapshot](#equipment-health-snapshot), so the months they share must agree
+- Label the last point as partial, since the current month holds fewer days than the rest. Chart 2 matters most here — a month to date bar is short because the month is young, not because checking stopped. Say so in the chart note rather than leaving the reader to infer a decline
 
-## Alerts raised vs resolved
+**Links:**
+
+- Source link on Chart 1. Use the relative range, not custom dates — it holds the same window as the report ages
+- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&relative_date=last_6_months&include_today=true`
+
+## Monthly thermal comfort
+
+Where comfort has been heading  
+Date: last 6 complete months plus the current month to date
+
+Chart: Site thermal comfort score  
+Monthly line chart of thermal comfort score, built the same way as Chart 1 in [Monthly equipment health](#monthly-equipment-health), against the thermal comfort benchmark thresholds.
+
+Add source and link to indoor environment thermal comfort dashboard.
+
+**Display:**
+
+- Display values on points, 1dp x.x%
+- Add chart title
+- Score comes from the site rollup, the same series as the site row in [Indoor environment health snapshot](#indoor-environment-health-snapshot), so the months they share must agree
+- Thermal comfort swings harder than equipment health, so let the Y axis follow the data rather than reusing the equipment health scale
+- Label the last point as partial, since the current month holds fewer days than the rest
+
+**Links:**
+
+- Source link on the chart. Use the relative range, not custom dates
+- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts=2026-08-01&site_ids={{site_id}}&relative_date=last_6_months&include_today=true`
+
+## Monthly alerts raised vs resolved
 
 Faults triaged and resolved  
-Date: 6 months
+Date: last 6 complete months plus the current month to date
 
 Grouped bars by month.
 
@@ -230,6 +261,7 @@ Grouped bars by month.
 
 - Raised means an alert ticket is triaged into an action ticket, not when the alert ticket was created. Detection is automatic, raising is a human triage decision.
 - Filter on rule state is running. If an action is not linked to an alert still count it.
+- Label the last month as partial. Both series run short there because the month is young, so say it in the chart note rather than letting the reader read a slowdown.
 
 ## Assignee leaderboard
 
@@ -309,6 +341,15 @@ the current month is reported to date. Rows are levels x months, so page when
 levels x 4 exceeds 80. Never use `aggregate_entity:"zone"` for the snapshot —
 that is one row per zone per month, hundreds of rows for the same picture.
 Drill to zone only when investigating a named level.
+
+Run the `"site"` call from the first of the month six complete months back to
+tomorrow, so one call covers both the snapshot closing row and the
+[Monthly thermal comfort](#monthly-thermal-comfort) line — 7 buckets, the trend
+takes all of them, the snapshot the last 4. Same window on the `site` + `month`
+equipment health call for
+[Monthly equipment health](#monthly-equipment-health). Every monthly series in
+the report ends on the current month to date, so the trends and the snapshots
+share their closing bucket and must not disagree on it.
 
 Status ids: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing.
 
