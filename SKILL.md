@@ -70,11 +70,20 @@ Date: last 3 months
 
 | Rating chip                               | Metric label                                 | Value                                                                                       | Subtitle                                                                                                                                          |
 | ----------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| See below equipment score benchmark       | x.x% equipment health maintained             | Site equipment health score last 3 months                                                   | Up x.x pp vs y.y% over the last 12 months                                                                                                         |
-| See below thermal comfort score benchmark | x.x% thermal comfort maintained              | Site thermal comfort score last 3 months                                                    | Up x.x pp vs y.y% over the last 12 months                                                                                                         |
+| See below equipment score benchmark       | x.x% equipment health maintained             | Site equipment health score last 3 months                                                   | {Up\|Down} x.xx pp from y.yy% in {start month} to z.zz% in {current month} to date                                                                 |
+| See below thermal comfort score benchmark | x.x% thermal comfort maintained              | Site thermal comfort score last 3 months                                                    | {Up\|Down} x.x pp from y.y% in {start month} to z.z% in {current month} to date                                                                    |
 | Continuous                                | x automated equipment health checks ran 24/7 | Total executions last 3 months                                                              | Averaging x monthly checks across y scored rules                                                                                                  |
 | Modelled                                  | $x labor cost avoided                        | See below labor cost avoided model                                                          | x hours and y.y working days of inspection time                                                                                                   |
 | See below alert recovery benchmark        | x faults resolved with x% verified recovery  | Resolved alerts with current status closed last 3 months and current rule status is running | Median time to resolve of x days. Based on alert’s linked action creation and resolution date, do not use the alert creation and resolution date. |
+
+**Display:**
+
+- The two score rows carry a movement, not a baseline. Use the same definition as the snapshot Chg column — current month to date minus the start month, in pp — so the equipment movement equals the site row Chg in [Equipment health snapshot](#equipment-health-snapshot) and the thermal movement equals the site row Chg in [Indoor environment health snapshot](#indoor-environment-health-snapshot). A number the reader can check against the table below it is worth more than a 12 month baseline that appears nowhere else in the report
+- Name both endpoint values and their months in the subtitle. The headline figure is the 3 month score, not either endpoint, so a bare "up x.xx pp" implies a baseline that does not exist
+- Take both endpoints from the monthly site series already fetched for the snapshots and trends. No separate 12 month call
+- Equipment health to 2dp, thermal comfort to 1dp, matching each snapshot's precision
+- No red in this section. An improvement takes the positive chip, a decline or a flat result takes the muted chip — never the negative one. State the fall plainly in the figure, the glyph and the word: the section carries custodianship to the owner, so a decline is reported, not colour coded. Red stays available to the snapshot tables and charts below, where the detail belongs
+- The start month is the first month of the reporting quarter, so the row reads as where the quarter opened against where the site is running now
 
 **Links:**
 
@@ -244,7 +253,7 @@ Add source and link to indoor environment thermal comfort dashboard.
 **Links:**
 
 - Source link on the chart. Use the relative range, not custom dates
-- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts=2026-08-01&site_ids={{site_id}}&relative_date=last_6_months&include_today=true`
+- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts=2026-08-01&site_ids={{site_id}}&level_ids={level_id}&relative_date=last_6_months&include_today=true`
 
 ## Monthly alerts raised vs resolved
 
