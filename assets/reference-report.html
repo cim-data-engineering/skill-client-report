@@ -65,6 +65,7 @@ h1{font-family:var(--display);font-size:2.5rem;font-weight:700;line-height:1.15;
 .mastmeta{display:flex;flex-wrap:wrap;gap:44px;margin-top:36px;padding-top:20px;border-top:1px solid rgba(255,255,255,.18)}
 .mastmeta dt{font-size:.8125rem;font-weight:500;color:var(--on-secondary-muted);margin:0 0 4px}
 .mastmeta dd{margin:0;font-size:.9375rem;font-weight:500}
+.mastnote{margin:20px 0 0;text-wrap:pretty;font-size:.8125rem;font-weight:400;line-height:1.45;color:#B4B9DB;color:color-mix(in srgb,var(--secondary) 35%,var(--surface))}
 
 /* Sections */
 section{padding:48px 56px;border-bottom:1px solid var(--outline)}
@@ -242,8 +243,12 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
   <dl class="mastmeta">
     <div><dt>Reporting period</dt><dd>1 May – 31 Jul 2026</dd></div>
+    <!-- Author: always the full name of the logged-in PEAK MCP user. -->
+    <div><dt>Author</dt><dd>Jordan Avery</dd></div>
     <div><dt>Issued</dt><dd>12 Aug 2026</dd></div>
   </dl>
+  <!-- AI provenance disclaimer: required on every report, verbatim. -->
+  <p class="mastnote">AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed.</p>
 </header>
 
 <section>

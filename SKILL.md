@@ -45,7 +45,9 @@ Each section header renders as three stacked lines, per the reference report: th
 - {Site name} Quarterly Building Performance Review
 - Prepared by: {Company name} {Company service name}. Powered by PEAK
 - Reporting period: last 3 months date range
+- Author: full name of the logged-in PEAK MCP user, from `who_am_i` — always present, never omitted or substituted
 - Issue date: issue date
+- Disclaimer, verbatim, below the masthead metadata row: “AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed.”
 - Company name default “CIM” unless `name` is set in `BRAND.md` or given by the user
 - Company service name default “Data Driven Operations” unless `service-name` is set in `BRAND.md` or given by the user
 - Site `photo_url`: square, right of title block
@@ -328,6 +330,8 @@ Exclude actions resolved by stopping, tuning or ignoring a rule, platform, integ
 - Where win appears in the equipment health snapshot say so.
 
 ## Data recipes
+
+Author — `who_am_i`, read the user's full name for the masthead Author field.
 
 Site facts — `search_sites` omits these, use GraphQL:  
 `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
