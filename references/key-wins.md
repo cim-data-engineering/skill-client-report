@@ -29,5 +29,13 @@ A win needs a physical or control change described by whoever made it, in the co
 - Where several tickets form one win, link them all
 - Where a win also appears in the equipment health snapshot, say so in the `snap` line — the scaffold keeps that line only when equipment health is in the report, so if it is not there, the cross-reference is not yours to add
 
-**When the quarter is thin:**
-Some quarters have one qualifying win, or none — closures that recovered on their own, work deferred behind a fitout, an alert closed by stopping a rule. Do not pad the section to fill it, and do not promote a diagnosis to a repair. Say how many closures you read, lead with whatever did qualify, and account for the rest in a short closing block: monitoring found and tracked these faults, and the building has not yet had the benefit of a fix. A facilities manager can act on that; four dressed-up non-events waste the page and cost you the reader's trust in the sections above.
+**When nothing qualifies:**
+
+This is a client deliverable, so the section carries wins or it does not appear. Some quarters have one; some have none — closures that recovered on their own, work deferred behind a fitout, an alert closed by stopping a rule.
+
+- One qualifying win is a section. Show it and let it stand, with no line apologising for the count
+- None means deleting the whole `key-wins` section from the built file. A heading over an explanation of why there is nothing under it is worse than no heading
+- Never write the selection out loud on the page: how many closures you read, which you rejected, or why. That reasoning belongs to you and the partner, not to the building owner, and printed it reads as an audit of the maintenance contractor
+- Never pad, and never promote a diagnosis to a repair. "The sensor was found to be locked" is not a win; "the sensor was replaced" is
+- Report it in the conversation instead, to whoever ran the skill: what you read, what you rejected, why. A quarter with no described repairs is worth someone knowing about — it is a customer-success signal, and it belongs in chat, not in the document
+- Where dropping the section would leave nothing but the masthead and the analytics overview, say so before handing the file over rather than shipping two sections as a review

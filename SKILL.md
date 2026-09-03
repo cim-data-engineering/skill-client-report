@@ -43,6 +43,7 @@ Describe each option by what it adds, so the reader can see what leaving it out 
 - [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when at least one of the first three sections is in. Key wins on its own gives a masthead, the analytics overview and the wins — a short report, but an honest one, and the scaffold builds it that way
 - The notes band is an `<ol>`, so items dropped with their section renumber themselves. Trim the shared reporting-window item to the series that survive
 - Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scaffold handles this for the parts it knows; the prose is yours to keep honest
+- Key wins is the one section whose content can evaporate after the fetch, since whether a closure qualifies is only knowable from its comments. If none does, delete the section from the built file and report that in chat — the page never explains its own absences. Its reference carries the rule
 
 ## What always renders
 

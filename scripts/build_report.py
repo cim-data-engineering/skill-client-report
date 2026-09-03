@@ -159,6 +159,13 @@ def cmd_check(args):
                 warnings.append("reference site's own %s appears — fine only if this "
                                 "report really is for it" % ("id %s" % token if token.isdigit() else "name %r" % token))
 
+    # Key wins is the one section that can be scaffolded and then find nothing
+    # to say: an empty heading is worse than no heading, so it must be deleted.
+    kw = text.find('<p class="eyebrow">Key wins</p>')
+    if kw != -1 and 'class="win"' not in text[kw:text.find("</section>", kw)]:
+        errors.append("Key wins section carries no wins — delete the section rather "
+                      "than shipping the heading (references/key-wins.md)")
+
     present = re.findall(r'<p class="eyebrow">([^<]+)</p>', text)
     print("sections present: %s" % ", ".join(present))
     for w in warnings:
