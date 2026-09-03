@@ -66,7 +66,7 @@ Date: the 7 month window
 - Resolved and Open now as plain numerals. No bars
 - Close with a total row, separated from the rank
 - Include assignees with zero resolved but open actions. Exclude actions marked as Not Doing
-- Exclude non-human users. PEAK files them under a company of their own — the AI review agent shows as "AI Agent (Pilot)" — and it is assigned the tickets it raises itself, so it can outrank every contractor on its own review sweeps. Its closures stay in the raised vs resolved series, so note in the section line that the leaderboard total is the lower of the two
+- Exclude non-human users from the leaderboard. The AI review agent shows as Agent Hannah, filed under a company of its own, "AI Agent (Pilot)"; treat any other agent the same way. It is assigned the tickets it raises itself, so it can outrank every contractor on its own review sweeps. This is a ranking rule only — those actions still count in raised vs resolved, which measures how much work moved rather than who gets the credit. Note in the section line that the leaderboard total is the lower of the two
 - Truncate assignee and company name with ellipsis, do not wrap rows
 
 **Links:**
