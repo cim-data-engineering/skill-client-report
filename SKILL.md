@@ -41,7 +41,7 @@ Describe each option by what it adds, so the reader can see what leaving it out 
 - Skip the prompt when the invocation already names the sections ("/client-report Skyline Tower — equipment health and key wins only") and state the resolved list in your reply instead
 - Resolve the list before the first PEAK call. A section that is out is never fetched
 - [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when at least one of the first three sections is in. Key wins on its own gives a masthead, the analytics overview and the wins — a short report, but an honest one, and the scaffold builds it that way
-- The notes band is an `<ol>`, so items dropped with their section renumber themselves. Trim the shared current month item to the series that survive
+- The notes band is an `<ol>`, so items dropped with their section renumber themselves. Trim the shared reporting-window item to the series that survive
 - Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scaffold handles this for the parts it knows; the prose is yours to keep honest
 
 ## What always renders
@@ -50,7 +50,7 @@ Describe each option by what it adds, so the reader can see what leaving it out 
 
 - {Site name} Quarterly Building Performance Review
 - Prepared by: {Company name} {Company service name}. Powered by PEAK
-- Reporting period: last 3 months date range
+- Reporting period: the three complete months ending on the last complete month, as a date range
 - Author: full name of the logged-in PEAK MCP user, from `who_am_i` — always present, never omitted or substituted
 - Issue date: issue date
 - Disclaimer, verbatim, below the masthead metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
@@ -84,13 +84,13 @@ A frame around rows the sections own: three from equipment health, one from indo
 
 - No red in this section. An improvement takes the positive chip, a decline or a flat result takes the muted chip — never the negative one. State a fall plainly in the figure, the glyph and the word: the section carries custodianship to the owner, so a decline is reported, not colour coded. Red stays available to the snapshot tables and charts below, where the detail belongs
 - Keep the surviving rows in this order: equipment health score, thermal comfort, automated checks, labor cost avoided, faults resolved. Rows stack, so a removed row costs no layout work
-- Where a row states a movement, the start month is the first month of the reporting quarter, so it reads as where the quarter opened against where the site is running now
+- Where a row states a movement, it runs from the first month of the quarter to the last, so it reads as where the quarter opened against where it closed — the whole reporting period and nothing outside it
 
 ## Notes band
 
 Numbered methodology items in report order, each owned by the section it explains, plus one shared item:
 
-- **The current month** — every monthly series runs to the issue date, so the last bucket holds part of a month. Volume series are short there by construction; scores are rates over whatever days exist, so they are not. Name only the series the report actually shows
+- **The reporting window** — every monthly series closes on the last complete month, so no column or bar covers a part-month and the volume series can be read against each other directly. Name the series the report actually shows, and the three complete months the quarter covers
 
 ## After the render
 
@@ -103,7 +103,9 @@ A follow-up on a report that already exists is not a rebuild. Match the reading 
 
 ## Shared data
 
-Windows, named once because the references reuse them: the **quarter** is the last 3 months; the **4 month window** is the last 3 complete months plus the current month to date, which the snapshots use; the **7 month window** is the last 6 complete months plus the current month to date, which the trends use. Every monthly series ends on the current month to date, so trends and snapshots share their closing bucket and must not disagree on it.
+Every window closes on the **last complete month**. Nothing in the report covers a part-month, which is the right shape for a quarterly review — it reads as of the quarter, not as of the day someone happened to generate it — and it keeps every equipment health window on a month boundary, where the scores are stored pre-aggregated. A mid-month bound forces a raw scan there and a wide call is then refused outright for scanning too many rows.
+
+Two windows, named once because the references reuse them: the **quarter** is the three complete months ending on the last complete month, which the snapshots use column for column; the **7 month window** is the seven complete months ending there, which the trends use, so a trend carries the quarter plus the four months before it. Both close on the same bucket, so trends and snapshots share it and must not disagree on it.
 
 Always:
 

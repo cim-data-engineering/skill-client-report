@@ -33,7 +33,7 @@ Recovery rate is alerts resolved in the period with fault status recovered divid
 ## Monthly alerts raised vs resolved
 
 Faults triaged and resolved
-Date: last 6 complete months plus the current month to date
+Date: the seven complete months ending with the quarter
 
 Grouped bars by month.
 
@@ -44,7 +44,7 @@ Grouped bars by month.
 ## Assignee leaderboard
 
 Who closed the work
-Date: last 6 months
+Date: the six complete months ending with the quarter
 
 | Column          | Reference                                |
 | --------------- | ---------------------------------------- |
@@ -77,4 +77,4 @@ Date: last 6 months
 - **Median time to resolve** is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work
 - **Raised vs resolved.** Raised means an alert ticket is triaged into an action ticket, not when the alert ticket was created — detection is automatic, raising is a human triage decision. Resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series
 - **Completion rate** is resolved / (resolved + currently open) as at the issue date, so 100% reflects holding no open work
-- Label the last month of the chart as partial. Both series run short there because the month is young, so say it in the chart note rather than letting the reader read a slowdown
+- Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved, or one action closing many alerts at once, is worth a sentence in the chart note
