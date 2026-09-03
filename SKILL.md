@@ -122,18 +122,22 @@ Always:
 - Author — `who_am_i`, the user's full name for the masthead
 - Site facts — `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
 - Counts for the analytics overview — never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
-- Thermal zones — the zones PEAK scores for thermal comfort. Ask the rollup that owns the number: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. Counting sensor points instead looks cheaper and gets it wrong — the point code differs by equipment type, so any fixed list of codes misses whatever the building happens to use, and at one site a four-code list found 65 points against the 332 zones being scored. This is the same figure the indoor environment snapshot totals, so the two agree by construction
+- Thermal zones — the zones PEAK scores for thermal comfort: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. Do not count sensor points instead. The point code differs by equipment type, so a fixed list of codes misses whatever the building happens to use — at one site it found 65 points against 332 scored zones
 
 Only when Actions resolved and leaderboard, or Key wins, is in:
 
-Use `search_action_tickets`, not `tickets.tickets`. It returns `title`, `equipment_names`, `assignee{name, company_name}`, `linked_alert_ids`, `created_at`, `resolved_at` and `status` in one documented shape; the GraphQL equivalent needs nested paths (`assignees{}`, `ticket_links{ticket(){}}`) that have to be described before they can be trusted, and it still does not carry titles.
+Two tools read action tickets, and each is better at one job.
 
-It pages at 50, so pull only what each section needs:
+`search_action_tickets` carries the titles, equipment names and dates. Key wins and the median need those, so use it there. It pages at 50 and the rows are fat, so ask it only for months you will actually read.
 
-- **Resolved rows** — `resolved_after_local`/`resolved_before_local` over the 7 month window. The leaderboard needs these rows for assignee names, so the resolved series and the median time to resolve come free from the same pages
+`tickets.tickets` is the cheap way to count. Ask for `ticket_id`, `status_id`, `resolved_at` and `assignees{firstname, lastname, entity{name}}` and the rows are a fifth the size — 160 closures come back in three lean pages rather than four fat ones. Pass `ticket_archived: false`, which the other tool does for you.
+
+Pull only what each section needs:
+
+- **Resolved rows** — over the 7 month window, which answers the leaderboard, the resolved series and the median at once. Check the tally before you use it: read each month's count straight back with `limit:1` and compare. A hand count of 160 rows is wrong more often than it is right
 - **Raised counts** — one call per month with `created_after_local`/`created_before_local`, `limit:1`, and read `pagination.total`. Seven small calls beat three pages of rows you would only be counting. That total counts every status, so repeat each month with `status:"not_doing"` and subtract, or the two series drop Not Doing differently
 - **Open now** — one call per open status (`open`, `in_progress`, `on_hold`), no date bound, since work raised before the window can still be open today
-- Count actions, one per ticket, in both series. Not alerts: an action can be bulk-linked to dozens of alerts — 141 on one ticket at one site — and weighting by them makes a month spike on a triage decision rather than on work. Actions are what the reader assigns and closes
+- Count actions, one per ticket, in both series — never alerts. An action can be bulk-linked to dozens of them, 141 on one ticket at one site, so weighting by alerts makes a month spike on a triage decision rather than on work
 - Drop status Not Doing throughout. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing
 
 ## Newly onboarded sites
@@ -147,7 +151,7 @@ A site can have less history than the window asks for. Read that from the first 
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
 - An equipment type or a level can start later than the site did — new rules on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in the section note when its rules began scoring
 - Prorate the labor cost model over the days actually monitored, not the calendar quarter, or it credits the monitoring with time it wasn't running
-- A gap in the middle of a series is an outage, not onboarding. So is a month that did return a score but off a fraction of the usual rules — one rule against 850 either side is an outage wearing a score, and plotting it craters the trend for a reason that has nothing to do with the building. Treat both the same way: plot the months that exist, leave the gap visible, and say so in the chart note
+- A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules — one rule against 850 either side is an outage wearing a score, and plotting it craters the trend for a reason that has nothing to do with the building. Treat both alike: plot the months that exist, leave the gap visible, and say so in the chart note
 
 ## Output & theming
 

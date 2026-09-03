@@ -16,7 +16,7 @@ Both windows close on the last complete month: `local_end_date` is exclusive, so
 
 The level rollup carries no zone count, so Zones costs one small call per level: `aggregate_entity:"zone"`, `aggregate_period:"all"`, `level_ids:[one level]`, `limit:1`, read `pagination.total`. It is the most expensive thing in this section.
 
-The column is worth having, and it is not slow: the calls are one row each and all go out together, so a 14-level building costs one batch of 14 tiny responses. Take the per-level counts up to about 25 levels. Above that, make one call for the site total (same query, no `level_ids`), drop the column, and give the site total in the notes instead — floor-by-floor counts in a tower are nearly uniform anyway.
+The calls are one row each and go out together, so a dozen levels is one cheap batch. Take the per-level counts up to about that many. Above it, make one call for the site total (same query, no `level_ids`), drop the column, and give the total in the notes instead — a tower's floors carry near-identical zone counts, so past a dozen calls you are paying to print the same number over and over. At one 25-level site, 19 floors had exactly eight.
 
 Do not substitute `platform.levels` or `platform.zones`. They count zone *objects*, not zone temperature points — at one 25-level site that was 340 against 200 scored zones, which would contradict the thermal zones figure in the analytics overview. `has_ie_config` on `platform.zones` means a zone-specific override, not participation in the score.
 
