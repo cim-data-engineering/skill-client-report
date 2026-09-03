@@ -316,7 +316,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
   <!-- endif -->
 
-  <!-- if: actions -->
+  <!-- if: alerts-resolved -->
   <div class="irow">
     <span class="chip pos">Excellent</span>
     <div>
@@ -333,7 +333,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <!-- if: indoor-environment -->
     <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">See live indoor environment dashboard ›</a>
     <!-- endif -->
-    <!-- if: actions -->
+    <!-- if: alerts-resolved -->
     <a href="https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&amp;site_ids=1042&amp;status_ids=6&amp;archived=false">See live issues being resolved ›</a>
     <!-- endif -->
   </div>
@@ -718,19 +718,19 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <!-- if: indoor-environment -->
     <li><strong>Zones</strong> in the indoor environment snapshot counts the thermal zones that returned a score over the window — 298 of the 314 zone temperature points in the analytics overview. The remaining 16 did not report often enough in working hours to be scored.</li>
     <!-- endif -->
-    <!-- if: actions -->
+    <!-- if: alerts-resolved -->
     <li><strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running.</li>
     <!-- endif -->
-    <!-- if: actions -->
+    <!-- if: alerts-resolved -->
     <li><strong>Median time to resolve</strong> is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work.</li>
     <!-- endif -->
-    <!-- if: actions -->
+    <!-- if: alerts-resolved -->
     <li><strong>Raised vs resolved.</strong> Raised counts alerts triaged into actions in the month (or 1 where an action has no linked alert); resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series.</li>
     <!-- endif -->
-    <!-- if: equipment-health,indoor-environment,actions -->
+    <!-- if: equipment-health,indoor-environment,alerts-resolved -->
     <li><strong>The current month.</strong> Every monthly series runs to the issue date, so August holds 12 days rather than a full month. The volume series — automated checks, labour cost avoided, alerts raised and resolved — are short in that column by construction. Scores are rates over whatever days exist, so they are not.</li>
     <!-- endif -->
-    <!-- if: actions -->
+    <!-- if: alerts-resolved -->
     <li><strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the issue date, so 100% reflects holding no open work.</li>
     <!-- endif -->
   </ol>

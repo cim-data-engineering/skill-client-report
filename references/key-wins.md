@@ -17,7 +17,7 @@ Highlight resolved or open actions, written for the facilities manager or buildi
 Written by the partner maintaining the site, delivered to the facilities manager, forwarded by them to the owner. Each win must evidence custodianship: the building is watched, faults are found and fixed, closures are verified rather than asserted. Write from the partner's side, not the platform's.
 
 **Selection:**
-A win needs a physical or control change described by whoever made it, in the comment history. Exclude actions resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
+A win needs a physical or control change described by whoever made it, in the comment history. Exclude alerts resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
 
 **Display:**
 

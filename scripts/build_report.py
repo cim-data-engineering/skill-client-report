@@ -7,6 +7,7 @@ Rather than re-emit ~19KB of CSS and the markup of sections nobody asked for,
 scaffold the file you need and edit the sample data in place.
 
     scaffold  copy the shell, the always-on parts and the selected sections
+    part      print one part's markup, to add a section to a report already built
     check     look for sample data, sample links and markers left behind
     parts     list part names and sizes
 
@@ -23,12 +24,12 @@ ALWAYS = ["shell", "masthead", "analytics-overview", "footer"]
 SECTION_PARTS = {
     "equipment-health": ["equipment-health-snapshot", "monthly-equipment-health"],
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],
-    "actions": ["monthly-alerts", "assignee-leaderboard"],
+    "alerts-resolved": ["monthly-alerts", "assignee-leaderboard"],
     "key-wins": ["key-wins"],
 }
 # Parts that render for any of several sections. Operational impact is a frame
 # around rows the sections own, so it only stands if one of them is in.
-ROW_SECTIONS = ["equipment-health", "indoor-environment", "actions"]
+ROW_SECTIONS = ["equipment-health", "indoor-environment", "alerts-resolved"]
 PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS}
 PART_RE = re.compile(r"^\s*<!-- part: ([a-z-]+) -->\s*$")
 IF_RE = re.compile(r"^\s*<!-- if: ([a-z-, ]+) -->\s*$")
@@ -163,6 +164,19 @@ def cmd_check(args):
     print("ok — no sample data, placeholders or markers left.")
 
 
+def cmd_part(args):
+    """One part on its own, for adding a section to a report that already exists.
+    Re-scaffolding would throw away the filled-in report; this does not."""
+    sections = [x.strip() for x in args.sections.split(",") if x.strip()] \
+        if args.sections not in (None, "all") else list(SECTION_PARTS)
+    resolve(sections)
+    for name, lines in read_parts():
+        if name == args.name:
+            sys.stdout.write("\n".join(render(lines, sections)) + "\n")
+            return
+    sys.exit("unknown part: %s — run `parts` to list them" % args.name)
+
+
 def cmd_parts(args):
     for name, lines in read_parts():
         owner = next((s for s, ps in SECTION_PARTS.items() if name in ps), None) \
@@ -177,6 +191,11 @@ if __name__ == "__main__":
     s.add_argument("--sections", help="comma-separated: %s (default all)" % ", ".join(SECTION_PARTS))
     s.add_argument("--out", required=True)
     s.set_defaults(func=cmd_scaffold)
+    o = sub.add_parser("part", help="print one part's markup, for a report already built")
+    o.add_argument("name")
+    o.add_argument("--sections", help="the report's full section list, so the part's "
+                                      "conditional blocks resolve the same way (default all)")
+    o.set_defaults(func=cmd_part)
     c = sub.add_parser("check", help="find sample data, placeholders or markers left behind")
     c.add_argument("report")
     c.set_defaults(func=cmd_check)

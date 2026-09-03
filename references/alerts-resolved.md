@@ -1,4 +1,4 @@
-# Actions resolved and leaderboard
+# Alerts resolved and leaderboard
 
 Owns the operational impact faults resolved row, monthly alerts raised vs resolved, and the assignee leaderboard. Scaffold parts: `monthly-alerts`, `assignee-leaderboard`.
 

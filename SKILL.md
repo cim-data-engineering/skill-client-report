@@ -1,6 +1,6 @@
 ---
 name: client-report
-description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, actions resolved with the assignee leaderboard, and key wins — as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the assignee leaderboard, and key wins — as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
@@ -32,7 +32,7 @@ Describe each option by what it adds, so the reader can see what leaving it out 
 | -------------------------------- | -------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | Equipment health                 | `equipment-health`   | `references/equipment-health.md`   | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends   |
 | Indoor environment               | `indoor-environment` | `references/indoor-environment.md` | the thermal comfort row, comfort by level, the six month comfort trend                                                            |
-| Actions resolved and leaderboard | `actions`            | `references/actions.md`            | the faults resolved row with verified recovery, six months of raised vs resolved, and who closed the work                         |
+| Actions resolved and leaderboard | `alerts-resolved`    | `references/alerts-resolved.md`            | the faults resolved row with verified recovery, six months of raised vs resolved, and who closed the work                         |
 | Key wins                         | `key-wins`           | `references/key-wins.md`           | what physically changed in the building, evidenced from action comments                                                           |
 
 **Rules:**
@@ -78,7 +78,7 @@ All five render whatever the section selection, including thermal zones when ind
 What that monitoring delivered this quarter
 Date: last 3 months
 
-A frame around rows the sections own: three from equipment health, one from indoor environment, one from actions resolved. Their specs live in those references. The section renders when at least one of them is in and drops when none is.
+A frame around rows the sections own: three from equipment health, one from indoor environment, one from alerts resolved. Their specs live in those references. The section renders when at least one of them is in and drops when none is.
 
 **Display:**
 
@@ -91,6 +91,15 @@ A frame around rows the sections own: three from equipment health, one from indo
 Numbered methodology items in report order, each owned by the section it explains, plus one shared item:
 
 - **The current month** — every monthly series runs to the issue date, so the last bucket holds part of a month. Volume series are short there by construction; scores are rates over whatever days exist, so they are not. Name only the series the report actually shows
+
+## After the render
+
+A follow-up on a report that already exists is not a rebuild. Match the reading to the ask:
+
+- **A number, a date, a name, a sentence** — edit the file. One PEAK call if the answer needs one, no references, no `DESIGN.md`
+- **A section that was left out** — `python3 scripts/build_report.py part key-wins --sections <the report's full new list>` prints that part's markup on its own. Paste it in report order, read its reference, fetch only its calls. Re-scaffolding would throw away the report you have. Where the new section owns operational impact rows or notes items, add those too; if the report has neither of those frames, it was built with none of the three data sections in, so scaffold a fresh file instead
+- **A visual or structural change** — a new component, a table re-laid out, a different chart form — is where `DESIGN.md` earns its read: `## Colors` and `## Typography` for the tokens and the roles they fill, `## Components` for what a component owes, `## Layout` for the print rules. The rendered file carries the CSS but not the reasoning, so changing the design without it is guesswork
+- **A rebrand** — `BRAND.md` and the logo assets it names, per [Output & theming](#output--theming). Both files stay at the repo root because that is where the brand overlay skills write them, and because a rebrand reads them as a pair. All the tokens sit in one `:root` block and the masthead logo is one inlined SVG, so this stays a handful of edits on the file you already have
 
 ## Shared data
 
@@ -127,7 +136,7 @@ Resolve the theme in this order:
    - `colors:` — `primary`, `primary-container`, `on-primary-container`, `secondary`, `on-secondary`, `on-secondary-muted`, `chart-benchmark`, `text-heading` only
    - `fonts:` — `display`, `text`, `mono` family swaps mapped onto the DESIGN.md typography roles (display → h1/h2/card-title/metric; text → body/body-sm/label/eyebrow; mono → mono). Sizes, weights and line-heights always keep DESIGN.md values. Families on Google Fonts load CDN-first with `assets/fonts` fallback; otherwise local `assets/fonts` only
    - `logos:` — `reversed` (masthead) and `full-color`, paths to partner files. Inline the referenced SVG contents (data URI for PNG) so the report stays self-contained
-3. **`DESIGN.md`** — read its `## Colors` and `## Typography` sections when an override needs the role mapping, and the rest only when you need a component the scaffold has no CSS for. It is the source of truth, but the scaffold already speaks for it
+3. **`DESIGN.md`** (repo root, alongside BRAND.md) — read its `## Colors` and `## Typography` sections when an override needs the role mapping, and the rest when you need a component the scaffold has no CSS for or are changing the design itself, per [After the render](#after-the-render). It is the source of truth; the scaffold is only its output
 4. A missing BRAND.md, or any key left commented or absent, keeps the CIM default — an untouched fork must render identically to CIM's own output
 
 Derived rules when overrides are active:
