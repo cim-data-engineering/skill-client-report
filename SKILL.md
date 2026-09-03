@@ -122,7 +122,7 @@ Always:
 - Author — `who_am_i`, the user's full name for the masthead
 - Site facts — `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
 - Counts for the analytics overview — never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
-- Thermal zones — `search_favourites(metadata_codes:["VAV-Zn-T","PAC-Zn-T","Un-Zn-T","ZnT"], limit:1)`, read `pagination.total`. Filter on the codes, not the name. `%Zone Temperature` also matches `Un-MxZT`, the per-AHU maximum zone temperature, and `EF-ZnT` on exhaust fans; neither is a thermal zone, and on a small site the AHU aggregates alone inflated the count by 14%. Never widen to `%Zone Temp%` either — that picks up setpoints and roughly doubles it. Codes are case-sensitive and an unknown one matches nothing silently, so a zero here at a site that plainly has thermal comfort data means the list is wrong for that site, not that the site has no zones
+- Thermal zones — the zones PEAK scores for thermal comfort. Ask the rollup that owns the number: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. Counting sensor points instead looks cheaper and gets it wrong — the point code differs by equipment type, so any fixed list of codes misses whatever the building happens to use, and at one site a four-code list found 65 points against the 332 zones being scored. This is the same figure the indoor environment snapshot totals, so the two agree by construction
 
 Only when Actions resolved and leaderboard, or Key wins, is in:
 
@@ -131,7 +131,7 @@ Use `search_action_tickets`, not `tickets.tickets`. It returns `title`, `equipme
 It pages at 50, so pull only what each section needs:
 
 - **Resolved rows** — `resolved_after_local`/`resolved_before_local` over the 7 month window. The leaderboard needs these rows for assignee names, so the resolved series and the median time to resolve come free from the same pages
-- **Raised counts** — one call per month with `created_after_local`/`created_before_local`, `limit:1`, and read `pagination.total`. Seven small calls beat three pages of rows you would only be counting
+- **Raised counts** — one call per month with `created_after_local`/`created_before_local`, `limit:1`, and read `pagination.total`. Seven small calls beat three pages of rows you would only be counting. That total counts every status, so repeat each month with `status:"not_doing"` and subtract, or the two series drop Not Doing differently
 - **Open now** — one call per open status (`open`, `in_progress`, `on_hold`), no date bound, since work raised before the window can still be open today
 - Count actions, one per ticket, in both series. Not alerts: an action can be bulk-linked to dozens of alerts — 141 on one ticket at one site — and weighting by them makes a month spike on a triage decision rather than on work. Actions are what the reader assigns and closes
 - Drop status Not Doing throughout. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing
@@ -147,7 +147,7 @@ A site can have less history than the window asks for. Read that from the first 
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
 - An equipment type or a level can start later than the site did — new rules on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in the section note when its rules began scoring
 - Prorate the labor cost model over the days actually monitored, not the calendar quarter, or it credits the monitoring with time it wasn't running
-- A gap in the middle of a series is an outage, not onboarding. Plot the months that exist, leave the gap visible, and say so in the chart note
+- A gap in the middle of a series is an outage, not onboarding. So is a month that did return a score but off a fraction of the usual rules — one rule against 850 either side is an outage wearing a score, and plotting it craters the trend for a reason that has nothing to do with the building. Treat both the same way: plot the months that exist, leave the gap visible, and say so in the chart note
 
 ## Output & theming
 
