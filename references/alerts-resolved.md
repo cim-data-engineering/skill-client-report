@@ -2,7 +2,7 @@
 
 Owns the operational impact faults resolved row, monthly alerts raised vs resolved, and the assignee leaderboard. Scaffold parts: `monthly-alerts`, `assignee-leaderboard`.
 
-The two go together because they answer the same question from either end — how much fault work the site took on, and who closed it — off one pull of action tickets.
+The two go together because they answer the same question from either end — how much fault work the site took on, and who closed it — from one pull of action tickets.
 
 ## Fetch
 
@@ -14,7 +14,7 @@ The two go together because they answer the same question from either end — ho
 
 | Rating chip                        | Metric label                                | Value                                                                                       | Subtitle                                                                                                                                           |
 | ---------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| See below alert recovery benchmark | x faults resolved with x% verified recovery | Resolved alerts with current status closed last 3 months and current rule status is running | Median time to resolve of x days. Based on the alert's linked action creation and resolution date, not the alert's own creation and resolution date |
+| See below alert recovery benchmark | x faults resolved with x% verified recovery | Resolved alerts with status closed over the quarter, on rules still running | Median time to resolve of x days. Based on the alert's linked action creation and resolution date, not the alert's own creation and resolution date |
 
 Section link, labelled "See live issues being resolved":
 `https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&site_ids={{site_id}}&status_ids=6&archived=false`
@@ -44,14 +44,14 @@ Grouped bars by month.
 ## Assignee leaderboard
 
 Who closed the work
-Date: the six complete months ending with the quarter
+Date: the 7 month window
 
 | Column          | Reference                                |
 | --------------- | ---------------------------------------- |
 | Rank            | Position by actions resolved             |
 | Assignee        | Action ticket assignee full name         |
 | Company         | Assignee company name                    |
-| Resolved        | Actions resolved in the period           |
+| Resolved        | Actions resolved in the window           |
 | Completion rate | Resolved / (resolved + open now) x%      |
 | Open now        | Actions currently open, as at issue date |
 
@@ -68,8 +68,8 @@ Date: the six complete months ending with the quarter
 
 **Links:**
 
-- Add link to PEAK assignee leaderboard with last 6 month custom date range selected
-- `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date=2026-02-01T00:00:00.000&end_date=2026-07-31T00:00:00.000&grouping=assignee`
+- Add link to the PEAK assignee leaderboard over the same 7 month window
+- `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=assignee`
 
 ## Notes band items
 

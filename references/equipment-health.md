@@ -1,12 +1,12 @@
 # Equipment health
 
-Owns three of the operational impact rows — the equipment health score, the automated health checks and the labor cost avoided — plus the equipment health snapshot and both charts in monthly equipment health. The checks and the cost model are what the equipment health rules did, so they travel with this section rather than standing on their own. Scaffold parts: `equipment-health-snapshot`, `monthly-equipment-health`.
+Owns three of the operational impact rows — the equipment health score, the automated health checks and the labor cost avoided — plus the equipment health snapshot and both charts in monthly equipment health. The checks and the cost model measure what the equipment health rules did, so they belong to this section. Scaffold parts: `equipment-health-snapshot`, `monthly-equipment-health`.
 
 ## Fetch
 
 `search_equipment_health_scores` shapes all six calls. It takes no `limit` and returns every group, so none of these page.
 
-Pass `local_end_date` as the first of the month after the last complete month — it is exclusive, and both windows close there. Month boundaries are stored pre-aggregated, so this is also the only shape that reliably returns: a mid-month bound forces a raw scan and a wide call is then refused outright for scanning over 200,000 rows.
+Pass `local_end_date` as the first of the month after the last complete month; it is exclusive, and both windows close there. A mid-month bound is refused for scanning too many rows — Shared data in SKILL.md says why.
 
 | Call                                       | Window        | Feeds                                                        |
 | ------------------------------------------ | ------------- | ------------------------------------------------------------ |
@@ -23,21 +23,21 @@ On the `priority` calls, executions sum across priorities for the checks total a
 
 | Rating chip                         | Metric label                     | Value                                     | Subtitle                                                                          |
 | ----------------------------------- | -------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------- |
-| See below equipment score benchmark | x.x% equipment health maintained | Site equipment health score last 3 months | {Up\|Down} x.xx pp from y.yy% in {first month of the quarter} to z.zz% in {last month} |
+| See below equipment score benchmark | x.x% equipment health maintained | Site equipment health score over the quarter | {Up\|Down} x.xx pp from y.yy% in {first month of the quarter} to z.zz% in {last month} |
 
-The row carries a movement, not a baseline: the quarter's last month minus its first, in pp — the same definition as the snapshot Chg column, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months; the headline figure is the 3 month score, so a bare "up x.xx pp" implies a baseline that appears nowhere in the report. The headline score is the `site` × `all` rollup over the quarter; both movement endpoints come from the `site` × `month` series already fetched — no separate 12 month call. Score to 2dp, matching the snapshot.
+The row carries a movement, not a baseline: the quarter's last month minus its first, in pp — the same definition as the snapshot Chg column, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months; the headline figure is the quarter score, so a bare "up x.xx pp" implies a baseline that appears nowhere in the report. The headline score is the `site` × `all` rollup over the quarter; both movement endpoints come from the `site` × `month` series already fetched — no separate 12 month call. Score to 2dp, matching the snapshot.
 
 | Rating chip | Metric label                                 | Value                          | Subtitle                                         |
 | ----------- | -------------------------------------------- | ------------------------------ | ------------------------------------------------ |
-| Continuous  | x automated equipment health checks ran 24/7 | Total executions last 3 months | Averaging x monthly checks across y scored rules |
+| Continuous  | x automated equipment health checks ran 24/7 | Total executions over the quarter | Averaging x monthly checks across y scored rules |
 | Modelled    | $x labor cost avoided                        | See the labor cost model below | x hours and y.y working days of inspection time  |
 
 Section link, labelled "See live equipment health dashboard":
-`https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date=2026-05-01T00:00:00.000&end_date=2026-07-31T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
+`https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
 
 ## Labor cost avoided model
 
-Unique rules scored (by priority) last 3 months x annual mins saved per rule x (days in window / 365) x labor cost per minute. Assumed labor rates based on site region: USD 100/hr, AUD 150/hr, NZD 150/hr, GBP 75/hr, CAD 150/hr, EUR 100/hr.
+Unique rules scored (by priority) over the quarter x annual mins saved per rule x (days in window / 365) x labor cost per minute. Assumed labor rates based on site region: USD 100/hr, AUD 150/hr, NZD 150/hr, GBP 75/hr, CAD 150/hr, EUR 100/hr.
 
 | Priority | Annual checks | Mins per check | Annual mins saved per rule | Labor cost per hour ($US) | Annual cost saved per rule ($US) |
 | -------- | ------------- | -------------- | -------------------------- | ------------------------- | -------------------------------- |
@@ -60,9 +60,9 @@ Each rule replaces a manual inspection at a set frequency by priority: P1 daily 
 ## Equipment health snapshot
 
 Health by equipment type
-Date: the three complete months of the quarter
+Date: the quarter
 
-Heatmap table of monthly equipment health scores, one row per equipment type, three score columns — the months of the quarter, column for column with the reporting period in the masthead — plus two count columns the thermal comfort heatmap does not carry.
+Heatmap table of monthly equipment health scores, one row per equipment type, three score columns — the months of the quarter, matching the reporting period in the masthead — plus two count columns the thermal comfort heatmap does not carry.
 
 | Column         | Reference                                              |
 | -------------- | ------------------------------------------------------ |
@@ -90,7 +90,7 @@ Heatmap table of monthly equipment health scores, one row per equipment type, th
 **Links:**
 
 - Hyperlink equipment type name to PEAK with the same quarter as a custom date range, add chevron indicating link >
-- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date=2026-05-01T00:00:00.000&end_date=2026-08-12T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
+- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
 
 ## Monthly equipment health
 
@@ -108,13 +108,13 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 - Display values on points. Chart 1 display 1dp x.x% and Chart 2 compact number formatting
 - Add chart titles
 - Chart 1's score is the same `site` series as the snapshot site row, so the months they share must agree
-- A step change in the site score usually tracks a change in what is being scored, not a change in the building. Check the rule count per month before writing the note: a batch of newly deployed rules commonly faults until its thresholds settle, and saying so is more useful to the reader than reporting a decline in plant performance that did not happen
-- Every bucket is a whole month, so a dip in Chart 2 is a real fall in volume rather than a short month. Say what moved it — a change in the rule count, or a month with fewer scored days — rather than leaving the reader to guess
+- A step change in the site score often tracks a change in what is being scored, not a change in the building. Check the rule count per month before writing the note: newly deployed rules commonly fault until their thresholds settle, and that is the more useful thing to tell the reader
+- Every bucket is a whole month, so a dip in Chart 2 is a real fall in volume. Say what moved it — usually the rule count, sometimes a shorter month — rather than leaving the reader to guess
 
 **Links:**
 
-- Source link on Chart 1. Use the relative range, not custom dates — it holds the same window as the report ages
-- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&relative_date=last_6_months&include_today=true`
+- Source link on Chart 1, over the 7 month window. Use custom dates, not a relative range — the report is a fixed quarter and must keep showing the same window as it ages
+- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Notes band items
 

@@ -17,12 +17,12 @@ Both windows close on the last complete month: `local_end_date` is exclusive, so
 
 | Rating chip                               | Metric label                    | Value                                    | Subtitle                                                                        |
 | ----------------------------------------- | ------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------- |
-| See below thermal comfort score benchmark | x.x% thermal comfort maintained | Site thermal comfort score last 3 months | {Up\|Down} x.x pp from y.y% in {first month of the quarter} to z.z% in {last month} |
+| See below thermal comfort score benchmark | x.x% thermal comfort maintained | Site thermal comfort score over the quarter | {Up\|Down} x.x pp from y.y% in {first month of the quarter} to z.z% in {last month} |
 
 Same movement definition as the snapshot Chg column — the quarter's last month minus its first, in pp — so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months. Both endpoints come from the `site` series already fetched. Score to 1dp, matching the snapshot.
 
 Section link, labelled "See live indoor environment dashboard":
-`https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts=2026-08-01&site_ids={{site_id}}&start_date=2026-05-01T00:00:00.000&end_date=2026-08-11T00:00:00.000`
+`https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Thermal comfort score benchmark
 
@@ -36,7 +36,7 @@ Section link, labelled "See live indoor environment dashboard":
 ## Indoor environment health snapshot
 
 Thermal comfort by level
-Date: the three complete months of the quarter
+Date: the quarter
 
 Heatmap table on the same `heatmap` component as the equipment health snapshot. One row per site level, three score columns — the months of the quarter — cell value the thermal comfort score to 1dp, closing with a signed change column.
 
@@ -63,7 +63,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 **Links:**
 
 - Hyperlink level name to PEAK with the same quarter as a custom date range, add chevron indicating link >
-- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts=2026-08-01&site_ids={{site_id}}&start_date=2026-05-01T00:00:00.000&end_date=2026-08-11T00:00:00.000`
+- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Monthly thermal comfort
 
@@ -81,10 +81,10 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 
 **Links:**
 
-- Source link on the chart. Use the relative range, not custom dates
-- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts=2026-08-01&site_ids={{site_id}}&level_ids={level_id}&relative_date=last_6_months&include_today=true`
+- Source link on the chart, over the 7 month window. Use custom dates, not a relative range — the report is a fixed quarter and must keep showing the same window as it ages
+- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&level_ids={{level_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Notes band items
 
 - **Thermal comfort score.** Share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK, typically 21-24.9C (68-79F), so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows
-- **Zones.** The count is scored zones over the window, against the zone temperature points in the analytics overview. Say how many of them scored, and why the rest did not — typically too few working-hours readings to score
+- **Zones.** The count is scored zones over the quarter, against the zone temperature points in the analytics overview. Say how many scored, and why the rest did not — usually too few working-hours readings
