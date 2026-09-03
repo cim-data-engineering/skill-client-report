@@ -121,9 +121,10 @@ def sample_strings():
     for pat in (r'<td class="name">([^<]+)</td>', r'<td class="co">([^<]+)</td>',
                 r'<h3>([^<]+)</h3>', r'<title>([^<]+)</title>',
                 # narrative slots: long, site-specific sentences, so an exact
-                # match means the sample's commentary was left in place
-                r'<p class="chartnote">([^<]+)</p>', r'<p class="h2note">([^<]+)</p>',
-                r'<p class="snap">([^<]+)</p>', r'<div class="win">\s*<h3>[^<]*</h3>\s*<p>([^<]+)</p>'):
+                # match means the sample's commentary was left in place. h2note
+                # is deliberately absent — it carries window and method wording
+                # that is correct for every report and recurs legitimately.
+                r'<p class="chartnote">([^<]+)</p>', r'<p class="snap">([^<]+)</p>', r'<div class="win">\s*<h3>[^<]*</h3>\s*<p>([^<]+)</p>'):
         for m in re.finditer(pat, src, re.S):
             found.add(m.group(1))
     for m in re.finditer(r'<p class="refs">(.*?)</p>', src, re.S):
