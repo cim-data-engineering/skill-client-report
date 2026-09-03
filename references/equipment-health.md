@@ -1,6 +1,6 @@
 # Equipment health
 
-Owns three of the operational impact rows — the equipment health score, the automated health checks and the labor cost avoided — plus the equipment health snapshot and both charts in monthly equipment health. The checks and the cost model measure what the equipment health rules did, so they belong to this section. Scaffold parts: `equipment-health-snapshot`, `monthly-equipment-health`.
+Owns three of the operational impact rows (the equipment health score, the automated health checks and the labor cost avoided) plus the equipment health snapshot and both charts in monthly equipment health. The checks and the cost model measure what the equipment health rules did, so they belong to this section. Scaffold parts: `equipment-health-snapshot`, `monthly-equipment-health`.
 
 ## Operational impact rows
 
@@ -8,7 +8,7 @@ Owns three of the operational impact rows — the equipment health score, the au
 | ----------------------------------- | -------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------- |
 | See below equipment score benchmark | x.x% equipment health maintained | Site equipment health score over the quarter | {Up\|Down} x.xx pp from y.yy% in {first month of the quarter} to z.zz% in {last month} |
 
-The row carries a movement, not a baseline: the quarter's last month minus its first, in pp — the same definition as the snapshot Chg column, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months; the headline figure is the quarter score, so a bare "up x.xx pp" implies a baseline that appears nowhere in the report. The headline score is the `site` × `all` rollup over the quarter; both movement endpoints come from the `site` × `month` series already fetched — no separate 12 month call. Score to 2dp, matching the snapshot.
+The row carries a movement, not a baseline: the quarter's last month minus its first, in pp. Same definition as the snapshot Chg column, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months; the headline figure is the quarter score, so a bare "up x.xx pp" implies a baseline that appears nowhere in the report. The headline score is the `site` × `all` rollup over the quarter; both movement endpoints come from the `site` × `month` series already fetched. No separate 12 month call. Score to 2dp, matching the snapshot.
 
 | Rating chip | Metric label                                 | Value                          | Subtitle                                         |
 | ----------- | -------------------------------------------- | ------------------------------ | ------------------------------------------------ |
@@ -45,7 +45,7 @@ Each rule replaces a manual inspection at a set frequency by priority: P1 daily 
 Health by equipment type
 Date: the quarter
 
-Heatmap table of monthly equipment health scores, one row per equipment type, three score columns — the months of the quarter, matching the reporting period in the masthead — plus two count columns the thermal comfort heatmap does not carry.
+Heatmap table of monthly equipment health scores, one row per equipment type, three score columns for the months of the quarter, matching the reporting period in the masthead, plus two count columns the thermal comfort heatmap does not carry.
 
 | Column         | Reference                                              |
 | -------------- | ------------------------------------------------------ |
@@ -59,7 +59,7 @@ Heatmap table of monthly equipment health scores, one row per equipment type, th
 
 - Color cells per the equipment score benchmark. Color the cell, not the text
 - Score to 2dp. The benchmark bands sit close together, and 1dp rounds a value across a band edge so the numeral and its color disagree
-- Emphasise only the closing month column. Earlier months step back to body weight, per the `heatmap` component — a grid of bold figures reads as noise
+- Emphasise only the closing month column. Earlier months step back to body weight, per the `heatmap` component. A grid of bold figures reads as noise
 - Equipment and Rules as plain numerals, left of the score columns, never colored and never barred
 - Chg signed with a direction glyph. Green up, red down, muted when flat
 - Sort by Chg descending, so the biggest improvement leads and any decline closes
@@ -68,7 +68,7 @@ Heatmap table of monthly equipment health scores, one row per equipment type, th
 - Display all equipment types, not a sample
 - Truncate equipment type name with ellipsis, do not wrap rows
 - Equipment health rules count can differ to overall site rules count as rules can trigger alerts but not score
-- Exclude the system equipment types — the same ones the analytics overview subtracts from its equipment count. They are the platform checking itself, not building plant; Bacer and Water Meters (System) are the two that turn up
+- Exclude the system equipment types, the same ones the analytics overview subtracts from its equipment count. They are the platform checking itself, not building plant; Bacer and Water Meters (System) are the two that turn up
 
 **Links:**
 
@@ -81,10 +81,10 @@ Seven months of trend
 Date: the seven complete months ending with the quarter
 
 Chart 1: Site equipment health score
-Monthly line chart. Render the two nearest benchmark thresholds and label them — one either side where the series sits inside a band, otherwise the threshold it crosses plus the next one out, so the reader can see which months fall on which side. Auto scale Y axis to fit both.
+Monthly line chart. Render the two nearest benchmark thresholds and label them: one either side where the series sits inside a band, otherwise the threshold it crosses plus the next one out, so the reader can see which months fall on which side. Auto scale Y axis to fit both.
 
 Chart 2: Site automated health checks and labor cost avoided
-Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avoided (RHS) — the monthly view of the two rows above. Price each month with the labor cost model, prorated over that month's days.
+Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avoided (RHS), the monthly view of the two rows above. Price each month with the labor cost model, prorated over that month's days.
 
 **Display:**
 
@@ -92,11 +92,11 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 - Add chart titles
 - Chart 1's score is the same `site` series as the snapshot site row, so the months they share must agree
 - A step change in the site score often tracks a change in what is being scored, not a change in the building. Check the rule count per month before writing the note: newly deployed rules commonly fault until their thresholds settle, and that is the more useful thing to tell the reader
-- Every bucket is a whole month, so a dip in Chart 2 is a real fall in volume. Say what moved it — usually the rule count, sometimes a shorter month — rather than leaving the reader to guess
+- Every bucket is a whole month, so a dip in Chart 2 is a real fall in volume. Say what moved it, usually the rule count and sometimes a shorter month, rather than leaving the reader to guess
 
 **Links:**
 
-- Source link on Chart 1, over the 7 month window. Use custom dates, not a relative range — the report is a fixed quarter and must keep showing the same window as it ages
+- Source link on Chart 1, over the 7 month window. Use custom dates, not a relative range. The report is a fixed quarter and must keep showing the same window as it ages
 - `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Notes band items

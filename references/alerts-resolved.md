@@ -2,9 +2,9 @@
 
 Owns the operational impact faults resolved row, monthly alerts raised vs resolved, and the assignee leaderboard. Scaffold parts: `monthly-alerts`, `assignee-leaderboard`.
 
-The two go together because they answer the same question from either end — how much fault work the site took on, and who closed it — from one pull of action tickets.
+The two answer the same question from either end: how much fault work the site took on, and who closed it. Both come from one pull of action tickets.
 
-Nothing resolved in the window means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. Delete the section, its operational impact row and its notes items, and give the open count in chat instead — the same rule Key wins follows. A newly onboarded site is where this happens.
+Nothing resolved in the window means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. Delete the section, its operational impact row and its notes items, and give the open count in chat instead. Key wins follows the same rule. A newly onboarded site is where this happens.
 
 ## Operational impact row
 
@@ -60,7 +60,7 @@ Date: the 7 month window
 - Resolved and Open now as plain numerals. No bars
 - Close with a total row, separated from the rank
 - Include assignees with zero resolved but open actions. Exclude actions marked as Not Doing
-- Exclude non-human users from the leaderboard — Agent Hannah, or any other agent. They still count in raised vs resolved. No need to call this out in the report
+- Exclude non-human users from the leaderboard: Agent Hannah, or any other agent. They still count in raised vs resolved. No need to call this out in the report
 - Truncate assignee and company name with ellipsis, do not wrap rows
 
 **Links:**
@@ -71,7 +71,7 @@ Date: the 7 month window
 ## Notes band items
 
 - **Verified recovery.** Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running
-- **Median time to resolve** is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work
+- **Median time to resolve** is measured from the linked action's creation to its resolution, not from the alert's own dates, since detection is automatic but resolution is human work
 - **Raised vs resolved.** Raised counts action tickets created in the month, not the alerts behind them: detection is automatic, raising an action is a human triage decision, and one action can be linked to many alerts. Resolved counts actions on their resolution date. Actions marked Not Doing are excluded from both series
 - **Completion rate** is resolved / (resolved + currently open) as at the issue date, so 100% reflects holding no open work
 - Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved is worth a sentence in the chart note
@@ -82,7 +82,7 @@ Date: the 7 month window
 | ------------------------------------ | ----------------------------------------------------------------------------------- |
 | Leaderboard, resolved series, median | The resolved action pull in SKILL.md, over the 7 month window                        |
 | Raised series                        | Its per-month counts                                                                 |
-| Open now                             | Its Open now calls — one per open status, no date bound                              |
+| Open now                             | Its Open now calls, one per open status, no date bound                              |
 | Verified recovery                    | `search_alert_tickets(status:"closed")` over the quarter, read against fault status   |
 
 - Open now is a different question from resolved: work raised before the window can still be open today, so count by assignee as at the issue date
