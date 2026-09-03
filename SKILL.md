@@ -13,7 +13,7 @@ A quarterly building performance review for one PEAK site: a self-contained A4 p
 2. **Scaffold the file**: `python3 scripts/build_report.py scaffold --sections equipment-health,key-wins --out skyline-q3.html`. It copies the stylesheet, the always-on sections and the parts the chosen sections own, in report order, and drops the operational impact rows, section links and notes items of everything left out. The scaffold is `assets/reference-report.html` filtered, so don't read that file or hand-write its CSS. `scaffold` with no `--sections` gives you everything; `parts` lists what exists.
 3. **Read one reference per chosen section**: `references/<section>.md`. Each carries its table spec, benchmark, links and notes items, and closes with a Data recipes block holding the PEAK calls behind them. The others describe sections you are not building; leave them unread.
 4. **Fetch**: [Data recipes](#data-recipes), then the Data recipes block at the end of each chosen reference. Nothing else. Most are aggregate calls that answer a whole section in one request, so don't go back for rows you can derive from what you already hold.
-5. **Fill the scaffold in place**: every figure, name, date and link in it is sample data for a different building. Read it from the masthead down rather than whole (offset past the `</style>` line, or grep to the section you are filling): the stylesheet needs no edits unless a brand override is active. Then work section by section with edits, so the CSS and component markup stay exactly as designed and you never re-emit them. Two slots are easy to miss: the `<title>` in the shell, and the second `seclinks` block under the snapshot table.
+5. **Fill the scaffold in place**: every figure, name, date and link in it is sample data for a different building. Read it from the masthead down rather than whole (offset past the `</style>` line, or grep to the section you are filling): the stylesheet needs no edits unless a brand override is active. Then work section by section with edits, so the CSS and component markup stay exactly as designed and you never re-emit them. Every sentence you write follows [Writing the narrative](#writing-the-narrative). Two slots are easy to miss: the `<title>` in the shell, and the second `seclinks` block under the snapshot table.
 6. **Check and hand over**: `python3 scripts/build_report.py check <file>` catches sample values, unresolved placeholders and markers left behind. It is a backstop, not a substitute for reading the numbers. Then name the sections you left out, so the reader knows the omission was asked for.
 
 ## Section selection
@@ -78,6 +78,7 @@ A chart note before and after. The first packs everything in, opens on an editor
 - Company name default "CIM" unless `name` is set in `BRAND.md` or given by the user
 - Company service name default "Data Driven Operations" unless `service-name` is set in `BRAND.md` or given by the user
 - Site `photo_url`: square, right of title block
+- Never print the PEAK site id anywhere in the report text, masthead or footer. It is a system id and means nothing to the reader. Links carry it in the URL, which is where it belongs
 
 ### Analytics overview
 
@@ -157,7 +158,7 @@ Resolve the theme in this order:
 Derived rules when overrides are active:
 
 - `secondary` overridden → re-derive the `shadow` token as the new `secondary` hue at 8% opacity
-- Any brand override active → platform strings read `PEAK · Site {id}` (drop the CIM prefix) in the masthead metadata row and footer. `Powered by PEAK` is always kept, in every brand
+- Any brand override active → platform strings read `PEAK` (drop the CIM prefix) in the masthead metadata row and footer. `Powered by PEAK` is always kept, in every brand
 - No overrides → keep `CIM PEAK` and the CIM masthead logo the scaffold already carries from `assets/logo-white.svg`
 
 ## Data recipes

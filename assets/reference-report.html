@@ -579,7 +579,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   <div class="sechead">
     <p class="eyebrow">Monthly alerts raised vs resolved</p>
     <h2>Faults triaged and resolved</h2>
-    <p class="h2note">February – August 2026, the last seven complete months. Raised counts alerts triaged into actions; resolved counts the same way. Actions marked Not Doing, and alerts on rules no longer running, are excluded from both series.</p>
+    <p class="h2note">February – August 2026, the last seven complete months. Raised counts actions created in the month, resolved counts actions closed in it. Actions marked Not Doing are excluded from both series.</p>
   </div>
   <div class="legend">
     <span><span class="sw sw-primary"></span>Raised</span>
@@ -669,14 +669,14 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <h3>Evaporator pressure sensing restored on chillers CH-01 and CH-02</h3>
     <p>Both chillers had been carrying evaporator pressure faults, which leaves the plant running without reliable protection on its refrigerant circuit. On CH-02, Meridian Mechanical replaced the chilled water differential pressure sensor and confirmed the work on 21 July; on CH-01, Marcus Bell traced the reading back to a logic input on the chiller and corrected it on 13 July. PEAK has held both alerts recovered since.</p>
     <!-- if: equipment-health -->
-    <p class="snap">Also visible in the equipment health snapshot: Chiller, up 5.00 pp across the quarter and into the Excellent band in August.</p>
+    <p class="snap">Also visible in the equipment health snapshot: Chiller, up 5 pp across the quarter and into the Excellent band in August.</p>
     <!-- endif -->
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48213">CH-02 — Inspect Evaporator Insufficient Pressure</a> · <a href="https://ace.cimenviro.com/tickets/escalated/1042/48307">CH-01 — Inspect Evaporator Pressure Broken Sensor</a></p>
   </div>
 
   <div class="win">
     <h3>Supply air pressure reset now running on AC-02, AC-04 and AC-05</h3>
-    <p>AC-02, AC-04 and AC-05 were each holding a fixed supply air pressure setpoint, so their fans worked as hard at quarter load as at full load. Meridian Mechanical implemented a demand-based reset strategy on all three, and the setpoints now step between 220–260 Pa and 300–320 Pa with load instead of sitting flat. Fan energy follows pressure closely, so this is the change most likely to show up on the bill; all three alerts recovered and closed by 24 June.</p>
+    <p>AC-02, AC-04 and AC-05 were each holding a fixed supply air pressure setpoint, so their fans worked as hard at quarter load as at full load. Meridian Mechanical implemented a demand-based reset strategy on all three, and the setpoints now step between 220–260 Pa and 300–320 Pa with load instead of sitting flat. All three alerts recovered and closed by 24 June.</p>
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48254">AC-02 — Confirm Supply Pressure Override</a> · <a href="https://ace.cimenviro.com/tickets/escalated/1042/48255">AC-04 — Confirm Supply Pressure Override</a> · <a href="https://ace.cimenviro.com/tickets/escalated/1042/48256">AC-05 — Confirm Supply Pressure Override</a></p>
   </div>
 
@@ -684,7 +684,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <h3>Failed plant controller replaced, returning AC-01 to automatic chilled water control</h3>
     <p>The chilled water valves on AC-01, AC-02 and AC-03 had been forced open by hand while a failed level 22 plant controller was on order, which meant the units were cooling flat out with no modulation. Meridian Mechanical replaced the controller and returned the valves to Auto, and PEAK verified AC-01 recovered on 30 April with the valve modulating normally again: a 22% average in the first day after the fix, rising to 49% by day seven.</p>
     <!-- if: equipment-health -->
-    <p class="snap">Also visible in the equipment health snapshot: Air Handling Units, up 1.13 pp, the second largest gain on the page.</p>
+    <p class="snap">Also visible in the equipment health snapshot: Air Handling Units, up 1.1 pp across the quarter.</p>
     <!-- endif -->
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48166">AC-01 — Inspect Chilled Water Valve Leak</a></p>
   </div>
@@ -719,10 +719,10 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <li><strong>Median time to resolve</strong> is measured from the linked action's creation to its resolution, not from the alert's own dates, since detection is automatic but resolution is human work.</li>
     <!-- endif -->
     <!-- if: alerts-resolved -->
-    <li><strong>Raised vs resolved.</strong> Raised counts alerts triaged into actions in the month (or 1 where an action has no linked alert); resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series.</li>
+    <li><strong>Raised vs resolved.</strong> Raised counts action tickets created in the month, not the alerts behind them: detection is automatic, raising an action is a human triage decision, and one action can be linked to many alerts. Resolved counts actions on their resolution date. Actions marked Not Doing are excluded from both series.</li>
     <!-- endif -->
     <!-- if: equipment-health,indoor-environment,alerts-resolved -->
-    <li><strong>The reporting window.</strong> Every monthly series closes on the last complete month, so no column or bar covers a part-month. Automated checks, labour cost avoided, and alerts raised and resolved can therefore be read against each other directly. The quarter itself is the three complete months named in the masthead.</li>
+    <li><strong>The reporting window.</strong> Every monthly series closes on the last complete month, so no column or bar covers a part-month. Automated checks, labour cost avoided, and actions raised and resolved can therefore be read against each other directly. The quarter itself is the three complete months named in the masthead.</li>
     <!-- endif -->
     <!-- if: alerts-resolved -->
     <li><strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the issue date, so 100% reflects holding no open work.</li>
@@ -732,7 +732,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 
 <!-- part: footer -->
 <footer>
-  <span>CIM PEAK · Site 1042 · Skyline Tower, Brisbane QLD 4000</span>
+  <span>CIM PEAK · Skyline Tower, Brisbane QLD 4000</span>
   <span>Issued 1 Sep 2026</span>
 </footer>
 

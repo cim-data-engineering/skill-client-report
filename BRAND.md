@@ -82,7 +82,7 @@ time without conflicts.
 - Keys outside the whitelist above are ignored.
 - When `secondary` is overridden, the screen shadow re-derives as that hue at 8%
   opacity (the `shadow` token role in DESIGN.md).
-- When any brand override is active, platform strings read `PEAK · Site N` — the
-  CIM prefix is dropped. `Powered by PEAK` is always kept and cannot be removed.
+- When any brand override is active, platform strings read `PEAK`; the CIM prefix
+  is dropped. `Powered by PEAK` is always kept and cannot be removed.
 - Unbranded (default) reports keep `CIM PEAK` and
   `Prepared by CIM — Data Driven Operations`.

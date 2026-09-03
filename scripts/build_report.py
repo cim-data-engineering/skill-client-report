@@ -151,13 +151,19 @@ def cmd_check(args):
     if len(hits) > 20:
         errors.append("... and %d more sample values" % (len(hits) - 20))
 
+    # The PEAK site id is a system id. It belongs in a link URL, never in the text.
+    visible = re.sub(r'\s(?:href|src)="[^"]*"', "", text)
+    for m in sorted(set(re.findall(r"Site\s+\d+", visible))):
+        errors.append("site id in visible text: %s — a system id the reader has no use for, "
+                      "keep it to the link URLs" % m)
+
     ref = open(REF, encoding="utf-8").read()
-    site = re.search(r"Site (\d+) · ([^,<]+)", ref)
-    if site:
-        for token in (site.group(1), site.group(2)):
-            if token in text:
-                warnings.append("reference site's own %s appears — fine only if this "
-                                "report really is for it" % ("id %s" % token if token.isdigit() else "name %r" % token))
+    rid = re.search(r"site_ids=(\d+)", ref)
+    rname = re.search(r"PEAK · ([^,<]+)", ref)
+    for token in [m.group(1) for m in (rid, rname) if m]:
+        if token in text:
+            warnings.append("reference site's own %s appears — fine only if this "
+                            "report really is for it" % ("id %s" % token if token.isdigit() else "name %r" % token))
 
     # Key wins is the one section that can be scaffolded and then find nothing
     # to say: an empty heading is worse than no heading, so it must be deleted.
