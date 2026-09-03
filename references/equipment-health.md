@@ -46,7 +46,7 @@ Unique rules scored (by priority) over the quarter x annual mins saved per rule 
 | P3       | 12            | 1.00           | 12.0                       | $100                      | $30.00                           |
 | P4-5     | 4             | 1.00           | 4.0                        | $100                      | $10.00                           |
 
-Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the period.
+Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the days monitored in the period.
 
 ## Equipment score benchmark
 

@@ -51,7 +51,7 @@ Describe each option by what it adds:
 
 - {Site name} Quarterly Building Performance Review
 - Prepared by: {Company name} {Company service name}. Powered by PEAK
-- Reporting period: the quarter as a date range, per [Shared data](#shared-data)
+- Reporting period: the quarter as a date range, per [Shared data](#shared-data), or the site's own coverage per [Newly onboarded sites](#newly-onboarded-sites)
 - Author: full name of the logged-in PEAK MCP user, from `who_am_i` — always present, never omitted or substituted
 - Issue date: issue date
 - Disclaimer, verbatim, below the masthead metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
@@ -131,6 +131,18 @@ Only when Actions resolved and leaderboard, or Key wins, is in — one pull serv
 - Bucket by site-local month; drop `status_id:8`; weight by linked alerts whose rule is still running. An action with no linked alert counts 1; an action whose every linked alert is on a stopped rule counts 0
 - Flag any action closing many alerts at once — it distorts the month
 - Status ids: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing
+
+## Newly onboarded sites
+
+A site can have less history than the window asks for. Read that from the first fetch rather than assuming: if the earliest month returned by the `site` × `month` call is later than the window start, the site went live inside the window and the report covers what exists.
+
+- Trim both windows to the months that returned data, still whole months only. The month a site went live in is not a complete month for it unless it went live on the 1st, so drop it
+- Say it once, in the masthead: "Reporting period: 1 – 31 August 2026, monitoring live since 14 July 2026". The reader needs to know the report is short because the site is new, not because something failed. Don't repeat it section by section
+- A movement needs two months. With one, state the score and drop the delta — "up 0.00 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column. The score still stands on its own
+- A trend needs three points. With fewer, drop the trend chart and keep the snapshot; two months drawn as a line invites the reader to extend it. Where that empties a trends section, delete the section
+- Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
+- Prorate the labor cost model over the days actually monitored, not the calendar quarter, or it credits the monitoring with time it wasn't running
+- A gap in the middle of a series is an outage, not onboarding. Plot the months that exist, leave the gap visible, and say so in the chart note
 
 ## Output & theming
 

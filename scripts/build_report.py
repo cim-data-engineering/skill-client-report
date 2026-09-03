@@ -166,6 +166,16 @@ def cmd_check(args):
         errors.append("Key wins section carries no wins — delete the section rather "
                       "than shipping the heading (references/key-wins.md)")
 
+    # A heatmap trimmed for a short-history site has to lose the same columns
+    # from its header and from every row, so a ragged table means a missed row.
+    for t in re.findall(r'<table class="hm">(.*?)</table>', text, re.S):
+        cols = len(re.findall(r'<th class="mo"', t))
+        widths = {len(re.findall(r'<td class="c ', r))
+                  for r in re.findall(r"<tr[^>]*>.*?</tr>", t, re.S)} - {0}
+        if widths - {cols}:
+            errors.append("heatmap has %d month columns but rows with %s — trim header "
+                          "and rows together" % (cols, sorted(widths)))
+
     present = re.findall(r'<p class="eyebrow">([^<]+)</p>', text)
     print("sections present: %s" % ", ".join(present))
     for w in warnings:
