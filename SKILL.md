@@ -33,7 +33,7 @@ Describe each option by what it adds:
 | Equipment health                 | `equipment-health`   | `references/equipment-health.md`   | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends   |
 | Indoor environment               | `indoor-environment` | `references/indoor-environment.md` | the thermal comfort row, comfort by level, the seven month comfort trend                                                            |
 | Actions resolved and leaderboard | `alerts-resolved`    | `references/alerts-resolved.md`    | the faults resolved row with verified recovery, seven months of raised vs resolved, and who closed the work                         |
-| Key wins                         | `key-wins`           | `references/key-wins.md`           | what physically changed in the building, evidenced from action comments                                                           |
+| Key wins                         | `key-wins`           | `references/key-wins.md`           | what was found and acted on — repairs made, plus live work the owner should see                                                           |
 
 **Rules:**
 
