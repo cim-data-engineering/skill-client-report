@@ -119,12 +119,17 @@ def sample_strings():
     src = open(REF, encoding="utf-8").read()
     found = set()
     for pat in (r'<td class="name">([^<]+)</td>', r'<td class="co">([^<]+)</td>',
-                r'<h3>([^<]+)</h3>', r'<p class="refs">.*?</p>'):
+                r'<h3>([^<]+)</h3>', r'<title>([^<]+)</title>',
+                # narrative slots: long, site-specific sentences, so an exact
+                # match means the sample's commentary was left in place
+                r'<p class="chartnote">([^<]+)</p>', r'<p class="h2note">([^<]+)</p>',
+                r'<p class="snap">([^<]+)</p>', r'<div class="win">\s*<h3>[^<]*</h3>\s*<p>([^<]+)</p>'):
         for m in re.finditer(pat, src, re.S):
-            found.add(m.group(1) if m.groups() else m.group(0))
+            found.add(m.group(1))
     for m in re.finditer(r'<p class="refs">(.*?)</p>', src, re.S):
         found |= set(re.findall(r'>([^<>]{8,})</a>', m.group(1)))
-    found |= set(re.findall(r'href="([^"]+)"', src))
+    # only platform links are report data — font and preconnect hosts stay
+    found |= {h for h in re.findall(r'href="([^"]+)"', src) if "cimenviro.com" in h}
     stop = {"CIM", "Total"}
     return sorted(s.strip() for s in found if len(s.strip()) >= 5 and s.strip() not in stop)
 

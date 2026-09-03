@@ -7,7 +7,7 @@ The two go together because they answer the same question from either end — ho
 ## Fetch
 
 - The shared action pull in SKILL.md carries the monthly buckets, the resolution dates behind the median, and the assignee names. Key wins shortlists from the same pull, so fetch it once
-- `search_alert_tickets` for the recovery rate: alerts resolved in the window with status closed, read against their fault status. The analytics overview's `limit:1` count does not cover this — the rate needs the resolved rows themselves
+- `search_alert_tickets` for the recovery rate: alerts resolved in the window with status closed, read against their fault status. This is the only call in the report that reads alert tickets, so it does not run at all when this section is out
 - Open now is a different question from Resolved: work raised before the window can still be open today. Read the open set with `search_action_tickets(status_ids:[1,3,7])`, unbounded by date, and count by assignee as at the issue date
 
 ## Operational impact row

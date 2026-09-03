@@ -28,3 +28,6 @@ A win needs a physical or control change described by whoever made it, in the co
 - Link the action ticket with its PEAK url as evidence, using the action title as the link name, not the id
 - Where several tickets form one win, link them all
 - Where a win also appears in the equipment health snapshot, say so in the `snap` line — the scaffold keeps that line only when equipment health is in the report, so if it is not there, the cross-reference is not yours to add
+
+**When the quarter is thin:**
+Some quarters have one qualifying win, or none — closures that recovered on their own, work deferred behind a fitout, an alert closed by stopping a rule. Do not pad the section to fill it, and do not promote a diagnosis to a repair. Say how many closures you read, lead with whatever did qualify, and account for the rest in a short closing block: monitoring found and tracked these faults, and the building has not yet had the benefit of a fix. A facilities manager can act on that; four dressed-up non-events waste the page and cost you the reader's trust in the sections above.

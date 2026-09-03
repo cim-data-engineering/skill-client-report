@@ -4,13 +4,16 @@ Owns three of the operational impact rows — the equipment health score, the au
 
 ## Fetch
 
-`search_equipment_health_scores` shapes all five calls. It takes no `limit` and returns every group, so none of these page.
+`search_equipment_health_scores` shapes all six calls. It takes no `limit` and returns every group, so none of these page.
+
+End every window on the first of a month, never on tomorrow's date. Month boundaries are stored pre-aggregated; a mid-month bound forces a raw scan and a wide call is then refused outright for scanning over 200,000 rows. The current month still reports to date, because only the elapsed days hold data.
 
 | Call                                       | Window        | Feeds                                                        |
 | ------------------------------------------ | ------------- | ------------------------------------------------------------ |
 | `aggregate_entities:["metadata_type"]`, `aggregate_period:"month"` | 4 months | heatmap cells                                     |
 | `aggregate_entities:["metadata_type"]`, `aggregate_period:"all"`   | 4 months | the Equipment and Rules counts                    |
 | `aggregate_entities:["site"]`, `aggregate_period:"month"`          | 7 months | snapshot site row (last 4), Chart 1 (all 7)       |
+| `aggregate_entities:["site"]`, `aggregate_period:"all"`            | quarter  | the headline score in the operational impact row  |
 | `aggregate_entities:["priority"]`, `aggregate_period:"all"`        | quarter  | the checks and labor cost rows                    |
 | `aggregate_entities:["priority"]`, `aggregate_period:"month"`      | 7 months | Chart 2 bars                                      |
 
@@ -22,7 +25,7 @@ On the `priority` calls, executions sum across priorities for the checks total a
 | ----------------------------------- | -------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------- |
 | See below equipment score benchmark | x.x% equipment health maintained | Site equipment health score last 3 months | {Up\|Down} x.xx pp from y.yy% in {start month} to z.zz% in {current month} to date |
 
-The row carries a movement, not a baseline: current month to date minus the start month, in pp — the same definition as the snapshot Chg column, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months; the headline figure is the 3 month score, so a bare "up x.xx pp" implies a baseline that appears nowhere in the report. Both endpoints come from the `site` × `month` series already fetched — no separate 12 month call. Score to 2dp, matching the snapshot.
+The row carries a movement, not a baseline: current month to date minus the start month, in pp — the same definition as the snapshot Chg column, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months; the headline figure is the 3 month score, so a bare "up x.xx pp" implies a baseline that appears nowhere in the report. The headline score is the `site` × `all` rollup over the quarter; both movement endpoints come from the `site` × `month` series already fetched — no separate 12 month call. Score to 2dp, matching the snapshot.
 
 | Rating chip | Metric label                                 | Value                          | Subtitle                                         |
 | ----------- | -------------------------------------------- | ------------------------------ | ------------------------------------------------ |
@@ -106,6 +109,7 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 - Display values on points. Chart 1 display 1dp x.x% and Chart 2 compact number formatting
 - Add chart titles
 - Chart 1's score is the same `site` series as the snapshot site row, so the months they share must agree
+- A step change in the site score usually tracks a change in what is being scored, not a change in the building. Check the rule count per month before writing the note: a batch of newly deployed rules commonly faults until its thresholds settle, and saying so is more useful to the reader than reporting a decline in plant performance that did not happen
 - Label the last point as partial, since the current month holds fewer days than the rest. Chart 2 matters most here — a month to date bar is short because the month is young, not because checking stopped. Say so in the chart note rather than leaving the reader to infer a decline
 
 **Links:**

@@ -13,7 +13,7 @@ A quarterly building performance review for one PEAK site, delivered as a self-c
 2. **Scaffold the file** — `python3 scripts/build_report.py scaffold --sections equipment-health,key-wins --out skyline-q3.html`. It copies the stylesheet, the always-on sections and only the parts the chosen sections own — in report order, so the file already reads top down — dropping the operational impact rows, section links and notes items of everything left out as it goes. The scaffold *is* `assets/reference-report.html`, filtered — so don't read that file or hand-write its CSS. `scaffold` with no `--sections` gives you everything; `parts` lists what exists.
 3. **Read one reference per chosen section** — `references/<section>.md`. Each carries its own PEAK calls, table spec, benchmark, links and notes items. The others describe sections you are not building; leave them unread.
 4. **Fetch** — [Shared data](#shared-data), then the Fetch block of each chosen reference. Nothing else. Most of these are aggregate calls that answer a whole section in one request; going back for rows you can derive from what you already hold is the main way this report gets slow.
-5. **Fill the scaffold in place** — every figure, name, date and link in it is sample data for a different building. Read it from the masthead down rather than whole (offset past the `</style>` line, or grep to the section you are filling): the stylesheet needs no edits unless a brand override is active. Then work section by section with edits, so the CSS and component markup stay exactly as designed and you never re-emit them.
+5. **Fill the scaffold in place** — every figure, name, date and link in it is sample data for a different building. Read it from the masthead down rather than whole (offset past the `</style>` line, or grep to the section you are filling): the stylesheet needs no edits unless a brand override is active. Then work section by section with edits, so the CSS and component markup stay exactly as designed and you never re-emit them. Two slots sit outside the data and are the ones actually missed: the `<title>` up in the shell, and the second `seclinks` block under the snapshot table.
 6. **Check and hand over** — `python3 scripts/build_report.py check <file>` catches sample values, unresolved placeholders and markers left behind. It is a backstop, not a substitute for reading the numbers. Then name the sections you left out, so the omission reads as asked for rather than missing.
 
 ## Section selection
@@ -109,12 +109,12 @@ Always:
 
 - Author — `who_am_i`, the user's full name for the masthead
 - Site facts — `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
-- Counts for the analytics overview — never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites`, `search_equipment` (subtract system types 21,37,69,70,87,105,114), `search_alert_tickets`
+- Counts for the analytics overview — never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
 - Thermal zones — `search_favourites(metadata_name:"%Zone Temperature", limit:1)`, read `pagination.total`. Anchor the wildcard at the end: `%Zone Temp%` also matches setpoint points and roughly doubles the count. Four point names mean zone temperature (`VAV-Zn-T`, `PAC-Zn-T`, `Un-Zn-T`, `ZnT`), so filter on name, not `metadata_codes`
 
 Only when Actions resolved and leaderboard, or Key wins, is in — one pull serves both, so fetch it once and skip it entirely when neither is:
 
-- `tickets.tickets`, `type:"escalated"`, `ticket_archived:false`, `limit:400`, date bounds `*_at_local_*` over the 7 month window
+- `tickets.tickets`, `type:"escalated"`, `ticket_archived:false`, `limit:400`, date bounds `*_at_local_*`. The 7 month window feeds the monthly buckets and the leaderboard, so narrow it to the quarter when Key wins is the only section in — it shortlists from the quarter and nothing else needs the earlier months
 - Fields: `ticket_id, created_at, resolved_at, status_id, assignees{id,firstname,lastname}, ticket_links{ticket(type:alert){ticket_id, rule_id}}`
 - Bucket by site-local month; drop `status_id:8`; weight by linked alerts whose rule is still running. An action with no linked alert counts 1; an action whose every linked alert is on a stopped rule counts 0
 - Flag any action closing many alerts at once — it distorts the month
@@ -124,7 +124,7 @@ Only when Actions resolved and leaderboard, or Key wins, is in — one pull serv
 
 One self-contained A4 print-first HTML file — all CSS inline, charts as hand-authored inline SVG, no JS. The scaffold supplies the stylesheet and every component, so this is a handful of edits rather than a rebuild:
 
-- The scaffold's chart SVGs are hand-authored at six columns and the monthly trends run seven, so recompute x positions across the plot width rather than reusing the coordinates and dropping the last month
+- The scaffold's chart SVGs already run seven columns at x = 80, 172 … 632, so the x positions carry over. The y geometry does not: recompute every point, bar top, benchmark line and value label from your own data range, and pick the range from the data plus the thresholds you are drawing. Reusing the sample's y values silently plots the sample's story
 - Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex — SVG presentation attributes cannot read `var()`. Heatmap band fills work the same way (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor), so a brand that swaps its measurement colours recolours both heatmaps without touching markup
 - Section headers are three stacked lines: the section name as an uppercase eyebrow in `primary`, the statement beneath it as the `h2` headline, and the date line as a muted byline. The statement is the headline, never the section name
 
