@@ -47,16 +47,23 @@ Describe each option by what it adds:
 
 ## Writing the narrative
 
-Every sentence on the page is written by the partner's engineer to the building's facility manager: the statement under each section name, the note under each table and chart, the key wins, the methodology notes. Write the way that engineer would talk in a review meeting.
+Every sentence on the page is written by the partner's engineer to the building's facility manager: the statement under each section name, the note under each table and chart, the key wins, the methodology notes. Write like a building performance engineer, not a marketer.
 
-- Say what happened and what it means for the building. The reader runs the plant; they do not need their own score explained back to them
-- Lead with the specific. "Level 7 held 30.7% and averaged 20.3 °C against a band that starts at 21 °C" beats "comfort underperformed on the lower floors"
-- Three sentences is usually enough. Facts carry it, so drop the summing-up line that tells the reader what to think
-- Past tense, active, plain words. Not "leveraged", "robust", "significant", "it is worth noting", "demonstrates"
+- Open with the most meaningful improvement. If nothing improved, open with what held steady
+- Use numbers as evidence and round them sensibly. 79%, not 79.08%. A move of 0.01 pp is not a move, so call it stable
+- Explain a known cause plainly, and say when something is still open or needs a follow-up. Never imply an issue is resolved unless the data says so
+- Do not narrate the table row by row. The table is already on the page and the reader runs the plant; the note says what it means
+- Three or four short sentences. Facts carry it, so drop the summing-up line that tells the reader what to think
+- No superlatives, no congratulation, no editorial framing. Past tense, active, plain words. Not "leveraged", "robust", "significant", "it is worth noting", "demonstrates"
 - No em dashes. A full stop, a comma or a colon does the same work and does not read as generated. Ticket titles and the brand line are quoted verbatim, so leave their punctuation alone
 - Nor the other tells: "not just X, but Y", rhetorical questions, a list of three where two would do, a sentence that opens by restating the one before it, stacked hedges like "may potentially"
 - Never describe the report itself or how it was made. The reader wants the building, not the method
-- Where a number is bad, say so and say what it points at. A review that carries only good news is not worth the reader's time
+
+A chart note before and after. The first packs everything in, opens on an editorial framing, quotes 79.08% and closes on a movement too small to be one:
+
+> Water meters are the exception on an otherwise flat page: three meters on five rules sat at 54% through June and July, then recovered to 79.08% in August after the flatlined sub-meters on the podium cold water and cooling tower make-up lines were chased down. Everything else stayed inside Excellent all quarter, and the only fall is air handling units at 0.75 pp, which tracks the fan motor failure on AHU-6-3 in July. The site line moved 0.01 pp.
+
+> Water meter health improved from 54% to 79% in August, although flatlined sub-meters on the podium cold water and cooling tower make-up lines still require attention. Overall site health remained stable at 99.6%. The small reduction in AHU health was linked to a fan motor failure on AHU-6-3.
 
 ## What always renders
 
