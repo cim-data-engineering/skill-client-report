@@ -66,6 +66,7 @@ Date: the 7 month window
 - Resolved and Open now as plain numerals. No bars
 - Close with a total row, separated from the rank
 - Include assignees with zero resolved but open actions. Exclude actions marked as Not Doing
+- The leaderboard ranks people, so leave automated assignees out of it. PEAK files them under a company of their own — the AI review agent shows as "AI Agent (Pilot)" — and because it is assigned the tickets it raises itself, it can outrank every contractor on its own review sweeps. Its closures still belong in the raised vs resolved series, so say in the section line that the leaderboard total is the lower of the two
 - Truncate assignee and company name with ellipsis, do not wrap rows
 
 **Links:**
