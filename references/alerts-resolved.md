@@ -66,7 +66,7 @@ Date: the 7 month window
 - Resolved and Open now as plain numerals. No bars
 - Close with a total row, separated from the rank
 - Include assignees with zero resolved but open actions. Exclude actions marked as Not Doing
-- Exclude non-human users from the leaderboard. The AI review agent shows as Agent Hannah, filed under a company of its own, "AI Agent (Pilot)"; treat any other agent the same way. It is assigned the tickets it raises itself, so it can outrank every contractor on its own review sweeps. This is a ranking rule only — those actions still count in raised vs resolved, which measures how much work moved rather than who gets the credit. Leave the exclusion off the page; the reader wants the ranking, not the rule behind it
+- Exclude non-human users from the leaderboard — Agent Hannah, or any other agent. They still count in raised vs resolved. No need to call this out in the report
 - Truncate assignee and company name with ellipsis, do not wrap rows
 
 **Links:**
