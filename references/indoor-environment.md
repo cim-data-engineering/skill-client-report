@@ -11,7 +11,9 @@ Owns the operational impact thermal comfort row, the indoor environment health s
 | `aggregate_entity:"level"`  | quarter  | the snapshot grid                                  |
 | `aggregate_entity:"site"`   | 7 months | the snapshot closing row (last 3) and the trend    |
 
-Both windows close on the last complete month: `local_end_date` is exclusive, so pass the first of the month after it. Level rows are levels x months, so page when levels x 3 exceeds 80. Never use `aggregate_entity:"zone"` for the snapshot — that is one row per zone per month, hundreds of rows for the same picture. Drill to zone only when investigating a named level.
+Both windows close on the last complete month: `local_end_date` is exclusive, so pass the first of the month after it. Level rows are levels x months, so page when levels x 3 exceeds 80.
+
+The level rollup carries no zone count, so the Zones column needs its own call: `aggregate_entity:"zone"`, `aggregate_period:"all"`, `level_ids:[one level]`, `limit:1`, and read `pagination.total`. That is one small call per level and it is the most expensive part of this section — a dozen levels is a dozen calls. Prefer it to sweeping every zone: `aggregate_entity:"zone"` unfiltered is one row per zone per period, hundreds of rows to count what these return as a total. Drill into zone rows themselves only when investigating a named level.
 
 ## Operational impact row
 

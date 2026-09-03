@@ -24,6 +24,16 @@ Highlight resolved or open actions, written for the facilities manager or buildi
 **Audience:**
 Written by the partner maintaining the site, delivered to the facilities manager, forwarded by them to the owner. Each win should show that the building is watched, that faults are found and fixed, and that closures are verified rather than asserted. Write from the partner's side, not the platform's.
 
+**Voice:**
+
+Write it the way the engineer who did the work would write it to the client: plain, specific, finished in three sentences. What was wrong, what was done and by whom, what it means for the building. Then stop.
+
+- Facts carry it. Names, equipment ids, dates, numbers — "reset the start to 90 minutes before occupancy on 14 July", not "optimised the start-up strategy"
+- No summing-up sentence. A closing line telling the reader what to think about the win they just read is the clearest sign nobody at the partner wrote it. Where the outcome needs stating, state it in the same breath as the change
+- No superlatives about your own work, and none of "importantly", "notably", "it is worth noting". The facilities manager can see what matters
+- Past tense, active, one clause at a time. Long sentences chained with dashes read as generated
+- Say what was done, not what it demonstrates. "Replaced the belts and had it running the next morning" beats "restored reliability to the unit"
+
 **Selection:**
 A win needs a physical or control change described by whoever made it, in the comment history. Exclude alerts resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
 

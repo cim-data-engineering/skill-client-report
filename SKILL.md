@@ -141,6 +141,7 @@ A site can have less history than the window asks for. Read that from the first 
 - A movement needs two months. With one, state the score and drop the delta — "up 0.00 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column. The score still stands on its own
 - A trend needs three points. With fewer, drop the trend chart and keep the snapshot; two months drawn as a line invites the reader to extend it. Where that empties a trends section, delete the section
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
+- An equipment type or a level can start later than the site did — new rules on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in the section note when its rules began scoring
 - Prorate the labor cost model over the days actually monitored, not the calendar quarter, or it credits the monitoring with time it wasn't running
 - A gap in the middle of a series is an outage, not onboarding. Plot the months that exist, leave the gap visible, and say so in the chart note
 
