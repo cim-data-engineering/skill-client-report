@@ -11,8 +11,8 @@ A quarterly building performance review for one PEAK site: a self-contained A4 p
 
 1. **Resolve the site and the sections** — [Section selection](#section-selection). Nothing is fetched before this settles, because the selection decides what there is to fetch.
 2. **Scaffold the file** — `python3 scripts/build_report.py scaffold --sections equipment-health,key-wins --out skyline-q3.html`. It copies the stylesheet, the always-on sections and the parts the chosen sections own, in report order, and drops the operational impact rows, section links and notes items of everything left out. The scaffold is `assets/reference-report.html` filtered, so don't read that file or hand-write its CSS. `scaffold` with no `--sections` gives you everything; `parts` lists what exists.
-3. **Read one reference per chosen section** — `references/<section>.md`. Each carries its own PEAK calls, table spec, benchmark, links and notes items. The others describe sections you are not building; leave them unread.
-4. **Fetch** — [Shared data](#shared-data), then the Fetch block of each chosen reference. Nothing else. Most are aggregate calls that answer a whole section in one request, so don't go back for rows you can derive from what you already hold.
+3. **Read one reference per chosen section** — `references/<section>.md`. Each carries its table spec, benchmark, links and notes items, and closes with a Data recipes block holding the PEAK calls behind them. The others describe sections you are not building; leave them unread.
+4. **Fetch** — [Data recipes](#data-recipes), then the Data recipes block at the end of each chosen reference. Nothing else. Most are aggregate calls that answer a whole section in one request, so don't go back for rows you can derive from what you already hold.
 5. **Fill the scaffold in place** — every figure, name, date and link in it is sample data for a different building. Read it from the masthead down rather than whole (offset past the `</style>` line, or grep to the section you are filling): the stylesheet needs no edits unless a brand override is active. Then work section by section with edits, so the CSS and component markup stay exactly as designed and you never re-emit them. Two slots are easy to miss: the `<title>` in the shell, and the second `seclinks` block under the snapshot table.
 6. **Check and hand over** — `python3 scripts/build_report.py check <file>` catches sample values, unresolved placeholders and markers left behind. It is a backstop, not a substitute for reading the numbers. Then name the sections you left out, so the reader knows the omission was asked for.
 
@@ -45,13 +45,24 @@ Describe each option by what it adds:
 - Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scaffold handles the parts it knows about; check the prose yourself
 - Two sections can come up empty after the fetch, and only the fetch can tell you: Key wins, because whether a closure qualifies is only visible in its comments, and Actions resolved, when nothing was resolved in the window. Either way, delete the section from the built file and say so in chat, not on the page. The two references carry the rule
 
+## Writing the narrative
+
+Every sentence on the page is written by the partner's engineer to the building's facility manager — the statement under each section name, the note under each table and chart, the key wins, the methodology notes. Write the way that engineer would talk in a review meeting.
+
+- Say what happened and what it means for the building. The reader runs the plant; they do not need their own score explained back to them
+- Lead with the specific. "Level 7 held 30.7% and averaged 20.3 °C against a band that starts at 21 °C" beats "comfort underperformed on the lower floors"
+- Three sentences is usually enough. Facts carry it, so drop the summing-up line that tells the reader what to think
+- Past tense, active, plain words. Not "leveraged", "robust", "significant", "it is worth noting", "demonstrates"
+- Never describe the report itself or how it was made. The reader wants the building, not the method
+- Where a number is bad, say so and say what it points at. A review that carries only good news is not worth the reader's time
+
 ## What always renders
 
 ### Report title
 
 - {Site name} Quarterly Building Performance Review
 - Prepared by: {Company name} {Company service name}. Powered by PEAK
-- Reporting period: the quarter as a date range, per [Shared data](#shared-data), or the site's own coverage per [Newly onboarded sites](#newly-onboarded-sites)
+- Reporting period: the quarter as a date range, per [Data recipes](#data-recipes), or the site's own coverage per [Newly onboarded sites](#newly-onboarded-sites)
 - Author: full name of the logged-in PEAK MCP user, from `who_am_i` — always present, never omitted or substituted
 - Issue date: issue date
 - Disclaimer, verbatim, below the masthead metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
@@ -102,44 +113,6 @@ A follow-up on a report that already exists is not a rebuild. Match the reading 
 - **A visual or structural change** — a new component, a table re-laid out, a different chart form — read `DESIGN.md`: `## Colors` and `## Typography` for the tokens and their roles, `## Components` for what a component owes, `## Layout` for the print rules. The rendered file carries the CSS but not the reasoning behind it
 - **A rebrand** — `BRAND.md` and the logo assets it names, per [Output & theming](#output--theming). Both files stay at the repo root: that is where the brand overlay skills write them, and a rebrand reads them as a pair. The tokens sit in one `:root` block and the masthead logo is one inlined SVG, so this is a handful of edits on the file you already have
 
-## Shared data
-
-Every window closes on the **last complete month**, so nothing in the report covers a part-month. Two reasons: a quarterly review should read as of the quarter, not as of the day it was generated; and equipment health scores are stored pre-aggregated on month boundaries, so a mid-month bound forces a raw scan and a wide call is then refused for scanning too many rows.
-
-Two windows, named here because the references reuse them. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **7 month window** is the seven complete months ending there, which the trends use, so a trend carries the quarter plus the four months before it. Both close on the same month, so trends and snapshots share that bucket and must not disagree on it.
-
-The references build PEAK links from these, so substitute rather than hardcoding dates:
-
-| Placeholder              | Value                                                   |
-| ------------------------ | ------------------------------------------------------- |
-| `{{quarter_start}}`      | first day of the quarter, `YYYY-MM-DD`                  |
-| `{{quarter_end}}`        | last day of the quarter — the last complete month's end |
-| `{{quarter_last_month}}` | first day of that last month, for `summary_ts`          |
-| `{{trend_start}}`        | first day of the 7 month window                         |
-
-Always:
-
-- Author — `who_am_i`, the user's full name for the masthead
-- Site facts — `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
-- Counts for the analytics overview — never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
-- Thermal zones — the zones PEAK scores for thermal comfort: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. Do not count sensor points instead. The point code differs by equipment type, so a fixed list of codes misses whatever the building happens to use — at one site it found 65 points against 332 scored zones
-
-Only when Actions resolved and leaderboard, or Key wins, is in:
-
-Two tools read action tickets, and each is better at one job.
-
-`search_action_tickets` carries the titles, equipment names and dates. Key wins and the median need those, so use it there. It pages at 50 and the rows are fat, so ask it only for months you will actually read.
-
-`tickets.tickets` is the cheap way to count. Ask for `ticket_id`, `status_id`, `resolved_at` and `assignees{firstname, lastname, entity{name}}` and the rows are a fifth the size — 160 closures come back in three lean pages rather than four fat ones. Pass `ticket_archived: false`, which the other tool does for you.
-
-Pull only what each section needs:
-
-- **Resolved rows** — over the 7 month window, which answers the leaderboard, the resolved series and the median at once. Check the tally before you use it: read each month's count straight back with `limit:1` and compare. A hand count of 160 rows is wrong more often than it is right
-- **Raised counts** — one call per month with `created_after_local`/`created_before_local`, `limit:1`, and read `pagination.total`. Seven small calls beat three pages of rows you would only be counting. That total counts every status, so repeat each month with `status:"not_doing"` and subtract, or the two series drop Not Doing differently
-- **Open now** — one call per open status (`open`, `in_progress`, `on_hold`), no date bound, since work raised before the window can still be open today
-- Count actions, one per ticket, in both series — never alerts. An action can be bulk-linked to dozens of them, 141 on one ticket at one site, so weighting by alerts makes a month spike on a triage decision rather than on work
-- Drop status Not Doing throughout. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing
-
 ## Newly onboarded sites
 
 A site can have less history than the window asks for. Read that from the first fetch rather than assuming: if the earliest month returned by the `site` × `month` call is later than the window start, the site went live inside the window and the report covers what exists.
@@ -177,3 +150,41 @@ Derived rules when overrides are active:
 - `secondary` overridden → re-derive the `shadow` token as the new `secondary` hue at 8% opacity
 - Any brand override active → platform strings read `PEAK · Site {id}` (drop the CIM prefix) in the masthead metadata row and footer. `Powered by PEAK` is always kept, in every brand
 - No overrides → keep `CIM PEAK` and the CIM masthead logo the scaffold already carries from `assets/logo-white.svg`
+
+## Data recipes
+
+Every window closes on the **last complete month**, so nothing in the report covers a part-month. Two reasons: a quarterly review should read as of the quarter, not as of the day it was generated; and equipment health scores are stored pre-aggregated on month boundaries, so a mid-month bound forces a raw scan and a wide call is then refused for scanning too many rows.
+
+Two windows, named here because the references reuse them. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **7 month window** is the seven complete months ending there, which the trends use, so a trend carries the quarter plus the four months before it. Both close on the same month, so trends and snapshots share that bucket and must not disagree on it.
+
+The references build PEAK links from these, so substitute rather than hardcoding dates:
+
+| Placeholder              | Value                                                   |
+| ------------------------ | ------------------------------------------------------- |
+| `{{quarter_start}}`      | first day of the quarter, `YYYY-MM-DD`                  |
+| `{{quarter_end}}`        | last day of the quarter — the last complete month's end |
+| `{{quarter_last_month}}` | first day of that last month, for `summary_ts`          |
+| `{{trend_start}}`        | first day of the 7 month window                         |
+
+Always:
+
+- Author — `who_am_i`, the user's full name for the masthead
+- Site facts — `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
+- Counts for the analytics overview — never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
+- Thermal zones — the zones PEAK scores for thermal comfort: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. Do not count sensor points instead. The point code differs by equipment type, so a fixed list of codes misses whatever the building happens to use — at one site it found 65 points against 332 scored zones
+
+Only when Actions resolved and leaderboard, or Key wins, is in:
+
+Two tools read action tickets, and each is better at one job.
+
+`search_action_tickets` carries the titles, equipment names and dates. Key wins and the median need those, so use it there. It pages at 50 and the rows are fat, so ask it only for months you will actually read.
+
+`tickets.tickets` is the cheap way to count. Ask for `ticket_id`, `status_id`, `resolved_at` and `assignees{firstname, lastname, entity{name}}` and the rows are a fifth the size — 160 closures come back in three lean pages rather than four fat ones. Pass `ticket_archived: false`, which the other tool does for you.
+
+Pull only what each section needs:
+
+- **Resolved rows** — over the 7 month window, which answers the leaderboard, the resolved series and the median at once. Check the tally before you use it: read each month's count straight back with `limit:1` and compare. A hand count of 160 rows is wrong more often than it is right
+- **Raised counts** — one call per month with `created_after_local`/`created_before_local`, `limit:1`, and read `pagination.total`. Seven small calls beat three pages of rows you would only be counting. That total counts every status, so repeat each month with `status:"not_doing"` and subtract, or the two series drop Not Doing differently
+- **Open now** — one call per open status (`open`, `in_progress`, `on_hold`), no date bound, since work raised before the window can still be open today
+- Count actions, one per ticket, in both series — never alerts. An action can be bulk-linked to dozens of them, 141 on one ticket at one site, so weighting by alerts makes a month spike on a triage decision rather than on work
+- Drop status Not Doing throughout. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing

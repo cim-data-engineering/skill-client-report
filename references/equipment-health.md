@@ -2,23 +2,6 @@
 
 Owns three of the operational impact rows — the equipment health score, the automated health checks and the labor cost avoided — plus the equipment health snapshot and both charts in monthly equipment health. The checks and the cost model measure what the equipment health rules did, so they belong to this section. Scaffold parts: `equipment-health-snapshot`, `monthly-equipment-health`.
 
-## Fetch
-
-`search_equipment_health_scores` shapes all six calls. It takes no `limit` and returns every group, so none of these page.
-
-Pass `local_end_date` as the first of the month after the last complete month; it is exclusive, and both windows close there. A mid-month bound is refused for scanning too many rows — Shared data in SKILL.md says why.
-
-| Call                                       | Window        | Feeds                                                        |
-| ------------------------------------------ | ------------- | ------------------------------------------------------------ |
-| `aggregate_entities:["metadata_type"]`, `aggregate_period:"month"` | quarter  | heatmap cells                                     |
-| `aggregate_entities:["metadata_type"]`, `aggregate_period:"all"`   | quarter  | the Equipment and Rules counts                    |
-| `aggregate_entities:["site"]`, `aggregate_period:"month"`          | 7 months | snapshot site row (last 3), Chart 1 (all 7)       |
-| `aggregate_entities:["site"]`, `aggregate_period:"all"`            | quarter  | the headline score in the operational impact row  |
-| `aggregate_entities:["priority"]`, `aggregate_period:"all"`        | quarter  | the checks and labor cost rows                    |
-| `aggregate_entities:["priority"]`, `aggregate_period:"month"`      | 7 months | Chart 2 bars                                      |
-
-On the `priority` calls, executions sum across priorities for the checks total and the per-priority split drives the labor model. Take distinct counts from an `all` call, never by summing months or picking one — it counts distinct equipment and rules across the whole window, so it is legitimately higher than any single month. Scores never sum either; the site row is its own rollup.
-
 ## Operational impact rows
 
 | Rating chip                         | Metric label                     | Value                                     | Subtitle                                                                          |
@@ -119,3 +102,21 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 ## Notes band items
 
 - **Labor cost avoided.** The model above, with the region's rate named
+
+## Data recipes
+
+All six calls are `search_equipment_health_scores`. It takes no `limit` and returns every group, so none of them page.
+
+| `aggregate_entities` | `aggregate_period` | Window   | Feeds                                            |
+| -------------------- | ------------------ | -------- | ------------------------------------------------ |
+| `metadata_type`      | `month`            | quarter  | heatmap cells                                    |
+| `metadata_type`      | `all`              | quarter  | the Equipment and Rules counts                   |
+| `site`               | `month`            | 7 months | snapshot site row (last 3), Chart 1 (all 7)      |
+| `site`               | `all`              | quarter  | the headline score in the operational impact row |
+| `priority`           | `all`              | quarter  | the checks and labor cost rows                   |
+| `priority`           | `month`            | 7 months | Chart 2 bars                                     |
+
+- `local_end_date` is exclusive, so pass the first of the month after the last complete month. A mid-month bound is refused for scanning too many rows
+- Executions sum across priorities for the checks total, and the per-priority split drives the labor model
+- Take distinct equipment and rule counts from an `all` call, never by summing months or picking one. It counts distinct across the whole window, so it is legitimately higher than any single month
+- Scores never sum. The site row is its own rollup

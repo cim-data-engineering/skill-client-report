@@ -2,40 +2,22 @@
 
 Owns the key wins section. No operational impact row. Scaffold part: `key-wins`.
 
-## Fetch
-
-Shortlist with `search_action_tickets(status:"closed", resolved_after_local, resolved_before_local)` over the quarter. The shared pull in SKILL.md carries ids, dates and assignees but not titles or equipment names, and the shortlist is chosen by reading those — so this is the one extra call Key wins needs, whether or not Alerts resolved is also in.
-
-Then read `search_action_comments` on the shortlist only, ten to fifteen candidates. Comments are where the physical work is described, and reading them for every closure in the quarter costs many times more than reading them for the few that could lead the page.
-
-Three patterns are visible in the shortlist itself and need no comment read — skip them:
-
-- `age_days: 0` with no `last_comment_author`: created and resolved in the same moment, so nobody worked it
-- A run of actions sharing a resolved timestamp to the second: a bulk cleanup, not a quarter of repairs
-- An action whose comments were already summarised as still in fault at closure: closed for tidiness while the fault stands
+This is the section the facility manager reads first and the one they forward to the owner. Every other section says how the building performed; this one says what was actually fixed, by whom, and what changed as a result. It is where the quarter's monitoring shows up as work on the floor, and it is what the owner is paying for.
 
 ## Key wins
 
 What changed in the building this quarter
 Date: the quarter
 
-Highlight resolved or open actions, written for the facilities manager or building owner.
-
-**Audience:**
-Written by the partner maintaining the site, delivered to the facilities manager, forwarded by them to the owner. Each win should show that the building is watched, that faults are found and fixed, and that closures are verified rather than asserted. Write from the partner's side, not the platform's.
-
 **Voice:**
 
-Write it the way the engineer who did the work would write it to the client: plain, specific, finished in three sentences. What was wrong, what was done and by whom, what it means for the building. Then stop.
+[Writing the narrative](../SKILL.md#writing-the-narrative) governs every sentence in the report. It matters most here, and wins add two rules of their own:
 
-- Facts carry it. Names, equipment ids, dates, numbers — "reset the start to 90 minutes before occupancy on 14 July", not "optimised the start-up strategy"
-- No summing-up sentence. A closing line telling the reader what to think about the win they just read is the clearest sign nobody at the partner wrote it. Where the outcome needs stating, state it in the same breath as the change
-- No superlatives about your own work, and none of "importantly", "notably", "it is worth noting". The facilities manager can see what matters
-- Past tense, active, one clause at a time. Long sentences chained with dashes read as generated
+- Write as the engineer who did the work: what was wrong, what was done and by whom, what it means for the building. Then stop
 - Say what was done, not what it demonstrates. "Replaced the belts and had it running the next morning" beats "restored reliability to the unit"
 
 **Selection:**
-A win needs a physical or control change described by whoever made it, in the comment history. Exclude alerts resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
+A win needs a physical or control change described by whoever made it, in the comment history — a closure verified, not asserted. Exclude alerts resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
 
 **Display:**
 
@@ -57,3 +39,18 @@ This is a client deliverable, so the section carries wins or it does not appear.
 - Never pad, and never promote a diagnosis to a repair. "The sensor was found to be locked" is not a win; "the sensor was replaced" is
 - Report it in chat instead, to whoever ran the skill: what you read, what you rejected, why. A quarter with no described repairs is a customer-success signal worth someone knowing about
 - Where dropping the section would leave nothing but the masthead and the analytics overview, say so before handing the file over rather than shipping two sections as a review
+
+## Data recipes
+
+| Step      | Call                                                                                                  |
+| --------- | ----------------------------------------------------------------------------------------------------- |
+| Shortlist | `search_action_tickets(status:"closed", resolved_after_local, resolved_before_local)` over the quarter  |
+| Evidence  | `search_action_comments`, on the shortlist only — ten to fifteen candidates                             |
+
+The shared pull in SKILL.md carries ids, dates and assignees but not titles or equipment names, and the shortlist is chosen by reading those, so the shortlist call runs whether or not Alerts resolved is also in. Comments are where the physical work is described, and reading them for every closure in the quarter costs many times more than reading them for the few that could lead the page.
+
+Three patterns are visible in the shortlist itself and need no comment read — skip them:
+
+- `age_days: 0` with no `last_comment_author`: created and resolved in the same moment, so nobody worked it
+- A run of actions sharing a resolved timestamp to the second: a bulk cleanup, not a quarter of repairs
+- An action whose comments were already summarised as still in fault at closure: closed for tidiness while the fault stands

@@ -6,12 +6,6 @@ The two go together because they answer the same question from either end — ho
 
 Nothing resolved in the window means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. Delete the section, its operational impact row and its notes items, and give the open count in chat instead — the same rule Key wins follows. A newly onboarded site is where this happens.
 
-## Fetch
-
-- The shared action pull in SKILL.md carries the resolved rows behind the leaderboard, the median, and the resolved series; the raised series comes from its per-month counts
-- `search_alert_tickets` for the recovery rate: alerts resolved in the window with status closed, read against their fault status. This is the only call in the report that reads alert tickets, so it does not run at all when this section is out
-- Open now is a different question from Resolved: work raised before the window can still be open today. Read the open set with the Open now calls in Shared data — one per open status, unbounded by date — and count by assignee as at the issue date
-
 ## Operational impact row
 
 | Rating chip                        | Metric label                                | Value                                                                                       | Subtitle                                                                                                                                           |
@@ -81,3 +75,15 @@ Date: the 7 month window
 - **Raised vs resolved.** Raised counts action tickets created in the month, not the alerts behind them: detection is automatic, raising an action is a human triage decision, and one action can be linked to many alerts. Resolved counts actions on their resolution date. Actions marked Not Doing are excluded from both series
 - **Completion rate** is resolved / (resolved + currently open) as at the issue date, so 100% reflects holding no open work
 - Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved is worth a sentence in the chart note
+
+## Data recipes
+
+| Need                                 | Call                                                                                |
+| ------------------------------------ | ----------------------------------------------------------------------------------- |
+| Leaderboard, resolved series, median | The resolved action pull in SKILL.md, over the 7 month window                        |
+| Raised series                        | Its per-month counts                                                                 |
+| Open now                             | Its Open now calls — one per open status, no date bound                              |
+| Verified recovery                    | `search_alert_tickets(status:"closed")` over the quarter, read against fault status   |
+
+- Open now is a different question from resolved: work raised before the window can still be open today, so count by assignee as at the issue date
+- `search_alert_tickets` is the only call in the report that reads alert tickets, so it does not run at all when this section is out

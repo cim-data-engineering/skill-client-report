@@ -2,24 +2,6 @@
 
 Owns the operational impact thermal comfort row, the indoor environment health snapshot, and monthly thermal comfort. Scaffold parts: `indoor-environment-snapshot`, `monthly-thermal-comfort`.
 
-## Fetch
-
-`search_indoor_environment(metric:"temperature", aggregate_period:"month", limit:80)`, two calls:
-
-| Call                        | Window   | Feeds                                              |
-| --------------------------- | -------- | -------------------------------------------------- |
-| `aggregate_entity:"level"`  | quarter  | the snapshot grid                                  |
-| `aggregate_entity:"site"`   | 7 months | the snapshot closing row (last 3) and the trend    |
-| `aggregate_entity:"site"`, `aggregate_period:"all"` | quarter | the headline score in the operational impact row |
-
-Both windows close on the last complete month: `local_end_date` is exclusive, so pass the first of the month after it. Level rows are levels x months, so page when levels x 3 exceeds 80.
-
-The level rollup carries no zone count, so Zones costs one small call per level: `aggregate_entity:"zone"`, `aggregate_period:"all"`, `level_ids:[one level]`, `limit:1`, read `pagination.total`. It is the most expensive thing in this section.
-
-The calls are one row each and go out together, so a dozen levels is one cheap batch. Take the per-level counts up to about that many. Above it, make one call for the site total (same query, no `level_ids`), drop the column, and give the total in the notes instead — a tower's floors carry near-identical zone counts, so past a dozen calls you are paying to print the same number over and over. At one 25-level site, 19 floors had exactly eight.
-
-Do not substitute `platform.levels` or `platform.zones`. They count zone *objects*, not zone temperature points — at one 25-level site that was 340 against 200 scored zones, which would contradict the thermal zones figure in the analytics overview. `has_ie_config` on `platform.zones` means a zone-specific override, not participation in the score.
-
 ## Operational impact row
 
 | Rating chip                               | Metric label                    | Value                                    | Subtitle                                                                        |
@@ -96,3 +78,19 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 
 - **Thermal comfort score.** Share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK, typically 21-24.9C (68-79F), so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows
 - **Zones.** The count is scored zones over the quarter. Where it falls short of the analytics overview figure, say how many scored and why the rest did not — usually too few working-hours readings
+
+## Data recipes
+
+All of it is `search_indoor_environment(metric:"temperature")`.
+
+| `aggregate_entity` | `aggregate_period` | Window   | Feeds                                            |
+| ------------------ | ------------------ | -------- | ------------------------------------------------ |
+| `level`            | `month`            | quarter  | the snapshot grid                                |
+| `site`             | `month`            | 7 months | the snapshot closing row (last 3) and the trend  |
+| `site`             | `all`              | quarter  | the headline score in the operational impact row |
+| `zone`             | `all`              | quarter  | the Zones column, one call per level — `level_ids:[one level]`, `limit:1`, read `pagination.total` |
+
+- `local_end_date` is exclusive, so pass the first of the month after the last complete month
+- Level rows are levels x months, so page at `limit:80` when levels x 3 exceeds 80
+- Zones is the expensive one, and the only per-level call. Each returns one row and they go out together, so a dozen levels is one cheap batch. Above about a dozen, make a single call for the site total (same query, no `level_ids`), drop the column and give the total in the notes — a tower's floors carry near-identical zone counts, so past that you are paying to print the same number over and over. At one 25-level site, 19 floors had exactly eight
+- Do not substitute `platform.levels` or `platform.zones`. They count zone objects, not zone temperature points — at one 25-level site that was 340 against 200 scored zones
