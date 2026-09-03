@@ -1,0 +1,95 @@
+# Equipment health
+
+Owns the operational impact equipment health row, the equipment health snapshot, and both charts in monthly equipment health. Scaffold parts: `equipment-health-snapshot`, `monthly-equipment-health`.
+
+## Fetch
+
+`search_equipment_health_scores` shapes all four calls. It takes no `limit` and returns every group, so none of these page.
+
+| Call                                       | Window        | Feeds                                                        |
+| ------------------------------------------ | ------------- | ------------------------------------------------------------ |
+| `aggregate_entities:["metadata_type"]`, `aggregate_period:"month"` | 4 months | heatmap cells                                     |
+| `aggregate_entities:["metadata_type"]`, `aggregate_period:"all"`   | 4 months | the Equipment and Rules counts                    |
+| `aggregate_entities:["site"]`, `aggregate_period:"month"`          | 7 months | snapshot site row (last 4), Chart 1 (all 7)       |
+| `aggregate_entities:["priority"]`, `aggregate_period:"month"`      | 7 months | Chart 2 bars                                      |
+
+Take the counts from the `all` call, never by summing months or picking one — it counts distinct equipment and rules across the whole window, so it is legitimately higher than any single month. Scores never sum either; the site row is its own rollup.
+
+## Operational impact row
+
+| Rating chip                         | Metric label                     | Value                                     | Subtitle                                                                          |
+| ----------------------------------- | -------------------------------- | ----------------------------------------- | --------------------------------------------------------------------------------- |
+| See below equipment score benchmark | x.x% equipment health maintained | Site equipment health score last 3 months | {Up\|Down} x.xx pp from y.yy% in {start month} to z.zz% in {current month} to date |
+
+The row carries a movement, not a baseline: current month to date minus the start month, in pp — the same definition as the snapshot Chg column, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months; the headline figure is the 3 month score, so a bare "up x.xx pp" implies a baseline that appears nowhere in the report. Both endpoints come from the `site` × `month` series already fetched — no separate 12 month call. Score to 2dp, matching the snapshot.
+
+Section link, labelled "See live equipment health dashboard":
+`https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date=2026-05-01T00:00:00.000&end_date=2026-07-31T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
+
+## Equipment score benchmark
+
+| Rating    | Equipment health score |
+| --------- | ---------------------- |
+| Excellent | >= 99%                 |
+| Good      | >= 97%                 |
+| Average   | >= 90%                 |
+| Poor      | < 90%                  |
+
+## Equipment health snapshot
+
+Health by equipment type
+Date: last 3 complete months plus the current month to date
+
+Heatmap table of monthly equipment health scores, one row per equipment type, four score columns — the last 3 complete months plus the current month to date — plus two count columns the thermal comfort heatmap does not carry.
+
+| Column         | Reference                                              |
+| -------------- | ------------------------------------------------------ |
+| Equipment type | Equipment types with at least one scored rule          |
+| Equipment      | Total equipment count of that type with a scored rule  |
+| Rules          | Total scored rules on that type                        |
+| Month columns  | Equipment health score for that month x.xx%            |
+| Chg            | Current month to date minus the start month in pp x.xx |
+
+**Display:**
+
+- Color cells per the equipment score benchmark. Color the cell, not the text
+- Score to 2dp. The benchmark bands sit close together, and 1dp rounds a value across a band edge so the numeral and its color disagree
+- Emphasise only the current month column. Earlier months step back to body weight, per the `heatmap` component — a grid of bold figures reads as noise
+- Equipment and Rules as plain numerals, left of the score columns, never colored and never barred
+- Chg signed with a direction glyph. Green up, red down, muted when flat
+- Sort by Chg descending, so the biggest improvement leads and any decline closes
+- Close with a site row, separated from the sort
+- Site row comes from the site rollup, so it will not equal the average of the type rows. Do not reconcile them
+- Display all equipment types, not a sample
+- Truncate equipment type name with ellipsis, do not wrap rows
+- Label the current month column as partial, since it holds fewer days than the rest
+- Equipment health rules count can differ to overall site rules count as rules can trigger alerts but not score
+- Exclude equipment type BACER or Bacer (System). These are platform health checks
+
+**Links:**
+
+- Hyperlink equipment type name to PEAK with the same 4 month custom date range selected, add chevron indicating link >
+- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date=2026-05-01T00:00:00.000&end_date=2026-08-12T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
+
+## Monthly equipment health
+
+Six months of trend
+Date: last 6 complete months plus the current month to date
+
+Chart 1: Site equipment health score
+Monthly line chart. Render the two nearest benchmark thresholds and label them — one either side where the series sits inside a band, otherwise the threshold it crosses plus the next one out, so the reader can see which months fall on which side. Auto scale Y axis to fit both.
+
+Chart 2: Site automated health checks and labor cost avoided
+Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avoided (RHS), the monthly view of the two operational impact rows that always render. Price each month with the labor cost model in SKILL.md, prorated over that month's days.
+
+**Display:**
+
+- Display values on points. Chart 1 display 1dp x.x% and Chart 2 compact number formatting
+- Add chart titles
+- Chart 1's score is the same `site` series as the snapshot site row, so the months they share must agree
+- Label the last point as partial, since the current month holds fewer days than the rest. Chart 2 matters most here — a month to date bar is short because the month is young, not because checking stopped. Say so in the chart note rather than leaving the reader to infer a decline
+
+**Links:**
+
+- Source link on Chart 1. Use the relative range, not custom dates — it holds the same window as the report ages
+- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&relative_date=last_6_months&include_today=true`

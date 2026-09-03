@@ -217,6 +217,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 <body>
 <div class="sheet">
 
+<!-- part: masthead -->
 <header class="mast">
   <!-- Masthead logo: the reversed (white) variant, inlined from assets/logo-white.svg so the file is self-contained. -->
   <svg class="logo" viewBox="0 0 100 29" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CIM">
@@ -251,6 +252,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   <p class="mastnote">AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed.</p>
 </header>
 
+<!-- part: analytics-overview -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Analytics overview</p>
@@ -266,6 +268,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 </section>
 
+<!-- part: operational-impact -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Operational impact</p>
@@ -273,6 +276,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <p class="h2note">1 May – 31 July 2026</p>
   </div>
 
+  <!-- if: equipment-health -->
   <div class="irow">
     <span class="chip pos">Good</span>
     <div>
@@ -280,7 +284,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <div class="isub"><span class="delta pos">↑ Up 0.43 pp</span> from 98.65% in May to 99.08% in August to date.</div>
     </div>
   </div>
+  <!-- endif -->
 
+  <!-- if: indoor-environment -->
   <div class="irow">
     <span class="chip pos">Excellent</span>
     <div>
@@ -288,6 +294,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <div class="isub"><span class="delta neu">↓ Down 2.7 pp</span> from 94.4% in May to 91.7% in August to date.</div>
     </div>
   </div>
+  <!-- endif -->
 
   <div class="irow">
     <span class="chip neu">Continuous</span>
@@ -305,6 +312,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     </div>
   </div>
 
+  <!-- if: issues -->
   <div class="irow">
     <span class="chip pos">Excellent</span>
     <div>
@@ -312,14 +320,22 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <div class="isub">Median time to resolve of 21 days, measured from linked action creation to resolution.</div>
     </div>
   </div>
+  <!-- endif -->
 
   <div class="seclinks">
+    <!-- if: equipment-health -->
     <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000">See live equipment health dashboard ›</a>
+    <!-- endif -->
+    <!-- if: indoor-environment -->
     <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">See live indoor environment dashboard ›</a>
+    <!-- endif -->
+    <!-- if: issues -->
     <a href="https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&amp;site_ids=1042&amp;status_ids=6&amp;archived=false">See live issues being resolved ›</a>
+    <!-- endif -->
   </div>
 </section>
 
+<!-- part: equipment-health-snapshot -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Equipment health snapshot</p>
@@ -365,6 +381,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 </section>
 
+<!-- part: indoor-environment-snapshot -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Indoor environment health snapshot</p>
@@ -421,6 +438,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 </section>
 
+<!-- part: monthly-equipment-health -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Monthly equipment health</p>
@@ -510,6 +528,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 </section>
 
+<!-- part: monthly-thermal-comfort -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Monthly thermal comfort</p>
@@ -556,6 +575,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 </section>
 
+<!-- part: monthly-alerts -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Monthly alerts raised vs resolved</p>
@@ -603,6 +623,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   <p class="chartnote">Resolution ran ahead of triage in six of seven months — 45 resolved against 32 raised. June distorts the shape: 13 VAV and AHU actions were raised in a single batch on 24 June for investigation at the next monthly maintenance, so read the spike as one scheduled sweep rather than a month of new faults. August covers 12 days, so both bars are short by construction.</p>
 </section>
 
+<!-- part: assignee-leaderboard -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Assignee leaderboard</p>
@@ -638,6 +659,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 </section>
 
+<!-- part: key-wins -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Key wins</p>
@@ -648,7 +670,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   <div class="win">
     <h3>Evaporator pressure sensing restored on both chillers — CH-01 and CH-02</h3>
     <p>Both chillers had been carrying evaporator pressure faults, which leaves the plant running without reliable protection on its refrigerant circuit. On CH-02, Meridian Mechanical replaced the chilled water differential pressure sensor and confirmed the work on 21 July; on CH-01, Marcus Bell traced the reading back to a logic input on the chiller and corrected it on 13 July. PEAK has held both alerts recovered since. This is the repair that matters most on this page — the chillers carry the building's cooling into summer.</p>
+    <!-- if: equipment-health -->
     <p class="snap">Also visible in the equipment health snapshot: Chiller, up 2.76 pp across the window and into the Excellent band in August.</p>
+    <!-- endif -->
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48213">CH-02 — Inspect Evaporator Insufficient Pressure</a> · <a href="https://ace.cimenviro.com/tickets/escalated/1042/48307">CH-01 — Inspect Evaporator Pressure Broken Sensor</a></p>
   </div>
 
@@ -661,7 +685,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   <div class="win">
     <h3>AC-01 returned to automatic chilled water control — failed plant controller replaced</h3>
     <p>The chilled water valves on AC-01, AC-02 and AC-03 had been forced open by hand while a failed level 22 plant controller was on order, which meant the units were cooling flat out with no modulation. Meridian Mechanical replaced the controller and returned the valves to Auto, and PEAK verified AC-01 recovered on 30 April with the valve modulating normally again — a 22% average in the first day after the fix rising to 49% by day seven, exactly the load-following behaviour that had been missing.</p>
+    <!-- if: equipment-health -->
     <p class="snap">Also visible in the equipment health snapshot: Air Handling Units, up 1.33 pp — the second largest gain on the page.</p>
+    <!-- endif -->
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48166">AC-01 — Inspect Chilled Water Valve Leak</a></p>
   </div>
 
@@ -672,6 +698,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 </section>
 
+<!-- part: notes -->
 <section class="notes">
   <div class="sechead">
     <p class="eyebrow">Notes on method</p>
@@ -679,16 +706,29 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
   <ol>
     <li><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority — P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over the 92-day period, valued at AUD 150/hr for this site's region.</li>
+    <!-- if: indoor-environment -->
     <li><strong>Thermal comfort score.</strong> The share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK and is 21–24.9 °C across this building, so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows.</li>
+    <!-- endif -->
+    <!-- if: indoor-environment -->
     <li><strong>Zones</strong> in the indoor environment snapshot counts the thermal zones that returned a score over the window — 298 of the 314 zone temperature points in the analytics overview. The remaining 16 did not report often enough in working hours to be scored.</li>
+    <!-- endif -->
+    <!-- if: issues -->
     <li><strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running.</li>
+    <!-- endif -->
+    <!-- if: issues -->
     <li><strong>Median time to resolve</strong> is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work.</li>
+    <!-- endif -->
+    <!-- if: issues -->
     <li><strong>Raised vs resolved.</strong> Raised counts alerts triaged into actions in the month (or 1 where an action has no linked alert); resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series.</li>
+    <!-- endif -->
     <li><strong>The current month.</strong> Every monthly series runs to the issue date, so August holds 12 days rather than a full month. The volume series — automated checks, labour cost avoided, alerts raised and resolved — are short in that column by construction. Scores are rates over whatever days exist, so they are not.</li>
+    <!-- if: leaderboard -->
     <li><strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the issue date, so 100% reflects holding no open work.</li>
+    <!-- endif -->
   </ol>
 </section>
 
+<!-- part: footer -->
 <footer>
   <span>CIM PEAK · Site 1042 · Skyline Tower, Brisbane QLD 4000</span>
   <span>Issued 12 Aug 2026</span>
