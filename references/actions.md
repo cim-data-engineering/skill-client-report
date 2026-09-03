@@ -1,0 +1,80 @@
+# Actions resolved and leaderboard
+
+Owns the operational impact faults resolved row, monthly alerts raised vs resolved, and the assignee leaderboard. Scaffold parts: `monthly-alerts`, `assignee-leaderboard`.
+
+The two go together because they answer the same question from either end — how much fault work the site took on, and who closed it — off one pull of action tickets.
+
+## Fetch
+
+- The shared action pull in SKILL.md carries the monthly buckets, the resolution dates behind the median, and the assignee names. Key wins shortlists from the same pull, so fetch it once
+- `search_alert_tickets` for the recovery rate: alerts resolved in the window with status closed, read against their fault status. The analytics overview's `limit:1` count does not cover this — the rate needs the resolved rows themselves
+- Open now is a different question from Resolved: work raised before the window can still be open today. Read the open set with `search_action_tickets(status_ids:[1,3,7])`, unbounded by date, and count by assignee as at the issue date
+
+## Operational impact row
+
+| Rating chip                        | Metric label                                | Value                                                                                       | Subtitle                                                                                                                                           |
+| ---------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| See below alert recovery benchmark | x faults resolved with x% verified recovery | Resolved alerts with current status closed last 3 months and current rule status is running | Median time to resolve of x days. Based on the alert's linked action creation and resolution date, not the alert's own creation and resolution date |
+
+Section link, labelled "See live issues being resolved":
+`https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&site_ids={{site_id}}&status_ids=6&archived=false`
+
+## Alert recovery benchmark
+
+Recovery rate is alerts resolved in the period with fault status recovered divided by all alerts resolved in the period. Filter for alerts with status closed.
+
+| Rating    | Recovery rate |
+| --------- | ------------- |
+| Excellent | >= 99%        |
+| Good      | >= 95%        |
+| Average   | >= 90%        |
+| Poor      | < 90%         |
+
+## Monthly alerts raised vs resolved
+
+Faults triaged and resolved
+Date: last 6 complete months plus the current month to date
+
+Grouped bars by month.
+
+- **Raised**: actions created in the month. Count the alerts linked to each action, or 1 where an action has none, since work was still raised
+- **Resolved**: actions resolved in the month, counted the same way
+- **Exclude**: actions marked Not Doing, and alerts whose rule is no longer running, from both series
+
+## Assignee leaderboard
+
+Who closed the work
+Date: last 6 months
+
+| Column          | Reference                                |
+| --------------- | ---------------------------------------- |
+| Rank            | Position by actions resolved             |
+| Assignee        | Action ticket assignee full name         |
+| Company         | Assignee company name                    |
+| Resolved        | Actions resolved in the period           |
+| Completion rate | Resolved / (resolved + open now) x%      |
+| Open now        | Actions currently open, as at issue date |
+
+**Display:**
+
+- Rank by resolved descending, tie-break on completion rate descending
+- Trophy glyph replaces the rank numeral at 1. Nothing on 2 or 3
+- Completion rate as a bar on a 0-100 scale with the value beside it
+- Open now emphasised when non-zero, muted at zero
+- Resolved and Open now as plain numerals. No bars
+- Close with a total row, separated from the rank
+- Include assignees with zero resolved but open actions. Exclude actions marked as Not Doing
+- Truncate assignee and company name with ellipsis, do not wrap rows
+
+**Links:**
+
+- Add link to PEAK assignee leaderboard with last 6 month custom date range selected
+- `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date=2026-02-01T00:00:00.000&end_date=2026-07-31T00:00:00.000&grouping=assignee`
+
+## Notes band items
+
+- **Verified recovery.** Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running
+- **Median time to resolve** is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work
+- **Raised vs resolved.** Raised means an alert ticket is triaged into an action ticket, not when the alert ticket was created — detection is automatic, raising is a human triage decision. Resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series
+- **Completion rate** is resolved / (resolved + currently open) as at the issue date, so 100% reflects holding no open work
+- Label the last month of the chart as partial. Both series run short there because the month is young, so say it in the chart note rather than letting the reader read a slowdown

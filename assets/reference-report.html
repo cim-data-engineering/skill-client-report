@@ -296,6 +296,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
   <!-- endif -->
 
+  <!-- if: equipment-health -->
   <div class="irow">
     <span class="chip neu">Continuous</span>
     <div>
@@ -303,7 +304,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <div class="isub">Averaging 1.39 million monthly checks across 1,637 scored rules.</div>
     </div>
   </div>
+  <!-- endif -->
 
+  <!-- if: equipment-health -->
   <div class="irow">
     <span class="chip neu">Modelled</span>
     <div>
@@ -311,8 +314,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <div class="isub">125.8 hours and 16.6 working days of inspection time, valued at AUD 150/hr.</div>
     </div>
   </div>
+  <!-- endif -->
 
-  <!-- if: issues -->
+  <!-- if: actions -->
   <div class="irow">
     <span class="chip pos">Excellent</span>
     <div>
@@ -329,7 +333,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <!-- if: indoor-environment -->
     <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">See live indoor environment dashboard ›</a>
     <!-- endif -->
-    <!-- if: issues -->
+    <!-- if: actions -->
     <a href="https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&amp;site_ids=1042&amp;status_ids=6&amp;archived=false">See live issues being resolved ›</a>
     <!-- endif -->
   </div>
@@ -705,24 +709,28 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     <h2>How these numbers are calculated</h2>
   </div>
   <ol>
+    <!-- if: equipment-health -->
     <li><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority — P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over the 92-day period, valued at AUD 150/hr for this site's region.</li>
+    <!-- endif -->
     <!-- if: indoor-environment -->
     <li><strong>Thermal comfort score.</strong> The share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK and is 21–24.9 °C across this building, so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows.</li>
     <!-- endif -->
     <!-- if: indoor-environment -->
     <li><strong>Zones</strong> in the indoor environment snapshot counts the thermal zones that returned a score over the window — 298 of the 314 zone temperature points in the analytics overview. The remaining 16 did not report often enough in working hours to be scored.</li>
     <!-- endif -->
-    <!-- if: issues -->
+    <!-- if: actions -->
     <li><strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running.</li>
     <!-- endif -->
-    <!-- if: issues -->
+    <!-- if: actions -->
     <li><strong>Median time to resolve</strong> is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work.</li>
     <!-- endif -->
-    <!-- if: issues -->
+    <!-- if: actions -->
     <li><strong>Raised vs resolved.</strong> Raised counts alerts triaged into actions in the month (or 1 where an action has no linked alert); resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series.</li>
     <!-- endif -->
+    <!-- if: equipment-health,indoor-environment,actions -->
     <li><strong>The current month.</strong> Every monthly series runs to the issue date, so August holds 12 days rather than a full month. The volume series — automated checks, labour cost avoided, alerts raised and resolved — are short in that column by construction. Scores are rates over whatever days exist, so they are not.</li>
-    <!-- if: leaderboard -->
+    <!-- endif -->
+    <!-- if: actions -->
     <li><strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the issue date, so 100% reflects holding no open work.</li>
     <!-- endif -->
   </ol>

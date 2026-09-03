@@ -1,6 +1,6 @@
 ---
 name: client-report
-description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, action leaderboard and key wins — as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, actions resolved with the assignee leaderboard, and key wins — as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
@@ -18,32 +18,30 @@ A quarterly building performance review for one PEAK site, delivered as a self-c
 
 ## Section selection
 
-Ask before fetching anything. The masthead, [Analytics overview](#analytics-overview), [Operational impact](#operational-impact) and the notes band always render — the five sections below are the reader's choice, and each owns a slice that comes or goes whole: its operational impact row, its section, its monthly trend, their links, and its notes-band items.
+Ask before fetching anything. The masthead and [Analytics overview](#analytics-overview) always render — the four sections below are the reader's choice, and each owns a slice that comes or goes whole: its operational impact rows, its section, its monthly trend, their links, and its notes-band items.
 
-Ask with one `AskUserQuestion` call carrying two multi-select questions. The tool takes at most four options per question, and the split is the report's own: the first three each own an operational impact row and a monthly trend, the last two own neither.
+Ask with one `AskUserQuestion` call carrying one multi-select question. Four options is the tool's limit and also the whole list, so nothing needs splitting across two questions:
 
-| Question                                                              | Header   | Options (`multiSelect: true`)                                     |
-| --------------------------------------------------------------------- | -------- | ----------------------------------------------------------------- |
-| Which performance sections should the report cover from last quarter?  | Sections | Equipment health · Indoor environment · Issues raised vs resolved |
-| Which delivery sections should it close with?                         | Delivery | Action leaderboard · Key wins                                     |
+| Question                                                   | Header   | Options (`multiSelect: true`)                                                          |
+| ---------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------- |
+| Which sections should the report cover from last quarter?   | Sections | Equipment health · Indoor environment · Actions resolved and leaderboard · Key wins   |
 
 Describe each option by what it adds, so the reader can see what leaving it out costs:
 
-| Choice                    | `--sections` name    | Reference                            | Adds                                                                                       |
-| ------------------------- | -------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------ |
-| Equipment health          | `equipment-health`   | `references/equipment-health.md`     | equipment health row, health by equipment type, six month score trend and the checks chart |
-| Indoor environment        | `indoor-environment` | `references/indoor-environment.md`   | thermal comfort row, comfort by level, six month comfort trend                             |
-| Issues raised vs resolved | `issues`             | `references/issues.md`               | faults resolved row with verified recovery, six months of raised vs resolved               |
-| Action leaderboard        | `leaderboard`        | `references/leaderboard.md`          | who closed the work, ranked, with completion rates                                         |
-| Key wins                  | `key-wins`           | `references/key-wins.md`             | what physically changed in the building, evidenced from action comments                     |
+| Choice                           | `--sections` name    | Reference                          | Adds                                                                                                                              |
+| -------------------------------- | -------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Equipment health                 | `equipment-health`   | `references/equipment-health.md`   | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends   |
+| Indoor environment               | `indoor-environment` | `references/indoor-environment.md` | the thermal comfort row, comfort by level, the six month comfort trend                                                            |
+| Actions resolved and leaderboard | `actions`            | `references/actions.md`            | the faults resolved row with verified recovery, six months of raised vs resolved, and who closed the work                         |
+| Key wins                         | `key-wins`           | `references/key-wins.md`           | what physically changed in the building, evidenced from action comments                                                           |
 
 **Rules:**
 
 - Everything is included by default. A dismissed prompt, an unanswered question, or an invocation naming only a site gets the full report
 - Skip the prompt when the invocation already names the sections ("/client-report Skyline Tower — equipment health and key wins only") and state the resolved list in your reply instead
 - Resolve the list before the first PEAK call. A section that is out is never fetched
-- The automated health checks and labor cost avoided rows are never optional. They answer what the monitoring itself did and stand without any score, so they hold [Operational impact](#operational-impact) up even when all three optional rows are gone
-- The notes band is an `<ol>`, so items dropped with their section renumber themselves. Keep the two always-on items and trim the current month note to the series that survive
+- [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when at least one of the first three sections is in. Key wins on its own gives a masthead, the analytics overview and the wins — a short report, but an honest one, and the scaffold builds it that way
+- The notes band is an `<ol>`, so items dropped with their section renumber themselves. Trim the shared current month item to the series that survive
 - Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scaffold handles this for the parts it knows; the prose is yours to keep honest
 
 ## What always renders
@@ -75,41 +73,23 @@ Date: As at {issue date}
 
 All five render whatever the section selection, including thermal zones when indoor environment is out. This section is the monitoring footprint, not a summary of the sections below it — it is what the client is paying for, and it stands on its own.
 
-### Operational impact
+## Operational impact
 
 What that monitoring delivered this quarter
 Date: last 3 months
 
-These two rows always render. The equipment health, thermal comfort and faults resolved rows are defined in their references and appear only when selected.
-
-| Rating chip | Metric label                                 | Value                          | Subtitle                                                        |
-| ----------- | -------------------------------------------- | ------------------------------ | --------------------------------------------------------------- |
-| Continuous  | x automated equipment health checks ran 24/7 | Total executions last 3 months | Averaging x monthly checks across y scored rules                |
-| Modelled    | $x labor cost avoided                        | See the labor cost model below | x hours and y.y working days of inspection time                 |
+A frame around rows the sections own: three from equipment health, one from indoor environment, one from actions resolved. Their specs live in those references. The section renders when at least one of them is in and drops when none is.
 
 **Display:**
 
 - No red in this section. An improvement takes the positive chip, a decline or a flat result takes the muted chip — never the negative one. State a fall plainly in the figure, the glyph and the word: the section carries custodianship to the owner, so a decline is reported, not colour coded. Red stays available to the snapshot tables and charts below, where the detail belongs
-- Keep the surviving rows in the order the sections list them: equipment health, thermal comfort, checks, labor cost, faults resolved. Rows stack, so a removed row costs no layout work
+- Keep the surviving rows in this order: equipment health score, thermal comfort, automated checks, labor cost avoided, faults resolved. Rows stack, so a removed row costs no layout work
 - Where a row states a movement, the start month is the first month of the reporting quarter, so it reads as where the quarter opened against where the site is running now
 
-**Labor cost avoided model:**
-Unique rules scored (by priority) last 3 months x annual mins saved per rule x (days in window / 365) x labor cost per minute. Assumed labor rates based on site region: USD 100/hr, AUD 150/hr, NZD 150/hr, GBP 75/hr, CAD 150/hr, EUR 100/hr.
+## Notes band
 
-| Priority | Annual checks | Mins per check | Annual mins saved per rule | Labor cost per hour ($US) | Annual cost saved per rule ($US) |
-| -------- | ------------- | -------------- | -------------------------- | ------------------------- | -------------------------------- |
-| P1       | 365           | 0.50           | 182.5                      | $100                      | $456.25                          |
-| P2       | 52            | 1.00           | 52.0                       | $100                      | $130.00                          |
-| P3       | 12            | 1.00           | 12.0                       | $100                      | $30.00                           |
-| P4-5     | 4             | 1.00           | 4.0                        | $100                      | $10.00                           |
+Numbered methodology items in report order, each owned by the section it explains, plus one shared item:
 
-*Footnote:* Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the period.
-
-### Notes band
-
-Numbered methodology items, in report order. Two always render:
-
-- **Labor cost avoided** — the footnote above, with the region's rate named
 - **The current month** — every monthly series runs to the issue date, so the last bucket holds part of a month. Volume series are short there by construction; scores are rates over whatever days exist, so they are not. Name only the series the report actually shows
 
 ## Shared data
@@ -122,9 +102,8 @@ Always:
 - Site facts — `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
 - Counts for the analytics overview — never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites`, `search_equipment` (subtract system types 21,37,69,70,87,105,114), `search_alert_tickets`
 - Thermal zones — `search_favourites(metadata_name:"%Zone Temperature", limit:1)`, read `pagination.total`. Anchor the wildcard at the end: `%Zone Temp%` also matches setpoint points and roughly doubles the count. Four point names mean zone temperature (`VAV-Zn-T`, `PAC-Zn-T`, `Un-Zn-T`, `ZnT`), so filter on name, not `metadata_codes`
-- The two unconditional operational impact rows — `search_equipment_health_scores(aggregate_entities:["priority"], aggregate_period:"all")` over the quarter. Executions sum across priorities for the checks total; the distinct scored-rule count and the per-priority split drive the labor model. Counts sum, scores never do
 
-Only when Issues raised vs resolved, Action leaderboard or Key wins is in — one pull serves all three, so fetch it once and skip it entirely when none is:
+Only when Actions resolved and leaderboard, or Key wins, is in — one pull serves both, so fetch it once and skip it entirely when neither is:
 
 - `tickets.tickets`, `type:"escalated"`, `ticket_archived:false`, `limit:400`, date bounds `*_at_local_*` over the 7 month window
 - Fields: `ticket_id, created_at, resolved_at, status_id, assignees{id,firstname,lastname}, ticket_links{ticket(type:alert){ticket_id, rule_id}}`

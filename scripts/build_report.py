@@ -19,16 +19,19 @@ import argparse, os, re, sys
 
 REF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "reference-report.html")
 
-ALWAYS = ["shell", "masthead", "analytics-overview", "operational-impact", "notes", "footer"]
+ALWAYS = ["shell", "masthead", "analytics-overview", "footer"]
 SECTION_PARTS = {
     "equipment-health": ["equipment-health-snapshot", "monthly-equipment-health"],
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],
-    "issues": ["monthly-alerts"],
-    "leaderboard": ["assignee-leaderboard"],
+    "actions": ["monthly-alerts", "assignee-leaderboard"],
     "key-wins": ["key-wins"],
 }
+# Parts that render for any of several sections. Operational impact is a frame
+# around rows the sections own, so it only stands if one of them is in.
+ROW_SECTIONS = ["equipment-health", "indoor-environment", "actions"]
+PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS}
 PART_RE = re.compile(r"^\s*<!-- part: ([a-z-]+) -->\s*$")
-IF_RE = re.compile(r"^\s*<!-- if: ([a-z-]+) -->\s*$")
+IF_RE = re.compile(r"^\s*<!-- if: ([a-z-, ]+) -->\s*$")
 ENDIF_RE = re.compile(r"^\s*<!-- endif -->\s*$")
 
 
@@ -52,6 +55,9 @@ def resolve(sections):
         sys.exit("unknown section(s): %s\nchoose from: %s"
                  % (", ".join(unknown), ", ".join(SECTION_PARTS)))
     keep = list(ALWAYS)
+    for part, owners in PART_IF.items():
+        if any(o in sections for o in owners):
+            keep.append(part)
     for s in SECTION_PARTS:          # section order follows the report, not the CLI
         if s in sections:
             keep += SECTION_PARTS[s]
@@ -63,8 +69,9 @@ def render(lines, sections):
     out, skipping = [], None
     for line in lines:
         m = IF_RE.match(line)
-        if m:
-            skipping = m.group(1) not in sections
+        if m:                        # a comma list keeps the block for any of them
+            owners = [o.strip() for o in m.group(1).split(",")]
+            skipping = not any(o in sections for o in owners)
             continue
         if ENDIF_RE.match(line):
             skipping = None
@@ -158,7 +165,8 @@ def cmd_check(args):
 
 def cmd_parts(args):
     for name, lines in read_parts():
-        owner = next((s for s, ps in SECTION_PARTS.items() if name in ps), "always")
+        owner = next((s for s, ps in SECTION_PARTS.items() if name in ps), None) \
+            or ("any of " + ", ".join(PART_IF[name]) if name in PART_IF else "always")
         print("%-28s %4d lines   %s" % (name, len(lines), owner))
 
 
