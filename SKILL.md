@@ -122,7 +122,7 @@ Always:
 - Author — `who_am_i`, the user's full name for the masthead
 - Site facts — `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
 - Counts for the analytics overview — never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
-- Thermal zones — `search_favourites(metadata_name:"%Zone Temperature", limit:1)`, read `pagination.total`. Anchor the wildcard at the end: `%Zone Temp%` also matches setpoint points and roughly doubles the count. Four point names mean zone temperature (`VAV-Zn-T`, `PAC-Zn-T`, `Un-Zn-T`, `ZnT`), so filter on name, not `metadata_codes`
+- Thermal zones — `search_favourites(metadata_codes:["VAV-Zn-T","PAC-Zn-T","Un-Zn-T","ZnT"], limit:1)`, read `pagination.total`. Filter on the codes, not the name. `%Zone Temperature` also matches `Un-MxZT`, the per-AHU maximum zone temperature, and `EF-ZnT` on exhaust fans; neither is a thermal zone, and on a small site the AHU aggregates alone inflated the count by 14%. Never widen to `%Zone Temp%` either — that picks up setpoints and roughly doubles it. Codes are case-sensitive and an unknown one matches nothing silently, so a zero here at a site that plainly has thermal comfort data means the list is wrong for that site, not that the site has no zones
 
 Only when Actions resolved and leaderboard, or Key wins, is in — one pull serves both, so fetch it once and skip it entirely when neither is:
 

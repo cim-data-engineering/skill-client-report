@@ -4,7 +4,15 @@ Owns the key wins section. No operational impact row. Scaffold part: `key-wins`.
 
 ## Fetch
 
-Shortlist from the shared action pull in SKILL.md — resolved or open actions in the quarter, Not Doing excluded — then read `search_action_comments` on the shortlist only, perhaps ten to fifteen candidates. Comments are where the physical work is described. Reading them for every closure in the quarter costs many times more than reading them for the ten or so that could lead the page.
+Shortlist with `search_action_tickets(status:"closed", resolved_after_local, resolved_before_local)` over the quarter. The shared pull in SKILL.md carries ids, dates and assignees but not titles or equipment names, and the shortlist is chosen by reading those — so this is the one extra call Key wins needs, whether or not Alerts resolved is also in.
+
+Then read `search_action_comments` on the shortlist only, ten to fifteen candidates. Comments are where the physical work is described, and reading them for every closure in the quarter costs many times more than reading them for the few that could lead the page.
+
+Three patterns are visible in the shortlist itself and need no comment read — skip them:
+
+- `age_days: 0` with no `last_comment_author`: created and resolved in the same moment, so nobody worked it
+- A run of actions sharing a resolved timestamp to the second: a bulk cleanup, not a quarter of repairs
+- An action whose comments were already summarised as still in fault at closure: closed for tidiness while the fault stands
 
 ## Key wins
 
