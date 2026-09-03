@@ -1,6 +1,6 @@
 ---
 name: client-report
-description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly equipment health, thermal comfort and alerts raised vs resolved trends, assignee leaderboard, and key wins — styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use when the user runs the /client-report slash command or asks for a client report, quarterly building performance review, or site performance report from PEAK data. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site — analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly equipment health, thermal comfort and alerts raised vs resolved trends, assignee leaderboard, and key wins — asking up front which sections to include and dropping the operational metric, monthly trend and notes of any left out, styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use when the user runs the /client-report slash command or asks for a client report, quarterly building performance review, or site performance report from PEAK data. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
@@ -25,18 +25,56 @@ Derived rules when overrides are active:
 - Any brand override active → platform strings read `PEAK · Site {id}` (drop the CIM prefix) in the masthead metadata row and footer. `Powered by PEAK` is always kept, in every brand.
 - No overrides → keep `CIM PEAK` and the CIM masthead logo inlined from `assets/logo-white.svg`.
 
+## Section selection
+
+Ask first, before fetching anything. The masthead, [Analytics overview](#analytics-overview), [Operational impact](#operational-impact) and the notes band always render — the five blocks below are the reader's choice.
+
+Ask with one `AskUserQuestion` call carrying two multi-select questions. The tool takes at most four options per question, and the split is the report's own: the first three each own an operational impact row and a monthly trend, the last two own neither.
+
+| Question                                                             | Header   | Options (`multiSelect: true`)                                     |
+| -------------------------------------------------------------------- | -------- | ----------------------------------------------------------------- |
+| Which performance sections should the report cover from last quarter? | Sections | Equipment health · Indoor environment · Issues raised vs resolved |
+| Which delivery sections should it close with?                        | Delivery | Action leaderboard · Key wins                                     |
+
+- Describe each option by what it adds — its operational impact row, its section, its trend — so the reader can see what leaving it out costs
+- Everything is included by default. A dismissed prompt, an unanswered question, or an invocation naming only a site gets the full report
+- Skip the prompt when the invocation already names the sections ("/client-report Skyline Tower — equipment health and key wins only") and state the resolved list in your reply instead
+- Resolve the list before the first PEAK call. A section that is out is never fetched, so the selection has to be settled first
+- Name what you dropped when you hand the file over, so the reader reads the omission as asked for rather than missing
+
+Each choice owns a slice of the report. When it is not selected the whole slice goes — its operational impact row, its section, its monthly trend, their links, and its notes-band items:
+
+| Choice                    | Operational impact row                      | Sections                                                                                                                      | Notes band items                                              |
+| ------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Equipment health          | x.x% equipment health maintained            | [Equipment health snapshot](#equipment-health-snapshot), Chart 1 of [Monthly equipment health](#monthly-equipment-health)      | equipment health score, its benchmark                         |
+| Indoor environment        | x.x% thermal comfort maintained             | [Indoor environment health snapshot](#indoor-environment-health-snapshot), [Monthly thermal comfort](#monthly-thermal-comfort) | thermal comfort score, zones scored                           |
+| Issues raised vs resolved | x faults resolved with x% verified recovery | [Monthly alerts raised vs resolved](#monthly-alerts-raised-vs-resolved)                                                        | verified recovery, median time to resolve, raised vs resolved |
+| Action leaderboard        | —                                           | [Assignee leaderboard](#assignee-leaderboard)                                                                                 | completion rate                                               |
+| Key wins                  | —                                           | [Key wins](#key-wins)                                                                                                         | —                                                             |
+
+**Rules:**
+
+- The automated health checks and labor cost avoided rows are never optional. They answer what the monitoring itself did and stand without any score, so they hold [Operational impact](#operational-impact) up even when all three optional rows are gone
+- Chart 2 of [Monthly equipment health](#monthly-equipment-health) plots those same two rows, so it is not optional either. Dropping Equipment health leaves that section holding Chart 2 alone: keep the section, re-eyebrow it "Automated health checks" with a statement to match, and drop Chart 1, its benchmark threshold labels and its equipment health dashboard link
+- Operational impact rows stack, so a removed row costs no layout work. Keep the survivors in the order that section lists them
+- Renumber the notes band from 1 after the cuts, and keep the current month note as long as one monthly series survives
+- Only claim agreement between a trend and a snapshot when both are in. Where a display bullet ties a figure to a section that is out, drop the bullet, not the figure — the figure still comes from the site rollup
+- Never leave behind an empty section, a section header with no content, a link to a section that is out, or a note explaining a number the report no longer shows
+
 ## Sections
 
 1. [Report title](#report-title)
 2. [Analytics overview](#analytics-overview)
 3. [Operational impact](#operational-impact)
-4. [Equipment health snapshot](#equipment-health-snapshot)
-5. [Indoor environment health snapshot](#indoor-environment-health-snapshot)
-6. [Monthly equipment health](#monthly-equipment-health)
-7. [Monthly thermal comfort](#monthly-thermal-comfort)
-8. [Monthly alerts raised vs resolved](#monthly-alerts-raised-vs-resolved)
-9. [Assignee leaderboard](#assignee-leaderboard)
-10. [Key wins](#key-wins)
+4. [Equipment health snapshot](#equipment-health-snapshot) — optional
+5. [Indoor environment health snapshot](#indoor-environment-health-snapshot) — optional
+6. [Monthly equipment health](#monthly-equipment-health) — Chart 1 optional
+7. [Monthly thermal comfort](#monthly-thermal-comfort) — optional
+8. [Monthly alerts raised vs resolved](#monthly-alerts-raised-vs-resolved) — optional
+9. [Assignee leaderboard](#assignee-leaderboard) — optional
+10. [Key wins](#key-wins) — optional
+
+Optional sections render only where [Section selection](#section-selection) includes them. Keep this order for whatever survives — the report reads top down, from what is monitored, to what that delivered, to the detail behind it.
 
 Each section header renders as three stacked lines, per the reference report: the section name as an uppercase eyebrow in `primary`, the statement line beneath it as the `h2` headline, and the date line as a muted byline.
 
@@ -70,6 +108,8 @@ Date: As at {issue date}
 What that monitoring delivered this quarter  
 Date: last 3 months
 
+The equipment health, thermal comfort and faults resolved rows each belong to a choice in [Section selection](#section-selection) and drop with it. The automated health checks and labor cost avoided rows always render.
+
 | Rating chip                               | Metric label                                 | Value                                                                                       | Subtitle                                                                                                                                          |
 | ----------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | See below equipment score benchmark       | x.x% equipment health maintained             | Site equipment health score last 3 months                                                   | {Up\|Down} x.xx pp from y.yy% in {start month} to z.zz% in {current month} to date                                                                 |
@@ -80,7 +120,7 @@ Date: last 3 months
 
 **Display:**
 
-- The two score rows carry a movement, not a baseline. Use the same definition as the snapshot Chg column — current month to date minus the start month, in pp — so the equipment movement equals the site row Chg in [Equipment health snapshot](#equipment-health-snapshot) and the thermal movement equals the site row Chg in [Indoor environment health snapshot](#indoor-environment-health-snapshot). A number the reader can check against the table below it is worth more than a 12 month baseline that appears nowhere else in the report
+- The two score rows carry a movement, not a baseline. Use the same definition as the snapshot Chg column — current month to date minus the start month, in pp — so the equipment movement equals the site row Chg in [Equipment health snapshot](#equipment-health-snapshot) and the thermal movement equals the site row Chg in [Indoor environment health snapshot](#indoor-environment-health-snapshot). A number the reader can check against the table below it is worth more than a 12 month baseline that appears nowhere else in the report. Each row travels with its snapshot, so where the row is in, the table to check it against is too
 - Name both endpoint values and their months in the subtitle. The headline figure is the 3 month score, not either endpoint, so a bare "up x.xx pp" implies a baseline that does not exist
 - Take both endpoints from the monthly site series already fetched for the snapshots and trends. No separate 12 month call
 - Equipment health to 2dp, thermal comfort to 1dp, matching each snapshot's precision
@@ -214,6 +254,8 @@ How the score is calculated: Share of zone readings inside the ASHRAE comfort ba
 Six months of trend  
 Date: last 6 complete months plus the current month to date
 
+Chart 1 belongs to the Equipment health choice in [Section selection](#section-selection). Chart 2 always renders, so without Chart 1 this section carries Chart 2 alone under an "Automated health checks" eyebrow.
+
 Chart 1: Site equipment health score  
 Monthly line chart of equipment health score. Render the two nearest benchmark thresholds and label them — one either side where the series sits inside a band, otherwise the threshold it crosses plus the next one out, so the reader can see which months fall on which side. Auto scale Y axis to fit both.
 
@@ -327,9 +369,17 @@ Exclude actions resolved by stopping, tuning or ignoring a rule, platform, integ
 - Rank by what the owner cares about. Critical plant over terminal units, permanent fixes over one-off resets
 - Link the action ticket with PEAK url for quick reference evidence, include action title as link name not id
 - Where several tickets form one win link them all
-- Where win appears in the equipment health snapshot say so.
+- Where win appears in the equipment health snapshot say so. Drop that line where the snapshot is out of the report, rather than pointing at a table the reader cannot see
 
 ## Data recipes
+
+Fetch only what the selected sections need — [Section selection](#section-selection) is settled before the first call:
+
+- **Always** — `who_am_i`, `platform.sites`, the [Analytics overview](#analytics-overview) counts, and the `site` and `priority` `search_equipment_health_scores` calls, which carry the executions, rule counts and monthly series behind Chart 2 and the two unconditional operational impact rows
+- **Equipment health** adds `search_equipment_health_scores` at `metadata_type`, both `month` and `all`
+- **Indoor environment** adds both `search_indoor_environment` calls. Out means neither runs — nothing else in the report reads thermal comfort
+- **Issues raised vs resolved** adds the resolved-alert detail behind the recovery row, beyond the overview's `limit:1` count
+- **Issues raised vs resolved**, **Action leaderboard** and **Key wins** all read `tickets.tickets`. One pull serves the three, so fetch it once when any is in and not at all when none is
 
 Author — `who_am_i`, read the user's full name for the masthead Author field.
 
