@@ -124,13 +124,17 @@ Always:
 - Counts for the analytics overview — never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
 - Thermal zones — `search_favourites(metadata_codes:["VAV-Zn-T","PAC-Zn-T","Un-Zn-T","ZnT"], limit:1)`, read `pagination.total`. Filter on the codes, not the name. `%Zone Temperature` also matches `Un-MxZT`, the per-AHU maximum zone temperature, and `EF-ZnT` on exhaust fans; neither is a thermal zone, and on a small site the AHU aggregates alone inflated the count by 14%. Never widen to `%Zone Temp%` either — that picks up setpoints and roughly doubles it. Codes are case-sensitive and an unknown one matches nothing silently, so a zero here at a site that plainly has thermal comfort data means the list is wrong for that site, not that the site has no zones
 
-Only when Actions resolved and leaderboard, or Key wins, is in — one pull serves both, so fetch it once and skip it entirely when neither is:
+Only when Actions resolved and leaderboard, or Key wins, is in:
 
-- `tickets.tickets`, `type:"escalated"`, `ticket_archived:false`, `limit:400`, date bounds `*_at_local_*`. Use the 7 month window for the monthly buckets and the leaderboard. When Key wins is the only section in, narrow it to the quarter — that is all it shortlists from
-- Fields: `ticket_id, created_at, resolved_at, status_id, assignees{id,firstname,lastname}, ticket_links{ticket(type:alert){ticket_id, rule_id}}`
-- Bucket by site-local month; drop `status_id:8`; weight by linked alerts whose rule is still running. An action with no linked alert counts 1; an action whose every linked alert is on a stopped rule counts 0
-- Flag any action closing many alerts at once — it distorts the month
-- Status ids: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing
+Use `search_action_tickets`, not `tickets.tickets`. It returns `title`, `equipment_names`, `assignee{name, company_name}`, `linked_alert_ids`, `created_at`, `resolved_at` and `status` in one documented shape; the GraphQL equivalent needs nested paths (`assignees{}`, `ticket_links{ticket(){}}`) that have to be described before they can be trusted, and it still does not carry titles.
+
+It pages at 50, so pull only what each section needs:
+
+- **Resolved rows** — `resolved_after_local`/`resolved_before_local` over the 7 month window. The leaderboard needs these rows for assignee names, so the resolved series and the median time to resolve come free from the same pages
+- **Raised counts** — one call per month with `created_after_local`/`created_before_local`, `limit:1`, and read `pagination.total`. Seven small calls beat three pages of rows you would only be counting
+- **Open now** — one call per open status (`open`, `in_progress`, `on_hold`), no date bound, since work raised before the window can still be open today
+- Count actions, one per ticket, in both series. Not alerts: an action can be bulk-linked to dozens of alerts — 141 on one ticket at one site — and weighting by them makes a month spike on a triage decision rather than on work. Actions are what the reader assigns and closes
+- Drop status Not Doing throughout. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing
 
 ## Newly onboarded sites
 

@@ -13,7 +13,11 @@ Owns the operational impact thermal comfort row, the indoor environment health s
 
 Both windows close on the last complete month: `local_end_date` is exclusive, so pass the first of the month after it. Level rows are levels x months, so page when levels x 3 exceeds 80.
 
-The level rollup carries no zone count, so the Zones column needs its own call: `aggregate_entity:"zone"`, `aggregate_period:"all"`, `level_ids:[one level]`, `limit:1`, and read `pagination.total`. That is one small call per level and it is the most expensive part of this section — a dozen levels is a dozen calls. Prefer it to sweeping every zone: `aggregate_entity:"zone"` unfiltered is one row per zone per period, hundreds of rows to count what these return as a total. Drill into zone rows themselves only when investigating a named level.
+The level rollup carries no zone count, so Zones needs `aggregate_entity:"zone"`, `aggregate_period:"all"`, `level_ids:[one level]`, `limit:1`, read `pagination.total` — one small call per level, and the most expensive thing in this section.
+
+Cap that cost. Up to about a dozen levels, take the per-level counts. Above that, one call for the site total (same query, no `level_ids`) and drop the Zones column from the table: on a 25-storey tower the column would cost more calls than the rest of the report, and floor-by-floor zone counts in a tower are nearly uniform anyway. Give the site total in the notes either way.
+
+Do not substitute `platform.levels` or `platform.zones`. They count zone *objects*, not zone temperature points — at one 25-level site that was 340 against 200 scored zones, which would contradict the thermal zones figure in the analytics overview. `has_ie_config` on `platform.zones` means a zone-specific override, not participation in the score.
 
 ## Operational impact row
 

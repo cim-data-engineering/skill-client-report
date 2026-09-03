@@ -6,7 +6,7 @@ The two go together because they answer the same question from either end — ho
 
 ## Fetch
 
-- The shared action pull in SKILL.md carries the monthly buckets, the resolution dates behind the median, and the assignee names. Key wins shortlists from the same pull, so fetch it once
+- The shared action pull in SKILL.md carries the resolved rows behind the leaderboard, the median, and the resolved series; the raised series comes from its per-month counts
 - `search_alert_tickets` for the recovery rate: alerts resolved in the window with status closed, read against their fault status. This is the only call in the report that reads alert tickets, so it does not run at all when this section is out
 - Open now is a different question from Resolved: work raised before the window can still be open today. Read the open set with `search_action_tickets(status_ids:[1,3,7])`, unbounded by date, and count by assignee as at the issue date
 
@@ -37,9 +37,9 @@ Date: the seven complete months ending with the quarter
 
 Grouped bars by month.
 
-- **Raised**: actions created in the month. Count the alerts linked to each action, or 1 where an action has none, since work was still raised
-- **Resolved**: actions resolved in the month, counted the same way
-- **Exclude**: actions marked Not Doing, and alerts whose rule is no longer running, from both series
+- **Raised**: actions created in the month, one per action
+- **Resolved**: actions resolved in the month, one per action
+- **Exclude**: actions marked Not Doing from both series
 
 ## Assignee leaderboard
 
@@ -75,6 +75,6 @@ Date: the 7 month window
 
 - **Verified recovery.** Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running
 - **Median time to resolve** is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work
-- **Raised vs resolved.** Raised means an alert ticket is triaged into an action ticket, not when the alert ticket was created — detection is automatic, raising is a human triage decision. Resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series
+- **Raised vs resolved.** Raised counts action tickets created in the month, not the alerts behind them: detection is automatic, raising an action is a human triage decision, and one action can be linked to many alerts. Resolved counts actions on their resolution date. Actions marked Not Doing are excluded from both series
 - **Completion rate** is resolved / (resolved + currently open) as at the issue date, so 100% reflects holding no open work
-- Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved, or one action closing many alerts at once, is worth a sentence in the chart note
+- Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved is worth a sentence in the chart note
