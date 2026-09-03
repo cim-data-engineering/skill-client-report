@@ -4,11 +4,13 @@ Owns the operational impact faults resolved row, monthly alerts raised vs resolv
 
 The two go together because they answer the same question from either end — how much fault work the site took on, and who closed it — from one pull of action tickets.
 
+Nothing resolved in the window means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. Delete the section, its operational impact row and its notes items, and give the open count in chat instead — the same rule Key wins follows. A newly onboarded site is where this happens.
+
 ## Fetch
 
 - The shared action pull in SKILL.md carries the resolved rows behind the leaderboard, the median, and the resolved series; the raised series comes from its per-month counts
 - `search_alert_tickets` for the recovery rate: alerts resolved in the window with status closed, read against their fault status. This is the only call in the report that reads alert tickets, so it does not run at all when this section is out
-- Open now is a different question from Resolved: work raised before the window can still be open today. Read the open set with `search_action_tickets(status_ids:[1,3,7])`, unbounded by date, and count by assignee as at the issue date
+- Open now is a different question from Resolved: work raised before the window can still be open today. Read the open set with the Open now calls in Shared data — one per open status, unbounded by date — and count by assignee as at the issue date
 
 ## Operational impact row
 

@@ -64,6 +64,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 - Sort levels in building order, highest level first, ground last — not by Chg. The reader is looking for where in the building comfort is drifting, and the Chg column carries the direction
 - Close with a site row at the bottom, same style as the equipment health snapshot
 - Site row comes from the site rollup, so it will not equal the average of the level rows. Do not reconcile them
+- One level means the level row and the site row are the same figure. Put the zones in the rows instead: the same `zone` call, without the `limit:1` so it returns the rows, and each zone's average temperature in place of the Zones column — a count of 1 says nothing. Label each row with its zone name, adding the unit's letter where one zone name covers several
 - Truncate level name with ellipsis, do not wrap rows
 
 **Links:**

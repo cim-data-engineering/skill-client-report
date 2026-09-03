@@ -33,7 +33,7 @@ The row carries a movement, not a baseline: the quarter's last month minus its f
 | Modelled    | $x labor cost avoided                        | See the labor cost model below | x hours and y.y working days of inspection time  |
 
 Section link, labelled "See live equipment health dashboard":
-`https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
+`https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Labor cost avoided model
 
@@ -81,11 +81,11 @@ Heatmap table of monthly equipment health scores, one row per equipment type, th
 - Chg signed with a direction glyph. Green up, red down, muted when flat
 - Sort by Chg descending, so the biggest improvement leads and any decline closes
 - Close with a site row, separated from the sort
-- Site row comes from the site rollup, so it will not equal the average of the type rows. Do not reconcile them
+- Site row comes from the site rollup, so it will not equal the average of the type rows. Do not reconcile them. Its Equipment and Rules are the totals of the rows shown, so those columns do add up — the rollup's own counts include the system types you just excluded
 - Display all equipment types, not a sample
 - Truncate equipment type name with ellipsis, do not wrap rows
 - Equipment health rules count can differ to overall site rules count as rules can trigger alerts but not score
-- Exclude equipment type BACER or Bacer (System). These are platform health checks
+- Exclude the system equipment types — ids 21, 37, 69, 70, 87, 105, 114, the same set the analytics overview subtracts. These are platform health checks, not plant, and Bacer and Water Meters (System) both turn up scoring 100%
 
 **Links:**
 

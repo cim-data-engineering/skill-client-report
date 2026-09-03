@@ -43,7 +43,7 @@ Describe each option by what it adds:
 - [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when at least one of the first three sections is in. Key wins on its own gives the masthead, the analytics overview and the wins. The scaffold builds it that way
 - The notes band is an `<ol>`, so items dropped with their section renumber themselves. Trim the shared reporting-window item to the series that survive
 - Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scaffold handles the parts it knows about; check the prose yourself
-- Key wins is the only section that can come up empty after the fetch, because whether a closure qualifies is only visible in its comments. If none qualifies, delete the section from the built file and say so in chat, not on the page. `references/key-wins.md` has the rule
+- Two sections can come up empty after the fetch, and only the fetch can tell you: Key wins, because whether a closure qualifies is only visible in its comments, and Actions resolved, when nothing was resolved in the window. Either way, delete the section from the built file and say so in chat, not on the page. The two references carry the rule
 
 ## What always renders
 
@@ -83,7 +83,7 @@ The rows belong to the sections — three to equipment health, one to indoor env
 
 **Display:**
 
-- No red in this section. An improvement takes the positive chip; a decline or a flat result takes the muted chip, never the negative one. State a fall plainly in the figure, the glyph and the word — reported, not colour coded. Red stays available to the snapshot tables and charts below, where the detail belongs
+- No red in this section. The rating chip reads Excellent or Good on the positive chip, Average or Poor on the warning chip, never the negative one. A movement takes the positive delta when it improves and the muted delta when it declines or holds flat. State a fall plainly in the figure, the glyph and the word — reported, not colour coded. Red stays available to the snapshot tables and charts below, where the detail belongs
 - Keep the surviving rows in this order: equipment health score, thermal comfort, automated checks, labor cost avoided, faults resolved. Rows stack, so a removed row costs no layout work
 - Where a row states a movement, it runs from the quarter's first month to its last: the reporting period, and nothing outside it
 
@@ -142,7 +142,7 @@ A site can have less history than the window asks for. Read that from the first 
 
 - Trim both windows to the months that returned data, still whole months only. The month a site went live in is not a complete month for it unless it went live on the 1st, so drop it
 - Say it once, in the masthead: "Reporting period: 1 – 31 August 2026, monitoring live since 14 July 2026". The reader needs to know the report is short because the site is new, not because something failed. Don't repeat it section by section
-- A movement needs two months. With one, state the score and drop the delta — "up 0.00 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column. The score still stands on its own
+- A movement needs two months. With one, state the score and drop the delta — "up 0.00 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column, and sort the rows by score with the lowest first, so the plant needing attention leads
 - A trend needs three points. With fewer, drop the trend chart and keep the snapshot; two months drawn as a line invites the reader to extend it. Where that empties a trends section, delete the section
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
 - An equipment type or a level can start later than the site did — new rules on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in the section note when its rules began scoring
