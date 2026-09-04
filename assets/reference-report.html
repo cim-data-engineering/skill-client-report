@@ -6,13 +6,13 @@
 <title>Skyline Tower — Quarterly Building Performance Review</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
-/* Fonts — CDN first, local assets/fonts fallback per DESIGN.md: the browser tries each src in order, so offline it falls through to the shipped woff2 */
-@font-face{font-family:'Archivo';src:url('https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLydOxKsv4Rn.woff2') format('woff2'),url('fonts/Archivo-Variable-latin.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'Archivo';src:url('https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLyTOxKsv4RnUPU.woff2') format('woff2'),url('fonts/Archivo-Variable-latin-ext.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1EFF,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-@font-face{font-family:'IBM Plex Sans';src:url('https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYbSB4Zh.woff2') format('woff2'),url('fonts/IBMPlexSans-Variable-latin.woff2') format('woff2');font-weight:400 600;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:'IBM Plex Sans';src:url('https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbSB4ZhRNU.woff2') format('woff2'),url('fonts/IBMPlexSans-Variable-latin-ext.woff2') format('woff2');font-weight:400 600;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1EFF,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
-@font-face{font-family:'IBM Plex Mono';src:url('https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q131nj-o.woff2') format('woff2'),url('fonts/IBMPlexMono-400-latin.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'IBM Plex Mono';src:url('https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgsAXHNk.woff2') format('woff2'),url('fonts/IBMPlexMono-500-latin.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
+/* Fonts — Google Fonts CDN per DESIGN.md. The report is one file that travels on its own, so there is nothing local to fall back to: offline, the stacks below fall through to the system faces */
+@font-face{font-family:'Archivo';src:url('https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLydOxKsv4Rn.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'Archivo';src:url('https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLyTOxKsv4RnUPU.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1EFF,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'IBM Plex Sans';src:url('https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxeKYbSB4Zh.woff2') format('woff2');font-weight:400 600;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:'IBM Plex Sans';src:url('https://fonts.gstatic.com/s/ibmplexsans/v23/zYXzKVElMYYaJe8bpLHnCwDKr932-G7dytD-Dmu1syxQKYbSB4ZhRNU.woff2') format('woff2');font-weight:400 600;font-style:normal;font-display:swap;unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1E00-1EFF,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'IBM Plex Mono';src:url('https://fonts.gstatic.com/s/ibmplexmono/v20/-F63fjptAgt5VM-kVkqdyU8n1i8q131nj-o.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'IBM Plex Mono';src:url('https://fonts.gstatic.com/s/ibmplexmono/v20/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgsAXHNk.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap}
 
 /* Tokens — DESIGN.md */
 :root{
@@ -41,9 +41,9 @@
   --on-error-container:#C62B25;
   --chart-benchmark:#CBE0FB;
   --shadow:rgba(0,37,86,.08);
-  --sans:'IBM Plex Sans',system-ui,sans-serif;
-  --display:'Archivo',system-ui,sans-serif;
-  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --display:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;
 }
 *{box-sizing:border-box}
 html{font-size:14px}
@@ -217,6 +217,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
 <body>
 <div class="sheet">
 
+<!-- part: masthead -->
 <header class="mast">
   <!-- Masthead logo: the reversed (white) variant, inlined from assets/logo-white.svg so the file is self-contained. -->
   <svg class="logo" viewBox="0 0 100 29" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CIM">
@@ -242,20 +243,21 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
     </div>
   </div>
   <dl class="mastmeta">
-    <div><dt>Reporting period</dt><dd>1 May – 31 Jul 2026</dd></div>
+    <div><dt>Reporting period</dt><dd>1 Jun – 31 Aug 2026</dd></div>
     <!-- Author: always the full name of the logged-in PEAK MCP user. -->
     <div><dt>Author</dt><dd>Jordan Avery</dd></div>
-    <div><dt>Issued</dt><dd>12 Aug 2026</dd></div>
+    <div><dt>Issued</dt><dd>1 Sep 2026</dd></div>
   </dl>
   <!-- AI provenance disclaimer: required on every report, verbatim. -->
   <p class="mastnote">AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed.</p>
 </header>
 
+<!-- part: analytics-overview -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Analytics overview</p>
     <h2>What we monitor at Skyline Tower</h2>
-    <p class="h2note">As at 12 August 2026</p>
+    <p class="h2note">As at 1 September 2026</p>
   </div>
   <div class="statgrid">
     <div class="stat"><p class="k">Building size</p><p class="n">16,200 <span>m²</span></p></div>
@@ -266,29 +268,35 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 </section>
 
+<!-- part: operational-impact -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Operational impact</p>
     <h2>What that monitoring delivered this quarter</h2>
-    <p class="h2note">1 May – 31 July 2026</p>
+    <p class="h2note">1 June – 31 August 2026</p>
   </div>
 
+  <!-- if: equipment-health -->
   <div class="irow">
     <span class="chip pos">Good</span>
     <div>
       <span class="fig">98.79%</span> <span class="figcap">equipment health maintained</span>
-      <div class="isub"><span class="delta pos">↑ Up 0.43 pp</span> from 98.65% in May to 99.08% in August to date.</div>
+      <div class="isub"><span class="delta pos">↑ Up 0.35 pp</span> from 98.73% in June to 99.08% in August.</div>
     </div>
   </div>
+  <!-- endif -->
 
+  <!-- if: indoor-environment -->
   <div class="irow">
     <span class="chip pos">Excellent</span>
     <div>
       <span class="fig">93.43%</span> <span class="figcap">thermal comfort maintained</span>
-      <div class="isub"><span class="delta neu">↓ Down 2.7 pp</span> from 94.4% in May to 91.7% in August to date.</div>
+      <div class="isub"><span class="delta neu">↓ Down 1.9 pp</span> from 93.6% in June to 91.7% in August.</div>
     </div>
   </div>
+  <!-- endif -->
 
+  <!-- if: equipment-health -->
   <div class="irow">
     <span class="chip neu">Continuous</span>
     <div>
@@ -296,7 +304,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <div class="isub">Averaging 1.39 million monthly checks across 1,637 scored rules.</div>
     </div>
   </div>
+  <!-- endif -->
 
+  <!-- if: equipment-health -->
   <div class="irow">
     <span class="chip neu">Modelled</span>
     <div>
@@ -304,7 +314,9 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <div class="isub">125.8 hours and 16.6 working days of inspection time, valued at AUD 150/hr.</div>
     </div>
   </div>
+  <!-- endif -->
 
+  <!-- if: alerts-resolved -->
   <div class="irow">
     <span class="chip pos">Excellent</span>
     <div>
@@ -312,19 +324,27 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <div class="isub">Median time to resolve of 21 days, measured from linked action creation to resolution.</div>
     </div>
   </div>
+  <!-- endif -->
 
   <div class="seclinks">
-    <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000">See live equipment health dashboard ›</a>
-    <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">See live indoor environment dashboard ›</a>
+    <!-- if: equipment-health -->
+    <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">See live equipment health dashboard ›</a>
+    <!-- endif -->
+    <!-- if: indoor-environment -->
+    <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">See live indoor environment dashboard ›</a>
+    <!-- endif -->
+    <!-- if: alerts-resolved -->
     <a href="https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&amp;site_ids=1042&amp;status_ids=6&amp;archived=false">See live issues being resolved ›</a>
+    <!-- endif -->
   </div>
 </section>
 
+<!-- part: equipment-health-snapshot -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Equipment health snapshot</p>
     <h2>Health by equipment type</h2>
-    <p class="h2note">May – August 2026. Share of rule executions returning no fault, by equipment type, sorted by change across the window.</p>
+    <p class="h2note">June – August 2026, the three months of the reporting quarter. Share of rule executions returning no fault, by equipment type, sorted by change across the quarter.</p>
   </div>
   <div class="bandkey">
     <span><i class="b4"></i>Excellent ≥ 99%</span>
@@ -338,38 +358,38 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
         <th class="lv">Equipment type</th>
         <th class="ct">Equip</th>
         <th class="ct">Rules</th>
-        <th class="mo">May 26</th>
         <th class="mo">Jun 26</th>
         <th class="mo">Jul 26</th>
-        <th class="mo">Aug 26<em>partial</em></th>
+        <th class="mo">Aug 26</th>
         <th class="cg">Chg</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=1">Chiller &rsaquo;</a></td><td class="ct">5</td><td class="ct">42</td><td class="c b2">96.91</td><td class="c b2">94.67</td><td class="c b2">95.94</td><td class="c b4 now">99.67</td><td class="cg"><span class="chg up">&uarr; +2.76</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=7">Air Handling Units &rsaquo;</a></td><td class="ct">7</td><td class="ct">167</td><td class="c b3">97.02</td><td class="c b3">97.23</td><td class="c b3">98.65</td><td class="c b3 now">98.36</td><td class="cg"><span class="chg up">&uarr; +1.33</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=9">Variable Air Volume &rsaquo;</a></td><td class="ct">310</td><td class="ct">1,355</td><td class="c b3">98.83</td><td class="c b3">98.97</td><td class="c b4">99.03</td><td class="c b4 now">99.09</td><td class="cg"><span class="chg up">&uarr; +0.27</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=32">Exhaust Air Fans &rsaquo;</a></td><td class="ct">4</td><td class="ct">4</td><td class="c b4">99.90</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg up">&uarr; +0.10</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=2">Cooling Tower &rsaquo;</a></td><td class="ct">4</td><td class="ct">14</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=6">Condenser Water Pumps &rsaquo;</a></td><td class="ct">2</td><td class="ct">12</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=20">Packaged AC Units &rsaquo;</a></td><td class="ct">2</td><td class="ct">2</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=33">Variable Speed Drive &rsaquo;</a></td><td class="ct">11</td><td class="ct">11</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=40">Car Park Ventilation &rsaquo;</a></td><td class="ct">6</td><td class="ct">23</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000&amp;equipment_type_ids=5">Primary CHW Pumps &rsaquo;</a></td><td class="ct">3</td><td class="ct">16</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">99.82</td><td class="cg"><span class="chg down">&darr; &minus;0.18</span></td></tr>
-      <tr class="total"><td class="lv">Site</td><td class="ct">354</td><td class="ct">1,646</td><td class="c b3">98.65</td><td class="c b3">98.73</td><td class="c b3">98.96</td><td class="c b4 now">99.08</td><td class="cg"><span class="chg up">&uarr; +0.43</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=1">Chiller &rsaquo;</a></td><td class="ct">5</td><td class="ct">42</td><td class="c b2">94.67</td><td class="c b2">95.94</td><td class="c b4 now">99.67</td><td class="cg"><span class="chg up">&uarr; +5.00</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=7">Air Handling Units &rsaquo;</a></td><td class="ct">7</td><td class="ct">167</td><td class="c b3">97.23</td><td class="c b3">98.65</td><td class="c b3 now">98.36</td><td class="cg"><span class="chg up">&uarr; +1.13</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=9">Variable Air Volume &rsaquo;</a></td><td class="ct">310</td><td class="ct">1,355</td><td class="c b3">98.97</td><td class="c b4">99.03</td><td class="c b4 now">99.09</td><td class="cg"><span class="chg up">&uarr; +0.12</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=32">Exhaust Air Fans &rsaquo;</a></td><td class="ct">4</td><td class="ct">4</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=2">Cooling Tower &rsaquo;</a></td><td class="ct">4</td><td class="ct">14</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=6">Condenser Water Pumps &rsaquo;</a></td><td class="ct">2</td><td class="ct">12</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=20">Packaged AC Units &rsaquo;</a></td><td class="ct">2</td><td class="ct">2</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=33">Variable Speed Drive &rsaquo;</a></td><td class="ct">11</td><td class="ct">11</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=40">Car Park Ventilation &rsaquo;</a></td><td class="ct">6</td><td class="ct">23</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">100.00</td><td class="cg"><span class="chg flat">0.00</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;equipment_type_ids=5">Primary CHW Pumps &rsaquo;</a></td><td class="ct">3</td><td class="ct">16</td><td class="c b4">100.00</td><td class="c b4">100.00</td><td class="c b4 now">99.82</td><td class="cg"><span class="chg down">&darr; &minus;0.18</span></td></tr>
+      <tr class="total"><td class="lv">Site</td><td class="ct">354</td><td class="ct">1,646</td><td class="c b3">98.73</td><td class="c b3">98.96</td><td class="c b4 now">99.08</td><td class="cg"><span class="chg up">&uarr; +0.35</span></td></tr>
     </tbody>
   </table>
-  <p class="chartnote">Chiller carries the quarter's biggest move: three months in the Average band, then into Excellent at 99.67% in August once evaporator pressure sensing was restored on both machines in July. Air handling units gained 1.33 pp off the valve and control work on AC-01 and AC-07. Only Primary CHW Pumps went backwards, by 0.18 pp, and it is still inside Excellent.</p>
+  <p class="chartnote">Chiller health improved from 94.7% in June to 99.7% in August, after evaporator pressure sensing was restored on both machines in July. Air handling units gained 1.1 pp following valve and control work on AC-01 and AC-07. Overall site health improved slightly to 99.1%. Primary chilled water pumps eased 0.2 pp and remain inside Excellent.</p>
   <div class="seclinks">
-    <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">See live equipment health dashboard &rsaquo;</a>
+    <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">See live equipment health dashboard &rsaquo;</a>
   </div>
 </section>
 
+<!-- part: indoor-environment-snapshot -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Indoor environment health snapshot</p>
     <h2>Thermal comfort by level</h2>
-    <p class="h2note">May – August 2026. Share of zone readings inside the ASHRAE comfort band during working hours, by level, in building order.</p>
+    <p class="h2note">June – August 2026. Share of zone readings inside the ASHRAE comfort band during working hours, by level, in building order.</p>
   </div>
   <div class="bandkey">
     <span><i class="b4"></i>Excellent &ge; 92%</span>
@@ -382,88 +402,84 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <tr>
         <th class="lv">Level</th>
         <th class="ct">Zones</th>
-        <th class="mo">May 26</th>
         <th class="mo">Jun 26</th>
         <th class="mo">Jul 26</th>
-        <th class="mo">Aug 26<em>partial</em></th>
+        <th class="mo">Aug 26</th>
         <th class="cg">Chg</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L22 &rsaquo;</a></td><td class="ct">3</td><td class="c b2">80.4</td><td class="c b1">45.5</td><td class="c b1">40.7</td><td class="c b1 now">44.4</td><td class="cg"><span class="chg down">&darr; &minus;36.0</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L21 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">95.9</td><td class="c b4">97.6</td><td class="c b4">96.7</td><td class="c b4 now">94.6</td><td class="cg"><span class="chg down">&darr; &minus;1.4</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L20 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">97.3</td><td class="c b4">95.5</td><td class="c b4">92.8</td><td class="c b4 now">92.6</td><td class="cg"><span class="chg down">&darr; &minus;4.7</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L19 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">92.2</td><td class="c b4">95.8</td><td class="c b4">96.3</td><td class="c b4 now">94.9</td><td class="cg"><span class="chg up">&uarr; +2.8</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L18 &rsaquo;</a></td><td class="ct">20</td><td class="c b3">91.1</td><td class="c b4">97.4</td><td class="c b4">98.1</td><td class="c b4 now">96.7</td><td class="cg"><span class="chg up">&uarr; +5.6</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L17 &rsaquo;</a></td><td class="ct">18</td><td class="c b4">94.1</td><td class="c b4">93.4</td><td class="c b3">90.5</td><td class="c b4 now">92.3</td><td class="cg"><span class="chg down">&darr; &minus;1.8</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L16 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">95.2</td><td class="c b4">92.7</td><td class="c b3">91.5</td><td class="c b3 now">90.7</td><td class="cg"><span class="chg down">&darr; &minus;4.5</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L15 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">95.4</td><td class="c b4">96.9</td><td class="c b4">97.5</td><td class="c b4 now">95.8</td><td class="cg"><span class="chg up">&uarr; +0.5</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L14 &rsaquo;</a></td><td class="ct">15</td><td class="c b4">97.9</td><td class="c b4">99.7</td><td class="c b4">99.4</td><td class="c b4 now">99.0</td><td class="cg"><span class="chg up">&uarr; +1.1</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L13 &rsaquo;</a></td><td class="ct">15</td><td class="c b4">94.0</td><td class="c b4">96.1</td><td class="c b4">96.9</td><td class="c b4 now">93.6</td><td class="cg"><span class="chg down">&darr; &minus;0.4</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L12 &rsaquo;</a></td><td class="ct">17</td><td class="c b4">92.1</td><td class="c b4">96.0</td><td class="c b4">96.4</td><td class="c b4 now">93.7</td><td class="cg"><span class="chg up">&uarr; +1.6</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L11 &rsaquo;</a></td><td class="ct">13</td><td class="c b4">98.8</td><td class="c b4">97.7</td><td class="c b4">96.5</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;2.5</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L10 &rsaquo;</a></td><td class="ct">15</td><td class="c b4">97.2</td><td class="c b4">97.7</td><td class="c b4">97.2</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;0.9</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L09 &rsaquo;</a></td><td class="ct">18</td><td class="c b3">89.8</td><td class="c b3">91.8</td><td class="c b4">93.4</td><td class="c b4 now">94.3</td><td class="cg"><span class="chg up">&uarr; +4.5</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L08 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">97.3</td><td class="c b4">95.6</td><td class="c b4">94.4</td><td class="c b4 now">94.9</td><td class="cg"><span class="chg down">&darr; &minus;2.5</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L07 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">97.9</td><td class="c b4">96.3</td><td class="c b4">94.6</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;1.7</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L06 &rsaquo;</a></td><td class="ct">13</td><td class="c b4">97.1</td><td class="c b3">86.9</td><td class="c b2">84.0</td><td class="c b3 now">86.6</td><td class="cg"><span class="chg down">&darr; &minus;10.4</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L04 &rsaquo;</a></td><td class="ct">19</td><td class="c b4">93.3</td><td class="c b3">90.5</td><td class="c b3">89.4</td><td class="c b3 now">89.2</td><td class="cg"><span class="chg down">&darr; &minus;4.1</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L03 &rsaquo;</a></td><td class="ct">7</td><td class="c b4">99.5</td><td class="c b3">87.5</td><td class="c b2">79.0</td><td class="c b2 now">77.3</td><td class="cg"><span class="chg down">&darr; &minus;22.2</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L02 &rsaquo;</a></td><td class="ct">6</td><td class="c b4">99.5</td><td class="c b4">97.3</td><td class="c b4">92.0</td><td class="c b3 now">91.9</td><td class="cg"><span class="chg down">&darr; &minus;7.6</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">L01 &rsaquo;</a></td><td class="ct">11</td><td class="c b2">82.9</td><td class="c b1">71.4</td><td class="c b1">61.2</td><td class="c b1 now">59.1</td><td class="cg"><span class="chg down">&darr; &minus;23.8</span></td></tr>
-      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">G &rsaquo;</a></td><td class="ct">2</td><td class="c b4">95.0</td><td class="c b4">98.9</td><td class="c b4">96.0</td><td class="c b4 now">93.9</td><td class="cg"><span class="chg down">&darr; &minus;1.1</span></td></tr>
-      <tr class="total"><td class="lv">Site</td><td class="ct">298</td><td class="c b4">94.4</td><td class="c b4">93.6</td><td class="c b4">92.3</td><td class="c b3 now">91.7</td><td class="cg"><span class="chg down">&darr; &minus;2.7</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L22 &rsaquo;</a></td><td class="ct">3</td><td class="c b1">45.5</td><td class="c b1">40.7</td><td class="c b1 now">44.4</td><td class="cg"><span class="chg down">&darr; &minus;1.1</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L21 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">97.6</td><td class="c b4">96.7</td><td class="c b4 now">94.6</td><td class="cg"><span class="chg down">&darr; &minus;3.0</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L20 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">95.5</td><td class="c b4">92.8</td><td class="c b4 now">92.6</td><td class="cg"><span class="chg down">&darr; &minus;2.9</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L19 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">95.8</td><td class="c b4">96.3</td><td class="c b4 now">94.9</td><td class="cg"><span class="chg down">&darr; &minus;0.9</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L18 &rsaquo;</a></td><td class="ct">20</td><td class="c b4">97.4</td><td class="c b4">98.1</td><td class="c b4 now">96.7</td><td class="cg"><span class="chg down">&darr; &minus;0.7</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L17 &rsaquo;</a></td><td class="ct">18</td><td class="c b4">93.4</td><td class="c b3">90.5</td><td class="c b4 now">92.3</td><td class="cg"><span class="chg down">&darr; &minus;1.1</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L16 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">92.7</td><td class="c b3">91.5</td><td class="c b3 now">90.7</td><td class="cg"><span class="chg down">&darr; &minus;2.0</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L15 &rsaquo;</a></td><td class="ct">16</td><td class="c b4">96.9</td><td class="c b4">97.5</td><td class="c b4 now">95.8</td><td class="cg"><span class="chg down">&darr; &minus;1.1</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L14 &rsaquo;</a></td><td class="ct">15</td><td class="c b4">99.7</td><td class="c b4">99.4</td><td class="c b4 now">99.0</td><td class="cg"><span class="chg down">&darr; &minus;0.7</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L13 &rsaquo;</a></td><td class="ct">15</td><td class="c b4">96.1</td><td class="c b4">96.9</td><td class="c b4 now">93.6</td><td class="cg"><span class="chg down">&darr; &minus;2.5</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L12 &rsaquo;</a></td><td class="ct">17</td><td class="c b4">96.0</td><td class="c b4">96.4</td><td class="c b4 now">93.7</td><td class="cg"><span class="chg down">&darr; &minus;2.3</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L11 &rsaquo;</a></td><td class="ct">13</td><td class="c b4">97.7</td><td class="c b4">96.5</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;1.5</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L10 &rsaquo;</a></td><td class="ct">15</td><td class="c b4">97.7</td><td class="c b4">97.2</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;1.5</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L09 &rsaquo;</a></td><td class="ct">18</td><td class="c b3">91.8</td><td class="c b4">93.4</td><td class="c b4 now">94.3</td><td class="cg"><span class="chg up">&uarr; +2.5</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L08 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">95.6</td><td class="c b4">94.4</td><td class="c b4 now">94.9</td><td class="cg"><span class="chg down">&darr; &minus;0.7</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L07 &rsaquo;</a></td><td class="ct">14</td><td class="c b4">96.3</td><td class="c b4">94.6</td><td class="c b4 now">96.2</td><td class="cg"><span class="chg down">&darr; &minus;0.1</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L06 &rsaquo;</a></td><td class="ct">13</td><td class="c b3">86.9</td><td class="c b2">84.0</td><td class="c b3 now">86.6</td><td class="cg"><span class="chg down">&darr; &minus;0.3</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L04 &rsaquo;</a></td><td class="ct">19</td><td class="c b3">90.5</td><td class="c b3">89.4</td><td class="c b3 now">89.2</td><td class="cg"><span class="chg down">&darr; &minus;1.3</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L03 &rsaquo;</a></td><td class="ct">7</td><td class="c b3">87.5</td><td class="c b2">79.0</td><td class="c b2 now">77.3</td><td class="cg"><span class="chg down">&darr; &minus;10.2</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L02 &rsaquo;</a></td><td class="ct">6</td><td class="c b4">97.3</td><td class="c b4">92.0</td><td class="c b3 now">91.9</td><td class="cg"><span class="chg down">&darr; &minus;5.4</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">L01 &rsaquo;</a></td><td class="ct">11</td><td class="c b1">71.4</td><td class="c b1">61.2</td><td class="c b1 now">59.1</td><td class="cg"><span class="chg down">&darr; &minus;12.3</span></td></tr>
+      <tr><td class="lv"><a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">G &rsaquo;</a></td><td class="ct">2</td><td class="c b4">98.9</td><td class="c b4">96.0</td><td class="c b4 now">93.9</td><td class="cg"><span class="chg down">&darr; &minus;5.0</span></td></tr>
+      <tr class="total"><td class="lv">Site</td><td class="ct">298</td><td class="c b4">93.6</td><td class="c b4">92.3</td><td class="c b3 now">91.7</td><td class="cg"><span class="chg down">&darr; &minus;1.9</span></td></tr>
     </tbody>
   </table>
-  <p class="chartnote">Comfort is drifting cool, not warm. L01 and L22 have given up 23.8 and 36.0 pp since May and now sit around 21 °C, at or under the bottom of the target band; L03 is down 22.2 pp. Six of 22 levels improved, led by L18 and L09, so the site line only eases 2.7 pp to 91.7% — its first month under the 92% Excellent threshold.</p>
+  <p class="chartnote">L09 was the only level to improve this quarter, by 2.5 pp. Site comfort eased 1.9 pp to 91.7%, its first month below the 92% Excellent threshold. L01 and L22 remain the weakest at 59% and 44%, both running cool against the bottom of the band, and L01 has lost 12.3 pp since June. Both floors still require investigation.</p>
   <div class="seclinks">
-    <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-05-01T00:00:00.000&amp;end_date=2026-08-12T00:00:00.000">See live indoor environment dashboard &rsaquo;</a>
+    <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">See live indoor environment dashboard &rsaquo;</a>
   </div>
 </section>
 
+<!-- part: monthly-equipment-health -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Monthly equipment health</p>
     <h2>Six months of trend</h2>
-    <p class="h2note">February – August 2026, the last six complete months plus August to date.</p>
+    <p class="h2note">March – August 2026, the last six complete months.</p>
   </div>
 
   <div class="chartblock">
     <h3 class="charttitle">Site equipment health score</h3>
     <div class="chart">
-      <svg viewBox="0 0 682 236" role="img" aria-label="Line chart of monthly site equipment health score, February to August 2026: 98.6, 98.2, 98.5, 98.7, 98.7, 99.0 and 99.1 percent, against the 97.0 percent Good threshold below and the 99.0 percent Excellent threshold, which the series reaches in July and clears in August. August is to date.">
+      <svg viewBox="0 0 682 236" role="img" aria-label="Line chart of monthly site equipment health score, March to August 2026: 98.2, 98.5, 98.7, 98.7, 99.0 and 99.1 percent, against the 97.0 percent Good threshold below and the 99.0 percent Excellent threshold, which the series reaches in July and clears in August.">
         <text class="axis" x="44" y="40">Excellent threshold</text>
         <line class="benchline" x1="36" y1="48"  x2="670" y2="48"/><text class="axis" x="4" y="51">99.0</text>
         <text class="axis" x="44" y="164">Good threshold</text>
         <line class="benchline" x1="36" y1="172" x2="670" y2="172"/><text class="axis" x="4" y="175">97.0</text>
         <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
-        <polyline class="series-line" points="80,72.8 172,97.6 264,79 356,66.6 448,66.6 540,48 632,41.8"/>
-        <circle cx="80"  cy="72.8" r="4.5" class="pt"/>
-        <circle cx="172" cy="97.6" r="4.5" class="pt"/>
-        <circle cx="264" cy="79"   r="4.5" class="pt"/>
-        <circle cx="356" cy="66.6" r="4.5" class="pt"/>
-        <circle cx="448" cy="66.6" r="4.5" class="pt"/>
-        <circle cx="540" cy="48"   r="4.5" class="pt"/>
-        <circle cx="632" cy="41.8" r="4.5" class="pt"/>
-        <text class="val" x="80"  y="90"  text-anchor="middle">98.6%</text>
-        <text class="val" x="172" y="115" text-anchor="middle">98.2%</text>
-        <text class="val" x="264" y="96"  text-anchor="middle">98.5%</text>
-        <text class="val" x="356" y="84"  text-anchor="middle">98.7%</text>
-        <text class="val" x="448" y="84"  text-anchor="middle">98.7%</text>
-        <text class="val" x="540" y="65"  text-anchor="middle">99.0%</text>
-        <text class="val" x="632" y="59"  text-anchor="middle">99.1%</text>
-        <text class="axis" x="80"  y="216" text-anchor="middle">Feb 26</text>
-        <text class="axis" x="172" y="216" text-anchor="middle">Mar 26</text>
-        <text class="axis" x="264" y="216" text-anchor="middle">Apr 26</text>
-        <text class="axis" x="356" y="216" text-anchor="middle">May 26</text>
-        <text class="axis" x="448" y="216" text-anchor="middle">Jun 26</text>
-        <text class="axis" x="540" y="216" text-anchor="middle">Jul 26</text>
-        <text class="axis" x="632" y="216" text-anchor="middle">Aug 26</text>
-        <text class="axis-sub" x="632" y="228" text-anchor="middle">to date</text>
+        <polyline class="series-line" points="80,97.6 190,79 300,66.6 410,66.6 520,48 630,41.8"/>
+        <circle cx="80"  cy="97.6"  r="4.5" class="pt"/>
+        <circle cx="190" cy="79"    r="4.5" class="pt"/>
+        <circle cx="300" cy="66.6"  r="4.5" class="pt"/>
+        <circle cx="410" cy="66.6"  r="4.5" class="pt"/>
+        <circle cx="520" cy="48"    r="4.5" class="pt"/>
+        <circle cx="630" cy="41.8"  r="4.5" class="pt"/>
+        <text class="val" x="80"  y="115" text-anchor="middle">98.2%</text>
+        <text class="val" x="190" y="96"  text-anchor="middle">98.5%</text>
+        <text class="val" x="300" y="84"  text-anchor="middle">98.7%</text>
+        <text class="val" x="410" y="84"  text-anchor="middle">98.7%</text>
+        <text class="val" x="520" y="65"  text-anchor="middle">99.0%</text>
+        <text class="val" x="630" y="59"  text-anchor="middle">99.1%</text>
+        <text class="axis" x="80"  y="216" text-anchor="middle">Mar 26</text>
+        <text class="axis" x="190" y="216" text-anchor="middle">Apr 26</text>
+        <text class="axis" x="300" y="216" text-anchor="middle">May 26</text>
+        <text class="axis" x="410" y="216" text-anchor="middle">Jun 26</text>
+        <text class="axis" x="520" y="216" text-anchor="middle">Jul 26</text>
+        <text class="axis" x="630" y="216" text-anchor="middle">Aug 26</text>
       </svg>
     </div>
-    <p class="chartsource">Source: <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;relative_date=last_6_months&amp;include_today=true">PEAK equipment health dashboard</a></p>
-    <p class="chartnote">The site sat inside Good all half and never came close to slipping out of it — the 97.0% floor is 0.8 pp under the weakest month. It has improved every month since the March dip, reached the 99.0% Excellent threshold in July and is holding just above it at 99.1% in August. A score is a rate, so the short month does not flatter it.</p>
+    <p class="chartsource">Source: <a href="https://ace.cimenviro.com/dashboard/equipment-health?site_ids=1042&amp;start_date=2026-03-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">PEAK equipment health dashboard</a></p>
+    <p class="chartnote">Site health rose in every month but June, which held flat, and reached 99.1% in August, clearing the 99% Excellent threshold for the first time. The 97% Good floor sits 1.2 pp below the weakest month, so the site held Good across all six. Every point covers a complete month.</p>
   </div>
 
   <div class="chartblock">
@@ -473,141 +489,130 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       <span><span class="sw sw-benchmark"></span>Labour cost avoided (right scale)</span>
     </div>
     <div class="chart">
-      <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart, February to August 2026. Automated checks: 607 thousand, 1.31, 1.25, 1.18, 1.40 and 1.57 million, then 638 thousand in August to date. Labour cost avoided: 5.8, 6.1, 5.9, 6.2, 6.1 and 6.4 thousand dollars, then 2.5 thousand in August to date.">
-        <path class="bar-primary" d="M47,196 V144.7 Q47,140.7 51,140.7 H73 Q77,140.7 77,144.7 V196 Z"/>
-        <path class="bar-benchmark" d="M83,196 V76.5 Q83,72.5 87,72.5 H109 Q113,72.5 113,76.5 V196 Z"/>
-        <path class="bar-primary" d="M139,196 V80.7 Q139,76.7 143,76.7 H165 Q169,76.7 169,80.7 V196 Z"/>
-        <path class="bar-benchmark" d="M175,196 V70.1 Q175,66.1 179,66.1 H201 Q205,66.1 205,70.1 V196 Z"/>
-        <path class="bar-primary" d="M231,196 V86.1 Q231,82.1 235,82.1 H257 Q261,82.1 261,86.1 V196 Z"/>
-        <path class="bar-benchmark" d="M267,196 V74.3 Q267,70.3 271,70.3 H293 Q297,70.3 297,74.3 V196 Z"/>
-        <path class="bar-primary" d="M323,196 V92.5 Q323,88.5 327,88.5 H349 Q353,88.5 353,92.5 V196 Z"/>
-        <path class="bar-benchmark" d="M359,196 V67.9 Q359,63.9 363,63.9 H385 Q389,63.9 389,67.9 V196 Z"/>
-        <path class="bar-primary" d="M415,196 V72.5 Q415,68.5 419,68.5 H441 Q445,68.5 445,72.5 V196 Z"/>
-        <path class="bar-benchmark" d="M451,196 V70.1 Q451,66.1 455,66.1 H477 Q481,66.1 481,70.1 V196 Z"/>
-        <path class="bar-primary" d="M507,196 V57 Q507,53 511,53 H533 Q537,53 537,57 V196 Z"/>
-        <path class="bar-benchmark" d="M543,196 V63.7 Q543,59.7 547,59.7 H569 Q573,59.7 573,63.7 V196 Z"/>
-        <path class="bar-primary" d="M599,196 V141.9 Q599,137.9 603,137.9 H625 Q629,137.9 629,141.9 V196 Z"/>
-        <path class="bar-benchmark" d="M635,196 V146.7 Q635,142.7 639,142.7 H661 Q665,142.7 665,146.7 V196 Z"/>
+      <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart, March to August 2026. Automated checks: 1.31, 1.25, 1.18, 1.40 and 1.57 million, then 638 thousand. Labour cost avoided: 6.1, 5.9, 6.2, 6.1, 6.4 and 2.5 thousand dollars.">
+        <path class="bar-primary" d="M47,196 V80.7 Q47,76.7 51,76.7 H73 Q77,76.7 77,80.7 V196 Z"/>
+        <path class="bar-benchmark" d="M83,196 V70.1 Q83,66.1 87,66.1 H109 Q113,66.1 113,70.1 V196 Z"/>
+        <path class="bar-primary" d="M157,196 V86.1 Q157,82.1 161,82.1 H183 Q187,82.1 187,86.1 V196 Z"/>
+        <path class="bar-benchmark" d="M193,196 V74.3 Q193,70.3 197,70.3 H219 Q223,70.3 223,74.3 V196 Z"/>
+        <path class="bar-primary" d="M267,196 V92.5 Q267,88.5 271,88.5 H293 Q297,88.5 297,92.5 V196 Z"/>
+        <path class="bar-benchmark" d="M303,196 V67.9 Q303,63.9 307,63.9 H329 Q333,63.9 333,67.9 V196 Z"/>
+        <path class="bar-primary" d="M377,196 V72.5 Q377,68.5 381,68.5 H403 Q407,68.5 407,72.5 V196 Z"/>
+        <path class="bar-benchmark" d="M413,196 V70.1 Q413,66.1 417,66.1 H439 Q443,66.1 443,70.1 V196 Z"/>
+        <path class="bar-primary" d="M487,196 V57 Q487,53 491,53 H513 Q517,53 517,57 V196 Z"/>
+        <path class="bar-benchmark" d="M523,196 V63.7 Q523,59.7 527,59.7 H549 Q553,59.7 553,63.7 V196 Z"/>
+        <path class="bar-primary" d="M597,196 V141.9 Q597,137.9 601,137.9 H623 Q627,137.9 627,141.9 V196 Z"/>
+        <path class="bar-benchmark" d="M633,196 V146.7 Q633,142.7 637,142.7 H659 Q663,142.7 663,146.7 V196 Z"/>
         <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
-        <text class="val" x="62"  y="133" text-anchor="middle">607K</text><text class="val" x="98"  y="64"  text-anchor="middle">$5.8k</text>
-        <text class="val" x="154" y="69"  text-anchor="middle">1.31M</text><text class="val" x="190" y="58"  text-anchor="middle">$6.1k</text>
-        <text class="val" x="246" y="74"  text-anchor="middle">1.25M</text><text class="val" x="282" y="62"  text-anchor="middle">$5.9k</text>
-        <text class="val" x="338" y="80"  text-anchor="middle">1.18M</text><text class="val" x="374" y="56"  text-anchor="middle">$6.2k</text>
-        <text class="val" x="430" y="60"  text-anchor="middle">1.40M</text><text class="val" x="466" y="58"  text-anchor="middle">$6.1k</text>
-        <text class="val" x="522" y="45"  text-anchor="middle">1.57M</text><text class="val" x="558" y="52"  text-anchor="middle">$6.4k</text>
-        <text class="val" x="614" y="130" text-anchor="middle">638K</text><text class="val" x="650" y="135" text-anchor="middle">$2.5k</text>
-        <text class="axis" x="80"  y="216" text-anchor="middle">Feb 26</text>
-        <text class="axis" x="172" y="216" text-anchor="middle">Mar 26</text>
-        <text class="axis" x="264" y="216" text-anchor="middle">Apr 26</text>
-        <text class="axis" x="356" y="216" text-anchor="middle">May 26</text>
-        <text class="axis" x="448" y="216" text-anchor="middle">Jun 26</text>
-        <text class="axis" x="540" y="216" text-anchor="middle">Jul 26</text>
-        <text class="axis" x="632" y="216" text-anchor="middle">Aug 26</text>
-        <text class="axis-sub" x="632" y="228" text-anchor="middle">to date</text>
+        <text class="val" x="62"  y="69"  text-anchor="middle">1.31M</text><text class="val" x="98"  y="58"  text-anchor="middle">$6.1k</text>
+        <text class="val" x="172" y="74"  text-anchor="middle">1.25M</text><text class="val" x="208" y="62"  text-anchor="middle">$5.9k</text>
+        <text class="val" x="282" y="80"  text-anchor="middle">1.18M</text><text class="val" x="318" y="56"  text-anchor="middle">$6.2k</text>
+        <text class="val" x="392" y="60"  text-anchor="middle">1.40M</text><text class="val" x="428" y="58"  text-anchor="middle">$6.1k</text>
+        <text class="val" x="502" y="45"  text-anchor="middle">1.57M</text><text class="val" x="538" y="52"  text-anchor="middle">$6.4k</text>
+        <text class="val" x="612" y="130" text-anchor="middle">638K</text><text class="val" x="648" y="135" text-anchor="middle">$2.5k</text>
+        <text class="axis" x="80"  y="216" text-anchor="middle">Mar 26</text>
+        <text class="axis" x="190" y="216" text-anchor="middle">Apr 26</text>
+        <text class="axis" x="300" y="216" text-anchor="middle">May 26</text>
+        <text class="axis" x="410" y="216" text-anchor="middle">Jun 26</text>
+        <text class="axis" x="520" y="216" text-anchor="middle">Jul 26</text>
+        <text class="axis" x="630" y="216" text-anchor="middle">Aug 26</text>
       </svg>
     </div>
-    <p class="chartnote">Check volume has climbed every month since April and reached 1.57 million in July. February is genuinely low — under half of any later month — so treat it as the exception rather than the baseline. August is short for a different reason: both bars cover 12 days, and at that rate the month is tracking with July. Modelled savings sit near $6.1k a full month because they track the rule count, which barely moved.</p>
+    <p class="chartnote">Check volume grew from 1.18 million in May to 1.57 million in July as the rule count rose. Modelled savings held near $6.1k a month, since they follow the rule count rather than the check count. August sits at 638,000, under half of any month before it, and the cause has not been established. Every bar covers a complete month.</p>
   </div>
 </section>
 
+<!-- part: monthly-thermal-comfort -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Monthly thermal comfort</p>
     <h2>Where comfort has been heading</h2>
-    <p class="h2note">February – August 2026, the last six complete months plus August to date.</p>
+    <p class="h2note">March – August 2026, the last six complete months.</p>
   </div>
 
   <div class="chartblock">
     <h3 class="charttitle">Site thermal comfort score</h3>
     <div class="chart">
-      <svg viewBox="0 0 682 236" role="img" aria-label="Line chart of monthly site thermal comfort score, February to August 2026: 86.9, 89.4, 92.7, 94.4, 93.6, 92.3 and 91.7 percent, against the 85.0 percent Good threshold below and the 92.0 percent Excellent threshold, which the series clears from April to July and drops back under in August. August is to date.">
+      <svg viewBox="0 0 682 236" role="img" aria-label="Line chart of monthly site thermal comfort score, March to August 2026: 89.4, 92.7, 94.4, 93.6, 92.3 and 91.7 percent, against the 85.0 percent Good threshold below and the 92.0 percent Excellent threshold, which the series clears from April to July and drops back under in August.">
         <text class="axis" x="44" y="64">Excellent threshold</text>
         <line class="benchline" x1="36" y1="72"  x2="670" y2="72"/><text class="axis" x="4" y="75">92.0</text>
         <text class="axis" x="44" y="172">Good threshold</text>
         <line class="benchline" x1="36" y1="180" x2="670" y2="180"/><text class="axis" x="4" y="183">85.0</text>
         <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
-        <polyline class="series-line" points="80,151 172,112.3 264,61.1 356,34.8 448,47.2 540,67.3 632,76.6"/>
-        <circle cx="80"  cy="151"   r="4.5" class="pt"/>
-        <circle cx="172" cy="112.3" r="4.5" class="pt"/>
-        <circle cx="264" cy="61.1"  r="4.5" class="pt"/>
-        <circle cx="356" cy="34.8"  r="4.5" class="pt"/>
-        <circle cx="448" cy="47.2"  r="4.5" class="pt"/>
-        <circle cx="540" cy="67.3"  r="4.5" class="pt"/>
-        <circle cx="632" cy="76.6"  r="4.5" class="pt"/>
-        <text class="val" x="80"  y="142" text-anchor="middle">86.9%</text>
-        <text class="val" x="172" y="103" text-anchor="middle">89.4%</text>
-        <text class="val" x="264" y="52"  text-anchor="middle">92.7%</text>
-        <text class="val" x="356" y="26"  text-anchor="middle">94.4%</text>
-        <text class="val" x="448" y="38"  text-anchor="middle">93.6%</text>
-        <text class="val" x="540" y="58"  text-anchor="middle">92.3%</text>
-        <text class="val" x="632" y="94"  text-anchor="middle">91.7%</text>
-        <text class="axis" x="80"  y="216" text-anchor="middle">Feb 26</text>
-        <text class="axis" x="172" y="216" text-anchor="middle">Mar 26</text>
-        <text class="axis" x="264" y="216" text-anchor="middle">Apr 26</text>
-        <text class="axis" x="356" y="216" text-anchor="middle">May 26</text>
-        <text class="axis" x="448" y="216" text-anchor="middle">Jun 26</text>
-        <text class="axis" x="540" y="216" text-anchor="middle">Jul 26</text>
-        <text class="axis" x="632" y="216" text-anchor="middle">Aug 26</text>
-        <text class="axis-sub" x="632" y="228" text-anchor="middle">to date</text>
+        <polyline class="series-line" points="80,112.3 190,61.1 300,34.8 410,47.2 520,67.3 630,76.6"/>
+        <circle cx="80"  cy="112.3" r="4.5" class="pt"/>
+        <circle cx="190" cy="61.1"  r="4.5" class="pt"/>
+        <circle cx="300" cy="34.8"  r="4.5" class="pt"/>
+        <circle cx="410" cy="47.2"  r="4.5" class="pt"/>
+        <circle cx="520" cy="67.3"  r="4.5" class="pt"/>
+        <circle cx="630" cy="76.6"  r="4.5" class="pt"/>
+        <text class="val" x="80"  y="103" text-anchor="middle">89.4%</text>
+        <text class="val" x="190" y="52"  text-anchor="middle">92.7%</text>
+        <text class="val" x="300" y="26"  text-anchor="middle">94.4%</text>
+        <text class="val" x="410" y="38"  text-anchor="middle">93.6%</text>
+        <text class="val" x="520" y="58"  text-anchor="middle">92.3%</text>
+        <text class="val" x="630" y="94"  text-anchor="middle">91.7%</text>
+        <text class="axis" x="80"  y="216" text-anchor="middle">Mar 26</text>
+        <text class="axis" x="190" y="216" text-anchor="middle">Apr 26</text>
+        <text class="axis" x="300" y="216" text-anchor="middle">May 26</text>
+        <text class="axis" x="410" y="216" text-anchor="middle">Jun 26</text>
+        <text class="axis" x="520" y="216" text-anchor="middle">Jul 26</text>
+        <text class="axis" x="630" y="216" text-anchor="middle">Aug 26</text>
       </svg>
     </div>
-    <p class="chartsource">Source: <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;relative_date=last_6_months&amp;include_today=true">PEAK indoor environment dashboard</a></p>
-    <p class="chartnote">Comfort recovered 7.5 pp out of the February heat and peaked at 94.4% in May, then gave back ground through winter as the building drifted cool. August is the first month back under the 92.0% Excellent threshold since March, and the level detail puts most of that on L01, L03 and L22. The 85.0% Good floor has not been in reach since February.</p>
+    <p class="chartsource">Source: <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=1042&amp;summary_ts=2026-08-01&amp;site_ids=1042&amp;start_date=2026-03-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">PEAK indoor environment dashboard</a></p>
+    <p class="chartnote">Comfort improved 5.0 pp from March to a peak of 94.4% in May. It has eased each month since, and August at 91.7% is the first month back below the 92% Excellent threshold since March. The level detail puts most of the decline on L01, L03 and L22, which are running cool. The 85% Good floor has not been approached in the six months.</p>
   </div>
 </section>
 
+<!-- part: monthly-alerts -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Monthly alerts raised vs resolved</p>
     <h2>Faults triaged and resolved</h2>
-    <p class="h2note">February – August 2026, the last six complete months plus August to date. Raised counts alerts triaged into actions; resolved counts the same way. Actions marked Not Doing, and alerts on rules no longer running, are excluded from both series.</p>
+    <p class="h2note">March – August 2026, the last six complete months. Raised counts actions created in the month, resolved counts actions closed in it. Actions marked Not Doing are excluded from both series.</p>
   </div>
   <div class="legend">
     <span><span class="sw sw-primary"></span>Raised</span>
     <span><span class="sw sw-benchmark"></span>Resolved</span>
   </div>
   <div class="chart">
-    <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart of alerts raised and resolved each month, February to August 2026. Raised 1, 2, 3, 5, 18, 1 and 2 in August to date. Resolved 2, 12, 9, 5, 6, 7 and 4 in August to date.">
-      <path class="bar-primary" d="M47,196 V192.5 Q47,188.5 51,188.5 H73 Q77,188.5 77,192.5 V196 Z"/>
-      <path class="bar-benchmark" d="M83,196 V185 Q83,181 87,181 H109 Q113,181 113,185 V196 Z"/>
-      <path class="bar-primary" d="M139,196 V185 Q139,181 143,181 H165 Q169,181 169,185 V196 Z"/>
-      <path class="bar-benchmark" d="M175,196 V110 Q175,106 179,106 H201 Q205,106 205,110 V196 Z"/>
-      <path class="bar-primary" d="M231,196 V177.5 Q231,173.5 235,173.5 H257 Q261,173.5 261,177.5 V196 Z"/>
-      <path class="bar-benchmark" d="M267,196 V132.5 Q267,128.5 271,128.5 H293 Q297,128.5 297,132.5 V196 Z"/>
-      <path class="bar-primary" d="M323,196 V162.5 Q323,158.5 327,158.5 H349 Q353,158.5 353,162.5 V196 Z"/>
-      <path class="bar-benchmark" d="M359,196 V162.5 Q359,158.5 363,158.5 H385 Q389,158.5 389,162.5 V196 Z"/>
-      <path class="bar-primary" d="M415,196 V65 Q415,61 419,61 H441 Q445,61 445,65 V196 Z"/>
-      <path class="bar-benchmark" d="M451,196 V155 Q451,151 455,151 H477 Q481,151 481,155 V196 Z"/>
-      <path class="bar-primary" d="M507,196 V192.5 Q507,188.5 511,188.5 H533 Q537,188.5 537,192.5 V196 Z"/>
-      <path class="bar-benchmark" d="M543,196 V147.5 Q543,143.5 547,143.5 H569 Q573,143.5 573,147.5 V196 Z"/>
-      <path class="bar-primary" d="M599,196 V185 Q599,181 603,181 H625 Q629,181 629,185 V196 Z"/>
-      <path class="bar-benchmark" d="M635,196 V170 Q635,166 639,166 H661 Q665,166 665,170 V196 Z"/>
+    <svg viewBox="0 0 682 236" role="img" aria-label="Grouped bar chart of alerts raised and resolved each month, March to August 2026. Raised 2, 3, 5, 18, 1 and 2. Resolved 12, 9, 5, 6, 7 and 4.">
+      <path class="bar-primary" d="M47,196 V185 Q47,181 51,181 H73 Q77,181 77,185 V196 Z"/>
+      <path class="bar-benchmark" d="M83,196 V110 Q83,106 87,106 H109 Q113,106 113,110 V196 Z"/>
+      <path class="bar-primary" d="M157,196 V177.5 Q157,173.5 161,173.5 H183 Q187,173.5 187,177.5 V196 Z"/>
+      <path class="bar-benchmark" d="M193,196 V132.5 Q193,128.5 197,128.5 H219 Q223,128.5 223,132.5 V196 Z"/>
+      <path class="bar-primary" d="M267,196 V162.5 Q267,158.5 271,158.5 H293 Q297,158.5 297,162.5 V196 Z"/>
+      <path class="bar-benchmark" d="M303,196 V162.5 Q303,158.5 307,158.5 H329 Q333,158.5 333,162.5 V196 Z"/>
+      <path class="bar-primary" d="M377,196 V65 Q377,61 381,61 H403 Q407,61 407,65 V196 Z"/>
+      <path class="bar-benchmark" d="M413,196 V155 Q413,151 417,151 H439 Q443,151 443,155 V196 Z"/>
+      <path class="bar-primary" d="M487,196 V192.5 Q487,188.5 491,188.5 H513 Q517,188.5 517,192.5 V196 Z"/>
+      <path class="bar-benchmark" d="M523,196 V147.5 Q523,143.5 527,143.5 H549 Q553,143.5 553,147.5 V196 Z"/>
+      <path class="bar-primary" d="M597,196 V185 Q597,181 601,181 H623 Q627,181 627,185 V196 Z"/>
+      <path class="bar-benchmark" d="M633,196 V170 Q633,166 637,166 H659 Q663,166 663,170 V196 Z"/>
       <line class="baseline" x1="36" y1="196" x2="670" y2="196"/>
-      <text class="val" x="62"  y="180" text-anchor="middle">1</text><text class="val" x="98"  y="173" text-anchor="middle">2</text>
-      <text class="val" x="154" y="173" text-anchor="middle">2</text><text class="val" x="190" y="98"  text-anchor="middle">12</text>
-      <text class="val" x="246" y="165" text-anchor="middle">3</text><text class="val" x="282" y="120" text-anchor="middle">9</text>
-      <text class="val" x="338" y="150" text-anchor="middle">5</text><text class="val" x="374" y="150" text-anchor="middle">5</text>
-      <text class="val" x="430" y="53"  text-anchor="middle">18</text><text class="val" x="466" y="143" text-anchor="middle">6</text>
-      <text class="val" x="522" y="180" text-anchor="middle">1</text><text class="val" x="558" y="135" text-anchor="middle">7</text>
-      <text class="val" x="614" y="173" text-anchor="middle">2</text><text class="val" x="650" y="158" text-anchor="middle">4</text>
-      <text class="axis" x="80"  y="216" text-anchor="middle">Feb 26</text>
-      <text class="axis" x="172" y="216" text-anchor="middle">Mar 26</text>
-      <text class="axis" x="264" y="216" text-anchor="middle">Apr 26</text>
-      <text class="axis" x="356" y="216" text-anchor="middle">May 26</text>
-      <text class="axis" x="448" y="216" text-anchor="middle">Jun 26</text>
-      <text class="axis" x="540" y="216" text-anchor="middle">Jul 26</text>
-      <text class="axis" x="632" y="216" text-anchor="middle">Aug 26</text>
-      <text class="axis-sub" x="632" y="228" text-anchor="middle">to date</text>
+      <text class="val" x="62"  y="173" text-anchor="middle">2</text><text class="val" x="98"  y="98"  text-anchor="middle">12</text>
+      <text class="val" x="172" y="165" text-anchor="middle">3</text><text class="val" x="208" y="120" text-anchor="middle">9</text>
+      <text class="val" x="282" y="150" text-anchor="middle">5</text><text class="val" x="318" y="150" text-anchor="middle">5</text>
+      <text class="val" x="392" y="53"  text-anchor="middle">18</text><text class="val" x="428" y="143" text-anchor="middle">6</text>
+      <text class="val" x="502" y="180" text-anchor="middle">1</text><text class="val" x="538" y="135" text-anchor="middle">7</text>
+      <text class="val" x="612" y="173" text-anchor="middle">2</text><text class="val" x="648" y="158" text-anchor="middle">4</text>
+      <text class="axis" x="80"  y="216" text-anchor="middle">Mar 26</text>
+      <text class="axis" x="190" y="216" text-anchor="middle">Apr 26</text>
+      <text class="axis" x="300" y="216" text-anchor="middle">May 26</text>
+      <text class="axis" x="410" y="216" text-anchor="middle">Jun 26</text>
+      <text class="axis" x="520" y="216" text-anchor="middle">Jul 26</text>
+      <text class="axis" x="630" y="216" text-anchor="middle">Aug 26</text>
     </svg>
   </div>
-  <p class="chartnote">Resolution ran ahead of triage in six of seven months — 45 resolved against 32 raised. June distorts the shape: 13 VAV and AHU actions were raised in a single batch on 24 June for investigation at the next monthly maintenance, so read the spike as one scheduled sweep rather than a month of new faults. August covers 12 days, so both bars are short by construction.</p>
+  <p class="chartnote">Resolution ran ahead of triage in four of the six months and matched it in a fifth, 43 resolved against 31 raised. The 18 raised in June were a single batch of VAV and AHU actions logged on 24 June for the next monthly maintenance visit, so that month reads as one scheduled sweep rather than a run of new faults. Every bar covers a complete month.</p>
 </section>
 
+<!-- part: actions-leaderboard -->
 <section>
   <div class="sechead">
-    <p class="eyebrow">Assignee leaderboard</p>
+    <p class="eyebrow">Actions leaderboard</p>
     <h2>Who closed the work</h2>
-    <p class="h2note">Actions resolved February – July 2026, ranked by resolved. Completion rate is resolved ÷ (resolved + currently open); open now as at 12 August 2026.</p>
+    <p class="h2note">Actions resolved March – August 2026, ranked by resolved. Completion rate is resolved ÷ (resolved + currently open); open now as at 1 September 2026.</p>
   </div>
   <table>
     <thead>
@@ -621,23 +626,24 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
       </tr>
     </thead>
     <tbody>
-      <tr><td class="rank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></td><td class="name">Daniel Reyes</td><td class="co">CIM</td><td class="num">14</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
-      <tr><td class="rank">2</td><td class="name">Tom Whitfield</td><td class="co">Meridian Mechanical</td><td class="num">13</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
-      <tr><td class="rank">3</td><td class="name">Oliver Grant</td><td class="co">Harbourview Property</td><td class="num">11</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
-      <tr><td class="rank">4</td><td class="name">Sarah Chen</td><td class="co">CIM</td><td class="num">6</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
-      <tr><td class="rank">5</td><td class="name">Marcus Bell</td><td class="co">Meridian Mechanical</td><td class="num">6</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:35.3%"></span></span><span class="sval">35.3%</span></span></td><td class="num open-hot">11</td></tr>
-      <tr><td class="rank">6</td><td class="name">David Okafor</td><td class="co">Meridian Mechanical</td><td class="num">2</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></td><td class="name">Daniel Reyes</td><td class="co">CIM</td><td class="num">12</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">2</td><td class="name">Tom Whitfield</td><td class="co">Meridian Mechanical</td><td class="num">10</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">3</td><td class="name">Oliver Grant</td><td class="co">Harbourview Property</td><td class="num">8</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">4</td><td class="name">Marcus Bell</td><td class="co">Meridian Mechanical</td><td class="num">6</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:35.3%"></span></span><span class="sval">35.3%</span></span></td><td class="num open-hot">11</td></tr>
+      <tr><td class="rank">5</td><td class="name">Sarah Chen</td><td class="co">CIM</td><td class="num">4</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr><td class="rank">6</td><td class="name">David Okafor</td><td class="co">Meridian Mechanical</td><td class="num">1</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
       <tr><td class="rank">7</td><td class="name">Emma Lawson</td><td class="co">Meridian Mechanical</td><td class="num">1</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100%"></span></span><span class="sval">100%</span></span></td><td class="num open-zero">0</td></tr>
       <tr><td class="rank">8</td><td class="name">Ryan Foster</td><td class="co">Meridian Mechanical</td><td class="num">1</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:50%"></span></span><span class="sval">50%</span></span></td><td class="num open-hot">1</td></tr>
       <tr><td class="rank">9</td><td class="name">Jack Morrison</td><td class="co">Meridian Mechanical</td><td class="num">0</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:0%"></span></span><span class="sval">0%</span></span></td><td class="num open-hot">1</td></tr>
-      <tr class="total"><td></td><td>Total</td><td></td><td class="num">54</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:80.6%"></span></span><span class="sval">80.6%</span></span></td><td class="num">13</td></tr>
+      <tr class="total"><td></td><td>Total</td><td></td><td class="num">43</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:76.8%"></span></span><span class="sval">76.8%</span></span></td><td class="num">13</td></tr>
     </tbody>
   </table>
   <div class="seclinks">
-    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=1042&amp;start_date=2026-02-01T00:00:00.000&amp;end_date=2026-07-31T00:00:00.000&amp;grouping=assignee">See live assignee leaderboard ›</a>
+    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=1042&amp;start_date=2026-03-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=assignee">See live actions leaderboard ›</a>
   </div>
 </section>
 
+<!-- part: key-wins -->
 <section>
   <div class="sechead">
     <p class="eyebrow">Key wins</p>
@@ -646,52 +652,74 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 
   <div class="win">
-    <h3>Evaporator pressure sensing restored on both chillers — CH-01 and CH-02</h3>
-    <p>Both chillers had been carrying evaporator pressure faults, which leaves the plant running without reliable protection on its refrigerant circuit. On CH-02, Meridian Mechanical replaced the chilled water differential pressure sensor and confirmed the work on 21 July; on CH-01, Marcus Bell traced the reading back to a logic input on the chiller and corrected it on 13 July. PEAK has held both alerts recovered since. This is the repair that matters most on this page — the chillers carry the building's cooling into summer.</p>
-    <p class="snap">Also visible in the equipment health snapshot: Chiller, up 2.76 pp across the window and into the Excellent band in August.</p>
+    <h3>Evaporator pressure sensing restored on chillers CH-01 and CH-02</h3>
+    <p>Both chillers had been carrying evaporator pressure faults, which leaves the plant running without reliable protection on its refrigerant circuit. On CH-02, Meridian Mechanical replaced the chilled water differential pressure sensor and confirmed the work on 21 July; on CH-01, Marcus Bell traced the reading back to a logic input on the chiller and corrected it on 13 July. PEAK has held both alerts recovered since.</p>
+    <!-- if: equipment-health -->
+    <p class="snap">Also visible in the equipment health snapshot: Chiller, up 5 pp across the quarter and into the Excellent band in August.</p>
+    <!-- endif -->
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48213">CH-02 — Inspect Evaporator Insufficient Pressure</a> · <a href="https://ace.cimenviro.com/tickets/escalated/1042/48307">CH-01 — Inspect Evaporator Pressure Broken Sensor</a></p>
   </div>
 
   <div class="win">
-    <h3>Supply air pressure reset now running on three air handling units — AC-02, AC-04 and AC-05</h3>
-    <p>AC-02, AC-04 and AC-05 were each holding a fixed supply air pressure setpoint, so their fans worked as hard at quarter load as at full load. Meridian Mechanical implemented a demand-based reset strategy on all three, and the setpoints now step between 220–260 Pa and 300–320 Pa with load instead of sitting flat. Fan energy follows pressure closely, so this is the change most likely to show up on the bill; all three alerts recovered and closed by 24 June.</p>
+    <h3>Supply air pressure reset now running on AC-02, AC-04 and AC-05</h3>
+    <p>AC-02, AC-04 and AC-05 were each holding a fixed supply air pressure setpoint, so their fans worked as hard at quarter load as at full load. Meridian Mechanical implemented a demand-based reset strategy on all three, and the setpoints now step between 220–260 Pa and 300–320 Pa with load instead of sitting flat. All three alerts recovered and closed by 24 June.</p>
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48254">AC-02 — Confirm Supply Pressure Override</a> · <a href="https://ace.cimenviro.com/tickets/escalated/1042/48255">AC-04 — Confirm Supply Pressure Override</a> · <a href="https://ace.cimenviro.com/tickets/escalated/1042/48256">AC-05 — Confirm Supply Pressure Override</a></p>
   </div>
 
   <div class="win">
-    <h3>AC-01 returned to automatic chilled water control — failed plant controller replaced</h3>
-    <p>The chilled water valves on AC-01, AC-02 and AC-03 had been forced open by hand while a failed level 22 plant controller was on order, which meant the units were cooling flat out with no modulation. Meridian Mechanical replaced the controller and returned the valves to Auto, and PEAK verified AC-01 recovered on 30 April with the valve modulating normally again — a 22% average in the first day after the fix rising to 49% by day seven, exactly the load-following behaviour that had been missing.</p>
-    <p class="snap">Also visible in the equipment health snapshot: Air Handling Units, up 1.33 pp — the second largest gain on the page.</p>
+    <h3>Failed plant controller replaced, returning AC-01 to automatic chilled water control</h3>
+    <p>The chilled water valves on AC-01, AC-02 and AC-03 had been forced open by hand while a failed level 22 plant controller was on order, which meant the units were cooling flat out with no modulation. Meridian Mechanical replaced the controller and returned the valves to Auto, and PEAK verified AC-01 recovered on 30 April with the valve modulating normally again: a 22% average in the first day after the fix, rising to 49% by day seven.</p>
+    <!-- if: equipment-health -->
+    <p class="snap">Also visible in the equipment health snapshot: Air Handling Units, up 1.1 pp across the quarter.</p>
+    <!-- endif -->
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48166">AC-01 — Inspect Chilled Water Valve Leak</a></p>
   </div>
 
   <div class="win">
     <h3>AC-07 chilled water valve tuned out of a slow-response fault</h3>
-    <p>AC-07 was delivering supply air 1.5–2 °C below setpoint because its chilled water valve modulated too slowly to keep up. Tom Whitfield range-tested the actuator to rule out a mechanical fault, then retuned the PID loop to match the other air handling units — integral from 0.3 to 3.0, proportional from 0.05 to 0.2, derivative to zero. The valve has modulated cleanly since, with no hunting in the change history, and the alert recovered on 12 May.</p>
+    <p>AC-07 was delivering supply air 1.5–2 °C below setpoint because its chilled water valve modulated too slowly to keep up. Tom Whitfield range-tested the actuator to rule out a mechanical fault, then retuned the PID loop to match the other air handling units: integral from 0.3 to 3.0, proportional from 0.05 to 0.2, derivative to zero. The valve has modulated cleanly since, with no hunting in the change history, and the alert recovered on 12 May.</p>
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48191">AC-07 — Inspect Chilled Water Valve Leak</a></p>
   </div>
 </section>
 
+<!-- part: notes -->
 <section class="notes">
   <div class="sechead">
     <p class="eyebrow">Notes on method</p>
     <h2>How these numbers are calculated</h2>
   </div>
   <ol>
-    <li><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority — P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over the 92-day period, valued at AUD 150/hr for this site's region.</li>
+    <!-- if: equipment-health -->
+    <li><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over the 92-day period, valued at AUD 150/hr for this site's region.</li>
+    <!-- endif -->
+    <!-- if: indoor-environment -->
     <li><strong>Thermal comfort score.</strong> The share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK and is 21–24.9 °C across this building, so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows.</li>
-    <li><strong>Zones</strong> in the indoor environment snapshot counts the thermal zones that returned a score over the window — 298 of the 314 zone temperature points in the analytics overview. The remaining 16 did not report often enough in working hours to be scored.</li>
+    <!-- endif -->
+    <!-- if: indoor-environment -->
+    <li><strong>Zones</strong> in the indoor environment snapshot counts the thermal zones that returned a score over the window: 298 of the 314 zone temperature points in the analytics overview. The remaining 16 did not report often enough in working hours to be scored.</li>
+    <!-- endif -->
+    <!-- if: alerts-resolved -->
     <li><strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running.</li>
-    <li><strong>Median time to resolve</strong> is measured from the linked action's creation to its resolution — not from the alert's own dates, since detection is automatic but resolution is human work.</li>
-    <li><strong>Raised vs resolved.</strong> Raised counts alerts triaged into actions in the month (or 1 where an action has no linked alert); resolved counts the same way on resolution date. Rules must be running; actions marked Not Doing are excluded from both series.</li>
-    <li><strong>The current month.</strong> Every monthly series runs to the issue date, so August holds 12 days rather than a full month. The volume series — automated checks, labour cost avoided, alerts raised and resolved — are short in that column by construction. Scores are rates over whatever days exist, so they are not.</li>
+    <!-- endif -->
+    <!-- if: alerts-resolved -->
+    <li><strong>Median time to resolve</strong> is measured from the linked action's creation to its resolution, not from the alert's own dates, since detection is automatic but resolution is human work.</li>
+    <!-- endif -->
+    <!-- if: alerts-resolved -->
+    <li><strong>Raised vs resolved.</strong> Raised counts action tickets created in the month, not the alerts behind them: detection is automatic, raising an action is a human triage decision, and one action can be linked to many alerts. Resolved counts actions on their resolution date. Actions marked Not Doing are excluded from both series.</li>
+    <!-- endif -->
+    <!-- if: equipment-health,indoor-environment,alerts-resolved -->
+    <li><strong>The reporting window.</strong> Every monthly series closes on the last complete month, so no column or bar covers a part-month. Automated checks, labour cost avoided, and actions raised and resolved can therefore be read against each other directly. The quarter itself is the three complete months named in the masthead.</li>
+    <!-- endif -->
+    <!-- if: alerts-resolved -->
     <li><strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the issue date, so 100% reflects holding no open work.</li>
+    <!-- endif -->
   </ol>
 </section>
 
+<!-- part: footer -->
 <footer>
-  <span>CIM PEAK · Site 1042 · Skyline Tower, Brisbane QLD 4000</span>
-  <span>Issued 12 Aug 2026</span>
+  <span>CIM PEAK · Skyline Tower, Brisbane QLD 4000</span>
+  <span>Issued 1 Sep 2026</span>
 </footer>
 
 </div>
