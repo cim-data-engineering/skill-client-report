@@ -4,13 +4,13 @@ Owns the operational impact thermal comfort row, the indoor environment health s
 
 ## Operational impact row
 
-| Rating chip                               | Metric label                    | Value                                    | Subtitle                                                                        |
-| ----------------------------------------- | ------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------- |
-| See below thermal comfort score benchmark | x.x% thermal comfort maintained | Site thermal comfort score over the quarter | {Up\|Down} x.x pp from y.y% in {first month of the quarter} to z.z% in {last month} |
+| Rating chip                               | Metric label                    | Value                                       | Subtitle                                                                           |
+| ----------------------------------------- | ------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------- |
+| See below thermal comfort score benchmark | x.x% thermal comfort maintained | Site thermal comfort score over the quarter | {Up|Down} x.x pp from y.y% in {first month of the quarter} to z.z% in {last month} |
 
 Same movement definition as the snapshot Chg column, the quarter's last month minus its first in pp, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months. Both endpoints come from the `site` series already fetched. Score to 1dp, matching the snapshot.
 
-Section link, labelled "See live indoor environment dashboard":
+Section link, labelled "See live indoor environment dashboard":  
 `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Thermal comfort score benchmark
@@ -24,17 +24,17 @@ Section link, labelled "See live indoor environment dashboard":
 
 ## Indoor environment health snapshot
 
-Thermal comfort by level
+Thermal comfort by level  
 Date: the quarter
 
 Heatmap table on the same `heatmap` component as the equipment health snapshot. One row per site level, three score columns for the months of the quarter, cell value the thermal comfort score to 1dp, closing with a signed change column.
 
-| Column        | Reference                                             |
-| ------------- | ----------------------------------------------------- |
-| Level         | Site levels with at least one thermal zone            |
-| Zones         | Thermal zones on that level that returned a score     |
-| Month columns | Thermal comfort score for that month x.x%             |
-| Chg           | Last month of the quarter minus the first, in pp x.x  |
+| Column        | Reference                                            |
+| ------------- | ---------------------------------------------------- |
+| Level         | Site levels with at least one thermal zone           |
+| Zones         | Thermal zones on that level that returned a score    |
+| Month columns | Thermal comfort score for that month x.x%            |
+| Chg           | Last month of the quarter minus the first, in pp x.x |
 
 **Display:**
 
@@ -53,11 +53,11 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 **Links:**
 
 - Hyperlink level name to PEAK with the same quarter as a custom date range, add chevron indicating link >
-- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
+- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&level_ids={{level_id}}`
 
 ## Monthly thermal comfort
 
-Where comfort has been heading
+Where comfort has been heading  
 Date: the six complete months ending with the quarter
 
 Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in monthly equipment health, against the thermal comfort benchmark thresholds.
@@ -83,12 +83,12 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 
 All of it is `search_indoor_environment(metric:"temperature")`.
 
-| `aggregate_entity` | `aggregate_period` | Window   | Feeds                                            |
-| ------------------ | ------------------ | -------- | ------------------------------------------------ |
-| `level`            | `month`            | quarter  | the snapshot grid                                |
-| `site`             | `month`            | 6 months | the snapshot closing row (last 3) and the trend  |
-| `site`             | `all`              | quarter  | the headline score in the operational impact row |
-| `zone`             | `all`              | quarter  | the Zones column, and the site total from `pagination.total`                                     |
+| `aggregate_entity` | `aggregate_period` | Window   | Feeds                                                        |
+| ------------------ | ------------------ | -------- | ------------------------------------------------------------ |
+| `level`            | `month`            | quarter  | the snapshot grid                                            |
+| `site`             | `month`            | 6 months | the snapshot closing row (last 3) and the trend              |
+| `site`             | `all`              | quarter  | the headline score in the operational impact row             |
+| `zone`             | `all`              | quarter  | the Zones column, and the site total from `pagination.total` |
 
 - `local_end_date` is exclusive, so pass the first of the month after the last complete month
 - Level rows are levels x months, so page at `limit:80` when levels x 3 exceeds 80
