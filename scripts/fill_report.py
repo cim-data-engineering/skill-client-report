@@ -11,7 +11,13 @@ passed in through the bundle; nothing in this file invents prose.
 import argparse, json, os, re, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-X = [80, 190, 300, 410, 520, 630]          # month column centres, per DESIGN.md
+def xs(n):
+    """Month column centres. Six months are the DESIGN.md positions; a window
+    trimmed for a newly onboarded site spreads evenly over the same plot width."""
+    if n == 6:
+        return [80, 190, 300, 410, 520, 630]
+    step = (630 - 80) / (n - 1) if n > 1 else 0
+    return [round(80 + step * i) for i in range(n)]
 BASELINE, LEFT, RIGHT = 196, 36, 670
 
 
@@ -57,12 +63,15 @@ def heatmap(d, months):
         cells = "".join('<td class="ct">%s</td>' % (f"{v:,}" if isinstance(v, int) else v)
                         for v in r.get("counts", []))
         mo = r["months"]
-        cells += "".join('<td class="c %s%s">%.*f</td>'
-                         % (band(v, t), " now" if i == len(mo) - 1 else "", dp, v)
-                         for i, v in enumerate(mo))
+        cells += "".join(
+            '<td class="c none">&mdash;</td>' if v is None else
+            '<td class="c %s%s">%.*f</td>' % (band(v, t), " now" if i == len(mo) - 1 else "", dp, v)
+            for i, v in enumerate(mo))
         link = ('<a href="%s">%s &rsaquo;</a>' % (r["link"], r["name"])) if r.get("link") else r["name"]
+        delta = ('<span class="chg flat">&mdash;</span>' if None in (mo[0], mo[-1])
+                 else chg(mo[-1] - mo[0], dp))
         body.append('      <tr><td class="lv">%s</td>%s<td class="cg">%s</td></tr>'
-                    % (link, cells, chg(mo[-1] - mo[0], dp)))
+                    % (link, cells, delta))
     sr = d["site"]
     cells = "".join('<td class="ct">%s</td>' % f"{v:,}" for v in sr.get("counts", []))
     mo = sr["months"]
@@ -93,13 +102,13 @@ def line_chart(d, months):
                    % (LEFT, y(tv), RIGHT, y(tv), y(tv) + 3, tv))
     out.append('        <line class="baseline" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (LEFT, BASELINE, RIGHT, BASELINE))
     out.append('        <polyline class="series-line" points="%s"/>'
-               % " ".join("%d,%.1f" % (x, y(val)) for x, val in zip(X, v)))
-    out += ['        <circle cx="%d" cy="%.1f" r="4.5" class="pt"/>' % (x, y(val)) for x, val in zip(X, v)]
-    for x, val in zip(X, v):
+               % " ".join("%d,%.1f" % (x, y(val)) for x, val in zip(xs(len(v)), v)))
+    out += ['        <circle cx="%d" cy="%.1f" r="4.5" class="pt"/>' % (x, y(val)) for x, val in zip(xs(len(v)), v)]
+    for x, val in zip(xs(len(v)), v):
         ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
         out.append('        <text class="val" x="%d" y="%.1f" text-anchor="middle">%.*f%%</text>' % (x, ly, dp, val))
     out += ['        <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m)
-            for x, m in zip(X, months)]
+            for x, m in zip(xs(len(months)), months)]
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n      </svg>'
             % (d["alt"], "\n".join(out)))
 
@@ -112,12 +121,15 @@ def grouped_bar(d, months):
     amax, bmax = max(a) * 1.06, max(b) * 1.06
     H = 140.0
     out = []
+    C = xs(len(months))
+    step = (C[1] - C[0]) if len(C) > 1 else 110
+    w = min(30, step * 0.27)
     for k in range(len(months)):
-        for x0, val, mx, cls in ((47 + 110 * k, a[k], amax, "bar-primary"),
-                                 (83 + 110 * k, b[k], bmax, "bar-benchmark")):
+        for x0, val, mx, cls in ((C[k] - w - 3, a[k], amax, "bar-primary"),
+                                 (C[k] + 3, b[k], bmax, "bar-benchmark")):
             t = BASELINE - (val / mx) * H
-            x1 = x0 + 30
-            out.append('      <path class="%s" d="M%d,%d V%.1f Q%d,%.1f %d,%.1f H%d Q%d,%.1f %d,%.1f V%d Z"/>'
+            x1 = x0 + w
+            out.append('      <path class="%s" d="M%.1f,%d V%.1f Q%.1f,%.1f %.1f,%.1f H%.1f Q%.1f,%.1f %.1f,%.1f V%d Z"/>'
                        % (cls, x0, BASELINE, t, x0, t - 4, x0 + 4, t - 4, x1 - 4, x1, t - 4, x1, t, BASELINE))
     out.append('      <line class="baseline" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (LEFT, BASELINE, RIGHT, BASELINE))
     for k in range(len(months)):
@@ -125,9 +137,9 @@ def grouped_bar(d, months):
         tb = BASELINE - (b[k] / bmax) * H
         out.append('      <text class="val" x="%d" y="%.1f" text-anchor="middle">%s</text>'
                    '<text class="val" x="%d" y="%.1f" text-anchor="middle">%s</text>'
-                   % (47 + 110 * k + 15, ta - 8, la[k], 83 + 110 * k + 15, tb - 8, lb[k]))
+                   % (C[k] - w / 2 - 3, ta - 8, la[k], C[k] + w / 2 + 3, tb - 8, lb[k]))
     out += ['      <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m)
-            for x, m in zip(X, months)]
+            for x, m in zip(xs(len(months)), months)]
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n    </svg>'
             % (d["alt"], "\n".join(out)))
 
@@ -158,7 +170,13 @@ def main():
     for old, new in D.get("global_replace", []):
         s = s.replace(old, new)
 
-    # shell + masthead
+    # every occurrence: window wording recurs across the trend sections
+    for old, new in D.get("replace_all", []):
+        if old not in s:
+            sys.exit("fill: replace_all anchor not found: %.70s" % old)
+        s = s.replace(old, new)
+
+    # exactly one occurrence: a second match means the anchor is not specific enough
     for old, new in D["replace"]:
         if s.count(old) != 1:
             sys.exit("fill: anchor matched %d times: %.70s" % (s.count(old), old))
