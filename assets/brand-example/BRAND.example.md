@@ -37,7 +37,7 @@ logos:
 - **Colors**: violet accent replaces CIM blue, deep indigo masthead replaces navy,
   pale violet benchmark series replaces pale blue. Neutrals and the green/amber/red
   measurement colors are untouched — they are not brand.
-- **Fonts**: all three families are on Google Fonts, so no woff2 files need to
-  ship; the generated report keeps the CDN-first + local-fallback loading rule.
+- **Fonts**: all three families are on Google Fonts, so nothing needs embedding;
+  the generated report loads them from the CDN over a system-face fallback stack.
 - **Logos**: original SVGs beside this file, both variants; the reversed (white)
   wordmark sits on the dark masthead, inlined into the report at generation time.

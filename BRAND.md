@@ -32,8 +32,8 @@
 # ── Fonts — family swaps only ───────────────────────────────────────────
 # Three slots mapped onto the DESIGN.md typography roles. Sizes, weights
 # and line-heights are locked upstream. Families on Google Fonts load
-# CDN-first with an assets/fonts fallback; for licensed families, drop
-# woff2 files in assets/fonts and they load locally only.
+# from the CDN; for licensed families, drop woff2 files in assets/fonts
+# and they are embedded into the report as base64 data URIs.
 # fonts:
 #   display: Space Grotesk          # h1, h2, card-title, metric
 #   text: Inter                     # body, body-sm, label, eyebrow
@@ -53,7 +53,8 @@
 
 1. Uncomment and edit the keys above — only what differs from CIM.
 2. Add your logo files under `assets/brand/` and point the `logos:` keys at them.
-3. If a font family is not on Google Fonts, drop its woff2 files in `assets/fonts/`.
+3. If a font family is not on Google Fonts, create `assets/fonts/` and drop its woff2
+   files there. They ship inside the report as data URIs, not as a relative path.
 4. Validate the palette: copy your `colors:` values over the matching tokens in a
    scratch copy of `DESIGN.md` and run `npx @google/design.md lint` on it — the
    linter checks WCAG AA contrast and broken references.
@@ -69,7 +70,7 @@ with working logo files beside it).
 | :------------------------------- | :--------------------------------- |
 | `BRAND.md`                       | `DESIGN.md`                        |
 | `assets/brand/*`                 | `SKILL.md`                         |
-| `assets/fonts/*` (additions)     | `assets/reference-report.html`     |
+| `assets/fonts/*` (licensed)      | `assets/reference-report.html`     |
 |                                  | `assets/logo.svg`, `assets/logo-white.svg`, `assets/trophy.svg` |
 
 Editing upstream-owned files forfeits clean merges: this repo keeps improving, and
