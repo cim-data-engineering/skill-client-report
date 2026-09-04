@@ -27,6 +27,7 @@ colors:
   error-container: "#FDECEC"
   on-error-container: "#C62B25"
   chart-benchmark: "#CBE0FB"
+  impact-water: "#00A3B5"
   shadow: "rgba(0, 37, 86, 0.08)"
 typography:
   h1:
@@ -169,6 +170,11 @@ components:
     textColor: "{colors.on-primary-container}"
     rounded: "{rounded.full}"
     height: 26px
+  impact-tag:
+    textColor: "{colors.text-muted}"
+    typography: "{typography.eyebrow}"
+    fontSize: 0.6875rem
+    dotSize: 8px
   table-header:
     textColor: "{colors.text-muted}"
     typography: "{typography.mono}"
@@ -200,13 +206,14 @@ This file is a theme. Every rule below is written against token roles (`primary`
 
 ## Colors
 
-`secondary` is identity, `primary` is accent, green and red are *only* ever measurement.
+`secondary` is identity, `primary` is accent, green and red are *only* ever measurement. The **impact tag** dot is the single place colour marks a *category* instead, and it earns that by staying an 8px dot beside a word that already says the same thing.
 
 - **primary:** the single accent — links, eyebrows, the primary chart series, inline score-bar fills. Never decorative.
 - **secondary:** the identity anchor — the masthead field, all headings, and every 2px strong rule. The masthead is the only dark field on the page.
 - **surface / surface-dim:** the white sheet, previewed on a `surface-dim` backdrop on screen; `surface-dim` also backs the notes/methodology band. Neutrals are tinted toward `secondary` — never warm grey, never pure black text.
 - **success / warning / error:** carry meaning only — delta chips and rating chips. Green means the movement is *good* (falling energy is green), not that the number went up.
 - **chart-benchmark:** the comparison series beside `primary`; **on-secondary-muted** is its counterpart for labels sitting on the masthead.
+- **impact-water:** the one hue the palette carries purely to separate a category, held by the water impact dot. It exists because the five other impacts already map onto tokens on the page and water has nothing to borrow that a reader would not misread as one of them. Like the `heatmap-band-*` fills it is brand-stable and stays out of `BRAND.md`: what an impact *is* does not change with the partner.
 
 ## Typography
 
@@ -231,6 +238,7 @@ Radii climb with size: 4px chart-bar tops (top corners only), 6px delta chips, 1
 - **metric row:** `metric-value` with a plain caption beside it, a one-line `body-sm` explanation in `text-muted` beneath, and a rating or delta chip.
 - **delta chip:** `delta-positive` / `delta-negative` chosen by whether the change is *good*, not by its sign, always with a direction glyph and words.
 - **rating chip:** benchmark-band label in the matching `rating-*` container — always words, never colour alone. Excellent and Good are both `rating-positive`; Average is `rating-warning`; Poor is `rating-negative`; `rating-neutral` is for non-benchmark labels (e.g. Continuous, Modelled).
+- **impact tag:** the building outcome a key win belongs to — Energy, Comfort, Reliability, Water, Safety, Other — set above the win's heading as an `eyebrow` at the smallest step in `text-muted`, led by an 8px dot. Impact is a *category* dimension, not a measurement: it says which kind of outcome the win sits under, never how good or bad anything is. So the colour sits on the dot alone and never on the text, and the word is what carries the meaning — the dot is there to let a reader scan a page of wins for the one they came for. That also keeps it clear of the rule that green and red measure: `error` on a Safety dot is a category marker, not a bad reading. Dots map onto tokens already on the page — energy `warning`, comfort `primary`, reliability `secondary`, safety `error`, water `impact-water`, other `outline-strong` — so a rebrand carries the tag with it. Six categories is the whole vocabulary; never invent a seventh, and never colour a whole win card by its impact.
 - **table:** `table-rule-strong` on top and above the total row; `table-header` in mono uppercase; numerals right-aligned and tabular; hairline row rules. Inline 0–100 score bars use an `outline` track with a `primary` fill and the value beside them — semantic colour stays on the rating chip, never the bar.
 - **heatmap:** a table whose score cells are filled by benchmark band — the one place the row itself carries colour, because the grid *is* the reading. The four `heatmap-band-*` fills are mixed from the measurement colours over `surface` at one matched strength — `success`, `warning` and `error` at 22%, with Excellent and Good taking two steps of the same green (22% and 9%) because the `*-container` tokens would put both on one fill and collapse the two bands that hold most of the data. Re-derive all four whenever a measurement colour changes; they are deliberately brand-stable, since what a score *means* does not change with the partner. The numeral stays `heatmap-cell` at every band, so the value is legible without the fill and the page still reads in grayscale — but only the newest column carries weight, at 600 in `text-heading`; earlier columns drop to 400 in `text-body`. A grid of uniformly bold figures reads as noise, and the reader's question is where the building stands *now*, with the history as context. `text-body` rather than `text-muted` is the floor here, because `text-muted` falls under 4.5:1 against the lighter band fills. Cells are separated by `surface` hairlines rather than `outline`, so each column reads as one continuous field. A band key above the table names all four bands in words; count and identifier columns flanking the grid stay uncoloured and keep normal `outline` rules. Every heatmap states its benchmark and picks a score precision fine enough that rounding cannot cross a band edge.
 - **chart:** first series `primary`, comparison `chart-benchmark`; values labelled directly on points/bars; axis labels in `mono` and `text-muted`; gridlines in `outline`. A `body-sm` note in `text-muted` under each chart states the one thing the reader should take from it.
@@ -248,7 +256,7 @@ Radii climb with size: 4px chart-bar tops (top corners only), 6px delta chips, 1
 
 **Don't**
 - No emoji, anywhere. No gradients, no decorative colour, no cards with a coloured left border.
-- Don't use green or red as decoration, and don't tint a whole card or row by status. The `heatmap` is the one sanctioned exception: its cells are tinted by measured band, not by status, and the fill *is* the chart.
+- Don't use green or red as decoration, and don't tint a whole card or row by status. The `heatmap` is the one sanctioned exception: its cells are tinted by measured band, not by status, and the fill *is* the chart. The impact dot is not a third case — it is a category marker, so it never spreads to the label, the heading or the card.
 - Don't add a second dark field — the masthead is the only one.
 - Don't let hover, tooltips or motion carry information; the deliverable is a PDF.
 - Don't recolour, re-space or rebuild the logo; use the reversed (white) version on the masthead.

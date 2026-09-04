@@ -40,6 +40,7 @@
   --error-container:#FDECEC;
   --on-error-container:#C62B25;
   --chart-benchmark:#CBE0FB;
+  --impact-water:#00A3B5;
   --shadow:rgba(0,37,86,.08);
   --sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   --display:'Archivo',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
@@ -187,6 +188,17 @@ table.hm{table-layout:fixed}
 .win + .win{margin-top:16px}
 .win h3{font-family:var(--display);font-size:1.0625rem;font-weight:600;line-height:1.35;color:var(--text-heading);margin:0 0 8px}
 .win p{margin:0;font-size:.9375rem}
+/* Impact tag — which building outcome the win belongs to, read off its action
+   tickets. Impact is a category, not a measurement, so the word carries the
+   meaning and the dot only speeds up scanning: colour never sits on the text. */
+.win .impact{display:flex;align-items:center;gap:7px;font-size:.6875rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin:0 0 6px}
+.win .impact i{flex:none;width:8px;height:8px;border-radius:999px;background:var(--outline-strong)}
+.win .impact.energy i{background:var(--warning)}
+.win .impact.comfort i{background:var(--primary)}
+.win .impact.reliability i{background:var(--secondary)}
+.win .impact.water i{background:var(--impact-water)}
+.win .impact.safety i{background:var(--error)}
+.win .impact.other i{background:var(--outline-strong)}
 .win .snap{font-size:.8125rem;color:var(--text-muted);margin-top:8px}
 .win .refs{font-family:var(--mono);font-size:.6875rem;margin-top:10px}
 
@@ -652,6 +664,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 
   <div class="win">
+    <p class="impact reliability"><i></i>Reliability</p>
     <h3>Evaporator pressure sensing restored on chillers CH-01 and CH-02</h3>
     <p>Both chillers had been carrying evaporator pressure faults, which leaves the plant running without reliable protection on its refrigerant circuit. On CH-02, Meridian Mechanical replaced the chilled water differential pressure sensor and confirmed the work on 21 July; on CH-01, Marcus Bell traced the reading back to a logic input on the chiller and corrected it on 13 July. PEAK has held both alerts recovered since.</p>
     <!-- if: equipment-health -->
@@ -661,12 +674,14 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 
   <div class="win">
+    <p class="impact energy"><i></i>Energy</p>
     <h3>Supply air pressure reset now running on AC-02, AC-04 and AC-05</h3>
     <p>AC-02, AC-04 and AC-05 were each holding a fixed supply air pressure setpoint, so their fans worked as hard at quarter load as at full load. Meridian Mechanical implemented a demand-based reset strategy on all three, and the setpoints now step between 220–260 Pa and 300–320 Pa with load instead of sitting flat. All three alerts recovered and closed by 24 June.</p>
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48254">AC-02 — Confirm Supply Pressure Override</a> · <a href="https://ace.cimenviro.com/tickets/escalated/1042/48255">AC-04 — Confirm Supply Pressure Override</a> · <a href="https://ace.cimenviro.com/tickets/escalated/1042/48256">AC-05 — Confirm Supply Pressure Override</a></p>
   </div>
 
   <div class="win">
+    <p class="impact energy"><i></i>Energy</p>
     <h3>Failed plant controller replaced, returning AC-01 to automatic chilled water control</h3>
     <p>The chilled water valves on AC-01, AC-02 and AC-03 had been forced open by hand while a failed level 22 plant controller was on order, which meant the units were cooling flat out with no modulation. Meridian Mechanical replaced the controller and returned the valves to Auto, and PEAK verified AC-01 recovered on 30 April with the valve modulating normally again: a 22% average in the first day after the fix, rising to 49% by day seven.</p>
     <!-- if: equipment-health -->
@@ -676,6 +691,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   </div>
 
   <div class="win">
+    <p class="impact comfort"><i></i>Comfort</p>
     <h3>AC-07 chilled water valve tuned out of a slow-response fault</h3>
     <p>AC-07 was delivering supply air 1.5–2 °C below setpoint because its chilled water valve modulated too slowly to keep up. Tom Whitfield range-tested the actuator to rule out a mechanical fault, then retuned the PID loop to match the other air handling units: integral from 0.3 to 3.0, proportional from 0.05 to 0.2, derivative to zero. The valve has modulated cleanly since, with no hunting in the change history, and the alert recovered on 12 May.</p>
     <p class="refs"><a href="https://ace.cimenviro.com/tickets/escalated/1042/48191">AC-07 — Inspect Chilled Water Valve Leak</a></p>

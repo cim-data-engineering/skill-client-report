@@ -19,6 +19,11 @@ def xs(n):
     step = (630 - 80) / (n - 1) if n > 1 else 0
     return [round(80 + step * i) for i in range(n)]
 BASELINE, LEFT, RIGHT = 196, 36, 670
+# Win impact tags. The key is the PEAK `impacts` value, which is also the class
+# the dot colour hangs off; the label is what prints. See references/key-wins.md
+# for how a win's impact is chosen from its action tickets.
+IMPACTS = {"energy": "Energy", "comfort": "Comfort", "reliability": "Reliability",
+           "water": "Water", "safety": "Safety", "other": "Other"}
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -252,7 +257,15 @@ def main():
     if "wins" in D:
         blocks = []
         for w in D["wins"]:
-            b = '  <div class="win">\n    <h3>%s</h3>\n    <p>%s</p>\n' % (w["heading"], w["body"])
+            b = '  <div class="win">\n'
+            # No impact key means an older bundle: fill it without a tag rather
+            # than guessing one the action tickets never carried.
+            if w.get("impact"):
+                k = w["impact"]
+                if k not in IMPACTS:
+                    sys.exit("fill: unknown win impact %r — one of %s" % (k, ", ".join(IMPACTS)))
+                b += '    <p class="impact %s"><i></i>%s</p>\n' % (k, IMPACTS[k])
+            b += '    <h3>%s</h3>\n    <p>%s</p>\n' % (w["heading"], w["body"])
             if w.get("snap"):
                 b += '    <p class="snap">%s</p>\n' % w["snap"]
             b += ('    <p class="refs">' + " &middot; ".join(

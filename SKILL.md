@@ -186,7 +186,7 @@ Every action ticket read is one GraphQL query, `tickets.tickets`, carrying `type
 
 What makes it cheap:
 
-- It carries `summary`, the ticket title, so any pull that needs titles gets them inline. `search_action_tickets` is the fallback for equipment names, and only when a summary does not already carry them
+- It carries `summary`, the ticket title, so any pull that needs titles gets them inline. `search_action_tickets` is the fallback for equipment names, and only when a summary does not already carry them — Key wins runs it once over its shortlist regardless, since the win impact tags come off its `impacts` field and the GraphQL rows carry only raw `impact_ids`
 - `comments` is a sub-field taking its own `limit` and `user_only`, and its body field is `text`, not `comment_text`. A comment history rides along with the row it belongs to, so a shortlist of fifteen is one call and not fifteen
 - Array filters throughout, `status_ids` and `ticket_ids`, so a set of statuses or a set of tickets never costs a call each
 - `limit` goes well past what the search tools page at, so size the pull to the site rather than assuming. Read `pagination.total` off the first response and check `has_more`: a `limit` under the total returns a full page and sets `has_more:true` instead of erring, so an unchecked pull silently drops rows and the series it feeds is quietly wrong. A busy site runs to hundreds of actions in a window

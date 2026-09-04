@@ -28,6 +28,10 @@ Either way it needs a comment history showing a person engaged with it. Exclude 
 **Display:**
 
 - Heading names the outcome, or the finding where the work is still live, plus the equipment type and name
+- Tag the win with its impact, above the heading: one of `energy`, `comfort`, `reliability`, `water`, `safety`, `other`, carried in the bundle as the win's `impact` key. It renders as a small uppercase word with a coloured dot, and the word is what states the impact — the dot only speeds up scanning down the page
+- The impact is the one its linked action tickets carry, never one you read off the story. A win about a chiller that plainly saves energy is tagged `reliability` if that is what the tickets say. The engineer who worked the ticket set that field, and the report has no standing to overrule it
+- Where a win links several tickets whose impacts differ, take the most severe: `safety`, then `reliability`, `comfort`, `energy`, `water`, `other`. Never merge two into a compound tag, and never show two tags on one win
+- Where the tickets carry no impact at all, or carry `other`, tag it `Other` rather than picking the one that would look best. Then say so in chat — name the ticket and its title — so the user can set the impact in PEAK and re-run. Fixing the ticket fixes every report that reads it; guessing here fixes nothing and puts a claim on the page the ticket does not support
 - Say where it stands. A win in flight is written as in flight: what was found, who has it, what happens next. The date line under the section heading follows the wins too, so do not leave a line promising everything was fixed when some of it is still open
 - Two to three sentences: what was wrong, what was changed, why it matters
 - Lead with the building outcome: comfort, reliability, energy, tenant experience
@@ -54,12 +58,15 @@ This is a client deliverable, so the section carries wins or it does not appear.
 | Fixed     | Its own pull: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline |
 | In flight | Its Open now call, `status_ids:[1,3,7]`                                                           |
 | Evidence  | Its Shortlist comments call, `ticket_ids:[the ten to fifteen you chose]`                          |
+| Impact    | One `search_action_tickets` on the same `ticket_ids`, reading `impacts` and, where a summary lacks one, `equipment_names` |
 
 Key wins runs its own pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, which is most of them, and holding to the quarter cuts it again, leaving a set small enough to carry `comments` inline so the candidates and their evidence arrive together.
 
 The in-flight candidates need no pull of their own: the Open now call already carries `summary` and `comment_count`. Choose from those rows, then fetch the histories with one call passing the whole `ticket_ids` list and selecting `comments` with `limit:8` and `user_only:true`. Never call `search_action_comments` in a loop, one ticket at a time.
 
-Equipment names are usually already in the summary, which reads "L15-VAV-C2 - Inspect VAV Airflow Leak". Only where one does not, resolve the win's `equipment_ids` with a single `search_equipment` call covering every id you still need.
+Equipment names are usually already in the summary, which reads "L15-VAV-C2 - Inspect VAV Airflow Leak". Only where one does not, resolve the shortlist with a single `search_action_tickets` call on their `ticket_ids`, which returns `equipment_names` per ticket.
+
+Impacts ride on that same call: `search_action_tickets` returns an `impacts` array on every row, so no extra pull is needed. Run it over the whole shortlist rather than only the tickets missing a name, since every win needs its impact and one call covers both. It comes back as a list — `["reliability"]`, sometimes `[]` — so a ticket with an empty array is a ticket with no impact set, which is the `Other` case above and worth naming in chat. The GraphQL pulls are no help here: `tickets.tickets` carries `impact_ids` as raw UUIDs with no names attached.
 
 Five patterns are visible in the candidate rows themselves and need no comment read, so skip them:
 

@@ -124,7 +124,10 @@ def sample_strings():
                 # match means the sample's commentary was left in place. h2note
                 # is deliberately absent — it carries window and method wording
                 # that is correct for every report and recurs legitimately.
-                r'<p class="chartnote">([^<]+)</p>', r'<p class="snap">([^<]+)</p>', r'<div class="win">\s*<h3>[^<]*</h3>\s*<p>([^<]+)</p>',
+                r'<p class="chartnote">([^<]+)</p>', r'<p class="snap">([^<]+)</p>',
+                # the impact tag sits between the win's div and its heading, so
+                # the body pattern has to step over it or it stops matching
+                r'<div class="win">\s*(?:<p class="impact[^"]*">.*?</p>\s*)?<h3>[^<]*</h3>\s*<p>([^<]+)</p>',
                 # operational impact carries the sample's headline figures and the
                 # sentence under each; both are site data, and both were slipping through.
                 r'<span class="fig">([^<]+)</span>', r'<div class="isub">(.*?)</div>'):
