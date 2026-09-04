@@ -78,12 +78,15 @@ Date: the 6 month window
 
 ## Data recipes
 
-| Need                                 | Call                                                                                |
-| ------------------------------------ | ----------------------------------------------------------------------------------- |
-| Leaderboard, resolved series, median | The resolved action pull in SKILL.md, over the 6 month window                        |
-| Raised series                        | Its per-month counts                                                                 |
-| Open now                             | Its Open now calls, one per open status, no date bound                              |
-| Verified recovery                    | `search_alert_tickets(status:"closed")` over the quarter, read against fault status   |
+Three calls, all of them from the `tickets.tickets` block in SKILL.md, plus two counts.
+
+| Need                                 | Call                                                          |
+| ------------------------------------ | ------------------------------------------------------------- |
+| Leaderboard, resolved series, median | Its Resolved call, over the 6 month window                    |
+| Raised series                        | Its Raised call, one call for all six months                  |
+| Open now                             | Its Open now call, `status_ids:[1,3,7]`, no date bound        |
+| Verified recovery                    | Two counts, below                                             |
 
 - Open now is a different question from resolved: work raised before the window can still be open today, so count by assignee as at the issue date
-- `search_alert_tickets` is the only call in the report that reads alert tickets, so it does not run at all when this section is out
+- Verified recovery needs a rate, not rows. Call `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter twice with `limit:1`, once plain and once with `fault_statuses:["recovered"]`, and divide the two `pagination.total` values. Never page the alerts to count them by hand
+- Those two are the only calls in the report that read alert tickets, so they do not run at all when this section is out

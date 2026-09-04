@@ -163,6 +163,8 @@ Derived rules when overrides are active:
 
 ## Data recipes
 
+A full four-section report is about two dozen calls, and a long session has a call budget. Every recipe here is written to answer a whole section in one request, so the discipline is: pull a window, not a month; pass a set, not one id at a time; read `pagination.total` when you only need a count; and derive locally anything already sitting in rows you hold. A per-item loop is the sign you have missed a batch filter.
+
 Every window closes on the **last complete month**, so nothing in the report covers a part-month. Two reasons: a quarterly review should read as of the quarter, not as of the day it was generated; and equipment health scores are stored pre-aggregated on month boundaries, so a mid-month bound forces a raw scan and a wide call is then refused for scanning too many rows.
 
 Two windows, named here because the references reuse them. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use, so a trend carries the quarter plus the three months before it. Both close on the same month, so trends and snapshots share that bucket and must not disagree on it.
@@ -181,20 +183,29 @@ Always:
 - Author: `who_am_i`, the user's full name for the masthead
 - Site facts: `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
 - Counts for the analytics overview: never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
-- Thermal zones: the zones PEAK scores for thermal comfort: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. Do not count sensor points instead. The point code differs by equipment type, so a fixed list of codes misses whatever the building happens to use. At one site it found 65 points against 332 scored zones
+- Thermal zones: the zones PEAK scores for thermal comfort: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. When Indoor environment is in, its zone pull is this same call and its first page carries the same total, so read it from there and skip this one. Do not count sensor points instead. The point code differs by equipment type, so a fixed list of codes misses whatever the building happens to use. At one site it found 65 points against 332 scored zones
 
 Only when Actions resolved and leaderboard, or Key wins, is in:
 
-Two tools read action tickets, and each is better at one job.
+Every action ticket read is one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Four calls cover both sections between them, whichever of the two is in. `search_action_tickets` is the fallback for equipment names, and only when a summary does not already carry them.
 
-`search_action_tickets` carries the titles, equipment names and dates. Key wins and the median need those, so use it there. It pages at 50 and the rows are fat, so ask it only for months you will actually read.
+What makes it cheap:
 
-`tickets.tickets` is the cheap way to count. Ask for `ticket_id`, `status_id`, `resolved_at` and `assignees{firstname, lastname, entity{name}}` and the rows are a fifth the size, so 160 closures come back in three lean pages rather than four fat ones. Pass `ticket_archived: false`, which the other tool does for you.
+- It carries `summary`, the ticket title, so it answers Key wins as well as the counts. There is no second pull for titles
+- `comments` is a sub-field taking its own `limit` and `user_only`, and its body field is `text`, not `comment_text`. A comment history rides along with the row it belongs to, so a shortlist of fifteen is one call and not fifteen
+- Array filters throughout, `status_ids` and `ticket_ids`, so a set of statuses or a set of tickets never costs a call each
+- `limit` goes well past what the search tools page at. 129 rows of three scalar fields come back in a single page, so a whole window is one call. Rows carrying comments are fat, so keep those to the shortlist
+- Every response carries `pagination.total`, so a count is `limit:1` and no rows at all
 
-Pull only what each section needs:
+The four calls:
 
-- **Resolved rows**: over the 6 month window, which answers the leaderboard, the resolved series and the median at once. Check the tally before you use it: read each month's count straight back with `limit:1` and compare. A hand count of 160 rows is wrong more often than it is right
-- **Raised counts**: one call per month with `created_after_local`/`created_before_local`, `limit:1`, and read `pagination.total`. Six small calls beat three pages of rows you would only be counting. That total counts every status, so repeat each month with `status:"not_doing"` and subtract, or the two series drop Not Doing differently
-- **Open now**: one call per open status (`open`, `in_progress`, `on_hold`), no date bound, since work raised before the window can still be open today
+- **Raised**: `created_at_local_start`/`created_at_local_end` over the 6 month window, fields `ticket_id`, `created_at`, `status_id`, `limit:300`. Bucket by month yourself and drop status 8. One call for the whole series, and `pagination.total` checks your bucketing without a second one
+- **Resolved**: the same shape on `resolved_at_local_start`/`resolved_at_local_end`, adding `summary`, `comment_count` and `assignees{firstname, lastname, entity{name}}`. It answers the leaderboard, the resolved series, the median and the Key wins shortlist at once. No comments on this one
+- **Open now**: `status_ids:[1,3,7]`, no date bound, since work raised before the window can still be open today. It serves the leaderboard's Open now column and the Key wins in-flight candidates together
+- **Shortlist comments**: `ticket_ids:[the ten to fifteen you chose]` with the `comments` sub-field. Only when Key wins is in
+
+Then, on the rows:
+
+- `created_at` and `resolved_at` come back as UTC instants while the `_local` filters read site time, so convert before bucketing by month or a late-evening ticket lands in the wrong one. Leave `orderBy` alone, it errors; sort the rows yourself
 - Count actions, one per ticket, in both series. Never alerts. An action can be bulk-linked to dozens of them, 141 on one ticket at one site, so weighting by alerts makes a month spike on a triage decision rather than on work
 - Drop status Not Doing throughout. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing

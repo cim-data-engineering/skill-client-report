@@ -88,9 +88,10 @@ All of it is `search_indoor_environment(metric:"temperature")`.
 | `level`            | `month`            | quarter  | the snapshot grid                                |
 | `site`             | `month`            | 6 months | the snapshot closing row (last 3) and the trend  |
 | `site`             | `all`              | quarter  | the headline score in the operational impact row |
-| `zone`             | `all`              | quarter  | the Zones column, one call per level: `level_ids:[one level]`, `limit:1`, read `pagination.total` |
+| `zone`             | `all`              | quarter  | the Zones column, and the site total from `pagination.total`                                     |
 
 - `local_end_date` is exclusive, so pass the first of the month after the last complete month
 - Level rows are levels x months, so page at `limit:80` when levels x 3 exceeds 80
-- Zones is the expensive one, and the only per-level call. Each returns one row and they go out together, so a dozen levels is one cheap batch. Above about a dozen, make a single call for the site total (same query, no `level_ids`), drop the column and give the total in the notes. A tower's floors carry near-identical zone counts, so past that you are paying to print the same number over and over. At one 25-level site, 19 floors had exactly eight
+- The zone rows carry `level_id` and `level_name`, so never call once per level with `level_ids`. Page the unfiltered call at `limit:80` and tally the levels yourself: 200 zones is three calls whatever the building's height, and `pagination.total` on the first page is the site total. The rows also carry `zone_name` and `zone_value`, which is what the single-level case needs, so that costs nothing extra either
+- Where a tower is tall enough that the column stops earning its width, drop the column and give the site total in the notes. A tower's floors carry near-identical zone counts, so past about a dozen levels the column prints the same number over and over. At one 25-level site, 19 floors had exactly eight. That is a display decision now, not a fetch one
 - Do not substitute `platform.levels` or `platform.zones`. They count zone objects, not zone temperature points. At one 25-level site that was 340 against 200 scored zones

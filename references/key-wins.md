@@ -49,17 +49,20 @@ This is a client deliverable, so the section carries wins or it does not appear.
 
 ## Data recipes
 
-| Step      | Call                                                                                                    |
-| --------- | ------------------------------------------------------------------------------------------------------- |
-| Fixed     | `search_action_tickets(status:"closed", resolved_after_local, resolved_before_local)` over the quarter    |
-| In flight | `search_action_tickets` once per open status (`open`, `in_progress`, `on_hold`), `created_after_local` over the quarter |
-| Evidence  | `search_action_comments`, on the shortlist only, ten to fifteen candidates                               |
+| Step      | Call                                                                                              |
+| --------- | --------------------------------------------------------------------------------------------------- |
+| Fixed     | The Resolved call in SKILL.md, narrowed to the quarter                                            |
+| In flight | Its Open now call, `status_ids:[1,3,7]`                                                           |
+| Evidence  | Its Shortlist comments call, `ticket_ids:[the ten to fifteen you chose]`                          |
 
-The shared pull in SKILL.md carries ids, dates and assignees but not titles or equipment names, and the shortlist is chosen by reading those, so the shortlist call runs whether or not Alerts resolved is also in. Comments are where the work is described, and reading them for every action in the quarter costs many times more than reading them for the few that could lead the page.
+Both candidate pulls carry `summary`, so the shortlist is chosen from rows you already hold and costs nothing. Then one call brings back every shortlisted ticket's comments at once: pass the whole id list, and select `comments` with `limit:8` and `user_only:true`. Never call `search_action_comments` in a loop, one ticket at a time, and never read comments for every action in the quarter when a handful could lead the page.
 
-Four patterns are visible in the shortlist itself and need no comment read, so skip them:
+Equipment names are usually already in the summary, which reads "L15-VAV-C2 - Inspect VAV Airflow Leak". Only where one does not, resolve the win's `equipment_ids` with a single `search_equipment` call covering every id you still need.
 
-- `age_days: 0` with no `last_comment_author`: created and resolved in the same moment, so nobody worked it
+Five patterns are visible in the candidate rows themselves and need no comment read, so skip them:
+
+- `created_at` and `resolved_at` the same moment: nobody worked it
+- `comment_count: 0`: nothing to read, so it can never qualify. Filter it out with `has_comments:true` rather than dropping it by hand
 - A run of actions sharing a resolved timestamp to the second: a bulk cleanup, not a quarter of repairs
 - An action whose comments were already summarised as still in fault at closure: closed for tidiness while the fault stands
-- An open action with no `last_comment_author`: raised but not yet picked up, so there is nothing to show yet
+- An open action with no comments: raised but not yet picked up, so there is nothing to show yet
