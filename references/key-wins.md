@@ -55,7 +55,7 @@ This is a client deliverable, so the section carries wins or it does not appear.
 | In flight | Its Open now call, `status_ids:[1,3,7]`                                                           |
 | Evidence  | Its Shortlist comments call, `ticket_ids:[the ten to fifteen you chose]`                          |
 
-Key wins runs its own pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, which is most of them, and holding to the quarter cuts it again. At one site 975 resolved actions over six months came down to 112 commented closures in the quarter, small enough to carry `comments` inline so the candidates and their evidence arrive together.
+Key wins runs its own pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, which is most of them, and holding to the quarter cuts it again, leaving a set small enough to carry `comments` inline so the candidates and their evidence arrive together.
 
 The in-flight candidates need no pull of their own: the Open now call already carries `summary` and `comment_count`. Choose from those rows, then fetch the histories with one call passing the whole `ticket_ids` list and selecting `comments` with `limit:8` and `user_only:true`. Never call `search_action_comments` in a loop, one ticket at a time.
 

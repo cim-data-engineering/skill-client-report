@@ -1,6 +1,6 @@
 ---
-name: client-report-sections
-description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the actions leaderboard, and key wins, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
+name: client-report
+description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the actions leaderboard, and key wins, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
@@ -11,22 +11,16 @@ A quarterly building performance review for one PEAK site: a self-contained A4 p
 
 1. **Resolve the site and the sections**: [Section selection](#section-selection). Nothing is fetched before this settles, because the selection decides what there is to fetch.
 2. **Read one reference per chosen section**: `references/<section>.md`. Each carries its table spec, benchmark, links and notes items, and closes with a Data recipes block holding the PEAK calls behind them. The others describe sections you are not building; leave them unread.
-3. **Fetch in two rounds**: [Data recipes](#data-recipes), then the Data recipes block at the end of each chosen reference. Nothing else. One call resolves the site, then every remaining call goes out in a single parallel batch, because once the site id is known none of them depend on each other. Measured on a four-section report, twenty-four calls that way finish in about a minute, where the same calls spread over six round trips take ten. Two dependencies are worth breaking to keep the batch flat: resolve equipment type names with an unfiltered `search_equipment_types(limit:200)` instead of waiting on the health scores for their ids, and select `comments` inline on the Open now call rather than fetching them after.
+3. **Fetch in two rounds**: [Data recipes](#data-recipes), then the Data recipes block at the end of each chosen reference. Nothing else. One call resolves the site; every remaining call then goes out in a single parallel batch, since none of them depend on each other once the site id is known. Break the two dependencies that would otherwise split that batch: resolve equipment type names with an unfiltered `search_equipment_types(limit:200)` rather than waiting on the health scores for their ids, and select `comments` inline on the Open now call rather than fetching them after.
 4. **Write the data bundle**: one `data.json` carrying every figure, row, series and sentence the report needs. Derive it from the fetched rows with a short python script, reading the large pulls off the files the gateway spilled them to rather than out of the conversation. The prose is yours and follows [Writing the narrative](#writing-the-narrative); the bundle is where it lives. `scripts/fill_report.py` is the schema: its key names are the contract.
-5. **Fill**: `python3 scripts/fill_report.py data.json --out skyline-q3.html`. It scaffolds the chosen sections, then renders both heatmaps with their band colours, recomputes each chart's y geometry from its own data range, and lays in the operational impact rows, the leaderboard, the wins and every masthead slot. Hand-editing the scaffold instead costs about ten round trips and puts the chart arithmetic back on you, which is what this script exists to remove. `build_report.py parts` still lists what a section owns, and `build_report.py part <name>` prints one part when you are adding a section to a report that already exists.
+5. **Fill**: `python3 scripts/fill_report.py data.json --out skyline-q3.html`. It scaffolds the chosen sections, then renders both heatmaps with their band colours, recomputes each chart's y geometry from its own data range, and lays in the operational impact rows, the leaderboard, the wins and every masthead slot. Hand-editing the scaffold instead puts the chart arithmetic back on you, which is what this script exists to remove. `build_report.py parts` still lists what a section owns, and `build_report.py part <name>` prints one part when you are adding a section to a report that already exists.
 6. **Check and hand over**: `python3 scripts/build_report.py check <file>` catches sample values, unresolved placeholders and markers left behind. It is a backstop, not a substitute for reading the numbers. Then name the sections you left out, so the reader knows the omission was asked for.
 
 ## Section selection
 
 Ask before fetching anything. The masthead and [Analytics overview](#analytics-overview) always render. The four sections below are the reader's choice, and each owns a set of parts that come and go together: its operational impact rows, its own section, its monthly trend, their links and its notes-band items.
 
-Ask with one `AskUserQuestion` call and one multi-select question. Four options is the tool's limit, and four is the whole list:
-
-| Question                                                  | Header   | Options (`multiSelect: true`)                                                       |
-| --------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------- |
-| Which sections should the report cover from last quarter? | Sections | Equipment health · Indoor environment · Actions resolved and leaderboard · Key wins |
-
-Describe each option by what it adds:
+Ask with one `AskUserQuestion` call and one multi-select question, header "Sections": "Which sections should the report cover from last quarter?" Four options is the tool's limit, and four is the whole list. Describe each by what it adds:
 
 | Choice                           | `--sections` name    | Reference                          | Adds                                                                                                                            |
 | -------------------------------- | -------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -43,7 +37,7 @@ Describe each option by what it adds:
 - [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when at least one of the first three sections is in. Key wins on its own gives the masthead, the analytics overview and the wins. The scaffold builds it that way
 - The notes band is an `<ol>`, so items dropped with their section renumber themselves. Trim the shared reporting-window item to the series that survive
 - Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scaffold handles the parts it knows about; check the prose yourself
-- Two sections can come up empty after the fetch, and only the fetch can tell you: Key wins, because whether a closure qualifies is only visible in its comments, and Actions resolved, when nothing was resolved in the window. Either way, delete the section from the built file and say so in chat, not on the page. The two references carry the rule
+- Two sections can come up empty after the fetch, and only the fetch can tell you: Key wins, when no closure qualifies, and Actions resolved, when nothing was resolved in the window. Either way, delete the section from the built file and say so in chat, not on the page. The two references carry the rule
 
 ## Writing the narrative
 
@@ -93,7 +87,7 @@ Date: As at {issue date}
 | Rules          | Total rules status running     |
 | Thermal zones  | Total indoor environment zones |
 
-All five render whatever the selection, including thermal zones when indoor environment is out. This section is the monitoring footprint, not a summary of the sections below it, so it stands on its own.
+All five render whatever the selection, including thermal zones when indoor environment is out. This is the monitoring footprint, not a summary of the sections below it.
 
 ## Operational impact
 
@@ -104,8 +98,8 @@ Each row belongs to a section and is specified in that reference: three to equip
 
 **Display:**
 
-- No red in this section. The rating chip reads Excellent or Good on the positive chip, Average or Poor on the warning chip, never the negative one. A movement takes the positive delta when it improves and the muted delta when it declines or holds flat. State a fall plainly in the figure, the glyph and the word. Reported, not colour coded. Red stays available to the snapshot tables and charts below, where the detail belongs
-- Keep the surviving rows in this order: equipment health score, thermal comfort, automated checks, labor cost avoided, faults resolved. Rows stack, so a removed row costs no layout work
+- No red in this section. The rating chip reads Excellent or Good on the positive chip, Average or Poor on the warning chip, never the negative one. A movement takes the positive delta when it improves and the muted delta when it declines or holds flat. State a fall plainly in the figure, the glyph and the word: reported, not colour coded. Red stays available to the snapshot tables and charts below
+- Keep the surviving rows in this order: equipment health score, thermal comfort, automated checks, labor cost avoided, faults resolved
 - Where a row states a movement, it runs from the quarter's first month to its last: the reporting period, and nothing outside it
 
 ## Notes band
@@ -121,7 +115,7 @@ A follow-up on a report that already exists is not a rebuild. Match the reading 
 - **A number, a date, a name, a sentence**: edit the file. One PEAK call if the answer needs one, no references, no `DESIGN.md`
 - **A section that was left out**: `python3 scripts/build_report.py part key-wins --sections <the report's full new list>` prints that part's markup on its own. Paste it in report order, read its reference, fetch only its calls. Re-scaffolding would throw away the report you have. Where the new section owns operational impact rows or notes items, add those too; if the report has neither of those frames, it was built with none of the three data sections in, so scaffold a fresh file instead
 - **A visual or structural change**, such as a new component, a table re-laid out or a different chart form: read `DESIGN.md`. `## Colors` and `## Typography` for the tokens and their roles, `## Components` for what a component owes, `## Layout` for the print rules. The rendered file carries the CSS but not the reasoning behind it
-- **A rebrand**: `BRAND.md` and the logo assets it names, per [Output & theming](#output--theming). Both files stay at the repo root: that is where the brand overlay skills write them, and a rebrand reads them as a pair. The tokens sit in one `:root` block and the masthead logo is one inlined SVG, so this is a handful of edits on the file you already have
+- **A rebrand**: `BRAND.md` and the logo assets it names, per [Output & theming](#output--theming). Both files stay at the repo root. The tokens sit in one `:root` block and the masthead logo is one inlined SVG, so this is a handful of edits on the file you already have
 
 ## Newly onboarded sites
 
@@ -134,14 +128,14 @@ A site can have less history than the window asks for. Read that from the first 
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
 - An equipment type or a level can start later than the site did, when new rules go on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in the section note when its rules began scoring
 - Prorate the labor cost model over the days actually monitored, not the calendar quarter, or it credits the monitoring with time it wasn't running
-- A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules. One rule against 850 either side is an outage wearing a score, and plotting it craters the trend for a reason that has nothing to do with the building. Treat both alike: plot the months that exist, leave the gap visible, and say so in the chart note
+- A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules. One rule against 850 either side is an outage wearing a score. Treat both alike: plot the months that exist, leave the gap visible, and say so in the chart note
 
 ## Output & theming
 
 One self-contained A4 print-first HTML file: all CSS inline, charts as hand-authored inline SVG, no JS. The scaffold supplies the stylesheet and every component, so this is a handful of edits rather than a rebuild:
 
 - The scaffold's chart SVGs already run six columns at x = 80, 190 … 630, so the x positions carry over. The y geometry does not: recompute every point, bar top, benchmark line and value label from your own data range, and pick the range from the data plus the thresholds you are drawing. Reusing the sample's y values plots the sample's data, not yours
-- Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex, because SVG presentation attributes cannot read `var()`. Heatmap band fills work the same way (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor), so a brand that swaps its measurement colours recolours both heatmaps without touching markup
+- Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex, because SVG presentation attributes cannot read `var()`. Heatmap band fills work the same way (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor)
 - Section headers are three stacked lines: the section name as an uppercase eyebrow in `primary`, the statement beneath it as the `h2` headline, and the date line as a muted byline. The statement is the headline, never the section name
 
 Resolve the theme in this order:
@@ -184,26 +178,25 @@ Always:
 - Site facts: `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
 - Equipment type names: equipment health scores come back as `metadata_type_id` with no names, so resolve every id the heatmap needs in one `search_equipment_types(type_ids:[...])` call. Never one call per type
 - Counts for the analytics overview: never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
-- Thermal zones: the zones PEAK scores for thermal comfort: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. When Indoor environment is in, its zone pull is this same call and its first page carries the same total, so read it from there and skip this one. Do not count sensor points instead. The point code differs by equipment type, so a fixed list of codes misses whatever the building happens to use. At one site it found 65 points against 332 scored zones
+- Thermal zones: the zones PEAK scores for thermal comfort: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. When Indoor environment is in, its zone pull is this same call and its first page carries the same total, so read it from there and skip this one. Do not count sensor points instead. The point code differs by equipment type, so a fixed list of codes misses whatever the building happens to use
 
 Only when Actions resolved and leaderboard, or Key wins, is in:
 
-Every action ticket read is one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Five calls cover both sections at most, and three when only one of them is in. `search_action_tickets` is the fallback for equipment names, and only when a summary does not already carry them.
+Every action ticket read is one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Five calls cover both sections at most, and three when only one of them is in.
 
 What makes it cheap:
 
-- It carries `summary`, the ticket title, so any pull that needs titles gets them inline and `search_action_tickets` is never needed for one
+- It carries `summary`, the ticket title, so any pull that needs titles gets them inline. `search_action_tickets` is the fallback for equipment names, and only when a summary does not already carry them
 - `comments` is a sub-field taking its own `limit` and `user_only`, and its body field is `text`, not `comment_text`. A comment history rides along with the row it belongs to, so a shortlist of fifteen is one call and not fifteen
 - Array filters throughout, `status_ids` and `ticket_ids`, so a set of statuses or a set of tickets never costs a call each
-- `limit` goes well past what the search tools page at, so size the pull to the site rather than assuming. Read `pagination.total` off the first response and check `has_more`: a `limit` under the total returns a full page and sets `has_more:true` instead of erring, so an unchecked pull silently drops rows and the series it feeds is quietly wrong. A busy site runs to hundreds of actions in a window, and 783 rows of three scalar fields still came back in one call
-- Every response carries `pagination.total`, so a count is `limit:1` and no rows at all
+- `limit` goes well past what the search tools page at, so size the pull to the site rather than assuming. Read `pagination.total` off the first response and check `has_more`: a `limit` under the total returns a full page and sets `has_more:true` instead of erring, so an unchecked pull silently drops rows and the series it feeds is quietly wrong. A busy site runs to hundreds of actions in a window
 
 The calls:
 
 - **Raised**: `created_at_local_start`/`created_at_local_end` over the 6 month window, fields `ticket_id`, `created_at`, `status_id`, `limit:300`. Bucket by month yourself and drop status 8. One call for the whole series, and `pagination.total` checks your bucketing without a second one
-- **Resolved**: the same shape on `resolved_at_local_start`/`resolved_at_local_end`, adding `created_at` and `assignees{firstname, lastname, entity{name}}`. It answers the leaderboard, the resolved series and the median. Keep it lean: `summary` and `comment_count` belong to the Key wins pull, which is far narrower, and carrying them across a thousand rows is what pushes a response past the size cap
+- **Resolved**: the same shape on `resolved_at_local_start`/`resolved_at_local_end`, adding `created_at` and `assignees{firstname, lastname, entity{name}}`. It answers the leaderboard, the resolved series and the median. Keep it lean: `summary` and `comment_count` belong to the Key wins pull, and carrying them across a thousand rows pushes the response past the size cap
 - **Open now**: `status_ids:[1,3,7]`, no date bound, since work raised before the window can still be open today. It serves the leaderboard's Open now column and the Key wins in-flight candidates together
-- **Key wins candidates**: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline. Its own pull rather than a wider Resolved, because it wants few rows and every field where Resolved wants every row and few fields. Only when Key wins is in
+- **Key wins candidates**: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline, rather than widening the Resolved pull. Only when Key wins is in
 - **Shortlist comments**: `ticket_ids:[the in-flight candidates you chose]` with the `comments` sub-field, since Open now carries their titles but not their histories. Only when Key wins is in
 
 A large response is not a failure. Past roughly 60,000 characters the gateway writes the result to a file and hands you the path, which keeps a thousand rows out of the conversation entirely. Read it with `jq` or a short python script rather than re-fetching in smaller pages: one fat call and a local script beats four thin calls on both counts.
@@ -211,5 +204,5 @@ A large response is not a failure. Past roughly 60,000 characters the gateway wr
 Then, on the rows:
 
 - `created_at` and `resolved_at` come back as UTC instants while the `_local` filters read site time, so convert before bucketing by month or a late-evening ticket lands in the wrong one. Leave `orderBy` alone, it errors; sort the rows yourself
-- Count actions, one per ticket, in both series. Never alerts. An action can be bulk-linked to dozens of them, 141 on one ticket at one site, so weighting by alerts makes a month spike on a triage decision rather than on work
+- Count actions, one per ticket, in both series. Never alerts. An action can be bulk-linked to dozens of them, so weighting by alerts makes a month spike on a triage decision rather than on work
 - Drop status Not Doing throughout. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing
