@@ -1,6 +1,6 @@
 # Alerts resolved and leaderboard
 
-Owns the operational impact faults resolved row, monthly alerts raised vs resolved, and the assignee leaderboard. Scaffold parts: `monthly-alerts`, `assignee-leaderboard`.
+Owns the operational impact faults resolved row, monthly alerts raised vs resolved, and the actions leaderboard. Scaffold parts: `monthly-alerts`, `actions-leaderboard`.
 
 The two answer the same question from either end: how much fault work the site took on, and who closed it. Both come from one pull of action tickets.
 
@@ -37,7 +37,7 @@ Grouped bars by month.
 - **Resolved**: actions resolved in the month, one per action
 - **Exclude**: actions marked Not Doing from both series
 
-## Assignee leaderboard
+## Actions leaderboard
 
 Who closed the work
 Date: the 6 month window
@@ -65,7 +65,7 @@ Date: the 6 month window
 
 **Links:**
 
-- Add link to the PEAK assignee leaderboard over the same 6 month window
+- Add link to the PEAK actions leaderboard over the same 6 month window
 - `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=assignee`
 
 ## Notes band items

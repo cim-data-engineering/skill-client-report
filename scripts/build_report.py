@@ -24,7 +24,7 @@ ALWAYS = ["shell", "masthead", "analytics-overview", "footer"]
 SECTION_PARTS = {
     "equipment-health": ["equipment-health-snapshot", "monthly-equipment-health"],
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],
-    "alerts-resolved": ["monthly-alerts", "assignee-leaderboard"],
+    "alerts-resolved": ["monthly-alerts", "actions-leaderboard"],
     "key-wins": ["key-wins"],
 }
 # Parts that render for any of several sections. Operational impact is a frame

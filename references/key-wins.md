@@ -51,11 +51,13 @@ This is a client deliverable, so the section carries wins or it does not appear.
 
 | Step      | Call                                                                                              |
 | --------- | --------------------------------------------------------------------------------------------------- |
-| Fixed     | The Resolved call in SKILL.md, narrowed to the quarter                                            |
+| Fixed     | Its own pull: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline |
 | In flight | Its Open now call, `status_ids:[1,3,7]`                                                           |
 | Evidence  | Its Shortlist comments call, `ticket_ids:[the ten to fifteen you chose]`                          |
 
-Both candidate pulls carry `summary`, so the shortlist is chosen from rows you already hold and costs nothing. Then one call brings back every shortlisted ticket's comments at once: pass the whole id list, and select `comments` with `limit:8` and `user_only:true`. Never call `search_action_comments` in a loop, one ticket at a time, and never read comments for every action in the quarter when a handful could lead the page.
+Key wins runs its own pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, which is most of them, and holding to the quarter cuts it again. At one site 975 resolved actions over six months came down to 112 commented closures in the quarter, small enough to carry `comments` inline so the candidates and their evidence arrive together.
+
+The in-flight candidates need no pull of their own: the Open now call already carries `summary` and `comment_count`. Choose from those rows, then fetch the histories with one call passing the whole `ticket_ids` list and selecting `comments` with `limit:8` and `user_only:true`. Never call `search_action_comments` in a loop, one ticket at a time.
 
 Equipment names are usually already in the summary, which reads "L15-VAV-C2 - Inspect VAV Airflow Leak". Only where one does not, resolve the win's `equipment_ids` with a single `search_equipment` call covering every id you still need.
 

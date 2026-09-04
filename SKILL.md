@@ -1,6 +1,6 @@
 ---
 name: client-report-sections
-description: Generates a client-facing quarterly building performance review for a PEAK site: analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the assignee leaderboard, and key wins, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site: analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the actions leaderboard, and key wins, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
@@ -182,27 +182,31 @@ Always:
 
 - Author: `who_am_i`, the user's full name for the masthead
 - Site facts: `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
+- Equipment type names: equipment health scores come back as `metadata_type_id` with no names, so resolve every id the heatmap needs in one `search_equipment_types(type_ids:[...])` call. Never one call per type
 - Counts for the analytics overview: never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
 - Thermal zones: the zones PEAK scores for thermal comfort: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. When Indoor environment is in, its zone pull is this same call and its first page carries the same total, so read it from there and skip this one. Do not count sensor points instead. The point code differs by equipment type, so a fixed list of codes misses whatever the building happens to use. At one site it found 65 points against 332 scored zones
 
 Only when Actions resolved and leaderboard, or Key wins, is in:
 
-Every action ticket read is one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Four calls cover both sections between them, whichever of the two is in. `search_action_tickets` is the fallback for equipment names, and only when a summary does not already carry them.
+Every action ticket read is one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Five calls cover both sections at most, and three when only one of them is in. `search_action_tickets` is the fallback for equipment names, and only when a summary does not already carry them.
 
 What makes it cheap:
 
-- It carries `summary`, the ticket title, so it answers Key wins as well as the counts. There is no second pull for titles
+- It carries `summary`, the ticket title, so any pull that needs titles gets them inline and `search_action_tickets` is never needed for one
 - `comments` is a sub-field taking its own `limit` and `user_only`, and its body field is `text`, not `comment_text`. A comment history rides along with the row it belongs to, so a shortlist of fifteen is one call and not fifteen
 - Array filters throughout, `status_ids` and `ticket_ids`, so a set of statuses or a set of tickets never costs a call each
-- `limit` goes well past what the search tools page at. 129 rows of three scalar fields come back in a single page, so a whole window is one call. Rows carrying comments are fat, so keep those to the shortlist
+- `limit` goes well past what the search tools page at, so size the pull to the site rather than assuming. Read `pagination.total` off the first response and check `has_more`: a `limit` under the total returns a full page and sets `has_more:true` instead of erring, so an unchecked pull silently drops rows and the series it feeds is quietly wrong. A busy site runs to hundreds of actions in a window, and 783 rows of three scalar fields still came back in one call
 - Every response carries `pagination.total`, so a count is `limit:1` and no rows at all
 
-The four calls:
+The calls:
 
 - **Raised**: `created_at_local_start`/`created_at_local_end` over the 6 month window, fields `ticket_id`, `created_at`, `status_id`, `limit:300`. Bucket by month yourself and drop status 8. One call for the whole series, and `pagination.total` checks your bucketing without a second one
-- **Resolved**: the same shape on `resolved_at_local_start`/`resolved_at_local_end`, adding `summary`, `comment_count` and `assignees{firstname, lastname, entity{name}}`. It answers the leaderboard, the resolved series, the median and the Key wins shortlist at once. No comments on this one
+- **Resolved**: the same shape on `resolved_at_local_start`/`resolved_at_local_end`, adding `created_at` and `assignees{firstname, lastname, entity{name}}`. It answers the leaderboard, the resolved series and the median. Keep it lean: `summary` and `comment_count` belong to the Key wins pull, which is far narrower, and carrying them across a thousand rows is what pushes a response past the size cap
 - **Open now**: `status_ids:[1,3,7]`, no date bound, since work raised before the window can still be open today. It serves the leaderboard's Open now column and the Key wins in-flight candidates together
-- **Shortlist comments**: `ticket_ids:[the ten to fifteen you chose]` with the `comments` sub-field. Only when Key wins is in
+- **Key wins candidates**: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline. Its own pull rather than a wider Resolved, because it wants few rows and every field where Resolved wants every row and few fields. Only when Key wins is in
+- **Shortlist comments**: `ticket_ids:[the in-flight candidates you chose]` with the `comments` sub-field, since Open now carries their titles but not their histories. Only when Key wins is in
+
+A large response is not a failure. Past roughly 60,000 characters the gateway writes the result to a file and hands you the path, which keeps a thousand rows out of the conversation entirely. Read it with `jq` or a short python script rather than re-fetching in smaller pages: one fat call and a local script beats four thin calls on both counts.
 
 Then, on the rows:
 
