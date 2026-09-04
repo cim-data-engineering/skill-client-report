@@ -1,6 +1,6 @@
 ---
 name: client-report-sections
-description: Generates a client-facing quarterly building performance review for a PEAK site: analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the actions leaderboard, and key wins, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the actions leaderboard, and key wins, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Styled per the design system in DESIGN.md with partner brand overrides from BRAND.md (defaults to CIM when no overrides are set). Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
@@ -22,18 +22,18 @@ Ask before fetching anything. The masthead and [Analytics overview](#analytics-o
 
 Ask with one `AskUserQuestion` call and one multi-select question. Four options is the tool's limit, and four is the whole list:
 
-| Question                                                   | Header   | Options (`multiSelect: true`)                                                          |
-| ---------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------- |
-| Which sections should the report cover from last quarter?   | Sections | Equipment health · Indoor environment · Actions resolved and leaderboard · Key wins   |
+| Question                                                  | Header   | Options (`multiSelect: true`)                                                       |
+| --------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| Which sections should the report cover from last quarter? | Sections | Equipment health · Indoor environment · Actions resolved and leaderboard · Key wins |
 
 Describe each option by what it adds:
 
-| Choice                           | `--sections` name    | Reference                          | Adds                                                                                                                              |
-| -------------------------------- | -------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Equipment health                 | `equipment-health`   | `references/equipment-health.md`   | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends   |
-| Indoor environment               | `indoor-environment` | `references/indoor-environment.md` | the thermal comfort row, comfort by level, the six month comfort trend                                                            |
-| Actions resolved and leaderboard | `alerts-resolved`    | `references/alerts-resolved.md`    | the faults resolved row with verified recovery, six months of raised vs resolved, and who closed the work                         |
-| Key wins                         | `key-wins`           | `references/key-wins.md`           | what was found and acted on: repairs made, plus live work the owner should see                                                           |
+| Choice                           | `--sections` name    | Reference                          | Adds                                                                                                                            |
+| -------------------------------- | -------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Equipment health                 | `equipment-health`   | `references/equipment-health.md`   | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends |
+| Indoor environment               | `indoor-environment` | `references/indoor-environment.md` | the thermal comfort row, comfort by level, the six month comfort trend                                                          |
+| Actions resolved and leaderboard | `alerts-resolved`    | `references/alerts-resolved.md`    | the faults resolved row with verified recovery, six months of raised vs resolved, and who closed the work                       |
+| Key wins                         | `key-wins`           | `references/key-wins.md`           | what was found and acted on: repairs made, plus live work the owner should see                                                  |
 
 **Rules:**
 
@@ -82,7 +82,7 @@ A chart note before and after. The first packs everything in, opens on an editor
 
 ### Analytics overview
 
-What we monitor at {site name}
+What we monitor at {site name}  
 Date: As at {issue date}
 
 | Display metric | Reference                      |
@@ -97,7 +97,7 @@ All five render whatever the selection, including thermal zones when indoor envi
 
 ## Operational impact
 
-What that monitoring delivered this quarter
+What that monitoring delivered this quarter  
 Date: the quarter
 
 Each row belongs to a section and is specified in that reference: three to equipment health, one to indoor environment, one to alerts resolved. The section renders when at least one of them is in, and drops when none is.
@@ -148,10 +148,10 @@ Resolve the theme in this order:
 
 1. **The scaffold**: its `:root` and component CSS are DESIGN.md compiled. A default CIM build needs nothing further; don't re-derive values the file already carries
 2. **`BRAND.md`** (repo root): if present, apply its YAML frontmatter overrides by editing `:root`, the `@font-face` block and the masthead logo. Honor only these keys and ignore everything else:
-   - `name`, `service-name`: replace the company name and service name defaults in [Report title](#report-title)
-   - `colors:`: `primary`, `primary-container`, `on-primary-container`, `secondary`, `on-secondary`, `on-secondary-muted`, `chart-benchmark`, `text-heading` only
-   - `fonts:`: `display`, `text`, `mono` family swaps mapped onto the DESIGN.md typography roles (display → h1/h2/card-title/metric; text → body/body-sm/label/eyebrow; mono → mono). Sizes, weights and line-heights always keep DESIGN.md values. Families on Google Fonts load from the CDN, and the `font-family` stack carries the offline case; a family that is not on Google Fonts is embedded from `assets/fonts` as a base64 data URI, since a relative font path does not survive the report leaving this repo
-   - `logos:`: `reversed` (masthead) and `full-color`, paths to partner files. Inline the referenced SVG contents (data URI for PNG) so the report stays self-contained
+  - `name`, `service-name`: replace the company name and service name defaults in [Report title](#report-title)
+  - `colors:`: `primary`, `primary-container`, `on-primary-container`, `secondary`, `on-secondary`, `on-secondary-muted`, `chart-benchmark`, `text-heading` only
+  - `fonts:`: `display`, `text`, `mono` family swaps mapped onto the DESIGN.md typography roles (display → h1/h2/card-title/metric; text → body/body-sm/label/eyebrow; mono → mono). Sizes, weights and line-heights always keep DESIGN.md values. Families on Google Fonts load from the CDN, and the `font-family` stack carries the offline case; a family that is not on Google Fonts is embedded from `assets/fonts` as a base64 data URI, since a relative font path does not survive the report leaving this repo
+  - `logos:`: `reversed` (masthead) and `full-color`, paths to partner files. Inline the referenced SVG contents (data URI for PNG) so the report stays self-contained
 3. **`DESIGN.md`** (repo root, alongside BRAND.md): read its `## Colors` and `## Typography` sections when an override needs the role mapping, and the rest when you need a component the scaffold has no CSS for or are changing the design itself, per [After the render](#after-the-render). DESIGN.md is the source of truth; the scaffold is its output
 4. A missing BRAND.md, or any key left commented or absent, keeps the CIM default. An untouched fork must render identically to CIM's own output
 
@@ -171,12 +171,12 @@ Two windows, named here because the references reuse them. The **quarter** is th
 
 The references build PEAK links from these, so substitute rather than hardcoding dates:
 
-| Placeholder              | Value                                                   |
-| ------------------------ | ------------------------------------------------------- |
-| `{{quarter_start}}`      | first day of the quarter, `YYYY-MM-DD`                  |
+| Placeholder              | Value                                                  |
+| ------------------------ | ------------------------------------------------------ |
+| `{{quarter_start}}`      | first day of the quarter, `YYYY-MM-DD`                 |
 | `{{quarter_end}}`        | last day of the quarter, the last complete month's end |
-| `{{quarter_last_month}}` | first day of that last month, for `summary_ts`          |
-| `{{trend_start}}`        | first day of the 6 month window                         |
+| `{{quarter_last_month}}` | first day of that last month, for `summary_ts`         |
+| `{{trend_start}}`        | first day of the 6 month window                        |
 
 Always:
 
