@@ -29,7 +29,7 @@ Recovery rate is alerts resolved in the period with fault status recovered divid
 ## Monthly alerts raised vs resolved
 
 Faults triaged and resolved
-Date: the seven complete months ending with the quarter
+Date: the six complete months ending with the quarter
 
 Grouped bars by month.
 
@@ -40,7 +40,7 @@ Grouped bars by month.
 ## Assignee leaderboard
 
 Who closed the work
-Date: the 7 month window
+Date: the 6 month window
 
 | Column          | Reference                                |
 | --------------- | ---------------------------------------- |
@@ -65,7 +65,7 @@ Date: the 7 month window
 
 **Links:**
 
-- Add link to the PEAK assignee leaderboard over the same 7 month window
+- Add link to the PEAK assignee leaderboard over the same 6 month window
 - `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=assignee`
 
 ## Notes band items
@@ -80,7 +80,7 @@ Date: the 7 month window
 
 | Need                                 | Call                                                                                |
 | ------------------------------------ | ----------------------------------------------------------------------------------- |
-| Leaderboard, resolved series, median | The resolved action pull in SKILL.md, over the 7 month window                        |
+| Leaderboard, resolved series, median | The resolved action pull in SKILL.md, over the 6 month window                        |
 | Raised series                        | Its per-month counts                                                                 |
 | Open now                             | Its Open now calls, one per open status, no date bound                              |
 | Verified recovery                    | `search_alert_tickets(status:"closed")` over the quarter, read against fault status   |

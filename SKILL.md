@@ -31,8 +31,8 @@ Describe each option by what it adds:
 | Choice                           | `--sections` name    | Reference                          | Adds                                                                                                                              |
 | -------------------------------- | -------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | Equipment health                 | `equipment-health`   | `references/equipment-health.md`   | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends   |
-| Indoor environment               | `indoor-environment` | `references/indoor-environment.md` | the thermal comfort row, comfort by level, the seven month comfort trend                                                            |
-| Actions resolved and leaderboard | `alerts-resolved`    | `references/alerts-resolved.md`    | the faults resolved row with verified recovery, seven months of raised vs resolved, and who closed the work                         |
+| Indoor environment               | `indoor-environment` | `references/indoor-environment.md` | the thermal comfort row, comfort by level, the six month comfort trend                                                            |
+| Actions resolved and leaderboard | `alerts-resolved`    | `references/alerts-resolved.md`    | the faults resolved row with verified recovery, six months of raised vs resolved, and who closed the work                         |
 | Key wins                         | `key-wins`           | `references/key-wins.md`           | what was found and acted on: repairs made, plus live work the owner should see                                                           |
 
 **Rules:**
@@ -140,7 +140,7 @@ A site can have less history than the window asks for. Read that from the first 
 
 One self-contained A4 print-first HTML file: all CSS inline, charts as hand-authored inline SVG, no JS. The scaffold supplies the stylesheet and every component, so this is a handful of edits rather than a rebuild:
 
-- The scaffold's chart SVGs already run seven columns at x = 80, 172 … 632, so the x positions carry over. The y geometry does not: recompute every point, bar top, benchmark line and value label from your own data range, and pick the range from the data plus the thresholds you are drawing. Reusing the sample's y values plots the sample's data, not yours
+- The scaffold's chart SVGs already run six columns at x = 80, 190 … 630, so the x positions carry over. The y geometry does not: recompute every point, bar top, benchmark line and value label from your own data range, and pick the range from the data plus the thresholds you are drawing. Reusing the sample's y values plots the sample's data, not yours
 - Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex, because SVG presentation attributes cannot read `var()`. Heatmap band fills work the same way (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor), so a brand that swaps its measurement colours recolours both heatmaps without touching markup
 - Section headers are three stacked lines: the section name as an uppercase eyebrow in `primary`, the statement beneath it as the `h2` headline, and the date line as a muted byline. The statement is the headline, never the section name
 
@@ -165,7 +165,7 @@ Derived rules when overrides are active:
 
 Every window closes on the **last complete month**, so nothing in the report covers a part-month. Two reasons: a quarterly review should read as of the quarter, not as of the day it was generated; and equipment health scores are stored pre-aggregated on month boundaries, so a mid-month bound forces a raw scan and a wide call is then refused for scanning too many rows.
 
-Two windows, named here because the references reuse them. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **7 month window** is the seven complete months ending there, which the trends use, so a trend carries the quarter plus the four months before it. Both close on the same month, so trends and snapshots share that bucket and must not disagree on it.
+Two windows, named here because the references reuse them. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use, so a trend carries the quarter plus the three months before it. Both close on the same month, so trends and snapshots share that bucket and must not disagree on it.
 
 The references build PEAK links from these, so substitute rather than hardcoding dates:
 
@@ -174,7 +174,7 @@ The references build PEAK links from these, so substitute rather than hardcoding
 | `{{quarter_start}}`      | first day of the quarter, `YYYY-MM-DD`                  |
 | `{{quarter_end}}`        | last day of the quarter, the last complete month's end |
 | `{{quarter_last_month}}` | first day of that last month, for `summary_ts`          |
-| `{{trend_start}}`        | first day of the 7 month window                         |
+| `{{trend_start}}`        | first day of the 6 month window                         |
 
 Always:
 
@@ -193,8 +193,8 @@ Two tools read action tickets, and each is better at one job.
 
 Pull only what each section needs:
 
-- **Resolved rows**: over the 7 month window, which answers the leaderboard, the resolved series and the median at once. Check the tally before you use it: read each month's count straight back with `limit:1` and compare. A hand count of 160 rows is wrong more often than it is right
-- **Raised counts**: one call per month with `created_after_local`/`created_before_local`, `limit:1`, and read `pagination.total`. Seven small calls beat three pages of rows you would only be counting. That total counts every status, so repeat each month with `status:"not_doing"` and subtract, or the two series drop Not Doing differently
+- **Resolved rows**: over the 6 month window, which answers the leaderboard, the resolved series and the median at once. Check the tally before you use it: read each month's count straight back with `limit:1` and compare. A hand count of 160 rows is wrong more often than it is right
+- **Raised counts**: one call per month with `created_after_local`/`created_before_local`, `limit:1`, and read `pagination.total`. Six small calls beat three pages of rows you would only be counting. That total counts every status, so repeat each month with `status:"not_doing"` and subtract, or the two series drop Not Doing differently
 - **Open now**: one call per open status (`open`, `in_progress`, `on_hold`), no date bound, since work raised before the window can still be open today
 - Count actions, one per ticket, in both series. Never alerts. An action can be bulk-linked to dozens of them, 141 on one ticket at one site, so weighting by alerts makes a month spike on a triage decision rather than on work
 - Drop status Not Doing throughout. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing

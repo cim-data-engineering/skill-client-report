@@ -77,8 +77,8 @@ Heatmap table of monthly equipment health scores, one row per equipment type, th
 
 ## Monthly equipment health
 
-Seven months of trend
-Date: the seven complete months ending with the quarter
+Six months of trend
+Date: the six complete months ending with the quarter
 
 Chart 1: Site equipment health score
 Monthly line chart. Render the two nearest benchmark thresholds and label them: one either side where the series sits inside a band, otherwise the threshold it crosses plus the next one out, so the reader can see which months fall on which side. Auto scale Y axis to fit both.
@@ -96,7 +96,7 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 
 **Links:**
 
-- Source link on Chart 1, over the 7 month window. Use custom dates, not a relative range. The report is a fixed quarter and must keep showing the same window as it ages
+- Source link on Chart 1, over the 6 month window. Use custom dates, not a relative range. The report is a fixed quarter and must keep showing the same window as it ages
 - `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Notes band items
@@ -111,10 +111,10 @@ All six calls are `search_equipment_health_scores`. It takes no `limit` and retu
 | -------------------- | ------------------ | -------- | ------------------------------------------------ |
 | `metadata_type`      | `month`            | quarter  | heatmap cells                                    |
 | `metadata_type`      | `all`              | quarter  | the Equipment and Rules counts                   |
-| `site`               | `month`            | 7 months | snapshot site row (last 3), Chart 1 (all 7)      |
+| `site`               | `month`            | 6 months | snapshot site row (last 3), Chart 1 (all 6)      |
 | `site`               | `all`              | quarter  | the headline score in the operational impact row |
 | `priority`           | `all`              | quarter  | the checks and labor cost rows                   |
-| `priority`           | `month`            | 7 months | Chart 2 bars                                     |
+| `priority`           | `month`            | 6 months | Chart 2 bars                                     |
 
 - `local_end_date` is exclusive, so pass the first of the month after the last complete month. A mid-month bound is refused for scanning too many rows
 - Executions sum across priorities for the checks total, and the per-priority split drives the labor model

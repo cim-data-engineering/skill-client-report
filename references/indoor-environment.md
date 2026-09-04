@@ -58,7 +58,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 ## Monthly thermal comfort
 
 Where comfort has been heading
-Date: the seven complete months ending with the quarter
+Date: the six complete months ending with the quarter
 
 Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in monthly equipment health, against the thermal comfort benchmark thresholds.
 
@@ -71,7 +71,7 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 
 **Links:**
 
-- Source link on the chart, over the 7 month window. Use custom dates, not a relative range. The report is a fixed quarter and must keep showing the same window as it ages
+- Source link on the chart, over the 6 month window. Use custom dates, not a relative range. The report is a fixed quarter and must keep showing the same window as it ages
 - `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Notes band items
@@ -86,7 +86,7 @@ All of it is `search_indoor_environment(metric:"temperature")`.
 | `aggregate_entity` | `aggregate_period` | Window   | Feeds                                            |
 | ------------------ | ------------------ | -------- | ------------------------------------------------ |
 | `level`            | `month`            | quarter  | the snapshot grid                                |
-| `site`             | `month`            | 7 months | the snapshot closing row (last 3) and the trend  |
+| `site`             | `month`            | 6 months | the snapshot closing row (last 3) and the trend  |
 | `site`             | `all`              | quarter  | the headline score in the operational impact row |
 | `zone`             | `all`              | quarter  | the Zones column, one call per level: `level_ids:[one level]`, `limit:1`, read `pagination.total` |
 
