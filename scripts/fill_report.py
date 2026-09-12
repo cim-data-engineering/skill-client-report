@@ -4,9 +4,9 @@
     python3 scripts/fill_report.py data.json --out report.html
 
 Everything mechanical lives here: heatmap rows and their band colours, chart
-geometry recomputed from each series' own range, the leaderboard, the wins and
-every masthead slot. The narrative sentences are written by the model and
-passed in through the bundle; nothing in this file invents prose.
+geometry recomputed from each series' own range, the leaderboard, the wins, the
+platform links and every masthead slot. The narrative sentences are written by
+the model and passed in through the bundle; nothing in this file invents prose.
 """
 import argparse, json, os, re, subprocess, sys, tempfile
 
@@ -24,6 +24,16 @@ BASELINE, LEFT, RIGHT = 196, 36, 670
 # for how a win's impact is chosen from its action tickets.
 IMPACTS = {"energy": "Energy", "comfort": "Comfort", "reliability": "Reliability",
            "water": "Water", "safety": "Safety", "other": "Other"}
+# Section and chart-source links, keyed by bundle slot and found in the scaffold
+# by the link text that follows them. Each one is the platform_link that section's
+# own PEAK call returned; see the platform links rules in SKILL.md. Row links ride
+# on their rows and ticket links on their wins, so neither is a slot here.
+LINK_SLOTS = {"equipment_health": "See live equipment health dashboard",
+              "comfort": "See live indoor environment dashboard",
+              "alerts": "See live issues being resolved",
+              "leaderboard": "See live actions leaderboard",
+              "trend_eh": "PEAK equipment health dashboard",
+              "trend_comfort": "PEAK indoor environment dashboard"}
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -56,6 +66,31 @@ def note(s, eyebrow, text):
     return s[:k] + '<p class="chartnote">' + text + '</p>' + s[s.index("</p>", k) + 4:]
 
 
+def href(url):
+    """A platform link separates its params with bare &, which an href owes as
+    &amp;. Skipping one already written that way keeps this safe to apply twice."""
+    return re.sub(r"&(?!amp;)", "&amp;", url.strip())
+
+
+def set_links(s, links):
+    """Point each link row at the URL its own PEAK call returned. A slot set to
+    null drops that link rather than leaving the scaffold's sample one standing."""
+    for slot, url in links.items():
+        if slot not in LINK_SLOTS:
+            raise SystemExit("fill: unknown link slot %r — one of %s" % (slot, ", ".join(LINK_SLOTS)))
+        text = re.escape(LINK_SLOTS[slot])
+        if not re.search(r'<a href="[^"]*">%s' % text, s):
+            raise SystemExit("fill: no link row for %r — is its section in the report?" % slot)
+        if url:
+            s = re.sub(r'<a href="[^"]*">(%s)' % text,
+                       lambda m: '<a href="%s">%s' % (href(url), m.group(1)), s)
+        else:
+            s = re.sub(r'\s*<p class="chartsource">[^<]*<a href="[^"]*">%s</a>[^<]*</p>' % text, "", s)
+            s = re.sub(r'<a href="[^"]*">%s[^<]*</a>' % text, "", s)
+            s = re.sub(r'\n *<div class="seclinks">\s*</div>', "", s)
+    return s
+
+
 # ── heatmaps ────────────────────────────────────────────────────────────────
 def heatmap(d, months):
     dp, t, counts = d["dp"], d["bands"], d.get("counts", [])
@@ -72,7 +107,7 @@ def heatmap(d, months):
             '<td class="c none">&mdash;</td>' if v is None else
             '<td class="c %s%s">%.*f</td>' % (band(v, t), " now" if i == len(mo) - 1 else "", dp, v)
             for i, v in enumerate(mo))
-        link = ('<a href="%s">%s &rsaquo;</a>' % (r["link"], r["name"])) if r.get("link") else r["name"]
+        link = ('<a href="%s">%s &rsaquo;</a>' % (href(r["link"]), r["name"])) if r.get("link") else r["name"]
         delta = ('<span class="chg flat">&mdash;</span>' if None in (mo[0], mo[-1])
                  else chg(mo[-1] - mo[0], dp))
         body.append('      <tr><td class="lv">%s</td>%s<td class="cg">%s</td></tr>'
@@ -187,6 +222,10 @@ def main():
             sys.exit("fill: anchor matched %d times: %.70s" % (s.count(old), old))
         s = s.replace(old, new)
 
+    # platform links, each one straight off the call that answered its section
+    if "links" in D:
+        s = set_links(s, D["links"])
+
     # operational impact rows, in the order the skill fixes
     if "impact" in D:
         rows = []
@@ -269,7 +308,7 @@ def main():
             if w.get("snap"):
                 b += '    <p class="snap">%s</p>\n' % w["snap"]
             b += ('    <p class="refs">' + " &middot; ".join(
-                '<a href="%s">%s</a>' % (r["url"], r["title"]) for r in w["refs"]) + '</p>\n  </div>')
+                '<a href="%s">%s</a>' % (href(r["url"]), r["title"]) for r in w["refs"]) + '</p>\n  </div>')
             blocks.append(b)
         i = s.index('  <div class="win">')
         j = s.rindex("</div>", i, s.index("</section>", i)) + len("</div>")

@@ -12,8 +12,7 @@ Nothing resolved in the window means no section. The recovery rate has no denomi
 | ---------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | See below alert recovery benchmark | x faults resolved with x% verified recovery | Resolved alerts with status closed over the quarter, on rules still running | Median time to resolve of x days. Based on the alert's linked action creation and resolution date, not the alert's own creation and resolution date |
 
-Section link, labelled "See live issues being resolved":
-`https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&site_ids={{site_id}}&status_ids=6&archived=false`
+Section link, labelled "See live issues being resolved": the `platform_link` off the plain verified recovery count in Data recipes, which opens the alerts this row is counting. Bundle slot `alerts`.
 
 ## Alert recovery benchmark
 
@@ -65,7 +64,7 @@ Date: the 6 month window
 
 **Links:**
 
-- Add link to the PEAK actions leaderboard over the same 6 month window
+- Add link to the PEAK actions leaderboard over the same 6 month window. No call answers this page, so it is the one link in the report built from parts: substitute the site id, the 6 month window's first day and the quarter's last day, both `YYYY-MM-DD`. Bundle slot `leaderboard`
 - `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=assignee`
 
 ## Notes band items
@@ -88,5 +87,5 @@ Three calls, all of them from the `tickets.tickets` block in SKILL.md, plus two 
 | Verified recovery                    | Two counts, below                                             |
 
 - Open now is a different question from resolved: work raised before the window can still be open today, so count by assignee as at the issue date
-- Verified recovery needs a rate, not rows. Call `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter twice with `limit:1`, once plain and once with `fault_statuses:["recovered"]`, and divide the two `pagination.total` values. Never page the alerts to count them by hand
+- Verified recovery needs a rate, not rows. Call `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter twice with `limit:1`, once plain and once with `fault_statuses:["recovered"]`, and divide the two `pagination.total` values. Never page the alerts to count them by hand. The plain call also carries the section link, so `limit:1` still answers both
 - Those two are the only calls in the report that read alert tickets, so they do not run at all when this section is out

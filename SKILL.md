@@ -13,7 +13,7 @@ A quarterly building performance review for one PEAK site: a self-contained A4 p
 2. **Read one reference per chosen section**: `references/<section>.md`. Each carries its table spec, benchmark, links and notes items, and closes with a Data recipes block holding the PEAK calls behind them. The others describe sections you are not building; leave them unread.
 3. **Fetch in two rounds**: [Data recipes](#data-recipes), then the Data recipes block at the end of each chosen reference. Nothing else. One call resolves the site; every remaining call then goes out in a single parallel batch, since none of them depend on each other once the site id is known. Break the two dependencies that would otherwise split that batch: resolve equipment type names with an unfiltered `search_equipment_types(limit:200)` rather than waiting on the health scores for their ids, and select `comments` inline on the Open now call rather than fetching them after.
 4. **Write the data bundle**: one `data.json` carrying every figure, row, series and sentence the report needs. Derive it from the fetched rows with a short python script, reading the large pulls off the files the gateway spilled them to rather than out of the conversation. The prose is yours and follows [Writing the narrative](#writing-the-narrative); the bundle is where it lives. `scripts/fill_report.py` is the schema: its key names are the contract.
-5. **Fill**: `python3 scripts/fill_report.py data.json --out skyline-q3.html`. It scaffolds the chosen sections, then renders both heatmaps with their band colours, recomputes each chart's y geometry from its own data range, and lays in the operational impact rows, the leaderboard, the wins and every masthead slot. Hand-editing the scaffold instead puts the chart arithmetic back on you, which is what this script exists to remove. `build_report.py parts` still lists what a section owns, and `build_report.py part <name>` prints one part when you are adding a section to a report that already exists.
+5. **Fill**: `python3 scripts/fill_report.py data.json --out skyline-q3.html`. It scaffolds the chosen sections, then renders both heatmaps with their band colours, recomputes each chart's y geometry from its own data range, and lays in the operational impact rows, the leaderboard, the wins, the platform links and every masthead slot. Hand-editing the scaffold instead puts the chart arithmetic back on you, which is what this script exists to remove. `build_report.py parts` still lists what a section owns, and `build_report.py part <name>` prints one part when you are adding a section to a report that already exists.
 6. **Check and hand over**: `python3 scripts/build_report.py check <file>` catches sample values, unresolved placeholders and markers left behind. It is a backstop, not a substitute for reading the numbers. Then name the sections you left out, so the reader knows the omission was asked for.
 
 ## Section selection
@@ -163,14 +163,14 @@ Every window closes on the **last complete month**, so nothing in the report cov
 
 Two windows, named here because the references reuse them. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use, so a trend carries the quarter plus the three months before it. Both close on the same month, so trends and snapshots share that bucket and must not disagree on it.
 
-The references build PEAK links from these, so substitute rather than hardcoding dates:
+Links come back with the data, so the report does not build them. `search_equipment_health_scores`, `search_indoor_environment`, `search_alert_tickets` and `search_action_tickets` each return `platform_link`, that call's own filters and window opened in the PEAK web app, and a section's links are the ones its own calls returned:
 
-| Placeholder              | Value                                                  |
-| ------------------------ | ------------------------------------------------------ |
-| `{{quarter_start}}`      | first day of the quarter, `YYYY-MM-DD`                 |
-| `{{quarter_end}}`        | last day of the quarter, the last complete month's end |
-| `{{quarter_last_month}}` | first day of that last month, for `summary_ts`         |
-| `{{trend_start}}`        | first day of the 6 month window                        |
+- A section link comes off one of that section's quarter calls, a chart's source link off its 6 month call. Take the URL as it is returned, so the report keeps showing its own window as it ages
+- A row link narrows the section link with that row's own filter appended, `&equipment_type_ids={id}` or `&level_ids={id}`. That is the URL the tool returns for the same call filtered that way, at no extra call, so never fetch a link per row
+- `platform_link` is null where the page cannot show what the call answered, which on this report is the indoor environment level and zone groupings. Those rows take the site call's link and narrow it, per the rule above. If a link a section needs ever comes back null, drop it and say so in chat rather than assembling a URL by hand
+- Ticket links are per row: `search_action_tickets` carries `ticket_link` on every ticket, which is the evidence url Key wins links to
+- Pass the section and chart links to `fill_report.py` in `links`, keyed by slot, and it lays them into the scaffold. Row links ride on their rows and ticket links on their wins, so those two are already covered
+- The actions leaderboard is the one link no call returns. `references/alerts-resolved.md` carries it written out, and it is the only URL in this skill built from parts
 
 Always:
 
