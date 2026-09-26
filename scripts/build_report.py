@@ -125,7 +125,6 @@ def sample_strings():
                 # is deliberately absent — it carries window and method wording
                 # that is correct for every report and recurs legitimately.
                 r'<p class="chartnote">([^<]+)</p>', r'<p class="snap">([^<]+)</p>',
-                r'<figcaption>([^<]+)</figcaption>',
                 # operational impact carries the sample's headline figures and the
                 # sentence under each; both are site data, and both were slipping through.
                 r'<span class="fig">([^<]+)</span>', r'<div class="isub">(.*?)</div>'):
@@ -182,8 +181,11 @@ def cmd_check(args):
 
     # A win photo has to travel inside the file. An attachment link is signed and
     # short-lived, so a photo left as a link breaks soon after the report is sent.
+    # The sample's placeholder tiles are SVG; every real photo is embedded as JPEG.
     for src in sorted(set(re.findall(r'<figure><img src="([^"]*)"', text))):
-        if not src.startswith("data:"):
+        if src.startswith("data:image/svg"):
+            errors.append("placeholder photo tile still in the report — fill the wins from the bundle")
+        elif not src.startswith("data:"):
             errors.append("win photo linked rather than embedded: %.60s… — download it and pass "
                           "the file to fill_report.py (references/key-wins.md)" % src)
 

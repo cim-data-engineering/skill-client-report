@@ -28,6 +28,7 @@ IMPACTS = {"energy": "Energy", "comfort": "Comfort", "reliability": "Reliability
 # Win photos embed at this height in pixels, about twice their printed size, so
 # they stay sharp on paper without carrying a phone camera's megabytes.
 PHOTO_PX = 480
+SOFT_PX = 300     # below this a tile has under 1.5x its printed size, and prints visibly soft
 MAX_PHOTOS = 4
 # Section and chart-source links, keyed by bundle slot and found in the scaffold
 # by the link text that follows them. Each one is the platform_link that section's
@@ -195,11 +196,12 @@ def swap_svg(s, after, svg):
 
 
 # ── win photos ──────────────────────────────────────────────────────────────
-def photo_uri(path, aspect, focus=None):
-    """A ticket photo as a JPEG data URI: turned upright, cropped to its tile
-    around `focus` (x, y as fractions of the frame, centre by default), shrunk
-    and re-encoded. Re-encoding also drops the camera's EXIF block, GPS position
-    included, which the original upload carries and a client report must not."""
+def photo_jpeg(path, aspect, focus=None, zoom=1):
+    """A ticket photo as JPEG bytes: turned upright, cropped to its tile around
+    `focus` (x, y as fractions of the frame, centre by default) and `zoom` times
+    tighter than the largest crop that fits, shrunk and re-encoded. Re-encoding
+    also drops the camera's EXIF block, GPS position included, which the
+    original upload carries and a client report must not."""
     try:
         from PIL import Image, ImageOps
     except ImportError:
@@ -216,33 +218,42 @@ def photo_uri(path, aspect, focus=None):
         im = Image.alpha_composite(Image.new("RGBA", im.size, "white"), im.convert("RGBA"))
     im = im.convert("RGB")
     w, h = im.size
-    cw, ch = (round(h * aspect), h) if w / h > aspect else (w, round(w / aspect))
     fx, fy = focus or (0.5, 0.5)
     if not (0 <= fx <= 1 and 0 <= fy <= 1):
         sys.exit("fill: focus %r on %s — [x, y] as fractions of the frame, 0 to 1" % (focus, path))
+    if zoom < 1:
+        sys.exit("fill: zoom %r on %s — 1 or more, where 2 keeps half the width" % (zoom, path))
+    cw, ch = (h * aspect, h) if w / h > aspect else (w, w / aspect)
+    cw, ch = round(cw / zoom), round(ch / zoom)
     x = min(max(round(fx * w - cw / 2), 0), w - cw)
     y = min(max(round(fy * h - ch / 2), 0), h - ch)
     im = im.crop((x, y, x + cw, y + ch))
-    if ch < PHOTO_PX:
-        print("fill: warning: %s is only %d px tall once cropped, so it prints soft; "
-              "pass the original, not the preview" % (path, ch), file=sys.stderr)
-    else:
+    if ch > PHOTO_PX:
         im = im.resize((round(PHOTO_PX * aspect), PHOTO_PX), Image.LANCZOS)
+    elif ch < SOFT_PX:
+        print("fill: warning: %s is only %d px tall once cropped, so it prints soft; "
+              "pass the original rather than the preview, or zoom less" % (path, ch), file=sys.stderr)
     buf = io.BytesIO()
     im.save(buf, "JPEG", quality=80, optimize=True, progressive=True, icc_profile=icc)
-    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
+    return buf.getvalue()
 
 
-def photo_row(photos, base):
-    """Figures in the order given. A pair crops to 3:2 so its row keeps the
-    height of three squares; one, three or four crop square."""
+def photo_row(photos, base, out=None, name="win"):
+    """Figures in the order given, each a path or {src, focus, zoom}. A pair
+    crops to 3:2 so its row keeps the height of three squares; one, three or
+    four crop square. No caption: the win's text explains its photos, and a
+    caption would be one more claim to get wrong. With `out`, each tile is also
+    saved there as <name>-<n>.jpg, exactly as embedded, to be looked at."""
     pair = len(photos) == 2
     figs = []
-    for p in photos:
+    for n, p in enumerate(photos, 1):
+        p = {"src": p} if isinstance(p, str) else p
         src = p["src"] if os.path.isabs(p["src"]) else os.path.join(base, p["src"])
-        figs.append('<figure><img src="%s" alt="%s"><figcaption>%s</figcaption></figure>'
-                    % (photo_uri(src, 1.5 if pair else 1.0, p.get("focus")),
-                       p["caption"].replace('"', "&quot;"), p["caption"]))
+        jpg = photo_jpeg(src, 1.5 if pair else 1.0, p.get("focus"), p.get("zoom", 1))
+        if out:
+            open(os.path.join(out, "%s-%d.jpg" % (name, n)), "wb").write(jpg)
+        figs.append('<figure><img src="data:image/jpeg;base64,%s" alt="Photo from the action ticket"></figure>'
+                    % base64.b64encode(jpg).decode())
     return '<div class="photos%s">%s</div>' % (" pair" if pair else "", "".join(figs))
 
 
@@ -251,7 +262,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("data")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--photos-out", help="also save each win photo here, cropped exactly as embedded")
     a = ap.parse_args()
+    if a.photos_out:
+        os.makedirs(a.photos_out, exist_ok=True)
     D = json.load(open(a.data, encoding="utf-8"))
     sections = D.get("sections") or "equipment-health,indoor-environment,alerts-resolved,key-wins"
 
@@ -353,7 +367,7 @@ def main():
     if "wins" in D:
         base = os.path.dirname(os.path.abspath(a.data))   # photo paths are relative to the bundle
         blocks = []
-        for w in D["wins"]:
+        for wn, w in enumerate(D["wins"], 1):
             photos = w.get("photos") or []
             if len(photos) > MAX_PHOTOS:
                 sys.exit("fill: %d photos on %r — %d at most (references/key-wins.md)"
@@ -375,7 +389,7 @@ def main():
                 b += pad + '<p class="where"><span class="k">%s</span>%s</p>\n' % (
                     "Levels" if len(lv) > 1 else "Level", ", ".join(lv))
             if photos and not side:
-                b += pad + photo_row(photos, base) + "\n"
+                b += pad + photo_row(photos, base, a.photos_out, "win%d" % wn) + "\n"
             b += pad + '<p>%s</p>\n' % w["body"]
             if w.get("snap"):
                 b += pad + '<p class="snap">%s</p>\n' % w["snap"]
@@ -383,7 +397,7 @@ def main():
                 '<a href="%s">%s</a>' % (href(r["url"]), r["title"]) for r in w["refs"]) + '</p>\n'
             if side:
                 b = ('  <div class="win compact">\n    %s\n    <div class="wtext">\n%s    </div>\n  </div>'
-                     % (photo_row(photos, base), b))
+                     % (photo_row(photos, base, a.photos_out, "win%d" % wn), b))
             else:
                 b = '  <div class="win">\n' + b + '  </div>'
             blocks.append(b)
