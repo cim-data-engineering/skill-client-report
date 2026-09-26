@@ -28,6 +28,7 @@ Either way it needs a comment history showing a person engaged with it. Exclude 
 **Display:**
 
 - Heading names the outcome, or the finding where the work is still live, plus the equipment type and name
+- Under the heading, the level the equipment serves, so the reader can place the win in the building. It is the win's `level`, PEAK's level name as it stands, and a list where the equipment spans levels. Leave it off where PEAK holds no real level for the equipment
 - Tag the win with its impact, above the heading: one of `energy`, `comfort`, `reliability`, `water`, `safety`, `other`, carried in the bundle as the win's `impact` key. It renders as a small uppercase word with a coloured dot, and the word is what states the impact — the dot only speeds up scanning down the page
 - The impact is the one its linked action tickets carry, never one you read off the story. A win about a chiller that plainly saves energy is tagged `reliability` if that is what the tickets say. The engineer who worked the ticket set that field, and the report has no standing to overrule it
 - Where a win links several tickets whose impacts differ, take the most severe: `safety`, then `reliability`, `comfort`, `energy`, `water`, `other`. Never merge two into a compound tag, and never show two tags on one win
@@ -39,6 +40,19 @@ Either way it needs a comment history showing a person engaged with it. Exclude 
 - Link the action ticket as evidence with the `ticket_link` its row carries, using the action title as the link name, not the id
 - Where several tickets form one win, link them all
 - Where a win also appears in the equipment health snapshot, say so in the `snap` line. The scaffold keeps that line only when equipment health is in the report, so if it is not there the cross-reference is not yours to add
+
+**Photos:**
+
+Engineers often attach photos to an action ticket as they work it. One that shows what the win says is the strongest evidence the page can carry, so the win carries it. One that does not stays off: a photo on the page is a claim, held to the same standard as the text.
+
+- A photo earns its place by showing something the text says: the fault as found, the part at issue, a reading that proves the diagnosis, the repair done. Never plant in general, and never a photo only because the ticket had one
+- The plant, not a screen. A phone shot of a laptop or BMS page, a screenshot or a trend log is unreadable at the printed size, and the charts already carry the data
+- It has to read at about 5 cm across: close enough for the detail, sharp and lit. A plant room shot from the doorway shows nothing
+- No faces, and no one who could be identified. Hands at work are fine
+- As many as the text has distinct things to show, up to four, never two of the same thing. Order them as the story runs: the unit or the fault, the finding, the fix
+- Caption each in a few plain words naming what is in the frame: "Other winding: open circuit". Sentence case, no full stop, and no more than the text claims, so a fault still open is captioned as found
+- Wins with photos lead: those with a row of photos, then those with one, then the rest, with the ranking above ordering each group. The layout follows the count and is not yours to set: one photo sits beside the text, two to four run in a row under the heading
+- Photos never decide whether a win qualifies. They change how a win is shown and where it sits, nothing else
 
 **When nothing qualifies:**
 
@@ -59,6 +73,8 @@ This is a client deliverable, so the section carries wins or it does not appear.
 | In flight | Its Open now call, `status_ids:[1,3,7]`                                                           |
 | Evidence  | Its Shortlist comments call, `ticket_ids:[the ten to fifteen you chose]`                          |
 | Impact    | One `search_action_tickets` on the same `ticket_ids`, reading `impacts`, `ticket_link` and, where a summary lacks one, `equipment_names` |
+| Photos    | Its Photos call, `ticket_ids:[every ticket the chosen wins link]`, once the wins are settled      |
+| Level     | One `platform.equipment` on those wins' `equipment_ids`, in the same batch as Photos               |
 
 Key wins runs its own pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, which is most of them, and holding to the quarter cuts it again, leaving a set small enough to carry `comments` inline so the candidates and their evidence arrive together.
 
@@ -75,3 +91,13 @@ Five patterns are visible in the candidate rows themselves and need no comment r
 - A run of actions sharing a resolved timestamp to the second: a bulk cleanup, not a quarter of repairs
 - An action whose comments were already summarised as still in fault at closure: closed for tidiness while the fault stands
 - An open action with no comments: raised but not yet picked up, so there is nothing to show yet
+
+Photos ride on the ticket as the `attachments` sub-field, so one `tickets.tickets` call covers every win. Select `ticket_id` and only these five, as dotted paths: `attachments.attachment_id`, `attachments.file_name`, `attachments.mime_type`, `attachments.preview.link.url` and `attachments.link.url`. Every link is a signed URL well over a thousand characters long and a ticket can carry dozens of attachments, so the response comes back as a file; a refusal for size means splitting the `ticket_ids` in two. The links lapse twenty minutes after the call, so download promptly, and re-run the call for fresh links rather than retrying one that has lapsed.
+
+Look at every candidate before choosing, since a file name says nothing about the frame. The preview is a small copy, already upright and cheap to look at, and tiling a ticket's previews into one numbered sheet makes the choice one look per ticket. Where `preview` is null the original at `link` is the only copy, so shrink it before you look. Skip anything that is not an image; PNGs are nearly always screenshots, and screenshots come through as JPEG too, so the look decides, not the type. The same photo is often uploaded more than once under the same file name, so keep one copy.
+
+Download the originals you chose, never the previews, which print soft, into a folder beside the bundle, and list them on the win in reading order: `"photos": [{"src": "photos/ch02-sensor.jpg", "caption": "Failed differential pressure sensor off CH-02"}]`. An optional `focus` of `[x, y]`, fractions across and down the frame, keeps a detail near an edge inside the crop. `fill_report.py` turns each photo upright, crops it to its tile, shrinks it and embeds it, so the report stays one file. Re-encoding also drops the original's EXIF block, the phone's GPS position included, which is why a photo reaches the report only through the script.
+
+Where the links cannot be fetched from where you are running, the wins go out without photos; say so in chat. Never leave a link on the page in their place: it breaks when it lapses, and `check` rejects it.
+
+The level comes off the equipment, not the ticket. Take the `equipment_ids` from the Impact rows and select `equipment_id`, `zone.level.level_name` and `zone.level.system`. A level with `system:true` is PEAK's placeholder, `__SYSTEM__`, not a place, so that equipment gets no line.

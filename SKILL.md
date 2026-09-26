@@ -182,7 +182,7 @@ Always:
 
 Only when Actions resolved and leaderboard, or Key wins, is in:
 
-Every action ticket read is one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Five calls cover both sections at most, and three when only one of them is in.
+Every action ticket read is one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Six calls cover both sections at most: three for Actions resolved alone, four for Key wins alone.
 
 What makes it cheap:
 
@@ -198,6 +198,7 @@ The calls:
 - **Open now**: `status_ids:[1,3,7]`, no date bound, since work raised before the window can still be open today. It serves the leaderboard's Open now column and the Key wins in-flight candidates together
 - **Key wins candidates**: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline, rather than widening the Resolved pull. Only when Key wins is in
 - **Shortlist comments**: `ticket_ids:[the in-flight candidates you chose]` with the `comments` sub-field, since Open now carries their titles but not their histories. Only when Key wins is in
+- **Photos**: `ticket_ids:[every ticket the chosen wins link]` with the `attachments` sub-field, once the wins are settled. Only when Key wins is in; `references/key-wins.md` carries the fields and what to do with the photos
 
 A large response is not a failure. Past roughly 60,000 characters the gateway writes the result to a file and hands you the path, which keeps a thousand rows out of the conversation entirely. Read it with `jq` or a short python script rather than re-fetching in smaller pages: one fat call and a local script beats four thin calls on both counts.
 
