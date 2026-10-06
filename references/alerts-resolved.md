@@ -64,7 +64,7 @@ Date: the 6 month window
 
 **Links:**
 
-- Add link to the PEAK actions leaderboard over the same 6 month window. No call answers this page, so it is the one link in the report built from parts: substitute the site id, the 6 month window's first day and the quarter's last day, both `YYYY-MM-DD`. Bundle slot `leaderboard`
+- Add link to the PEAK actions leaderboard over the same 6 month window. No call answers this page, `count_tickets` included, so it is the one link in the report built from parts: substitute the site id, the 6 month window's first day and the quarter's last day, both `YYYY-MM-DD`. Bundle slot `leaderboard`
 - `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=assignee`
 
 ## Notes band items
