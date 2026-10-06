@@ -30,8 +30,8 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 
 | Column        | Reference                                            |
 | ------------- | ---------------------------------------------------- |
-| Level         | Site levels with at least one thermal zone           |
-| Zones         | Thermal zones on that level that returned a score    |
+| Level         | Site levels that returned a comfort score            |
+| Zones         | Thermal zones configured on that level               |
 | Month columns | Thermal comfort score for that month x.x%            |
 | Chg           | Last month of the quarter minus the first, in pp x.x |
 
@@ -41,7 +41,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 - Score to 1dp. The benchmark bands sit far from the data here, so 1dp cannot round across a band edge
 - Emphasise only the closing month column, per the `heatmap` component
 - Zones as a plain numeral, left of the score columns, never colored and never barred. It sizes the level, so the reader knows whether a swing covers two zones or twenty
-- Zones counts scored zones, the same basis as the thermal zones figure in the analytics overview, so the site row should equal it. If it does not, a zone scored in one window and not the other, so say which in the notes
+- Zones counts the zone temperature points configured for comfort scoring, the same basis as the thermal zones figure in the analytics overview. The site row totals the levels shown, so it equals that figure unless a level with points returned no score in the quarter. Say which in the notes
 - Chg signed with a direction glyph. Green up, red down, muted when flat
 - Sort levels in building order, highest level first, ground last, not by Chg. The reader is looking for where in the building comfort is drifting, and the Chg column carries the direction
 - Close with a site row at the bottom, same style as the equipment health snapshot
@@ -75,21 +75,22 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 ## Notes band items
 
 - **Thermal comfort score.** Share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK, typically 21-24.9C (68-79F), so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows
-- **Zones.** The count is scored zones over the quarter. Where it falls short of the analytics overview figure, say how many scored and why the rest did not, usually too few working-hours readings
+- **Zones.** The count is the zone temperature points configured for comfort scoring on each level shown. Where the site row falls short of the analytics overview figure, a level with points returned no score in the quarter: say which, and why, usually no working-hours readings
 
 ## Data recipes
 
-All of it is `search_indoor_environment(metric:"temperature")`.
+The scores are `search_indoor_environment(metric:"temperature")`, and the zone counts are one `count_indoor_environment_zones` call.
 
 | `aggregate_entity` | `aggregate_period` | Window   | Feeds                                                        |
 | ------------------ | ------------------ | -------- | ------------------------------------------------------------ |
 | `level`            | `month`            | quarter  | the snapshot grid                                            |
 | `site`             | `month`            | 6 months | the snapshot closing row (last 3) and the trend              |
 | `site`             | `all`              | quarter  | the headline score in the operational impact row             |
-| `zone`             | `all`              | quarter  | the Zones column, and the site total from `pagination.total` |
+| `zone`             | `all`              | quarter  | the zone rows, only for a single-level site                  |
 
 - `local_end_date` is exclusive, so pass the first of the month after the last complete month
 - Level rows are levels x months, so page at `limit:80` when levels x 3 exceeds 80
-- The zone rows carry `level_id` and `level_name`, so never call once per level with `level_ids`. Page the unfiltered call at `limit:80` and tally the levels yourself: 200 zones is three calls whatever the building's height, and `pagination.total` on the first page is the site total. The rows also carry `zone_name` and `zone_value`, which is what the single-level case needs, so that costs nothing extra either
+- The Zones column is `count_indoor_environment_zones(metric:"temperature", site_ids:[id], aggregate_entity:"level")`: one row per level carrying `included_point_count`, joined to the level rows on `level_id`, and a level it does not return counts 0. It reads current configuration and takes no dates, so it goes in the main batch with the rest, and its rows sum to the thermal zones figure in the analytics overview. Never page zone rows to count them
+- The zone rows are for the single-level case only, which the level rows reveal, so fetch them after, paging at `limit:80`. They carry `zone_name` and `zone_value`, which is what that case lists
 - Where a tower is tall enough that the column stops earning its width, drop the column and give the site total in the notes. A tower's floors carry near-identical zone counts, so past about a dozen levels the column prints the same number over and over. That is a display decision now, not a fetch one
-- Do not substitute `platform.levels` or `platform.zones`. They count zone objects, not zone temperature points
+- Do not substitute `search_zones`, `platform.levels` or `platform.zones`. They list zone objects, not zone temperature points
