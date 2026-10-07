@@ -5,7 +5,7 @@
 
 Everything mechanical lives here: heatmap rows and their band colours, chart
 geometry recomputed from each series' own range, the leaderboard, the wins and
-their photos, the platform links and every masthead slot. The narrative
+their photos, the run hours chart, the platform links and every masthead slot. The narrative
 sentences are written by the model and passed in through the bundle; nothing in
 this file invents prose.
 """
@@ -21,7 +21,7 @@ def xs(n):
     return [round(80 + step * i) for i in range(n)]
 BASELINE, LEFT, RIGHT = 196, 36, 670
 # Win impact tags. The key is the PEAK `impacts` value, which is also the class
-# the dot colour hangs off; the label is what prints. See references/key-wins.md
+# the dot colour hangs off; the label is what prints. See references/actions-and-wins/key-wins.md
 # for how a win's impact is chosen from its action tickets.
 IMPACTS = {"energy": "Energy", "comfort": "Comfort", "reliability": "Reliability",
            "water": "Water", "safety": "Safety", "other": "Other"}
@@ -267,7 +267,7 @@ def main():
     if a.photos_out:
         os.makedirs(a.photos_out, exist_ok=True)
     D = json.load(open(a.data, encoding="utf-8"))
-    sections = D.get("sections") or "equipment-health,indoor-environment,alerts-resolved,key-wins"
+    sections = D.get("sections") or "equipment-health,indoor-environment,actions-and-wins,run-hours"
 
     tmp = tempfile.mktemp(suffix=".html")
     subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "scaffold",
@@ -298,7 +298,7 @@ def main():
         s = set_links(s, D["links"])
 
     # operational impact rows, in the order the skill fixes
-    if "impact" in D:
+    if D.get("impact"):
         rows = []
         for r in D["impact"]:
             sub = r["sub"]
@@ -370,7 +370,7 @@ def main():
         for wn, w in enumerate(D["wins"], 1):
             photos = w.get("photos") or []
             if len(photos) > MAX_PHOTOS:
-                sys.exit("fill: %d photos on %r — %d at most (references/key-wins.md)"
+                sys.exit("fill: %d photos on %r — %d at most (references/actions-and-wins/key-wins.md)"
                          % (len(photos), w["heading"], MAX_PHOTOS))
             # One photo sits beside the text; two to four run in a row under the heading.
             side = len(photos) == 1
@@ -407,6 +407,22 @@ def main():
         i = m.start()
         j = s.rindex("</div>", i, s.index("</section>", i)) + len("</div>")
         s = s[:i] + "\n\n".join(blocks) + s[j:]
+
+    # run hours: the chart and its date line as references/run-hours/scripts/run_hours.py
+    # drew them, and the note under the chart
+    if "run_hours" in D:
+        rh = D["run_hours"]
+        path = os.path.join(os.path.dirname(os.path.abspath(a.data)), rh["chart"])
+        drawn = json.load(open(path, encoding="utf-8"))
+        eyebrow = '<p class="eyebrow">Equipment run hours</p>'
+        if eyebrow not in s:
+            sys.exit("fill: the bundle carries run_hours but run-hours is not in its sections")
+        i = s.index('<div class="rh">')
+        j = s.index("<!-- /rh -->", i) + len("<!-- /rh -->")
+        s = s[:i] + '<div class="rh">\n' + drawn["html"] + "\n  </div>" + s[j:]
+        k = s.index('<p class="h2note">', s.index(eyebrow))
+        s = s[:k] + '<p class="h2note">' + drawn["dateline"] + s[s.index("</p>", k):]
+        s = note(s, eyebrow, rh["note"])
 
     open(a.out, "w", encoding="utf-8").write(s)
     n = s.count("<figure>")

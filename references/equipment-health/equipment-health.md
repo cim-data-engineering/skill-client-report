@@ -102,12 +102,13 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 
 ## Data recipes
 
-All six calls are `search_equipment_health_scores`. It takes no `limit` and returns every group, so none of them page.
+Every call here is `search_equipment_health_scores`. It takes no `limit` and returns every group, so none of them page.
 
 | `aggregate_entities` | `aggregate_period` | Window   | Feeds                                            |
 | -------------------- | ------------------ | -------- | ------------------------------------------------ |
 | `metadata_type`      | `month`            | quarter  | heatmap cells                                    |
-| `metadata_type`      | `all`              | quarter  | the Equipment and Rules counts                   |
+| `metadata_type`      | `all`              | quarter  | the Rules count                                  |
+| `equipment`          | `all`              | quarter  | the Equipment count                              |
 | `site`               | `month`            | 6 months | snapshot site row (last 3), Chart 1 (all 6)      |
 | `site`               | `all`              | quarter  | the headline score in the operational impact row |
 | `priority`           | `all`              | quarter  | the checks and labor cost rows                   |
@@ -116,4 +117,5 @@ All six calls are `search_equipment_health_scores`. It takes no `limit` and retu
 - `local_end_date` is exclusive, so pass the first of the month after the last complete month. A mid-month bound is refused for scanning too many rows
 - Executions sum across priorities for the checks total, and the per-priority split drives the labor model
 - Take distinct equipment and rule counts from an `all` call, never by summing months or picking one. It counts distinct across the whole window, so it is legitimately higher than any single month
+- The type rows carry rules but no equipment count, and the scores do not group by `metadata_type` and `equipment` together, so the Equipment column counts distinct `equipment_id` per type off the `equipment` rows, which carry their type
 - Scores never sum. The site row is its own rollup

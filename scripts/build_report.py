@@ -3,15 +3,15 @@
 
 The reference report is the design system compiled: its <style> block holds every
 DESIGN.md token and component, and each report section is marked off as a part.
-Rather than re-emit ~19KB of CSS and the markup of sections nobody asked for,
-scaffold the file you need and edit the sample data in place.
+fill_report.py scaffolds the chosen sections from it and fills them from the
+bundle, so a report carries only the parts it was asked for.
 
     scaffold  copy the shell, the always-on parts and the selected sections
     part      print one part's markup, to add a section to a report already built
     check     look for sample data, sample links and markers left behind
     parts     list part names and sizes
 
-    python3 scripts/build_report.py scaffold --sections equipment-health,key-wins \
+    python3 scripts/build_report.py scaffold --sections equipment-health,actions-and-wins \
         --out skyline-q3.html
     python3 scripts/build_report.py check skyline-q3.html
 """
@@ -26,11 +26,15 @@ SECTION_PARTS = {
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],
     "alerts-resolved": ["monthly-alerts", "actions-leaderboard"],
     "key-wins": ["key-wins"],
+    "run-hours": ["equipment-run-hours"],
 }
+# The section prompt's choices. Actions and key wins is one choice over two
+# sections: they share their pulls, and Key wins alone drops when no win qualifies.
+CHOICES = {"actions-and-wins": ["alerts-resolved", "key-wins"]}
 # Parts that render for any of several sections. Operational impact is a frame
 # around rows the sections own, so it only stands if one of them is in.
 ROW_SECTIONS = ["equipment-health", "indoor-environment", "alerts-resolved"]
-PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS}
+PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS + ["run-hours"]}
 PART_RE = re.compile(r"^\s*<!-- part: ([a-z-]+) -->\s*$")
 IF_RE = re.compile(r"^\s*<!-- if: ([a-z-, ]+) -->\s*$")
 ENDIF_RE = re.compile(r"^\s*<!-- endif -->\s*$")
@@ -50,11 +54,18 @@ def read_parts():
     return parts
 
 
+def section_list(arg):
+    """A --sections value as section names, each choice expanded to its sections."""
+    if arg in (None, "all"):
+        return list(SECTION_PARTS)
+    return [x for n in arg.split(",") if n.strip() for x in CHOICES.get(n.strip(), [n.strip()])]
+
+
 def resolve(sections):
     unknown = [s for s in sections if s not in SECTION_PARTS]
     if unknown:
         sys.exit("unknown section(s): %s\nchoose from: %s"
-                 % (", ".join(unknown), ", ".join(SECTION_PARTS)))
+                 % (", ".join(unknown), ", ".join(list(SECTION_PARTS) + list(CHOICES))))
     keep = list(ALWAYS)
     for part, owners in PART_IF.items():
         if any(o in sections for o in owners):
@@ -96,8 +107,7 @@ def tidy(lines):
 
 
 def cmd_scaffold(args):
-    sections = [s.strip() for s in args.sections.split(",") if s.strip()] \
-        if args.sections not in (None, "all") else list(SECTION_PARTS)
+    sections = section_list(args.sections)
     keep = resolve(sections)
     body = []
     for name, lines in read_parts():
@@ -125,9 +135,9 @@ def sample_strings():
                 # is deliberately absent — it carries window and method wording
                 # that is correct for every report and recurs legitimately.
                 r'<p class="chartnote">([^<]+)</p>', r'<p class="snap">([^<]+)</p>',
-                # operational impact carries the sample's headline figures and the
-                # sentence under each; both are site data, and both were slipping through.
-                r'<span class="fig">([^<]+)</span>', r'<div class="isub">(.*?)</div>'):
+                # an operational impact row is matched whole, figure to sentence: the
+                # sentence alone is a template a real site can repeat word for word.
+                r'(<span class="fig">[^<]+</span> <span class="figcap">[^<]+</span>\s*<div class="isub">.*?</div>)'):
         for m in re.finditer(pat, src, re.S):
             found.add(m.group(1))
     # a win's body is its one unclassed paragraph, wherever the impact tag, the
@@ -154,6 +164,7 @@ def cmd_check(args):
 
     hits = [s for s in sample_strings() if s in text]
     for h in hits[:20]:
+        h = " ".join(re.sub(r"<[^>]+>", " ", h).split())
         errors.append("sample data still in the report: %s" % (h[:90] + ("…" if len(h) > 90 else "")))
     if len(hits) > 20:
         errors.append("... and %d more sample values" % (len(hits) - 20))
@@ -168,7 +179,8 @@ def cmd_check(args):
     rid = re.search(r"site_ids=(\d+)", ref)
     rname = re.search(r"PEAK · ([^,<]+)", ref)
     for token in [m.group(1) for m in (rid, rname) if m]:
-        if token in text:
+        # a whole id, not the same digits inside a longer one such as a point id
+        if re.search(r"(?<!\d)%s(?!\d)" % re.escape(token), text):
             warnings.append("reference site's own %s appears — fine only if this "
                             "report really is for it" % ("id %s" % token if token.isdigit() else "name %r" % token))
 
@@ -177,7 +189,7 @@ def cmd_check(args):
     kw = text.find('<p class="eyebrow">Key wins</p>')
     if kw != -1 and not re.search(r'class="win[ "]', text[kw:text.find("</section>", kw)]):
         errors.append("Key wins section carries no wins — delete the section rather "
-                      "than shipping the heading (references/key-wins.md)")
+                      "than shipping the heading (references/actions-and-wins/key-wins.md)")
 
     # A win photo has to travel inside the file. An attachment link is signed and
     # short-lived, so a photo left as a link breaks soon after the report is sent.
@@ -187,7 +199,11 @@ def cmd_check(args):
             errors.append("placeholder photo tile still in the report — fill the wins from the bundle")
         elif not src.startswith("data:"):
             errors.append("win photo linked rather than embedded: %.60s… — download it and pass "
-                          "the file to fill_report.py (references/key-wins.md)" % src)
+                          "the file to fill_report.py (references/actions-and-wins/key-wins.md)" % src)
+
+    # The run hours sample chart is a placeholder; run_hours.py draws the real one.
+    if 'data-sample="run-hours"' in text:
+        errors.append("sample run hours chart still in the report — fill it from the bundle's run_hours")
 
     # A heatmap trimmed for a short-history site has to lose the same columns
     # from its header and from every row, so a ragged table means a missed row.
@@ -213,8 +229,7 @@ def cmd_check(args):
 def cmd_part(args):
     """One part on its own, for adding a section to a report that already exists.
     Re-scaffolding would throw away the filled-in report; this does not."""
-    sections = [x.strip() for x in args.sections.split(",") if x.strip()] \
-        if args.sections not in (None, "all") else list(SECTION_PARTS)
+    sections = section_list(args.sections)
     resolve(sections)
     for name, lines in read_parts():
         if name == args.name:
@@ -234,7 +249,9 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("scaffold", help="build a working file with only the parts needed")
-    s.add_argument("--sections", help="comma-separated: %s (default all)" % ", ".join(SECTION_PARTS))
+    s.add_argument("--sections", help="comma-separated: %s (default all)"
+                                      % ", ".join(["equipment-health", "indoor-environment"] + list(CHOICES)
+                                                  + ["run-hours"]))
     s.add_argument("--out", required=True)
     s.set_defaults(func=cmd_scaffold)
     o = sub.add_parser("part", help="print one part's markup, for a report already built")

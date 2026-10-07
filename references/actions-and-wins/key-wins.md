@@ -1,6 +1,6 @@
 # Key wins
 
-Owns the key wins section. No operational impact row. Scaffold part: `key-wins`.
+Owns the key wins section. No operational impact row. Scaffold part: `key-wins`. One choice in the section prompt with `alerts-resolved.md`, Actions and key wins.
 
 This is the section the facility manager reads first and the one they forward to the owner. Every other section says how the building performed; this one says what was found, who picked it up and where it got to. It is the evidence the building is in good hands: problems caught early and acted on, rather than counted. It is what the owner is paying for.
 
@@ -11,7 +11,7 @@ Date: the quarter
 
 **Voice:**
 
-[Writing the narrative](../SKILL.md#writing-the-narrative) governs every sentence in the report. It matters most here, and wins add two rules of their own:
+[Writing the narrative](../../SKILL.md#writing-the-narrative) governs every sentence in the report. It matters most here, and wins add two rules of their own:
 
 - Write as the engineer on the job: what was wrong, what has been done and by whom, where it stands. Then stop
 - Say what was done, not what it demonstrates. "Replaced the belts and had it running the next morning" beats "restored reliability to the unit"
@@ -77,7 +77,7 @@ This is a client deliverable, so the section carries wins or it does not appear.
 | Photos    | Its Photos call, `ticket_ids:[every ticket the chosen wins link]`, once the wins are settled      |
 | Level     | One `platform.equipment` on those wins' `equipment_ids`, in the same batch as Photos               |
 
-Key wins runs its own pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, which is most of them, and holding to the quarter cuts it again, leaving a set small enough to carry `comments` inline so the candidates and their evidence arrive together.
+Key wins runs its own pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, and holding to the quarter narrows it again, so the candidates can carry `comments` inline and arrive with their evidence.
 
 The in-flight candidates need no pull of their own: the Open now call already carries `summary` and `comment_count`. Choose from those rows, then fetch the histories with one call passing the whole `ticket_ids` list and selecting `comments` with `limit:8` and `user_only:true`. Never call `search_action_comments` in a loop, one ticket at a time.
 
@@ -95,10 +95,10 @@ Five patterns are visible in the candidate rows themselves and need no comment r
 
 Photos ride on the ticket as the `attachments` sub-field, so one `tickets.tickets` call covers every win. Select `ticket_id` and only these five, as dotted paths: `attachments.attachment_id`, `attachments.file_name`, `attachments.mime_type`, `attachments.preview.link.url` and `attachments.link.url`. Every link is a signed URL well over a thousand characters long and a ticket can carry dozens of attachments, so the response comes back as a file; a refusal for size means splitting the `ticket_ids` in two. The links lapse twenty minutes after the call, so download promptly, and re-run the call for fresh links rather than retrying one that has lapsed.
 
-Look at every candidate before choosing, since a file name says nothing about the frame. The preview is a small copy, already upright and cheap to look at, and tiling a ticket's previews into one numbered sheet makes the choice one look per ticket. Where `preview` is null the original at `link` is the only copy, so shrink it before you look. Keep the image mime types; a screenshot is a candidate like any photo, whether it comes through as PNG or JPEG. The same photo is often uploaded more than once under the same file name, so keep one copy.
+Look at every candidate before choosing, since a file name says nothing about the frame. The preview is a small copy, already upright, and tiling a ticket's previews into one numbered sheet makes the choice one look per ticket. Where `preview` is null the original at `link` is the only copy, so shrink it before you look. Keep the image mime types; a screenshot is a candidate like any photo, whether it comes through as PNG or JPEG. The same photo is often uploaded more than once under the same file name, so keep one copy.
 
 Download the originals you chose, never the previews, which print soft, into a folder beside the bundle, and list them on the win in reading order: `"photos": ["photos/ch02-sensor.jpg", "photos/ch02-new-sensor.jpg"]`. Where the part that matters sits off-centre or small in the frame, give that entry as `{"src": "…", "focus": [x, y], "zoom": 2}`: `focus` is the point to keep centred, as fractions across and down the frame, and `zoom` crops that many times tighter, for one detail of a wide shot or one panel of a screenshot. `fill_report.py` turns each photo upright, crops it to its tile, shrinks it and embeds it, so the report stays one file. Re-encoding also drops the original's EXIF block, the phone's GPS position included, which is why a photo reaches the report only through the script. Fill with `--photos-out <dir>` and look at every tile before handing over: it saves each one exactly as it prints, and a crop can cut off the very detail that earned the photo its place.
 
-Where the links cannot be fetched from where you are running, the wins go out without photos; say so in chat. Never leave a link on the page in their place: it breaks when it lapses, and `check` rejects it.
+Where the links cannot be fetched from where you are running, the wins go out without photos; say so in chat. Comments are read where they come back and never copied into a file: the wins are written in your own words. Never leave a link on the page in their place: it breaks when it lapses, and `check` rejects it.
 
 The level comes off the equipment, not the ticket. Take the `equipment_ids` from the Impact rows and select `equipment_id`, `zone.level.level_name` and `zone.level.system`. A level with `system:true` is PEAK's placeholder, `__SYSTEM__`, not a place, so that equipment gets no line.

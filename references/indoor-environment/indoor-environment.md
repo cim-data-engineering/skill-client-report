@@ -92,5 +92,4 @@ The scores are `search_indoor_environment(metric:"temperature")`, and the zone c
 - Level rows are levels x months, so page at `limit:80` when levels x 3 exceeds 80
 - The Zones column is `count_indoor_environment_zones(metric:"temperature", site_ids:[id], aggregate_entity:"level")`: one row per level carrying `included_point_count`, joined to the level rows on `level_id`, and a level it does not return counts 0. It reads current configuration and takes no dates, so it goes in the main batch with the rest. Summed over the levels the level rows return, it is the site row and the analytics overview's thermal zones figure. Never page zone rows to count them
 - The zone rows are for the single-level case only, which the level rows reveal, so fetch them after, paging at `limit:80`. They carry `zone_name` and `zone_value`, which is what that case lists
-- The column stays however tall the building: the one count call answers every level at once, so a tower costs no more than a single floor
 - Do not substitute `search_zones`, `platform.levels` or `platform.zones`. They list zone objects, not zone temperature points
