@@ -180,6 +180,14 @@ def cmd_draw(a):
     if later:
         print("\nNote under the chart: " + chart["note"])
     print("\nBuild notes, for chat:\n" + notes.strip())
+    left = {}
+    for u in json.loads((work / "plan.json").read_text())["units"]:     # as the build left it
+        if u.get("why"):
+            left.setdefault(u["why"], []).append(u["name"])
+    if left:
+        print("\nLeft off the chart, every unit by reason, for chat:")
+        for why, names in sorted(left.items(), key=lambda kv: -len(kv[1])):
+            print("- %s (%d): %s" % (why, len(names), ", ".join(names)))
     if later:
         print("\nNot shown, beyond the first pass: " + ", ".join(u["name"] for u in later))
 
