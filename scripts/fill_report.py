@@ -24,7 +24,7 @@ The bundle's keys, each drawn by the code below that reads it:
     trend_eh, trend_checks, trend_comfort, alerts   the charts
     leaderboard     one row per assignee: name, company, resolved, open
     wins            the key wins, with their refs, impact, level and photos
-    run_hours       {"chart": the chart.json run_hours.py draw wrote, "note": ...}
+    run_hours       {"chart": the chart.json run_hours.py draw wrote}
 """
 import argparse, base64, io, json, os, re, subprocess, sys, tempfile
 
@@ -48,8 +48,8 @@ PHOTO_PX = 480
 SOFT_PX = 300     # below this a tile has under 1.5x its printed size, and prints visibly soft
 MAX_PHOTOS = 4
 # Section and chart-source links, keyed by bundle slot and found in the scaffold
-# by the link text that follows them. Each one is the platform_link that section's
-# own PEAK call returned; see the platform links rules in SKILL.md. Row links ride
+# by the link text that follows them. Each one is built from the URL its section's
+# reference writes out; see the links rules in SKILL.md. Row links ride
 # on their rows and ticket links on their wins, so neither is a slot here.
 LINK_SLOTS = {"equipment_health": "See live equipment health dashboard",
               "comfort": "See live indoor environment dashboard",
@@ -96,8 +96,8 @@ def href(url):
 
 
 def set_links(s, links):
-    """Point each link row at the URL its own PEAK call returned. A slot set to
-    null drops that link rather than leaving the scaffold's sample one standing."""
+    """Point each link row at its URL. A slot set to null drops that link rather
+    than leaving the scaffold's sample one standing."""
     for slot, url in links.items():
         if slot not in LINK_SLOTS:
             raise SystemExit("fill: unknown link slot %r — one of %s" % (slot, ", ".join(LINK_SLOTS)))
@@ -158,8 +158,28 @@ def line_chart(d, months):
     top, bot = 50.0, 190.0
     y = lambda val: top + (hi - val) * (bot - top) / (hi - lo)
     out = []
+    # Value labels sit above or below each point; a threshold label takes the first of
+    # four places (left or right end, above or below its line) that no value label covers.
+    boxes = []
+    for x, val in zip(xs(len(v)), v):
+        ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
+        w = 6.2 * len("%.*f%%" % (dp, val))
+        boxes.append((x - w / 2 - 3, ly - 10, x + w / 2 + 3, ly + 3))
+        boxes.append((x - 6, y(val) - 6, x + 6, y(val) + 6))
+    def clear(x0, y0, x1, y1):
+        return all(x1 < a or x0 > c or y1 < b or y0 > e for a, b, c, e in boxes)
     for tv, tlabel in th:
-        out.append('        <text class="axis" x="44" y="%.1f">%s threshold</text>' % (y(tv) - 8, tlabel))
+        text, ty = "%s threshold" % tlabel, y(tv)
+        w = 5.6 * len(text)
+        for x, yy, anchor in ((44, ty - 8, "start"), (44, ty + 14, "start"),
+                              (RIGHT - 4, ty - 8, "end"), (RIGHT - 4, ty + 14, "end")):
+            x0 = x if anchor == "start" else x - w
+            if clear(x0, yy - 9, x0 + w, yy + 2):
+                break
+        else:
+            x, yy, anchor = 44, ty - 8, "start"
+        out.append('        <text class="axis" x="%d" y="%.1f"%s>%s</text>'
+                   % (x, yy, ' text-anchor="end"' if anchor == "end" else "", text))
         out.append('        <line class="benchline" x1="%d" y1="%.1f" x2="%d" y2="%.1f"/>'
                    '<text class="axis" x="4" y="%.1f">%.1f</text>'
                    % (LEFT, y(tv), RIGHT, y(tv), y(tv) + 3, tv))
@@ -176,12 +196,17 @@ def line_chart(d, months):
             % (d["alt"], "\n".join(out)))
 
 
-def grouped_bar(d, months):
+def grouped_bar(d, months, shared=False):
     a, b = d["a"], d["b"]
     # Compact labels keep long values from colliding; the bundle may supply its own.
     la = d.get("labels_a") or [d.get("fmt_a", "%s") % v for v in a]
     lb = d.get("labels_b") or [d.get("fmt_b", "%s") % v for v in b]
-    amax, bmax = max(a) * 1.06, max(b) * 1.06
+    # Two units (checks against dollars) take a scale each; one unit (actions raised
+    # against resolved) shares one, or a 17 draws as tall as a 69.
+    if shared:
+        amax = bmax = max(max(a), max(b), 1) * 1.06
+    else:
+        amax, bmax = max(max(a), 1) * 1.06, max(max(b), 1) * 1.06
     H = 140.0
     out = []
     C = xs(len(months))
@@ -348,7 +373,8 @@ def main():
         if key not in D:
             continue
         c = D[key]
-        svg = line_chart(c, months["trend"]) if kind == "line" else grouped_bar(c, months["trend"])
+        svg = (line_chart(c, months["trend"]) if kind == "line"
+               else grouped_bar(c, months["trend"], shared=key == "alerts"))
         s = swap_svg(s, anchor, svg)
         s = note(s, c["note_after"], c["note"])
 
@@ -425,11 +451,10 @@ def main():
         j = s.rindex("</div>", i, s.index("</section>", i)) + len("</div>")
         s = s[:i] + "\n\n".join(blocks) + s[j:]
 
-    # run hours: the chart and its date line as references/run-hours/scripts/run_hours.py
-    # drew them, and the note under the chart
+    # run hours: the chart, its date line and any note under it, all as
+    # references/run-hours/scripts/run_hours.py drew them
     if "run_hours" in D:
-        rh = D["run_hours"]
-        path = os.path.join(os.path.dirname(os.path.abspath(a.data)), rh["chart"])
+        path = os.path.join(os.path.dirname(os.path.abspath(a.data)), D["run_hours"]["chart"])
         drawn = json.load(open(path, encoding="utf-8"))
         eyebrow = '<p class="eyebrow">Equipment run hours</p>'
         if eyebrow not in s:
@@ -439,7 +464,11 @@ def main():
         s = s[:i] + '<div class="rh">\n' + drawn["html"] + "\n  </div>" + s[j:]
         k = s.index('<p class="h2note">', s.index(eyebrow))
         s = s[:k] + '<p class="h2note">' + drawn["dateline"] + s[s.index("</p>", k):]
-        s = note(s, eyebrow, rh["note"])
+        if drawn.get("note"):
+            s = note(s, eyebrow, drawn["note"])
+        else:                               # the chart carries every unit, so nothing goes under it
+            k = s.index('\n  <p class="chartnote">', s.index(eyebrow))
+            s = s[:k] + s[s.index("</p>", k) + 4:]
 
     open(a.out, "w", encoding="utf-8").write(s)
     n = s.count("<figure>")

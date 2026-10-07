@@ -12,7 +12,8 @@ Nothing resolved in the window means no section. The recovery rate has no denomi
 | ---------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | See below alert recovery benchmark | x faults resolved with x% verified recovery | Resolved alerts with status closed over the quarter, on rules still running | Median time to resolve of x days. Based on the alert's linked action creation and resolution date, not the alert's own creation and resolution date |
 
-Section link, labelled "See live issues being resolved": the `platform_link` off the plain verified recovery count in Data recipes, which opens the alerts this row is counting. Bundle slot `alerts`.
+Section link, labelled "See live issues being resolved", bundle slot `alerts`:
+`https://ace.cimenviro.com/tickets/escalated/search?tickets_order_by=updated_at%20DESC&site_ids={{site_id}}&status_ids=6&archived=false`
 
 ## Alert recovery benchmark
 
@@ -30,7 +31,7 @@ Recovery rate is alerts resolved in the period with fault status recovered divid
 Faults triaged and resolved
 Date: the six complete months ending with the quarter
 
-Grouped bars by month.
+Grouped bars by month, both series on one scale, since both count actions.
 
 - **Raised**: actions created in the month, one per action
 - **Resolved**: actions resolved in the month, one per action
@@ -64,7 +65,7 @@ Date: the 6 month window
 
 **Links:**
 
-- Add link to the PEAK actions leaderboard over the same 6 month window. No call answers this page, `count_tickets` included, so it is the one link in the report built from parts: substitute the site id, the 6 month window's first day and the quarter's last day, both `YYYY-MM-DD`. Bundle slot `leaderboard`
+- Add link to the PEAK actions leaderboard over the same 6 month window, bundle slot `leaderboard`: substitute the site id, the 6 month window's first day and the quarter's last day, both `YYYY-MM-DD`
 - `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=assignee`
 
 ## Notes band items
@@ -89,6 +90,6 @@ All of it comes from the action ticket block in SKILL.md, plus two alert counts.
 
 - Open now is a different question from resolved: work raised before the window can still be open today, so count by assignee as at the issue date
 - The leaderboard joins the two assignee counts on `assignee_id`, keeping anyone with open work and nothing resolved. Leave out the row with a null id, which is unassigned work, and any agent by name. `count_tickets` names each assignee but not their company, so take `entity{name}` for the same id off the Resolved rows, or off the Open now rows for someone with nothing resolved
-- Verified recovery needs a rate, not rows. Call `search_alert_tickets(status:"closed", rule_states:["running"])` resolved over the quarter, `local_resolved_start`/`local_resolved_end`, twice with `limit:1`, once plain and once with `fault_statuses:["recovered"]`, and divide the two `pagination.total` values. Never page the alerts to count them by hand. The plain call also carries the section link, so `limit:1` still answers both
+- Verified recovery needs a rate, not rows. Call `search_alert_tickets(status:"closed", rule_states:["running"])` resolved over the quarter, `local_resolved_start`/`local_resolved_end`, twice with `limit:1`, once plain and once with `fault_statuses:["recovered"]`, and divide the two `pagination.total` values. Never page the alerts to count them by hand
 - `count_tickets` is no substitute here: it cannot filter on alert status or rule state, so its rate takes in alerts this one leaves out
 - Those two are the only calls in the report that read alert tickets, so they do not run at all when this section is out

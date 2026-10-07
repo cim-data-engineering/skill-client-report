@@ -10,9 +10,9 @@ window  Takes the report's site out of the saved search_sites response, fixes
         <workdir>/window.json and prints the discovery and census calls to make.
 draw    Runs runhours_build.py over the saved first-pass history responses and
         draws the aggregate as static SVG in the report's design, since the report
-        carries no script. Writes <workdir>/chart.json for fill_report.py, and
-        prints the date line, the facts the note is written from and what to say
-        in chat.
+        carries no script. Writes <workdir>/chart.json for fill_report.py: the
+        chart, its date line, and a note under it only where field units were
+        left out to keep the chart to its first pass. Prints what to say in chat.
 
 The pull and the classification are skill-health-check's: runhours_plan.py,
 runhours_build.py and runhours_history.py beside this file, copied unchanged.
@@ -23,6 +23,7 @@ import json
 import re
 import subprocess
 import sys
+from collections import Counter
 from datetime import date, timedelta
 from html import escape
 from pathlib import Path
@@ -31,6 +32,7 @@ sys.dont_write_bytecode = True             # leave no __pycache__ beside the ski
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from runhours_history import read_results  # noqa: E402
+from runhours_plan import CAP_UNITS  # noqa: E402
 
 # Layout, in the report's chart units (the sheet draws every chart 682 wide).
 W, LABEL, RIGHT_PAD = 682, 168, 4
@@ -144,23 +146,6 @@ def render(agg):
     return "\n".join(out)
 
 
-def out_of_hours(agg):
-    """Hours each drawn unit ran outside working hours, most first."""
-    hours = []
-    for page in agg["pages"]:
-        for g in page["groups"]:
-            for r in g["rows"]:
-                n = 0
-                for a, b in r.get("runs") or []:
-                    for s in range(a, b):
-                        wh = agg["days"][s // 96]["wh"]
-                        if not wh or not (wh[0] <= s % 96 < wh[1]):
-                            n += 1
-                if n:
-                    hours.append((n / 4, r["name"], g["name"]))
-    return sorted(hours, reverse=True)
-
-
 def cmd_draw(a):
     work = Path(a.workdir)
     if not (work / "plan.json").is_file():
@@ -176,21 +161,26 @@ def cmd_draw(a):
     agg = json.loads((work / "agg.json").read_text())
     dateline = ("%s, the last full week of the quarter, against the site's working hours. Bars are exact to "
                 "15 minutes." % window["label"])
-    (work / "chart.json").write_text(json.dumps({"html": render(agg), "dateline": dateline}))
+    # field units past the first pass are the one omission the page states
+    later = [u for u in plan["units"] if u.get("pass") == 2 and u.get("pull")]
+    chart = {"html": render(agg), "dateline": dateline}
+    if later:
+        types = ["%s (%d)" % (t, n) for t, n in Counter(u["type_name"] for u in later).most_common()]
+        chart["note"] = ("Central plant is always drawn in full, and field units fill the chart up to %d units. "
+                         "Not shown are %d field units: %s."
+                         % (CAP_UNITS, len(later), ", ".join(types[:-1]) + " and " + types[-1] if len(types) > 1
+                            else types[0]))
+    (work / "chart.json").write_text(json.dumps(chart))
 
     rows = sum(len(g["rows"]) for p in agg["pages"] for g in p["groups"])
-    ooh = out_of_hours(agg)
-    later = [u["name"] for u in plan["units"] if u.get("pass") == 2 and u.get("pull")]
     print("Wrote %s: %d units drawn, %s, working hours from the %s." % (
         work / "chart.json", rows, window["label"],
         "user" if window.get("hours_source") == "user" else "site's settings in PEAK"))
-    print("\nDate line: " + dateline)
-    print("\nMost running outside working hours: "
-          + ("; ".join("%s (%s) %.1f h" % (n, g, h) for h, n, g in ooh[:6]) or "none"))
-    print("\nBuild notes, for the chart note and for chat:\n" + notes.strip())
     if later:
-        print("\nNot drawn, beyond the first pass of 100 units (say so in chat): %d units: %s"
-              % (len(later), ", ".join(later)))
+        print("\nNote under the chart: " + chart["note"])
+    print("\nBuild notes, for chat:\n" + notes.strip())
+    if later:
+        print("\nNot shown, beyond the first pass: " + ", ".join(u["name"] for u in later))
 
 
 def main():

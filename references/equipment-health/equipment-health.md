@@ -15,7 +15,8 @@ The row carries a movement, not a baseline: the quarter's last month minus its f
 | Continuous  | x automated equipment health checks ran 24/7 | Total executions over the quarter | Averaging x monthly checks across y scored rules |
 | Modelled    | $x labor cost avoided                        | See the labor cost model below | x hours and y.y working days of inspection time, a working day being 7.6 hours |
 
-Section link, labelled "See live equipment health dashboard": the `platform_link` off any of the quarter calls below, since they share a window. Bundle slot `equipment_health`.
+Section link, labelled "See live equipment health dashboard", bundle slot `equipment_health`:
+`https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Labor cost avoided model
 
@@ -71,7 +72,8 @@ Heatmap table of monthly equipment health scores, one row per equipment type, th
 
 **Links:**
 
-- Hyperlink equipment type name to the section link with `&equipment_type_ids={metadata_type_id}` appended, the row's own id off the heatmap call. Add chevron indicating link >
+- Hyperlink equipment type name to PEAK with the same quarter as a custom date range, add chevron indicating link >
+- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&equipment_type_ids={{equipment_type_id}}`
 
 ## Monthly equipment health
 
@@ -94,7 +96,8 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 
 **Links:**
 
-- Source link on Chart 1: the `platform_link` off the `site` × `month` 6 month call, so it opens the window the chart draws. Bundle slot `trend_eh`
+- Source link on Chart 1, over the 6 month window, bundle slot `trend_eh`. Use custom dates, not a relative range. The report is a fixed quarter and must keep showing the same window as it ages
+- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Notes band items
 

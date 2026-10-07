@@ -22,11 +22,11 @@ REF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "
 
 ALWAYS = ["shell", "masthead", "analytics-overview", "footer"]
 SECTION_PARTS = {
+    "run-hours": ["equipment-run-hours"],
     "equipment-health": ["equipment-health-snapshot", "monthly-equipment-health"],
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],
     "alerts-resolved": ["monthly-alerts", "actions-leaderboard"],
     "key-wins": ["key-wins"],
-    "run-hours": ["equipment-run-hours"],
 }
 # The section prompt's choices. Actions and key wins is one choice over two
 # sections: they share their pulls, and Key wins alone drops when no win qualifies.
@@ -250,8 +250,8 @@ if __name__ == "__main__":
     sub = ap.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("scaffold", help="build a working file with only the parts needed")
     s.add_argument("--sections", help="comma-separated: %s (default all)"
-                                      % ", ".join(["equipment-health", "indoor-environment"] + list(CHOICES)
-                                                  + ["run-hours"]))
+                                      % ", ".join(["run-hours", "equipment-health", "indoor-environment"]
+                                                  + list(CHOICES)))
     s.add_argument("--out", required=True)
     s.set_defaults(func=cmd_scaffold)
     o = sub.add_parser("part", help="print one part's markup, for a report already built")

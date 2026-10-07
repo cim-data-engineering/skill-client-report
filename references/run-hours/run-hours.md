@@ -15,7 +15,7 @@ Date: the week, as `run_hours.py draw` prints it
 - **Working hours** come from the site in PEAK, each day its own; a closed day has no working-hours column and all its running is outside hours. All days closed or all `00:00` stops the window step: ask the user what hours to assess against, never guess, and run it again with `--hours "Mon-Fri 08:00-18:00, Sat 09:00-13:00"`
 - **Equipment**: every type in `run-hours-signals.md`, central plant first, then field units. VAVs, chilled beams, lighting, lifts and meters stay out
 - **Sensors only**: a row is drawn only from a sensor that reports the unit running: a run status, a speed, current or power reading, or a compressor status. An enable, command or occupancy schedule says what the unit was told to do, not that it ran
-- **First pass**: up to 100 units, central plant always whole. The report draws the first pass; any units beyond it are named in chat
+- **First pass**: up to 100 units, central plant always whole. The report draws the first pass; a note under the chart counts any units beyond it by type, and chat names them
 
 **Which point draws the row:**
 
@@ -42,15 +42,12 @@ A reading holds for up to an hour, or one and a half times the point's own inter
 - Each unit name links to its PEAK chart for the same week with working hours on. No tool returns that page, so the build step writes the link
 - Level and zone sit right-aligned before the week where they fit; the full name, the point drawn and the location are in the hover
 
-**The note under the chart:**
+**Under the chart:**
 
-Two to four sentences, from what `run_hours.py draw` prints:
+- No note: the chart is the reading, and the legend and the notes item carry the encoding
+- The one exception is field units left out to keep the chart to its first pass. Then the draw step writes a single note under the chart saying how many and of which types, and `fill_report.py` places it
 
-- Lead with the plant that ran most outside working hours, named, and whether that is its job: a domestic hot water pump or a comms room unit on all week is expected, an air handler is not
-- Then anything on all week with nothing to check it against, which may be a stuck status rather than the unit running, and central plant that did not run at all
-- Say what it means for the building, not how the chart is drawn. The legend and the notes item carry the encoding
-
-Say in chat, not on the page: the units left off the chart and why (only an enable or schedule, no points in PEAK, alarms but no run point), equipment types the signals reference does not cover, and any units beyond the first pass.
+Say in chat, not on the page: the units left off the chart and why (only an enable or schedule, no points in PEAK, alarms but no run point, no history that week), equipment types the signals reference does not cover, and the names of any units beyond the first pass.
 
 ## Notes band item
 
@@ -62,7 +59,7 @@ The pull is `platform.equipment` for the units and their points, then `platform.
 
 1. **Window**: save the `search_sites` response, made with `include_working_hours:true`, as `site.json`, then run `python3 references/run-hours/scripts/run_hours.py window site.json runhours --site-id <the site's id> --quarter-end <the quarter's last day>`, which takes the report's site out of a search that matched several. It prints a discovery pull, every in-scope unit with its points nested, and two `limit:1` census counts. They go in the main batch; save each response in `runhours/` under the name printed, and page the discovery pull as the printout says when it has more
 2. **Plan**: `python3 references/run-hours/scripts/runhours_plan.py plan runhours runhours/discovery-0.json --census runhours/census-all.json runhours/census-known.json`, adding any further discovery pages after the first. It sorts the points by `run-hours-signals.md` and prints the history calls. Make them in parallel and save each as it names them. Where it says there is nothing to draw, the section is out: say why in chat
-3. **Draw**: `python3 references/run-hours/scripts/run_hours.py draw runhours` builds the week, writes `runhours/chart.json` with the chart and its date line, and prints the facts the note is written from and what to say in chat
-4. **Bundle**: `"run_hours": {"chart": "runhours/chart.json", "note": "<the note>"}`, the path relative to the bundle. `fill_report.py` lays in the chart, its date line and the note
+3. **Draw**: `python3 references/run-hours/scripts/run_hours.py draw runhours` builds the week, writes `runhours/chart.json` with the chart, its date line and any note under it, and prints what to say in chat
+4. **Bundle**: `"run_hours": {"chart": "runhours/chart.json"}`, the path relative to the bundle. `fill_report.py` lays in the chart, its date line and the note where there is one
 
 The discovery and history responses usually come back as files: copy each under its name rather than writing it out.

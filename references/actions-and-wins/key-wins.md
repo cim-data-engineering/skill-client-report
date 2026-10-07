@@ -37,7 +37,7 @@ Either way it needs a comment history showing a person engaged with it. Exclude 
 - Two to three sentences: what was wrong, what was changed, why it matters
 - Lead with the building outcome: comfort, reliability, energy, tenant experience
 - Rank by what the owner cares about. Critical plant over terminal units, permanent fixes over one-off resets
-- Link the action ticket as evidence with the `ticket_link` its row carries, using the action title as the link name, not the id
+- Link the action ticket as evidence, `https://ace.cimenviro.com/tickets/escalated/{{site_id}}/{{ticket_id}}`, using the action title as the link name, not the id
 - Where several tickets form one win, link them all
 - Where a win also appears in the equipment health snapshot, say so in the `snap` line. The scaffold keeps that line only when equipment health is in the report, so if it is not there the cross-reference is not yours to add
 
@@ -73,7 +73,7 @@ This is a client deliverable, so the section carries wins or it does not appear.
 | Fixed     | Its own pull: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline |
 | In flight | Its Open now call, `status_ids:[1,3,7]`                                                           |
 | Evidence  | Its Shortlist comments call, `ticket_ids:[the in-flight candidates you chose]`                    |
-| Impact    | One `search_action_tickets` on the same `ticket_ids`, reading `impacts`, `ticket_link` and, where a summary lacks one, `equipment_names` |
+| Impact    | One `search_action_tickets` on the same `ticket_ids`, reading `impacts` and, where a summary lacks one, `equipment_names` |
 | Photos    | Its Photos call, `ticket_ids:[every ticket the chosen wins link]`, once the wins are settled      |
 | Level     | One `platform.equipment` on those wins' `equipment_ids`, in the same batch as Photos               |
 
@@ -83,7 +83,7 @@ The in-flight candidates need no pull of their own: the Open now call already ca
 
 Equipment names are usually already in the summary, which reads "L15-VAV-C2 - Inspect VAV Airflow Leak". Only where one does not, resolve the shortlist with a single `search_action_tickets` call on their `ticket_ids`, which returns `equipment_names` per ticket.
 
-Impacts ride on that same call: `search_action_tickets` returns an `impacts` array on every row, so no extra pull is needed. Run it over the whole shortlist rather than only the tickets missing a name, since every win needs its impact and one call covers both, and the same rows carry `ticket_link`, the evidence url each win links to, so no ticket URL is assembled by hand. It comes back as a list — `["reliability"]`, sometimes `[]` — so a ticket with an empty array is a ticket with no impact set, which is the `Other` case above and worth naming in chat. The GraphQL pulls are no help here: `tickets.tickets` carries `impact_ids` as raw UUIDs with no names attached.
+Impacts ride on that same call: `search_action_tickets` returns an `impacts` array on every row, so no extra pull is needed. Run it over the whole shortlist rather than only the tickets missing a name, since every win needs its impact and one call covers both. It comes back as a list — `["reliability"]`, sometimes `[]` — so a ticket with an empty array is a ticket with no impact set, which is the `Other` case above and worth naming in chat. The GraphQL pulls are no help here: `tickets.tickets` carries `impact_ids` as raw UUIDs with no names attached.
 
 Five patterns are visible in the candidate rows themselves and need no comment read, so skip them:
 

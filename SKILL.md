@@ -26,10 +26,10 @@ Ask with one `AskUserQuestion` call and one multi-select question, header "Secti
 
 | Choice               | `sections` name      | Reference                                                              | Adds                                                                                                                                                                   |
 | -------------------- | -------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Equipment run hours  | `run-hours`          | `references/run-hours/run-hours.md`                                    | when each unit of plant ran across the last full week of the quarter, against the site's working hours                                                                 |
 | Equipment health     | `equipment-health`   | `references/equipment-health/equipment-health.md`                      | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends                                        |
 | Indoor environment   | `indoor-environment` | `references/indoor-environment/indoor-environment.md`                  | the thermal comfort row, comfort by level, the six month comfort trend                                                                                                 |
 | Actions and key wins | `actions-and-wins`   | `references/actions-and-wins/alerts-resolved.md` and `key-wins.md`     | the faults resolved row with verified recovery, six months of raised vs resolved, who closed the work, and the key wins: repairs made plus live work the owner should see |
-| Equipment run hours  | `run-hours`          | `references/run-hours/run-hours.md`                                    | when each unit of plant ran across the last full week of the quarter, against the site's working hours                                                                 |
 
 Each section keeps its reference in its own folder, and any scripts it needs beside it. Actions and key wins is one choice over two references, because both read the site's action tickets and share their pulls. Inside the bundle it is two sections, `alerts-resolved` and `key-wins`, so Key wins can drop on its own.
 
@@ -166,14 +166,16 @@ Every window closes on the **last complete month**, so nothing in the report cov
 
 Two windows, named here because the references reuse them. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use, so a trend carries the quarter plus the three months before it. Both close on the same month, so trends and snapshots share that bucket and must not disagree on it. Equipment run hours shows one week: the last full Monday-to-Sunday week inside the quarter.
 
-Links come back with the data, so the report does not build them. `search_equipment_health_scores`, `search_indoor_environment`, `search_alert_tickets` and `search_action_tickets` each return `platform_link`, that call's own filters and window opened in the PEAK web app, and a section's links are the ones its own calls returned:
+The references build PEAK links from these, so substitute rather than hardcoding dates:
 
-- A section link comes off one of that section's quarter calls, a chart's source link off its 6 month call. Take the URL as it is returned, so the report keeps showing its own window as it ages
-- A row link narrows the section link with that row's own filter appended, `&equipment_type_ids={id}` or `&level_ids={id}`. That is the URL the tool returns for the same call filtered that way, at no extra call, so never fetch a link per row
-- `platform_link` is null where the page cannot show what the call answered, which on this report includes the indoor environment level and zone groupings. Those rows take the site call's link and narrow it, per the rule above. If a link a section needs ever comes back null, drop it and say so in chat rather than assembling a URL by hand
-- Ticket links are per row: `search_action_tickets` carries `ticket_link` on every ticket, which is the evidence url Key wins links to
-- Pass the section and chart links to `fill_report.py` in `links`, keyed by slot, and it lays them into the scaffold. Row links ride on their rows and ticket links on their wins, so those two are already covered
-- The actions leaderboard is the one section link no call returns. `references/actions-and-wins/alerts-resolved.md` carries it written out. The run hours unit links are built by its scripts, since no tool returns that page either
+| Placeholder              | Value                                                  |
+| ------------------------ | ------------------------------------------------------ |
+| `{{quarter_start}}`      | first day of the quarter, `YYYY-MM-DD`                 |
+| `{{quarter_end}}`        | last day of the quarter, the last complete month's end |
+| `{{quarter_last_month}}` | first day of that last month, for `summary_ts`         |
+| `{{trend_start}}`        | first day of the 6 month window                        |
+
+Pass the section and chart links to `fill_report.py` in `links`, keyed by the slot each reference names, and it lays them into the scaffold. Row links ride on their rows and ticket links on their wins. The run hours unit links are built by its scripts.
 
 Always:
 
