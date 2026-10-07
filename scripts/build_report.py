@@ -152,6 +152,21 @@ def sample_strings():
     return sorted(s.strip() for s in found if len(s.strip()) >= 5 and s.strip() not in stop)
 
 
+MONTH = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"
+DATE = re.compile(r"(?:\d{1,2} )?%s(?: \d{4})? – (?:\d{1,2} )?%s \d{4}"        # June – August 2026
+                  r"|[A-Z][a-z]{2} \d{1,2} to [A-Z][a-z]{2} \d{1,2} %s \d{4}"   # Mon 24 to Sun 30 Aug 2026
+                  r"|\d{1,2} %s \d{4}" % (MONTH, MONTH, MONTH, MONTH))           # 1 September 2026
+MASTHEAD = re.compile(r"<dt>([^<]+)</dt><dd>([^<]*)</dd>")
+STATS = re.compile(r'<p class="k">([^<]+)</p><p class="n">(.*?)</p>')
+
+
+def dated_slots(html):
+    """The masthead values, date lines and footer: where a report states its dates."""
+    return [" ".join(" ".join(re.sub(r"<[^>]+>", " ", x).split()) for x in m if x)
+            for m in re.findall(r'<dd>([^<]*)</dd>|<p class="h2note">([^<]*)</p>|<footer>(.*?)</footer>',
+                                html, re.S)]
+
+
 def cmd_check(args):
     text = open(args.report, encoding="utf-8").read()
     errors, warnings = [], []
@@ -168,6 +183,37 @@ def cmd_check(args):
         errors.append("sample data still in the report: %s" % (h[:90] + ("…" if len(h) > 90 else "")))
     if len(hits) > 20:
         errors.append("... and %d more sample values" % (len(hits) - 20))
+
+    # The masthead, date lines and footer take the sample's values only where a
+    # slot was never filled: its author is invented, and its dates belong to a
+    # quarter of its own, which only a report for that same quarter shares.
+    ref_src = open(REF, encoding="utf-8").read()
+    ref_head, head = dict(MASTHEAD.findall(ref_src)), dict(MASTHEAD.findall(text))
+    if head.get("Author") == ref_head.get("Author"):
+        errors.append("the sample's author is still in the masthead: %s" % ref_head["Author"])
+    if head.get("Reporting period") != ref_head.get("Reporting period"):
+        ref_dates = {d for t in dated_slots(ref_src) for d in DATE.findall(t)}
+        for slot in dated_slots(text):
+            for d in sorted(ref_dates):
+                if d in slot:
+                    errors.append("sample date %r still in the report: %s" % (d, slot[:70]))
+    stats, ref_stats = STATS.findall(text), STATS.findall(ref_src)
+    same = [k for k, v in stats if (k, v) in ref_stats]
+    if stats and len(same) == len(stats):
+        errors.append("the analytics overview still carries the sample's figures")
+    elif same:
+        warnings.append("analytics overview %s %s the sample's — fine only if %s this site's"
+                        % (", ".join(same), "matches" if len(same) == 1 else "match",
+                           "it is" if len(same) == 1 else "they are"))
+
+    # The site photo travels inside the file, like the win photos.
+    for src in re.findall(r'<div class="sitephoto"><img src="([^"]*)"', text):
+        if not src.startswith("data:"):
+            errors.append("site photo linked rather than embedded: %.60s… — download it and pass it "
+                          "to fill_report.py as site_photo" % src)
+    if "<!-- Site photo slot:" in text:
+        errors.append("site photo slot still holds the sample sketch — pass site_photo, or leave it out "
+                      "to drop the slot")
 
     # The PEAK site id is a system id. It belongs in a link URL, never in the text.
     visible = re.sub(r'\s(?:href|src)="[^"]*"', "", text)

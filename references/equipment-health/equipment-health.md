@@ -24,10 +24,10 @@ Unique rules scored (by priority) over the quarter x annual mins saved per rule 
 
 | Priority | Annual checks | Mins per check | Annual mins saved per rule | Labor cost per hour ($US) | Annual cost saved per rule ($US) |
 | -------- | ------------- | -------------- | -------------------------- | ------------------------- | -------------------------------- |
-| P1       | 365           | 0.50           | 182.5                      | $100                      | $456.25                          |
-| P2       | 52            | 1.00           | 52.0                       | $100                      | $130.00                          |
-| P3       | 12            | 1.00           | 12.0                       | $100                      | $30.00                           |
-| P4-5     | 4             | 1.00           | 4.0                        | $100                      | $10.00                           |
+| P1       | 365           | 0.50           | 182.5                      | $100                      | $304.17                          |
+| P2       | 52            | 1.00           | 52.0                       | $100                      | $86.67                           |
+| P3       | 12            | 1.00           | 12.0                       | $100                      | $20.00                           |
+| P4-5     | 4             | 1.00           | 4.0                        | $100                      | $6.67                            |
 
 Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the days monitored in the period.
 
@@ -101,7 +101,7 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 
 ## Notes band items
 
-- **Labor cost avoided.** The model above, with the region's rate named
+- **Labor cost avoided.** The model above, with the period's days and the region's rate named: the scaffold's `{{quarter_days}}` and `{{labour_rate}}`, for example `92` and `AUD 150/hr`
 
 ## Data recipes
 

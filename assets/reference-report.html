@@ -774,10 +774,10 @@ L06</title>AC-07</text></a><text class="rh-where" x="162" y="153.0" text-anchor=
     <li><strong>Run hours.</strong> Each row is one unit, drawn from a sensor that reports it running: a run status, or a speed, current or power reading. An enable or schedule says what the unit was told to do, not that it ran, so it never draws a row. Where status and speed disagree, the one showing less running is kept, since the usual faults all add hours. Grey columns are the site's working hours in PEAK; hatching marks no reliable data.</li>
     <!-- endif -->
     <!-- if: equipment-health -->
-    <li><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over the 92-day period, valued at AUD 150/hr for this site's region.</li>
+    <li><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over the {{quarter_days}}-day period, valued at {{labour_rate}} for this site's region.</li>
     <!-- endif -->
     <!-- if: indoor-environment -->
-    <li><strong>Thermal comfort score.</strong> The share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK and is 21–24.9 °C across this building, so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows.</li>
+    <li><strong>Thermal comfort score.</strong> The share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK and is {{comfort_band}} across this building, so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows.</li>
     <!-- endif -->
     <!-- if: indoor-environment -->
     <li><strong>Zones</strong> in the indoor environment snapshot counts the zone temperature points configured for comfort scoring on each level shown, and its site row is the thermal zones figure in the analytics overview. A level whose points returned no score in the quarter is left out of both.</li>

@@ -21,6 +21,8 @@ heatmap's Chg between the two scores as printed.
                     section statements and date lines, the overview figures, notes
     replace_all     the same for wording that recurs across sections
     global_replace  the sample site id and window inside every link
+    site_photo      the site photo downloaded beside the bundle, from photo_url;
+                    left out where there is none, which drops the slot
     links           {slot: url or null}, per LINK_SLOTS
     impact          operational impact rows, in report order
     equipment_health, comfort                       the two heatmaps
@@ -338,7 +340,20 @@ def main():
             sys.exit("fill: anchor matched %d times: %.70s" % (s.count(old), old))
         s = s.replace(old, new)
 
-    # platform links, each one straight off the call that answered its section
+    # site photo: embedded square like the win photos, so the report opens offline;
+    # with none to embed, the slot goes rather than the sample's sketch
+    slot = re.search(r'\s*<!-- Site photo slot:.*?-->\s*<div class="sitephoto"[^>]*>.*?</div>', s, re.S)
+    if slot:
+        if D.get("site_photo"):
+            src = os.path.join(os.path.dirname(os.path.abspath(a.data)), D["site_photo"])
+            name = re.search(r"<h1>([^<]*)</h1>", s)
+            img = '<img src="data:image/jpeg;base64,%s" alt="%s">' % (
+                base64.b64encode(photo_jpeg(src, 1.0)).decode(), name.group(1) if name else "The site")
+            s = s[:slot.start()] + '\n    <div class="sitephoto">%s</div>' % img + s[slot.end():]
+        else:
+            s = s[:slot.start()] + s[slot.end():]
+
+    # platform links, each one built from its section's URL template
     if "links" in D:
         s = set_links(s, D["links"])
 

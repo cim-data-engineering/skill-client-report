@@ -23,7 +23,7 @@ The test is whether the facility manager would forward it to the owner as eviden
 - **Fixed.** A physical or control change described by whoever made it, so a closure verified rather than asserted
 - **Caught and being worked.** A fault the monitoring found that someone is visibly on: raised, assigned, diagnosed, contractor booked or parts on order. Finding a problem before the building finds it the hard way is worth as much to the owner as closing one, so it belongs on the page
 
-Either way it needs a comment history showing a person engaged with it. Exclude alerts resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
+Either way it needs a comment history showing a person engaged with it. An agent is not a person: Agent Hannah's follow-ups and "recovered and stable" closures, or any other agent's comments, show the monitoring at work, not someone on the job, so a history of only agent comments does not qualify. Exclude alerts resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
 
 **Display:**
 
@@ -79,19 +79,20 @@ This is a client deliverable, so the section carries wins or it does not appear.
 
 Key wins runs its own pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, and holding to the quarter narrows it again, so the candidates can carry `comments` inline and arrive with their evidence.
 
-The in-flight candidates need no pull of their own: the Open now call already carries `summary` and `comment_count`. Choose from those rows, then fetch the histories with one call passing the whole `ticket_ids` list and selecting `comments` with `limit:8` and `user_only:true`. Never call `search_action_comments` in a loop, one ticket at a time.
+The in-flight candidates need no pull of their own: the Open now call already carries `summary` and `comment_count`. Choose from those rows, then fetch the histories with one call passing the whole `ticket_ids` list and selecting `comments` with `limit:8` and `user_only:true`, and `text`, `author_full_name` and `created_at` inside it. Never call `search_action_comments` in a loop, one ticket at a time.
 
 Equipment names are usually already in the summary, which reads "L15-VAV-C2 - Inspect VAV Airflow Leak". Only where one does not, resolve the shortlist with a single `search_action_tickets` call on their `ticket_ids`, which returns `equipment_names` per ticket.
 
 Impacts ride on that same call: `search_action_tickets` returns an `impacts` array on every row, so no extra pull is needed. Run it over the whole shortlist rather than only the tickets missing a name, since every win needs its impact and one call covers both. It comes back as a list — `["reliability"]`, sometimes `[]` — so a ticket with an empty array is a ticket with no impact set, which is the `Other` case above and worth naming in chat. The GraphQL pulls are no help here: `tickets.tickets` carries `impact_ids` as raw UUIDs with no names attached.
 
-Five patterns are visible in the candidate rows themselves and need no comment read, so skip them:
+These patterns are visible in the candidate rows themselves and need no close read, so skip them:
 
 - `created_at` and `resolved_at` the same moment: nobody worked it
 - `comment_count: 0`: nothing to read, so it can never qualify. Filter it out with `has_comments:true` rather than dropping it by hand
 - A run of actions sharing a resolved timestamp to the second: a bulk cleanup, not a quarter of repairs
 - An action whose comments were already summarised as still in fault at closure: closed for tidiness while the fault stands
 - An open action with no comments: raised but not yet picked up, so there is nothing to show yet
+- Every comment from an agent: nobody has engaged with it yet
 
 Photos ride on the ticket as the `attachments` sub-field, so one `tickets.tickets` call covers every win. Select `ticket_id` and only these five, as dotted paths: `attachments.attachment_id`, `attachments.file_name`, `attachments.mime_type`, `attachments.preview.link.url` and `attachments.link.url`. Every link is a signed URL well over a thousand characters long and a ticket can carry dozens of attachments, so the response often comes back as a file; a refusal for size means splitting the `ticket_ids` in two. The links lapse twenty minutes after the call, so download promptly, and re-run the call for fresh links rather than retrying one that has lapsed.
 

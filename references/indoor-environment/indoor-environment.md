@@ -76,7 +76,7 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 
 ## Notes band items
 
-- **Thermal comfort score.** Share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK, typically 21-24.9C (68-79F), so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows
+- **Thermal comfort score.** Share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK, typically 21-24.9C (68-79F); name this site's from `thermal_comfort_min_temp` and `thermal_comfort_max_temp` on the site, in the scaffold's `{{comfort_band}}`, so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows
 - **Zones.** The count is the zone temperature points configured for comfort scoring on each level shown, and the site row is the thermal zones figure in the analytics overview. A level whose points returned no score in the quarter is left out of both
 
 ## Data recipes
