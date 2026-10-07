@@ -7,7 +7,7 @@ description: Generates a client-facing quarterly building performance review for
 
 A quarterly building performance review for one PEAK site: a self-contained A4 print-first HTML page the partner hands to a facilities manager. The reader chooses which sections it carries, and that choice decides what you fetch and what the page shows. A section that is out should cost nothing.
 
-Every figure, row, series, link, date line and methodology note comes from the section scripts. Your part is the PEAK calls, the key wins and the prose: the scripts exist so that no run works out a number, writes a derivation or reads the template, which is where the time used to go.
+Every figure, row, series, link, date line and methodology note comes from the section scripts. Your part is the PEAK calls, the key wins and the prose. Layout belongs to `scripts/fill_report.py`, which draws every table and chart from the bundle, so a change to how something looks is a change to that script or to `DESIGN.md`, never to a filled file.
 
 ## Build order
 
@@ -19,8 +19,6 @@ Work in one directory, `report/` below.
 4. **Bundle**: `python3 scripts/report.py bundle report` writes every figure into `report/data.json`, and `report/facts.md`: the facts each note is written from, and the prose slots to fill.
 5. **Write**: `report/prose.json`, one entry per slot `facts.md` names, by [Writing the narrative](#writing-the-narrative) and the "What you write" part of each chosen section's reference. The rest of a reference is what its script already did; read it only to answer a question it raises. With Actions and key wins in, choose the wins from the two candidate pulls and write `report/wins.json`; `next` then prints the impact and photo calls for them, and once those are saved, the level call. Make those, run `python3 references/actions-and-wins/scripts/key_wins.py photos report`, look at the one numbered contact sheet it makes per win, and add your picks to `wins.json`.
 6. **Fill and check**: `python3 scripts/report.py fill report` fills the report, saves every photo tile as it prints, and runs the check. Look at the tiles. Then say in chat whatever it lists, name the sections left out, and hand over the file.
-
-No browser render, screenshot or chart patch is needed: the fill script lays out every table and chart from the data, keeps labels clear of each other and scales each chart to its own range, and `check` catches anything left behind.
 
 ## Section selection
 
@@ -123,7 +121,7 @@ Numbered methodology items in report order, each owned by the section it explain
 A follow-up on a report that already exists is not a rebuild. Match the reading to the ask:
 
 - **A number, a date, a name, a sentence**: edit the file. One PEAK call if the answer needs one, no references, no `DESIGN.md`
-- **A section that was left out**: run the build again in a fresh directory with the report's full new list, copying `prose.json` and `wins.json` across, so only the new section's prose is left to write. The calls are cheap and the bundle rebuilds in seconds
+- **A section that was left out**: run the build again in a fresh directory with the report's full new list, copying `prose.json` and `wins.json` across, so only the new section's prose is left to write
 - **A visual or structural change**, such as a new component, a table re-laid out or a different chart form: read `DESIGN.md`. `## Colors` and `## Typography` for the tokens and their roles, `## Components` for what a component owes, `## Layout` for the print rules. The rendered file carries the CSS but not the reasoning behind it
 - **A rebrand**: `BRAND.md` and the logo assets it names, per [Output & theming](#output--theming). Both files stay at the repo root. The tokens sit in one `:root` block and the masthead logo is one inlined SVG, so this is a handful of edits on the file you already have
 
@@ -166,10 +164,10 @@ Derived rules when overrides are active:
 
 ## How the scripts fetch
 
-A full report is about forty calls, most of them small counts, and a long session has a call budget. Each section's `calls()` is written to answer the section in one request, so the discipline holds without you policing it: rows for a window, not a month; a set of ids, never one at a time; a count wherever a count is all that is needed, from `count_tickets`, `count_indoor_environment_zones` or `pagination.total`; and everything else derived locally from rows already held. Any change to a section's calls goes in its script, with the reason in its reference's Data block.
+Every call in a section's `calls()` answers a whole need in one request: rows for a window, not a month at a time; a set of ids, never one id at a time; a count wherever a count is all that is needed, from `count_tickets`, `count_indoor_environment_zones` or `pagination.total`; and everything else derived locally from rows already held. A change to a section's calls goes in its script, with the reason in its reference's Data block.
 
 Every window closes on the **last complete month**, so nothing in the report covers a part-month. A quarterly review should read as of the quarter, not as of the day it was generated, and equipment health scores are stored pre-aggregated on month boundaries, so a mid-month bound forces a raw scan. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use. Run hours takes the last full Monday-to-Sunday week inside the quarter.
 
 Links come back with the data, so the report does not build them. `search_equipment_health_scores`, `search_indoor_environment`, `search_alert_tickets` and `search_action_tickets` each return `platform_link`: a section link comes off one of that section's quarter calls, a chart's source link off its 6 month call, and a row link narrows the section link with the row's own filter, `&equipment_type_ids={id}` or `&level_ids={id}`. Where a link a section needs comes back null, the script drops it; say so in chat rather than assembling a URL. The actions leaderboard and the run hours unit charts are the only links built from parts, since no call returns those pages.
 
-A large response is not a failure. Past roughly 60,000 characters the gateway writes the result to a file and hands you the path: copy it under its name and the scripts read it from there. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing, which every count and pull leaves out.
+A response too large to return inline comes back as a file: copy it under its name and the scripts read it from there. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing, which every count and pull leaves out.

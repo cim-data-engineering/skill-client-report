@@ -53,4 +53,4 @@ A reading holds for up to an hour, or one and a half times the point's own inter
 
 ## Data
 
-`report.py plan` runs `runhours_plan.py window` and adds its three calls to the main batch: one `platform.equipment` discovery pull with every in-scope unit's points nested, and two `limit:1` census counts. `report.py next` runs `runhours_plan.py plan` over the saved discovery pages and prints the `platform.history` calls, about 36 points each. History responses run to a megabyte or more and come back as files, so they are copied, never written out. `report.py bundle` runs `runhours_build.py` and draws the result.
+`report.py plan` runs `runhours_plan.py window` and adds its calls to the main batch: a `platform.equipment` discovery pull with every in-scope unit's points nested, and two `limit:1` census counts. `report.py next` runs `runhours_plan.py plan` over the saved discovery pages and prints the `platform.history` calls. History responses are large and come back as files, so they are copied, never written out. `report.py bundle` runs `runhours_build.py` and draws the result.

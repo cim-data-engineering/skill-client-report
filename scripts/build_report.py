@@ -3,8 +3,8 @@
 
 The reference report is the design system compiled: its <style> block holds every
 DESIGN.md token and component, and each report section is marked off as a part.
-Rather than re-emit ~19KB of CSS and the markup of sections nobody asked for,
-scaffold the file you need and edit the sample data in place.
+fill_report.py scaffolds the chosen sections from it and fills them from the bundle,
+so a report carries only the parts it was asked for.
 
     scaffold  copy the shell, the always-on parts and the selected sections
     part      print one part's markup, to add a section to a report already built

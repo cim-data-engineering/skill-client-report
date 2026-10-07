@@ -83,13 +83,13 @@ Date: the 6 month window
 
 ## Data
 
-Eighteen calls in the main batch, all counts but four:
+All in the main batch:
 
 | Need | Call |
 | --- | --- |
 | Leaderboard Resolved | `count_tickets` by `assignee`, resolved over the 6 month window |
 | Leaderboard Open now | `count_tickets` by `assignee`, statuses open, in progress and on hold, no date bound |
-| Raised and resolved series | `count_tickets` ungrouped, one per month per series, on each month's own bounds: twelve small calls, since it has no month bucket |
+| Raised and resolved series | `count_tickets` ungrouped, one per month per series, on each month's own bounds, since it has no month bucket |
 | Median, company names | `tickets.tickets` resolved over the 6 month window, fields `age`, `resolved_at`, `status_id`, `assignees{id, entity{name}}` |
 | Company of anyone with only open work | `tickets.tickets` Open now, `status_ids:[1,3,7]`, selecting only `status_id` and `assignees{id, entity{name}}` |
 | Verified recovery | `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter, plain and with `fault_statuses:["recovered"]`, `limit:1` each: the two `pagination.total` values |

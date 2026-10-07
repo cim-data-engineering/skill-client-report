@@ -8,7 +8,7 @@ Nothing. The overview builds last, after the sections, so it can take the therma
 
 ## Data
 
-Five calls, all in the main batch, plus two when Indoor environment is out:
+All in the main batch:
 
 | Need | Call |
 | --- | --- |

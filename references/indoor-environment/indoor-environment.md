@@ -88,7 +88,7 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 
 ## Data
 
-Four calls in the main batch: three `search_indoor_environment(metric:"temperature")` and one `count_indoor_environment_zones`.
+All in the main batch: `search_indoor_environment(metric:"temperature")` at three groupings, and `count_indoor_environment_zones`.
 
 | Call | Window | Feeds |
 | --- | --- | --- |

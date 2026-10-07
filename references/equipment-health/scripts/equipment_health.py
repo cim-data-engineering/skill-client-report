@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Equipment health: three operational impact rows, the snapshot heatmap and
-both monthly charts, from eight saved calls. See
+both monthly charts, from the section's saved calls. See
 references/equipment-health/equipment-health.md for what each figure means;
-this module is that reference's arithmetic, so the model never redoes it.
+this module is that reference's arithmetic.
 """
 import os
 import sys

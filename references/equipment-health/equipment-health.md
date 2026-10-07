@@ -110,7 +110,7 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 
 ## Data
 
-Eight calls, all in the main batch. Type names come from `platform.metadata_types` selecting `type_id` and `type`, about 4K characters where `search_equipment_types(limit:200)` returns 24K. The rest are `search_equipment_health_scores`, which takes no `limit` and returns every group, so none of them page:
+All in the main batch. Type names come from `platform.metadata_types`, selecting only `type_id` and `type`. The rest are `search_equipment_health_scores`, which takes no `limit` and returns every group, so none of them page:
 
 | `aggregate_entities` | `aggregate_period` | Window   | Feeds                                            |
 | -------------------- | ------------------ | -------- | ------------------------------------------------ |
@@ -123,6 +123,6 @@ Eight calls, all in the main batch. Type names come from `platform.metadata_type
 | `priority`           | `month`            | 6 months | Chart 2 bars                                     |
 
 - `local_end_date` is exclusive, so the scripts pass the first of the month after the last complete month. A mid-month bound is refused for scanning too many rows
-- The type rows carry rules but no equipment count, and grouping by `metadata_type` and `equipment` together errors, so the Equipment column counts distinct `equipment_id` per type off the `equipment` rows, which return their type
+- The type rows carry rules but no equipment count, and PEAK does not group by `metadata_type` and `equipment` together, so the Equipment column counts distinct `equipment_id` per type off the `equipment` rows, which return their type
 - Executions sum across priorities for the checks total, and the per-priority split drives the labor model, each month priced over its own days in Chart 2
 - Distinct equipment and rule counts come from an `all` call, never by summing months: it counts distinct across the whole window, so it is legitimately higher than any single month. Scores never sum, and the site row is its own rollup
