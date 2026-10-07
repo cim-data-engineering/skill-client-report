@@ -26,11 +26,12 @@ SECTION_PARTS = {
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],
     "alerts-resolved": ["monthly-alerts", "actions-leaderboard"],
     "key-wins": ["key-wins"],
+    "run-hours": ["equipment-run-hours"],
 }
 # Parts that render for any of several sections. Operational impact is a frame
 # around rows the sections own, so it only stands if one of them is in.
 ROW_SECTIONS = ["equipment-health", "indoor-environment", "alerts-resolved"]
-PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS}
+PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS + ["run-hours"]}
 PART_RE = re.compile(r"^\s*<!-- part: ([a-z-]+) -->\s*$")
 IF_RE = re.compile(r"^\s*<!-- if: ([a-z-, ]+) -->\s*$")
 ENDIF_RE = re.compile(r"^\s*<!-- endif -->\s*$")
@@ -188,6 +189,10 @@ def cmd_check(args):
         elif not src.startswith("data:"):
             errors.append("win photo linked rather than embedded: %.60s… — download it and pass "
                           "the file to fill_report.py (references/key-wins.md)" % src)
+
+    # The run hours sample chart is a placeholder; the script draws the real one.
+    if 'data-sample="run-hours"' in text:
+        errors.append("sample run hours chart still in the report — fill it from the bundle's run_hours")
 
     # A heatmap trimmed for a short-history site has to lose the same columns
     # from its header and from every row, so a ragged table means a missed row.

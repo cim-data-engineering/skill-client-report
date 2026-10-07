@@ -141,8 +141,28 @@ def line_chart(d, months):
     top, bot = 50.0, 190.0
     y = lambda val: top + (hi - val) * (bot - top) / (hi - lo)
     out = []
+    # Value labels sit above or below each point; a threshold label takes the first of
+    # four places (left or right end, above or below its line) that no value label covers.
+    boxes = []
+    for x, val in zip(xs(len(v)), v):
+        ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
+        w = 6.2 * len("%.*f%%" % (dp, val))
+        boxes.append((x - w / 2 - 3, ly - 10, x + w / 2 + 3, ly + 3))
+        boxes.append((x - 6, y(val) - 6, x + 6, y(val) + 6))
+    def clear(x0, y0, x1, y1):
+        return all(x1 < a or x0 > c or y1 < b or y0 > e for a, b, c, e in boxes)
     for tv, tlabel in th:
-        out.append('        <text class="axis" x="44" y="%.1f">%s threshold</text>' % (y(tv) - 8, tlabel))
+        text, ty = "%s threshold" % tlabel, y(tv)
+        w = 5.6 * len(text)
+        for x, yy, anchor in ((44, ty - 8, "start"), (44, ty + 14, "start"),
+                              (RIGHT - 4, ty - 8, "end"), (RIGHT - 4, ty + 14, "end")):
+            x0 = x if anchor == "start" else x - w
+            if clear(x0, yy - 9, x0 + w, yy + 2):
+                break
+        else:
+            x, yy, anchor = 44, ty - 8, "start"
+        out.append('        <text class="axis" x="%d" y="%.1f"%s>%s</text>'
+                   % (x, yy, ' text-anchor="end"' if anchor == "end" else "", text))
         out.append('        <line class="benchline" x1="%d" y1="%.1f" x2="%d" y2="%.1f"/>'
                    '<text class="axis" x="4" y="%.1f">%.1f</text>'
                    % (LEFT, y(tv), RIGHT, y(tv), y(tv) + 3, tv))
@@ -164,7 +184,12 @@ def grouped_bar(d, months):
     # Compact labels keep long values from colliding; the bundle may supply its own.
     la = d.get("labels_a") or [d.get("fmt_a", "%s") % v for v in a]
     lb = d.get("labels_b") or [d.get("fmt_b", "%s") % v for v in b]
-    amax, bmax = max(a) * 1.06, max(b) * 1.06
+    # Two units (checks against dollars) take a scale each; one unit (actions raised
+    # against resolved) shares one, or a 17 draws as tall as a 69.
+    if d.get("scale") == "shared":
+        amax = bmax = max(max(a), max(b), 1) * 1.06
+    else:
+        amax, bmax = max(max(a), 1) * 1.06, max(max(b), 1) * 1.06
     H = 140.0
     out = []
     C = xs(len(months))
@@ -257,6 +282,68 @@ def photo_row(photos, base, out=None, name="win"):
     return '<div class="photos%s">%s</div>' % (" pair" if pair else "", "".join(figs))
 
 
+# ── named slots ─────────────────────────────────────────────────────────────
+# The section scripts hand over every mechanical string by name, so nothing has to
+# find the scaffold's sample text first. Each slot is located by the markup around it.
+def sub_one(s, pattern, repl, what):
+    s2, n = re.subn(pattern, lambda m: repl(m), s, count=1, flags=re.S)
+    if not n:
+        sys.exit("fill: no %s in the scaffold" % what)
+    return s2
+
+
+def after_eyebrow(s, eyebrow, tag_open, tag_close, text, what):
+    """Rewrite the first `tag_open...tag_close` after a section eyebrow."""
+    i = s.find('<p class="eyebrow">%s</p>' % eyebrow)
+    if i == -1:
+        return s                          # the section is out of this report
+    k = s.index(tag_open, i)
+    j = s.index(tag_close, k)
+    return s[:k] + tag_open + text + s[j:]
+
+
+def fill_slots(s, D):
+    m = D.get("masthead")
+    if m:
+        site = m["site_name"]
+        s = sub_one(s, r"<title>[^<]*</title>", lambda _: "<title>%s Quarterly Building Performance Review</title>" % site, "title")
+        s = sub_one(s, r"<h1>[^<]*</h1>", lambda _: "<h1>%s</h1>" % site, "h1")
+        if m.get("photo_url"):
+            s = sub_one(s, r'\s*<!-- Site photo slot:.*?-->\s*<div class="sitephoto"[^>]*>.*?</div>',
+                        lambda _: '\n    <div class="sitephoto"><img src="%s" alt="%s"></div>' % (m["photo_url"], site),
+                        "site photo slot")
+        for label, key in (("Reporting period", "period"), ("Author", "author"), ("Issued", "issued")):
+            s = sub_one(s, r"<dt>%s</dt><dd>[^<]*</dd>" % label,
+                        lambda _, label=label, key=key: "<dt>%s</dt><dd>%s</dd>" % (label, m[key]), label)
+        s = sub_one(s, r"<footer>\s*<span>[^<]*</span>\s*<span>[^<]*</span>",
+                    lambda _: "<footer>\n  <span>%s</span>\n  <span>Issued %s</span>" % (m["footer"], m["issued"]), "footer")
+        s = after_eyebrow(s, "Analytics overview", "<h2>", "</h2>", "What we monitor at %s" % site, "overview")
+    o = D.get("overview")
+    if o:
+        s = after_eyebrow(s, "Analytics overview", '<p class="h2note">', "</p>", o["as_at"], "as at")
+        for label, value in o["stats"].items():
+            s = sub_one(s, r'<p class="k">%s</p><p class="n">.*?</p>' % re.escape(label),
+                        lambda _, label=label, value=value: '<p class="k">%s</p><p class="n">%s</p>' % (label, value),
+                        "the %s stat" % label)
+    for eyebrow, text in D.get("statements", {}).items():
+        s = after_eyebrow(s, eyebrow, "<h2>", "</h2>", text, eyebrow)
+    for eyebrow, text in D.get("datelines", {}).items():
+        s = after_eyebrow(s, eyebrow, '<p class="h2note">', "</p>", text, eyebrow)
+    for key, inner in D.get("notes", {}).items():
+        i = s.find("<li><strong>%s" % key)
+        if i != -1:
+            j = s.index("</li>", i)
+            s = s[:i] + "<li>" + inner + s[j:]
+    rh = D.get("run_hours")
+    if rh:
+        i = s.index('<div class="rh">')
+        j = s.index("<!-- /rh -->", i)
+        s = s[:i] + '<div class="rh">\n' + rh["html"] + "\n  </div>" + s[j + len("<!-- /rh -->"):]
+        if rh.get("note"):
+            s = note(s, "Equipment run hours", rh["note"])
+    return s
+
+
 # ── main ────────────────────────────────────────────────────────────────────
 def main():
     ap = argparse.ArgumentParser()
@@ -275,7 +362,7 @@ def main():
     s = open(tmp, encoding="utf-8").read()
     os.unlink(tmp)
 
-    site, meta, months = D["site"], D["meta"], D["months"]
+    months = D["months"]
 
     # global swaps first: the sample site id and window live in every link
     for old, new in D.get("global_replace", []):
@@ -288,10 +375,13 @@ def main():
         s = s.replace(old, new)
 
     # exactly one occurrence: a second match means the anchor is not specific enough
-    for old, new in D["replace"]:
+    for old, new in D.get("replace", []):
         if s.count(old) != 1:
             sys.exit("fill: anchor matched %d times: %.70s" % (s.count(old), old))
         s = s.replace(old, new)
+
+    # named slots: masthead, overview, statements, date lines, notes, run hours
+    s = fill_slots(s, D)
 
     # platform links, each one straight off the call that answered its section
     if "links" in D:
