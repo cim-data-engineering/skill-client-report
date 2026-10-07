@@ -26,10 +26,10 @@ def esc(ctx):
     return {"type": "escalated", "site_ids": [ctx["site"]["site_id"]], "ticket_archived": False}
 
 
-OPEN_FIELDS = ["ticket_id", "summary", "comment_count", "status_id", "created_at", "equipment_ids",
-               "assignees.id", "assignees.entity.name",
-               {"path": "comments", "args": {"limit": 8, "user_only": True},
-                "sub_fields": ["text", "created_at", "author_full_name"]}]
+# Open now carries only what the leaderboard needs, the company of anyone holding open
+# work: saved responses hold numbers, ids and type, level or company names, never what
+# people wrote. The key win candidates, comments and all, are read where they arrive.
+OPEN_FIELDS = ["status_id", "assignees.id", "assignees.entity.name"]
 
 
 def calls(ctx):
@@ -49,7 +49,7 @@ def calls(ctx):
         io.gql("ar/resolved-rows.json", "tickets.tickets",
                dict(esc(ctx), resolved_at_local_start=t0 + "T00:00:00", resolved_at_local_end=t1 + "T00:00:00", limit=1000),
                ["age", "resolved_at", "status_id", "assignees.id", "assignees.entity.name"]),
-        # Open now: company names for anyone holding open work, and the in-flight key win candidates.
+        # Open now: the company of anyone holding open work and nothing resolved.
         io.gql("ar/open-rows.json", "tickets.tickets", dict(esc(ctx), status_ids=[1, 3, 7], limit=1000), OPEN_FIELDS),
         io.call("ar/alerts-closed.json", "search_alert_tickets", site_ids=[sid], status="closed",
                 rule_states=["running"], local_resolved_start=q0, local_resolved_end=q1, limit=1),

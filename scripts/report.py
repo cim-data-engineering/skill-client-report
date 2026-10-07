@@ -75,10 +75,15 @@ def show(calls, start):
 
 
 def save_rule(root):
-    return ("Save each response under %s/peak/ as the file named. An offloaded response: copy the file "
-            "you were handed (cp). Inline responses: write them out verbatim, all together if you like, "
-            "as one JSON object in %s/peak/inline.json, {\"<file name>\": <response exactly as returned>, ...}."
-            % (root, root))
+    return ("Save each response under %s/peak/ as the file named: an offloaded one by copying the file you "
+            "were handed (cp), an inline one by writing it to its file exactly as returned, one file per "
+            "response. Every response to save holds counts, scores, ids and type, level or company names "
+            "only." % root)
+
+
+READ_RULE = ("Read these where they come back and never save them: they carry what people wrote on the "
+             "tickets, and the files hold none of that. One that comes back offloaded as a file prints "
+             "screened and compact with: python3 references/actions-and-wins/scripts/key_wins.py digest <that file>")
 
 
 # ── plan ────────────────────────────────────────────────────────────────────
@@ -110,6 +115,8 @@ def cmd_plan(a):
     calls = [c for s in active(ctx) for c in module(s).calls(ctx)]
     with open(os.path.join(root, "calls.json"), "w") as fh:
         json.dump(calls, fh, indent=1)
+    save = [c for c in calls if not c.get("read")]
+    read = [c for c in calls if c.get("read")]
     q0, q1 = ctx["quarter"]
     print("%s: quarter %s, trends %s, issued %s." % (site["site_name"], io.period(q0, io.last_day(q1).isoformat(), True),
                                                     io.span(ctx["trend_months"][0], ctx["trend_months"][-1], True),
@@ -117,7 +124,10 @@ def cmd_plan(a):
     print("Sections: %s." % ", ".join(OPTIONS[o][0] if o in OPTIONS else o for o in picked))
     print("\n%d calls. Make them all in one parallel batch, each exactly as printed: the tool, then its "
           "arguments. %s Then run: python3 scripts/report.py next %s\n" % (len(calls), save_rule(a.dir), a.dir))
-    show(calls, 1)
+    show(save, 1)
+    if read:
+        print("\nIn the same batch, %d to read: the key win candidates. %s\n" % (len(read), READ_RULE))
+        show(read, len(save) + 1)
 
 
 def brand():
@@ -137,7 +147,7 @@ def cmd_next(a):
     work = io.Work(a.dir)
     with open(os.path.join(work.root, "calls.json")) as fh:
         calls = json.load(fh)
-    missing = [c["file"] for c in calls if not work.has(c["file"])]
+    missing = [c["file"] for c in calls if not c.get("read") and not work.has(c["file"])]
     if missing:
         sys.exit("Not saved yet: %s. %s" % (", ".join(missing), save_rule(a.dir)))
     new = [c for s in active(work.ctx) for c in module(s).more(work.ctx, work)]
@@ -193,10 +203,11 @@ def cmd_bundle(a):
     lines += ["- `%s`: %s" % (k, v) for k, v in prose.items()]
     if "key-wins" in ctx["sections"] and "key-wins" not in data.get("drop", []):
         lines += ["", "## wins.json", "",
-                  "Read kw/digest.md, choose by references/actions-and-wins/key-wins.md, and write %s/wins.json: "
-                  "a list, best first, of {\"tickets\": [8-character ids], \"state\": \"fixed\" or \"in_flight\", "
-                  "\"heading\": ..., \"body\": ...%s}. Then run report.py next for the impact, photo and level "
-                  "calls." % (a.dir, ", \"snap\": ..." if "equipment-health" in ctx["sections"] else "")]
+                  "Choose from the two key win candidate pulls by references/actions-and-wins/key-wins.md, and "
+                  "write %s/wins.json: a list, best first, of {\"tickets\": [full ticket ids], \"state\": "
+                  "\"fixed\" or \"in_flight\", \"heading\": ..., \"body\": ...%s}. Then run report.py next "
+                  "for the impact and photo calls, and next again for the level call." % (
+                      a.dir, ", \"snap\": ..." if "equipment-health" in ctx["sections"] else "")]
     with open(os.path.join(work.root, "facts.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
     print("Wrote %s/data.json and %s/facts.md." % (a.dir, a.dir))

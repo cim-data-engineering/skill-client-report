@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """Key wins: everything about the section but the choosing and the writing.
 
+    python3 references/actions-and-wins/scripts/key_wins.py digest <response file> [...]
     python3 references/actions-and-wins/scripts/key_wins.py photos <dir>
 
-scripts/report.py drives the rest through the usual hooks: calls() adds the
-closed-candidates pull to the main batch (the in-flight candidates ride on the
-leaderboard's Open now pull), build() writes <dir>/kw/digest.md, the candidates
-left once the patterns that need no reading are dropped, and more() prints the
-impact, photo and level calls once <dir>/wins.json names the chosen tickets.
-`photos` downloads each win's ticket images and tiles them into one numbered
-contact sheet per win; assemble() turns wins.json into the bundle's wins at fill
-time. See references/actions-and-wins/key-wins.md.
+The two candidate pulls, closures with comments and open actions with comments, are
+read where they come back and never saved: what people wrote stays out of the
+files. When one comes back offloaded as a file, `digest` prints it screened and
+compact, reading the file where the gateway put it. Once <dir>/wins.json names
+the chosen tickets, scripts/report.py next prints the impact and photo calls, and
+then the level call; `photos` downloads each win's ticket images and tiles them
+into one numbered contact sheet per win; assemble() turns wins.json into the
+bundle's wins at fill time. See references/actions-and-wins/key-wins.md.
 """
 import json
 import os
@@ -41,138 +42,98 @@ def esc(ctx):
 
 def calls(ctx):
     q0, q1 = ctx["quarter"]
-    return [io.gql("kw/closed.json", "tickets.tickets",
-                   dict(esc(ctx), status_id=6, has_comments=True, resolved_at_local_start=q0 + "T00:00:00",
-                        resolved_at_local_end=q1 + "T00:00:00", limit=1000), FIELDS)]
+    return [dict(io.gql("kw/closed.json", "tickets.tickets",
+                        dict(esc(ctx), status_id=6, has_comments=True, resolved_at_local_start=q0 + "T00:00:00",
+                             resolved_at_local_end=q1 + "T00:00:00", limit=1000), FIELDS), read=True),
+            dict(io.gql("kw/in-flight.json", "tickets.tickets",
+                        dict(esc(ctx), status_ids=[1, 3, 7], has_comments=True, limit=1000),
+                        [f for f in FIELDS if f != "resolved_at"]), read=True)]
 
 
 # ── candidates and the digest ───────────────────────────────────────────────
-def candidates(work):
-    from alerts_resolved import rows             # same folder: the Open now rows and their pages
-    closed = rows(work, "kw/closed.json")
-    opened = [r for r in rows(work, "ar/open-rows.json") if (r.get("comment_count") or 0) > 0]
-    return closed, opened
-
-
 def human(r):
     return [c for c in r.get("comments") or [] if not AGENT.match(c.get("author_full_name") or "")]
 
 
-def screen(closed, opened):
+def screen(rows):
     """Drop what needs no reading: closures nobody worked, bulk close-outs, and tickets
-    whose only commenter is an agent. Returns (kept closed, kept open, reasons)."""
-    stamps = Counter(r["resolved_at"][:19] for r in closed if r.get("resolved_at"))
-    why = Counter()
-    keep_c = []
-    for r in closed:
-        if r.get("created_at", "")[:19] == (r.get("resolved_at") or "")[:19]:
+    whose only commenter is an agent. Returns (kept, reasons)."""
+    stamps = Counter(r["resolved_at"][:19] for r in rows if r.get("resolved_at"))
+    why, keep = Counter(), []
+    for r in rows:
+        if r.get("resolved_at") and r.get("created_at", "")[:19] == r["resolved_at"][:19]:
             why["created and resolved the same moment"] += 1
-        elif stamps[(r.get("resolved_at") or "")[:19]] >= 3:
+        elif r.get("resolved_at") and stamps[r["resolved_at"][:19]] >= 3:
             why["bulk close-out, three or more sharing a resolved second"] += 1
         elif not human(r):
             why["only an agent commented"] += 1
         else:
-            keep_c.append(r)
-    keep_o = []
-    for r in opened:
-        if not human(r):
-            why["open, only an agent commented"] += 1
-        else:
-            keep_o.append(r)
-    return keep_c, keep_o, why
+            keep.append(r)
+    return keep, why
 
 
-def digest(ctx, work):
-    tz = ctx["site"]["timezone"]
-    from alerts_resolved import local_day
-    closed, opened = candidates(work)
-    kc, ko, why = screen(closed, opened)
-    day = lambda ts: io.day_short(local_day(ts, tz).isoformat()) if ts else "?"
-    out = ["# Key win candidates, %s" % io.span(ctx["quarter"][0], io.last_day(ctx["quarter"][1]).isoformat()), "",
-           "%d closed with comments in the quarter and %d open with comments; %d and %d left after screening."
-           % (len(closed), len(opened), len(kc), len(ko)),
-           "Screened out: " + ("; ".join("%d %s" % (n, w) for w, n in why.items()) or "nothing") + ".", "",
-           "Choose by references/actions-and-wins/key-wins.md, then write wins.json naming each win's tickets by "
-           "the 8-character ids below.", ""]
-    for title, group, closed_group in (("Closed this quarter", kc, True), ("Open now", ko, False)):
-        out += ["## %s" % title, ""]
-        for r in sorted(group, key=lambda r: -len(human(r))):
-            state = ("closed %s" % day(r.get("resolved_at"))) if closed_group else "open"
-            out.append("[%s] %s, raised %s · %s" % (r["ticket_id"][:8], state, day(r.get("created_at")),
-                                                   (r.get("summary") or "").strip()))
-            for c in sorted(human(r), key=lambda c: c.get("created_at") or ""):
-                text = " ".join((c.get("text") or "").split())
-                if len(text) > COMMENT_CHARS:
-                    text = text[:COMMENT_CHARS].rsplit(" ", 1)[0] + " …"
-                out.append("  - %s, %s: %s" % (day(c.get("created_at")), c.get("author_full_name") or "?", text))
-            out.append("")
-    path = os.path.join(work.root, "kw", "digest.md")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write("\n".join(out))
-    return path, len(kc), len(ko)
+def digest(paths):
+    """A candidate pull that came back as a file, screened and printed compact."""
+    rows = [r for p in paths for r in io.read(p).rows]
+    keep, why = screen(rows)
+    day = lambda ts: ts[:10] if ts else "?"
+    print("%d candidates, %d left after screening. Screened out: %s." % (
+        len(rows), len(keep), "; ".join("%d %s" % (n, w) for w, n in why.items()) or "nothing"))
+    for r in sorted(keep, key=lambda r: -len(human(r))):
+        state = ("closed %s" % day(r.get("resolved_at"))) if r.get("resolved_at") else "open"
+        print("\n[%s] %s, raised %s · %s" % (r["ticket_id"], state, day(r.get("created_at")),
+                                            (r.get("summary") or "").strip()))
+        for c in sorted(human(r), key=lambda c: c.get("created_at") or ""):
+            text = " ".join((c.get("text") or "").split())
+            if len(text) > COMMENT_CHARS:
+                text = text[:COMMENT_CHARS].rsplit(" ", 1)[0] + " …"
+            print("  - %s, %s: %s" % (day(c.get("created_at")), c.get("author_full_name") or "?", text))
 
 
 # ── the chosen wins ─────────────────────────────────────────────────────────
+UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+
+
 def load_wins(work):
     path = os.path.join(work.root, "wins.json")
     if not os.path.isfile(path):
         return None
     with open(path, encoding="utf-8") as fh:
         wins = json.load(fh)
-    closed, opened = candidates(work)
-    full = {r["ticket_id"]: r for r in closed + opened}
     for w in wins:
-        ids = []
-        for t in w.get("tickets") or []:
-            hit = [k for k in full if k.startswith(t)]
-            if len(hit) != 1:
-                raise SystemExit("wins.json: ticket %r matches %d candidates — use the ids in kw/digest.md"
-                                 % (t, len(hit)))
-            ids.append(hit[0])
-        if not ids:
-            raise SystemExit("wins.json: the win %r names no tickets" % w.get("heading"))
-        w["tickets"] = ids
-    return wins, full
+        bad = [t for t in w.get("tickets") or [] if not UUID.match(t)]
+        if bad or not w.get("tickets"):
+            raise SystemExit("wins.json: the win %r needs its tickets as full ticket ids, as the candidate "
+                             "pulls print them%s" % (w.get("heading"), ": not %s" % ", ".join(bad) if bad else ""))
+    return wins
+
+
+def tickets(wins):
+    return list(dict.fromkeys(t for w in wins for t in w["tickets"]))
 
 
 def more(ctx, work):
-    got = load_wins(work)
-    if not got:
+    wins = load_wins(work)
+    if not wins:
         return []
-    wins, full = got
-    ids = [t for w in wins for t in w["tickets"]]
-    have = set()
-    if work.has("kw/impacts.json"):
-        have = {r.get("ticket_id") for r in work.get("kw/impacts.json").rows}
-    if set(ids) <= have and work.has("kw/attachments.json") and (work.has("kw/levels.json") or not equipment(wins, full)):
-        return []
-    out = [io.call("kw/impacts.json", "search_action_tickets", ticket_ids=ids, limit=50),
-           io.gql("kw/attachments.json", "tickets.tickets", dict(esc(ctx), ticket_ids=ids, limit=50),
-                  ["ticket_id", "attachments.attachment_id", "attachments.file_name", "attachments.mime_type",
-                   "attachments.preview.link.url", "attachments.link.url"])]
-    eq = equipment(wins, full)
-    if eq:
-        out.append(io.gql("kw/levels.json", "platform.equipment", {"equipment_ids": eq, "limit": 100},
-                          ["equipment_id", "name", "zone.level.level_name", "zone.level.system"]))
-    return out
-
-
-def equipment(wins, full):
-    seen = []
-    for w in wins:
-        for t in w["tickets"]:
-            for e in full[t].get("equipment_ids") or []:
-                if e not in seen:
-                    seen.append(e)
-    return seen
+    ids = tickets(wins)
+    have = {r.get("ticket_id") for r in work.get("kw/impacts.json").rows} if work.has("kw/impacts.json") else set()
+    if not set(ids) <= have or not work.has("kw/attachments.json"):
+        return [io.call("kw/impacts.json", "search_action_tickets", ticket_ids=ids, limit=50),
+                io.gql("kw/attachments.json", "tickets.tickets", dict(esc(ctx), ticket_ids=ids, limit=50),
+                       ["ticket_id", "attachments.attachment_id", "attachments.file_name", "attachments.mime_type",
+                        "attachments.preview.link.url", "attachments.link.url"])]
+    eq = list(dict.fromkeys(e for r in work.get("kw/impacts.json").rows if r.get("ticket_id") in ids
+                            for e in r.get("equipment_ids") or []))
+    have_eq = {r.get("equipment_id") for r in work.get("kw/levels.json").rows} if work.has("kw/levels.json") else set()
+    if eq and not set(eq) <= have_eq:
+        return [io.gql("kw/levels.json", "platform.equipment", {"equipment_ids": eq, "limit": 100},
+                       ["equipment_id", "name", "zone.level.level_name", "zone.level.system"])]
+    return []
 
 
 def build(ctx, work, shared):
-    path, nc, no = digest(ctx, work)
-    return {"facts": ["Key wins: %d closed and %d open candidates left after screening, in %s. Choose the wins "
-                      "and write wins.json." % (nc, no, os.path.relpath(path, work.root))],
-            "prose": {}}
+    return {"facts": [], "prose": {}}
 
 
 # ── photos ──────────────────────────────────────────────────────────────────
@@ -185,7 +146,7 @@ def fetch(url, dest):
 
 def photos(root):
     work = io.Work(root)
-    wins, full = load_wins(work) or (None, None)
+    wins = load_wins(work)
     if not wins:
         raise SystemExit("write %s/wins.json first" % root)
     att = {r["ticket_id"]: r.get("attachments") or [] for r in work.get("kw/attachments.json").rows}
@@ -265,7 +226,7 @@ def contact_sheets(root, plan, files):
 def assemble(ctx, work):
     """wins.json -> the bundle's wins, plus the Key wins statement and date line and
     anything to say in chat."""
-    wins, full = load_wins(work)
+    wins = load_wins(work)
     imp = {r["ticket_id"]: r for r in work.get("kw/impacts.json").rows}
     levels = {}
     if work.has("kw/levels.json"):
@@ -288,7 +249,7 @@ def assemble(ctx, work):
         impact = min(tags, key=SEVERITY.index) if tags else "other"
         names = []
         for t in w["tickets"]:
-            for e in full[t].get("equipment_ids") or imp[t].get("equipment_ids") or []:
+            for e in imp[t].get("equipment_ids") or []:
                 if levels.get(e) and levels[e] not in names:
                     names.append(levels[e])
         pics = []
@@ -301,8 +262,7 @@ def assemble(ctx, work):
                 raise SystemExit("wins.json: photo %r is not on disk — run key_wins.py photos first" % pick)
             pics.append(dict(p, src=os.path.join("kw", "photos", hit[0])))
         win = {"impact": impact, "heading": w["heading"], "body": w["body"],
-               "refs": [{"url": imp[t]["ticket_link"], "title": imp[t].get("title") or full[t].get("summary")}
-                        for t in w["tickets"]]}
+               "refs": [{"url": imp[t]["ticket_link"], "title": imp[t].get("title")} for t in w["tickets"]]}
         if names:
             win["level"] = names[0] if len(names) == 1 else names
         if pics:
@@ -325,6 +285,9 @@ def assemble(ctx, work):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3 or sys.argv[1] != "photos":
-        sys.exit("usage: key_wins.py photos <dir>")
-    photos(sys.argv[2])
+    if len(sys.argv) >= 3 and sys.argv[1] == "digest":
+        digest(sys.argv[2:])
+    elif len(sys.argv) == 3 and sys.argv[1] == "photos":
+        photos(sys.argv[2])
+    else:
+        sys.exit("usage: key_wins.py digest <response file> [...] | key_wins.py photos <dir>")

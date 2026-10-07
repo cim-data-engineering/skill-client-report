@@ -91,7 +91,7 @@ Eighteen calls in the main batch, all counts but four:
 | Leaderboard Open now | `count_tickets` by `assignee`, statuses open, in progress and on hold, no date bound |
 | Raised and resolved series | `count_tickets` ungrouped, one per month per series, on each month's own bounds: twelve small calls, since it has no month bucket |
 | Median, company names | `tickets.tickets` resolved over the 6 month window, fields `age`, `resolved_at`, `status_id`, `assignees{id, entity{name}}` |
-| Company of anyone with only open work, in-flight key win candidates | `tickets.tickets` Open now, `status_ids:[1,3,7]`, with `summary`, `comments` and `equipment_ids` |
+| Company of anyone with only open work | `tickets.tickets` Open now, `status_ids:[1,3,7]`, selecting only `status_id` and `assignees{id, entity{name}}` |
 | Verified recovery | `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter, plain and with `fault_statuses:["recovered"]`, `limit:1` each: the two `pagination.total` values |
 
 - Every count carries `ticket_types:["escalated"]`, which counts actions, one per ticket, never the alerts behind them: an action can be bulk-linked to dozens of alerts. Every status list leaves out Not Doing. The server reads each window in site time, and a count cannot be cut short by a `limit`

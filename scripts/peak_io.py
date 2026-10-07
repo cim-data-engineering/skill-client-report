@@ -67,7 +67,6 @@ class Work:
         self.peak = os.path.join(root, "peak")
         with open(os.path.join(root, "plan.json"), encoding="utf-8") as fh:
             self.ctx = json.load(fh)
-        split_inline(self.peak)
 
     def path(self, name):
         return os.path.join(self.peak, name)
@@ -77,26 +76,6 @@ class Work:
 
     def get(self, name):
         return read(self.path(name))
-
-
-def split_inline(peak):
-    """Responses written together as one {file: response} object in peak/inline.json
-    are split out to their own files, so a batch of small inline responses can be
-    saved in one write rather than one write each."""
-    src = os.path.join(peak, "inline.json")
-    if not os.path.isfile(src):
-        return
-    with open(src, encoding="utf-8") as fh:
-        try:
-            batch = json.load(fh)
-        except ValueError as e:
-            raise SystemExit("%s is not valid JSON: %s" % (src, e))
-    for name, payload in batch.items():
-        dest = os.path.join(peak, name)
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
-        with open(dest, "w", encoding="utf-8") as fh:
-            json.dump(payload, fh)
-    os.replace(src, src + ".done")
 
 
 def call(file, tool, **args):

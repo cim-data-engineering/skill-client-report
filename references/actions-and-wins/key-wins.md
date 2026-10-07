@@ -6,16 +6,16 @@ Owns the key wins section. No operational impact row. Scaffold part: `key-wins`.
 
 The choosing and the words. Everything else is the script's: the candidates, the evidence calls, the impact tags, the levels, the ticket links, the order, the statement and date line, the photo downloads and crops.
 
-1. Read `report/kw/digest.md`: the quarter's closures with comments and the open actions with comments, with their comment histories, after the patterns that need no reading are screened out
+1. Read the two candidate pulls the plan lists to read, where they come back: the quarter's closures with comments and the open actions with comments, each with its comment history. Never save them; they carry what people wrote. One that comes back offloaded as a file prints screened and compact with `key_wins.py digest <that file>`
 2. Choose by **Selection** below, and write `report/wins.json`, best first:
 
 ```json
-[{"tickets": ["afbbae74"], "state": "fixed", "heading": "...", "body": "...", "snap": "..."},
- {"tickets": ["9df9aa6a", "1f788c8e"], "state": "in_flight", "heading": "...", "body": "..."}]
+[{"tickets": ["afbbae74-1afa-4fc2-883e-be510982fbfb"], "state": "fixed", "heading": "...", "body": "...", "snap": "..."},
+ {"tickets": ["9df9aa6a-ce4b-4917-a458-06b1794ee01e", "1f788c8e-905b-432f-b4c7-29776c173c10"], "state": "in_flight", "heading": "...", "body": "..."}]
 ```
 
-   `tickets` are the 8-character ids in the digest, every ticket the win stands on. `state` is `fixed` or `in_flight`, which sets the section's statement and date line. `snap` only with equipment health in, per **Display**
-3. `report.py next` prints the impact, photo and level calls for those tickets; make them, then run `key_wins.py photos report`
+   `tickets` are full ticket ids, every ticket the win stands on. `state` is `fixed` or `in_flight`, which sets the section's statement and date line. `snap` only with equipment health in, per **Display**
+3. `report.py next` prints the impact and photo calls for those tickets, and once they are saved, the level call; make them, then run `key_wins.py photos report`
 4. Look at the one numbered contact sheet per win, choose by **Photos** below, and add the picks to each win: `"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]`. A win with nothing worth showing gets none
 5. After `report.py fill`, look at every tile in `report/tiles/`: a crop can cut off the very detail that earned the photo its place. Adjust `focus` and `zoom` and fill again
 
@@ -87,15 +87,17 @@ This is a client deliverable, so the section carries wins or it does not appear.
 
 | Step | Call |
 | --- | --- |
-| Fixed | In the main batch: `tickets.tickets` `status_id:6`, `has_comments:true`, resolved inside the quarter, with `summary`, `equipment_ids` and `comments` (`limit:8`, `user_only:true`) inline |
-| In flight | The leaderboard's Open now pull, which carries the same fields |
-| Impact, link, title | Once `wins.json` exists: one `search_action_tickets` on the wins' tickets, reading `impacts`, `ticket_link` and `title` |
+| Fixed | In the main batch, read and not saved: `tickets.tickets` `status_id:6`, `has_comments:true`, resolved inside the quarter, with `summary`, `equipment_ids` and `comments` (`limit:8`, `user_only:true`) inline |
+| In flight | In the main batch, read and not saved: the same, `status_ids:[1,3,7]`, no date bound |
+| Impact, link, title | Once `wins.json` exists: one `search_action_tickets` on the wins' tickets, reading `impacts`, `ticket_link`, `title` and `equipment_ids` |
 | Photos | In the same batch: one `tickets.tickets` on the wins' tickets selecting `attachments.attachment_id`, `file_name`, `mime_type`, `preview.link.url` and `link.url` |
-| Level | In the same batch: one `platform.equipment` on the wins' `equipment_ids`, selecting `zone.level.level_name` and `zone.level.system` |
+| Level | Once the impact rows are saved: one `platform.equipment` on their `equipment_ids`, selecting `zone.level.level_name` and `zone.level.system` |
+
+The candidate pulls are the only responses the report reads without saving. Every saved response holds counts, scores, ids and type, level or company names: what people wrote on a ticket never goes into a file, and never needs writing out again.
 
 Key wins runs its own closed pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, and holding to the quarter cuts it again, leaving a set small enough to carry its comments inline.
 
-The digest screens out what needs no reading: a closure created and resolved the same moment, nobody worked it; three or more sharing a resolved second, a bulk cleanup; a ticket whose only commenter is an agent. Two more patterns are left to you, since only the comments show them: closures summarised as still in fault, and alerts closed by stopping or tuning a rule.
+Some patterns need no reading, and the digest screens them out when it is used: a closure created and resolved the same moment, nobody worked it; three or more sharing a resolved second, a bulk cleanup; a ticket whose only commenter is an agent. Two more patterns are left to you, since only the comments show them: closures summarised as still in fault, and alerts closed by stopping or tuning a rule.
 
 `impacts` comes back as a list, sometimes `[]`: a ticket with an empty list has no impact set, which is the `Other` case in **Display**, and `report.py fill` names each such ticket for you to say in chat. A level with `system:true` is PEAK's placeholder, `__SYSTEM__`, not a place, so that equipment gets no line.
 
