@@ -75,7 +75,7 @@ A chart note before and after. The first packs everything in, opens on an editor
 - Disclaimer, verbatim, below the masthead metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
 - Company name default "CIM" unless `name` is set in `BRAND.md` or given by the user
 - Company service name default "Data Driven Operations" unless `service-name` is set in `BRAND.md` or given by the user
-- Site photo: square, right of the title block. Download `photo_url` into a folder beside the bundle and pass it as `site_photo`; `fill_report.py` embeds it, so the report shows it without a network. Where PEAK holds no photo, or it cannot be fetched from where you are running, leave `site_photo` out: the slot goes, and say so in chat
+- Site photo: square, right of the title block. Pass the site's `photo_url` as `site_photo` and `fill_report.py` lays it in; PEAK serves it from a public link that does not lapse. Where PEAK holds no photo, leave `site_photo` out: the slot goes
 - Never print the PEAK site id anywhere in the report text, masthead or footer. It is a system id and means nothing to the reader. Links carry it in the URL, which is where it belongs
 
 ### Analytics overview
@@ -136,7 +136,7 @@ A site can have less history than the window asks for. Read that from the first 
 
 ## Output & theming
 
-One self-contained A4 print-first HTML file: all CSS inline, charts as inline SVG, no JS. The scaffold supplies the stylesheet and every component, and `fill_report.py` draws every table and chart from the bundle, so their geometry is never yours to compute:
+One self-contained A4 print-first HTML file: all CSS inline, charts as inline SVG and win photos embedded, no JS. Only the site photo and the web fonts load from their hosts. The scaffold supplies the stylesheet and every component, and `fill_report.py` draws every table and chart from the bundle, so their geometry is never yours to compute:
 
 - Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex, because SVG presentation attributes cannot read `var()`. Heatmap band fills work the same way (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor)
 - Section headers are three stacked lines: the section name as an uppercase eyebrow in `primary`, the statement beneath it as the `h2` headline, and the date line as a muted byline. The statement is the headline, never the section name

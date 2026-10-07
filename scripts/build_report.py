@@ -206,11 +206,6 @@ def cmd_check(args):
                         % (", ".join(same), "matches" if len(same) == 1 else "match",
                            "it is" if len(same) == 1 else "they are"))
 
-    # The site photo travels inside the file, like the win photos.
-    for src in re.findall(r'<div class="sitephoto"><img src="([^"]*)"', text):
-        if not src.startswith("data:"):
-            errors.append("site photo linked rather than embedded: %.60s… — download it and pass it "
-                          "to fill_report.py as site_photo" % src)
     if "<!-- Site photo slot:" in text:
         errors.append("site photo slot still holds the sample sketch — pass site_photo, or leave it out "
                       "to drop the slot")
