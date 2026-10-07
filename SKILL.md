@@ -9,6 +9,8 @@ A quarterly building performance review for one PEAK site: a self-contained A4 p
 
 ## Build order
 
+Commands name each script by its path inside this skill. Run them from a working folder of your own, so the bundle, the saved responses and the report never land in the skill.
+
 1. **Resolve the site and the sections**: [Section selection](#section-selection). Nothing is fetched before this settles, because the selection decides what there is to fetch.
 2. **Read the reference for each chosen section**, in its folder under `references/`, per [Section selection](#section-selection). Each carries its table spec, benchmark, links and notes items, and closes with a Data recipes block holding the PEAK calls behind them. The others describe sections you are not building; leave them unread.
 3. **Fetch**: [Data recipes](#data-recipes), then the Data recipes block at the end of each chosen reference. Nothing else. One call resolves the site; every remaining call that does not wait on another response then goes out in a single parallel batch. Resolve equipment type names with an unfiltered `search_equipment_types(limit:200)` rather than waiting on the health scores for their ids, so they join that batch. The follow-ups that do wait, such as the key win evidence and the run hours history, go out together once their inputs are in.
