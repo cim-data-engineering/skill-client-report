@@ -84,11 +84,11 @@ All of it comes from the action ticket block in SKILL.md, plus two alert counts.
 | Leaderboard Resolved         | Its Resolved by assignee count, over the 6 month window            |
 | Leaderboard Open now         | Its Open now by assignee count, no date bound                      |
 | Raised and resolved series   | Its by-month counts, one call per month per series                 |
-| Median, assignee company     | Its Resolved rows, plus its Open now rows for company              |
+| Median, assignee company     | Its Resolved rows, the median over those resolved in the quarter, plus its Open now rows for company. Under a day, state the median in hours |
 | Verified recovery            | Two alert counts, below                                            |
 
 - Open now is a different question from resolved: work raised before the window can still be open today, so count by assignee as at the issue date
 - The leaderboard joins the two assignee counts on `assignee_id`, keeping anyone with open work and nothing resolved. Leave out the row with a null id, which is unassigned work, and any agent by name. `count_tickets` names each assignee but not their company, so take `entity{name}` for the same id off the Resolved rows, or off the Open now rows for someone with nothing resolved
-- Verified recovery needs a rate, not rows. Call `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter twice with `limit:1`, once plain and once with `fault_statuses:["recovered"]`, and divide the two `pagination.total` values. Never page the alerts to count them by hand. The plain call also carries the section link, so `limit:1` still answers both
+- Verified recovery needs a rate, not rows. Call `search_alert_tickets(status:"closed", rule_states:["running"])` resolved over the quarter, `local_resolved_start`/`local_resolved_end`, twice with `limit:1`, once plain and once with `fault_statuses:["recovered"]`, and divide the two `pagination.total` values. Never page the alerts to count them by hand. The plain call also carries the section link, so `limit:1` still answers both
 - `count_tickets` is no substitute here: it cannot filter on alert status or rule state, so its rate takes in alerts this one leaves out
 - Those two are the only calls in the report that read alert tickets, so they do not run at all when this section is out

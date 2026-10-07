@@ -72,7 +72,7 @@ This is a client deliverable, so the section carries wins or it does not appear.
 | --------- | --------------------------------------------------------------------------------------------------- |
 | Fixed     | Its own pull: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline |
 | In flight | Its Open now call, `status_ids:[1,3,7]`                                                           |
-| Evidence  | Its Shortlist comments call, `ticket_ids:[the ten to fifteen you chose]`                          |
+| Evidence  | Its Shortlist comments call, `ticket_ids:[the in-flight candidates you chose]`                    |
 | Impact    | One `search_action_tickets` on the same `ticket_ids`, reading `impacts`, `ticket_link` and, where a summary lacks one, `equipment_names` |
 | Photos    | Its Photos call, `ticket_ids:[every ticket the chosen wins link]`, once the wins are settled      |
 | Level     | One `platform.equipment` on those wins' `equipment_ids`, in the same batch as Photos               |

@@ -1,6 +1,6 @@
 # Equipment run hours
 
-Owns the equipment run hours section and its notes-band item. No operational impact row. Scaffold part: `equipment-run-hours`. Scripts: `scripts/run_hours.py`, which fixes the week and draws the chart, and the three `runhours_*.py` scripts beside it, which pull and classify the points. Those three are the health check skill's, copied unchanged, so a change to them belongs in that skill first.
+Owns the equipment run hours section and its notes-band item. No operational impact row. Scaffold part: `equipment-run-hours`. Scripts: `references/run-hours/scripts/run_hours.py`, which fixes the week and draws the chart, and the three `runhours_*.py` scripts beside it, which pull and classify the points. Those three are the health check skill's, copied unchanged, so a change to them belongs in that skill first.
 
 When each unit of plant ran across one week, against the site's working hours: Monday to Sunday edge to edge, one row per unit, bars exact to 15 minutes. Out-of-hours running and plant that never ran show without reading any text, which is what the reader comes to this section for.
 
@@ -60,7 +60,7 @@ Say in chat, not on the page: the units left off the chart and why (only an enab
 
 The pull is `platform.equipment` for the units and their points, then `platform.history` for the week. Work in one folder, `runhours/` below, beside the bundle.
 
-1. **Window**: save the `search_sites` response, made with `include_working_hours:true`, as `site.json`, then run `python3 references/run-hours/scripts/run_hours.py window site.json runhours --quarter-end <the quarter's last day>`. It prints a discovery pull, every in-scope unit with its points nested, and two `limit:1` census counts. They go in the main batch; save each response in `runhours/` under the name printed, and page the discovery pull as the printout says when it has more
+1. **Window**: save the `search_sites` response, made with `include_working_hours:true`, as `site.json`, then run `python3 references/run-hours/scripts/run_hours.py window site.json runhours --site-id <the site's id> --quarter-end <the quarter's last day>`, which takes the report's site out of a search that matched several. It prints a discovery pull, every in-scope unit with its points nested, and two `limit:1` census counts. They go in the main batch; save each response in `runhours/` under the name printed, and page the discovery pull as the printout says when it has more
 2. **Plan**: `python3 references/run-hours/scripts/runhours_plan.py plan runhours runhours/discovery-0.json --census runhours/census-all.json runhours/census-known.json`, adding any further discovery pages after the first. It sorts the points by `run-hours-signals.md` and prints the history calls. Make them in parallel and save each as it names them. Where it says there is nothing to draw, the section is out: say why in chat
 3. **Draw**: `python3 references/run-hours/scripts/run_hours.py draw runhours` builds the week, writes `runhours/chart.json` with the chart and its date line, and prints the facts the note is written from and what to say in chat
 4. **Bundle**: `"run_hours": {"chart": "runhours/chart.json", "note": "<the note>"}`, the path relative to the bundle. `fill_report.py` lays in the chart, its date line and the note

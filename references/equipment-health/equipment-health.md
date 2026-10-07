@@ -13,7 +13,7 @@ The row carries a movement, not a baseline: the quarter's last month minus its f
 | Rating chip | Metric label                                 | Value                          | Subtitle                                         |
 | ----------- | -------------------------------------------- | ------------------------------ | ------------------------------------------------ |
 | Continuous  | x automated equipment health checks ran 24/7 | Total executions over the quarter | Averaging x monthly checks across y scored rules |
-| Modelled    | $x labor cost avoided                        | See the labor cost model below | x hours and y.y working days of inspection time  |
+| Modelled    | $x labor cost avoided                        | See the labor cost model below | x hours and y.y working days of inspection time, a working day being 7.6 hours |
 
 Section link, labelled "See live equipment health dashboard": the `platform_link` off any of the quarter calls below, since they share a window. Bundle slot `equipment_health`.
 
@@ -52,7 +52,7 @@ Heatmap table of monthly equipment health scores, one row per equipment type, th
 | Equipment      | Total equipment count of that type with a scored rule  |
 | Rules          | Total scored rules on that type                        |
 | Month columns  | Equipment health score for that month x.xx%            |
-| Chg            | Last month of the quarter minus the first, in pp x.xx  |
+| Chg            | Last month of the quarter minus the first, in pp x.xx, taken between the two scores as printed so the row agrees with itself |
 
 **Display:**
 

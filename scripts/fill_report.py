@@ -5,9 +5,26 @@
 
 Everything mechanical lives here: heatmap rows and their band colours, chart
 geometry recomputed from each series' own range, the leaderboard, the wins and
-their photos, the run hours chart, the platform links and every masthead slot. The narrative
+their photos, the run hours chart and the platform links. The narrative
 sentences are written by the model and passed in through the bundle; nothing in
 this file invents prose.
+
+The bundle's keys, each drawn by the code below that reads it:
+
+    sections        the --sections list the scaffold is built from
+    months          {"quarter": [...], "trend": [...]}, the column and axis labels
+    replace         [[sample, text], ...]: each sample string in the scaffold, found
+                    exactly once, swapped for the report's own: the masthead, the
+                    section statements and date lines, the overview figures, notes
+    replace_all     the same for wording that recurs across sections
+    global_replace  the sample site id and window inside every link
+    links           {slot: url or null}, per LINK_SLOTS
+    impact          operational impact rows, in report order
+    equipment_health, comfort                       the two heatmaps
+    trend_eh, trend_checks, trend_comfort, alerts   the charts
+    leaderboard     one row per assignee: name, company, resolved, open
+    wins            the key wins, with their refs, impact, level and photos
+    run_hours       {"chart": the chart.json run_hours.py draw wrote, "note": ...}
 """
 import argparse, base64, io, json, os, re, subprocess, sys, tempfile
 
@@ -275,7 +292,7 @@ def main():
     s = open(tmp, encoding="utf-8").read()
     os.unlink(tmp)
 
-    site, meta, months = D["site"], D["meta"], D["months"]
+    months = D["months"]
 
     # global swaps first: the sample site id and window live in every link
     for old, new in D.get("global_replace", []):

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Equipment run hours for the client report: the report's week, and its chart.
 
-    python3 references/run-hours/scripts/run_hours.py window <site.json> <workdir> --quarter-end YYYY-MM-DD [--hours "..."]
+    python3 references/run-hours/scripts/run_hours.py window <site.json> <workdir> --site-id N --quarter-end YYYY-MM-DD [--hours "..."]
     python3 references/run-hours/scripts/run_hours.py draw <workdir>
 
-window  Fixes the week the section shows, the last full Monday-to-Sunday week
-        inside the quarter, and hands it to runhours_plan.py window, which writes
+window  Takes the report's site out of the saved search_sites response, fixes
+        the week the section shows, the last full Monday-to-Sunday week inside the
+        quarter, and hands both to runhours_plan.py window, which writes
         <workdir>/window.json and prints the discovery and census calls to make.
 draw    Runs runhours_build.py over the saved first-pass history responses and
         draws the aggregate as static SVG in the report's design, since the report
@@ -28,6 +29,8 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True             # leave no __pycache__ beside the skill
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from runhours_history import read_results  # noqa: E402
 
 # Layout, in the report's chart units (the sheet draws every chart 682 wide).
 W, LABEL, RIGHT_PAD = 682, 168, 4
@@ -45,12 +48,18 @@ def script(name, *args):
 
 # ── window ──────────────────────────────────────────────────────────────────
 def cmd_window(a):
+    # a keyword search can return several sites; the plan reads one
+    site = [r for r in read_results(a.site) if r.get("site_id") == a.site_id]
+    if not site:
+        sys.exit("site %d is not in %s" % (a.site_id, a.site))
+    work = Path(a.workdir)
+    work.mkdir(parents=True, exist_ok=True)
+    (work / "site.json").write_text(json.dumps({"results": site[:1]}))
     last = date.fromisoformat(a.quarter_end)
     sunday = last - timedelta(days=(last.weekday() + 1) % 7)
-    args = ["window", a.site, a.workdir, "--week-of", (sunday - timedelta(days=6)).isoformat()]
+    args = ["window", work / "site.json", work, "--week-of", (sunday - timedelta(days=6)).isoformat()]
     if a.hours:
         args += ["--hours", a.hours]
-    Path(a.workdir).mkdir(parents=True, exist_ok=True)
     sys.stdout.write(script("runhours_plan.py", *args))
 
 
@@ -190,6 +199,7 @@ def main():
     w = sub.add_parser("window", help="fix the report's week and print the discovery and census calls")
     w.add_argument("site", help="the saved search_sites response, with working hours")
     w.add_argument("workdir")
+    w.add_argument("--site-id", type=int, required=True, help="the PEAK site id the report is for")
     w.add_argument("--quarter-end", required=True, help="the quarter's last day, YYYY-MM-DD")
     w.add_argument("--hours", help='working hours to assess against when the site has none, '
                                    'e.g. "Mon-Fri 08:00-18:00, Sat 09:00-13:00"')

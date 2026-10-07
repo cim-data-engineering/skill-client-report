@@ -33,7 +33,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 | Level         | Site levels that returned a comfort score            |
 | Zones         | Thermal zones configured on that level               |
 | Month columns | Thermal comfort score for that month x.x%            |
-| Chg           | Last month of the quarter minus the first, in pp x.x |
+| Chg           | Last month of the quarter minus the first, in pp x.x, taken between the two scores as printed so the row agrees with itself |
 
 **Display:**
 
