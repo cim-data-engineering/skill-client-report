@@ -13,7 +13,8 @@ The bundle's keys, each drawn by the code below that reads it. Scores go in
 unrounded: the fill rounds each to its table's or chart's precision, and takes a
 heatmap's Chg between the two scores as printed.
 
-    sections        the --sections list the scaffold is built from
+    sections        "run-hours,equipment-health,...": the comma-separated --sections
+                    value the scaffold is built from
     months          {"quarter": [...], "trend": [...]}, the column and axis labels
     replace         [[sample, text], ...]: each sample string in the scaffold, found
                     exactly once, swapped for the report's own: the masthead, the

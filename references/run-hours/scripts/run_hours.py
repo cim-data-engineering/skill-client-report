@@ -166,10 +166,11 @@ def cmd_draw(a):
     chart = {"html": render(agg), "dateline": dateline}
     if later:
         types = ["%s (%d)" % (t, n) for t, n in Counter(u["type_name"] for u in later).most_common()]
-        chart["note"] = ("Central plant is always drawn in full, and field units fill the chart up to %d units. "
-                         "Not shown are %d field units: %s."
-                         % (CAP_UNITS, len(later), ", ".join(types[:-1]) + " and " + types[-1] if len(types) > 1
-                            else types[0]))
+        types = ", ".join(types[:-1]) + " and " + types[-1] if len(types) > 1 else types[0]
+        field = sum(1 for u in plan["units"] if u.get("pass") == 1 and u.get("pull") and u.get("page") != "Central plant")
+        chart["note"] = (("Central plant is drawn in full and field units fill the chart up to %d units, so %d more "
+                          "field units are left out: %s." % (CAP_UNITS, len(later), types)) if field else
+                         ("Central plant fills the chart, so %d field units are left out: %s." % (len(later), types)))
     (work / "chart.json").write_text(json.dumps(chart))
 
     rows = sum(len(g["rows"]) for p in agg["pages"] for g in p["groups"])
