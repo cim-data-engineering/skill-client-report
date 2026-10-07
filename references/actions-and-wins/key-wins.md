@@ -23,7 +23,7 @@ The test is whether the facility manager would forward it to the owner as eviden
 - **Fixed.** A physical or control change described by whoever made it, so a closure verified rather than asserted
 - **Caught and being worked.** A fault the monitoring found that someone is visibly on: raised, assigned, diagnosed, contractor booked or parts on order. Finding a problem before the building finds it the hard way is worth as much to the owner as closing one, so it belongs on the page
 
-Either way it needs a comment history showing a person engaged with it. An agent is not a person: Agent Hannah's follow-ups and "recovered and stable" closures, or any other agent's comments, show the monitoring at work, not someone on the job, so a history of only agent comments does not qualify. Exclude alerts resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
+Either way it needs a comment history showing a person engaged with it. An agent is not a person: Agent Hannah's follow-ups and "recovered and stable" closures, or any other agent's comments, show the monitoring at work, not someone on the job, so a history of only agent comments does not qualify, and an agent's closure is never the description of a fix. Exclude alerts resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
 
 **Display:**
 
