@@ -41,7 +41,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 - Score to 1dp. The benchmark bands sit far from the data here, so 1dp cannot round across a band edge
 - Emphasise only the closing month column, per the `heatmap` component
 - Zones as a plain numeral, left of the score columns, never colored and never barred. It sizes the level, so the reader knows whether a swing covers two zones or twenty
-- Zones counts the zone temperature points configured for comfort scoring, the same basis as the thermal zones figure in the analytics overview. The site row totals the levels shown, so it equals that figure unless a level with points returned no score in the quarter, which the notes explain
+- Zones counts the zone temperature points configured for comfort scoring. The site row totals the levels shown, and the analytics overview prints that same total as thermal zones, so the two always agree. A level whose points returned no score in the quarter has no row and counts in neither
 - Chg signed with a direction glyph. Green up, red down, muted when flat
 - Sort levels in building order, highest level first, ground last, not by Chg. The reader is looking for where in the building comfort is drifting, and the Chg column carries the direction
 - Close with a site row at the bottom, same style as the equipment health snapshot
@@ -75,7 +75,7 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 ## Notes band items
 
 - **Thermal comfort score.** Share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK, typically 21-24.9C (68-79F), so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows
-- **Zones.** The count is the zone temperature points configured for comfort scoring on each level shown. Where the site row falls short of the analytics overview figure, the difference sits on levels that returned no score in the quarter: say how many points and levels, and why, usually no working-hours readings
+- **Zones.** The count is the zone temperature points configured for comfort scoring on each level shown, and the site row is the thermal zones figure in the analytics overview. A level whose points returned no score in the quarter is left out of both
 
 ## Data recipes
 
@@ -90,7 +90,7 @@ The scores are `search_indoor_environment(metric:"temperature")`, and the zone c
 
 - `local_end_date` is exclusive, so pass the first of the month after the last complete month
 - Level rows are levels x months, so page at `limit:80` when levels x 3 exceeds 80
-- The Zones column is `count_indoor_environment_zones(metric:"temperature", site_ids:[id], aggregate_entity:"level")`: one row per level carrying `included_point_count`, joined to the level rows on `level_id`, and a level it does not return counts 0. It reads current configuration and takes no dates, so it goes in the main batch with the rest, and its rows sum to the thermal zones figure in the analytics overview. Never page zone rows to count them
+- The Zones column is `count_indoor_environment_zones(metric:"temperature", site_ids:[id], aggregate_entity:"level")`: one row per level carrying `included_point_count`, joined to the level rows on `level_id`, and a level it does not return counts 0. It reads current configuration and takes no dates, so it goes in the main batch with the rest. Summed over the levels the level rows return, it is the site row and the analytics overview's thermal zones figure. Never page zone rows to count them
 - The zone rows are for the single-level case only, which the level rows reveal, so fetch them after, paging at `limit:80`. They carry `zone_name` and `zone_value`, which is what that case lists
 - The column stays however tall the building: the one count call answers every level at once, so a tower costs no more than a single floor
 - Do not substitute `search_zones`, `platform.levels` or `platform.zones`. They list zone objects, not zone temperature points
