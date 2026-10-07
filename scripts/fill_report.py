@@ -342,7 +342,7 @@ def fill_slots(s, D):
         j = s.index("<!-- /rh -->", i)
         s = s[:i] + '<div class="rh">\n' + rh["html"] + "\n  </div>" + s[j + len("<!-- /rh -->"):]
         if rh.get("note"):
-            s = note(s, "Equipment run hours", rh["note"])
+            s = note(s, '<p class="eyebrow">Equipment run hours</p>', rh["note"])
     return s
 
 

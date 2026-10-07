@@ -10,7 +10,7 @@ One note in `prose.json`, from the facts `report.py bundle` prints:
 
 - `alerts_trend`, under raised vs resolved: the balance across the six months. Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved, or a resolved peak that a bulk close-out explains, is worth a sentence
 
-Nothing resolved in the window means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. Delete the section, its operational impact row and its notes items, and give the open count in chat instead. Key wins follows the same rule. A newly onboarded site is where this happens.
+Nothing resolved in the window means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. The script leaves out the section, its operational impact row and its notes items, and `facts.md` gives the open count to say in chat instead. Key wins goes with it. A newly onboarded site is where this happens.
 
 ## Operational impact row
 

@@ -116,11 +116,12 @@ def build(ctx, work, shared):
     faults = work.get("ar/alerts-closed.json").total or 0
     recovered = work.get("ar/alerts-recovered.json").total or 0
 
+    open_now = work.get("ar/open-rows.json").total or 0
     if not faults or not sum(resolved):
         return {"drop": ["alerts-resolved", "key-wins"],
                 "facts": ["Actions resolved: nothing resolved in the window (%d alerts closed in the quarter, "
-                          "%d actions resolved in six months), so the section and Key wins are left out. Give "
-                          "the open count in chat instead." % (faults, sum(resolved))]}
+                          "%d actions resolved in six months), so the section and Key wins are left out. Say in "
+                          "chat instead that %d actions are open now." % (faults, sum(resolved), open_now)]}
 
     res_rows = rows(work, "ar/resolved-rows.json")
     open_rows = rows(work, "ar/open-rows.json")
@@ -168,8 +169,8 @@ def build(ctx, work, shared):
         "Leaderboard top three: " + "; ".join("%s (%s) %d resolved, %d open" % (e["name"], e["company"] or "no company",
                                                                              e["resolved"], e["open"])
                                               for e in leaderboard[:3]),
-        "Open now: %d actions with %d people." % (sum(e["open"] for e in leaderboard),
-                                                  sum(1 for e in leaderboard if e["open"])),
+        "Open now: %d actions; %d people on the leaderboard hold open work." % (
+            open_now, sum(1 for e in leaderboard if e["open"])),
     ]
     return {
         "impact": impact,

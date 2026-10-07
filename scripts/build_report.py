@@ -126,9 +126,9 @@ def sample_strings():
                 # is deliberately absent — it carries window and method wording
                 # that is correct for every report and recurs legitimately.
                 r'<p class="chartnote">([^<]+)</p>', r'<p class="snap">([^<]+)</p>',
-                # operational impact carries the sample's headline figures and the
-                # sentence under each; both are site data, and both were slipping through.
-                r'<span class="fig">([^<]+)</span>', r'<div class="isub">(.*?)</div>'):
+                # an operational impact row is matched whole, figure to sentence: the
+                # sentence alone is a template a real site can repeat word for word.
+                r'(<span class="fig">[^<]+</span> <span class="figcap">[^<]+</span>\s*<div class="isub">.*?</div>)'):
         for m in re.finditer(pat, src, re.S):
             found.add(m.group(1))
     # a win's body is its one unclassed paragraph, wherever the impact tag, the
@@ -155,6 +155,7 @@ def cmd_check(args):
 
     hits = [s for s in sample_strings() if s in text]
     for h in hits[:20]:
+        h = " ".join(re.sub(r"<[^>]+>", " ", h).split())
         errors.append("sample data still in the report: %s" % (h[:90] + ("…" if len(h) > 90 else "")))
     if len(hits) > 20:
         errors.append("... and %d more sample values" % (len(hits) - 20))
