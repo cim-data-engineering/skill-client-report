@@ -125,14 +125,15 @@ def sample_strings():
                 # is deliberately absent — it carries window and method wording
                 # that is correct for every report and recurs legitimately.
                 r'<p class="chartnote">([^<]+)</p>', r'<p class="snap">([^<]+)</p>',
-                # the impact tag sits between the win's div and its heading, so
-                # the body pattern has to step over it or it stops matching
-                r'<div class="win">\s*(?:<p class="impact[^"]*">.*?</p>\s*)?<h3>[^<]*</h3>\s*<p>([^<]+)</p>',
                 # operational impact carries the sample's headline figures and the
                 # sentence under each; both are site data, and both were slipping through.
                 r'<span class="fig">([^<]+)</span>', r'<div class="isub">(.*?)</div>'):
         for m in re.finditer(pat, src, re.S):
             found.add(m.group(1))
+    # a win's body is its one unclassed paragraph, wherever the impact tag, the
+    # level line and the photos put it, so read it off each win in turn
+    for m in re.finditer(r'<div class="win[^"]*">(.*?)<p class="refs">', src, re.S):
+        found |= set(re.findall(r'<p>([^<]+)</p>', m.group(1)))
     for m in re.finditer(r'<p class="refs">(.*?)</p>', src, re.S):
         found |= set(re.findall(r'>([^<>]{8,})</a>', m.group(1)))
     # only platform links are report data — font and preconnect hosts stay
@@ -174,9 +175,19 @@ def cmd_check(args):
     # Key wins is the one section that can be scaffolded and then find nothing
     # to say: an empty heading is worse than no heading, so it must be deleted.
     kw = text.find('<p class="eyebrow">Key wins</p>')
-    if kw != -1 and 'class="win"' not in text[kw:text.find("</section>", kw)]:
+    if kw != -1 and not re.search(r'class="win[ "]', text[kw:text.find("</section>", kw)]):
         errors.append("Key wins section carries no wins — delete the section rather "
                       "than shipping the heading (references/key-wins.md)")
+
+    # A win photo has to travel inside the file. An attachment link is signed and
+    # short-lived, so a photo left as a link breaks soon after the report is sent.
+    # The sample's placeholder tiles are SVG; every real photo is embedded as JPEG.
+    for src in sorted(set(re.findall(r'<figure><img src="([^"]*)"', text))):
+        if src.startswith("data:image/svg"):
+            errors.append("placeholder photo tile still in the report — fill the wins from the bundle")
+        elif not src.startswith("data:"):
+            errors.append("win photo linked rather than embedded: %.60s… — download it and pass "
+                          "the file to fill_report.py (references/key-wins.md)" % src)
 
     # A heatmap trimmed for a short-history site has to lose the same columns
     # from its header and from every row, so a ragged table means a missed row.

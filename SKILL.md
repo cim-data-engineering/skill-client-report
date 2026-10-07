@@ -190,7 +190,7 @@ The counts, only when Actions resolved and leaderboard is in. Each carries `site
 - **Open now by assignee**: `aggregate_entities:["assignee"]` with `statuses:["open","in_progress","on_hold"]` instead, and no date bound, since work raised before the window can still be open today. The leaderboard's Open now column
 - **Raised and resolved by month**: ungrouped, one call per month per series, since `count_tickets` has no month bucket: `local_created_start`/`local_created_end` for raised and `local_resolved_start`/`local_resolved_end` for resolved, on that month's own bounds. Twelve small calls, all in the main batch
 
-The rows are one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Four calls cover both sections at most: two when only Actions resolved is in, three when only Key wins is.
+The rows are one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Five calls cover both sections at most: two when only Actions resolved is in, four when only Key wins is.
 
 What makes it cheap:
 
@@ -205,6 +205,7 @@ The calls:
 - **Open now**: `status_ids:[1,3,7]`, no date bound, with `assignees{id, entity{name}}`. It names the company of anyone holding open work with nothing resolved in the window, and serves the Key wins in-flight candidates. The Open now figures themselves come from the count
 - **Key wins candidates**: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline, rather than widening the Resolved pull. Only when Key wins is in
 - **Shortlist comments**: `ticket_ids:[the in-flight candidates you chose]` with the `comments` sub-field, since Open now carries their titles but not their histories. Only when Key wins is in
+- **Photos**: `ticket_ids:[every ticket the chosen wins link]` with the `attachments` sub-field, once the wins are settled. Only when Key wins is in; `references/key-wins.md` carries the fields and what to do with the photos
 
 A large response is not a failure. Past roughly 60,000 characters the gateway writes the result to a file and hands you the path, which keeps a thousand rows out of the conversation entirely. Read it with `jq` or a short python script rather than re-fetching in smaller pages: one fat call and a local script beats four thin calls on both counts.
 
