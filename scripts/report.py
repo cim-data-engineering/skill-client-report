@@ -104,7 +104,7 @@ def cmd_plan(a):
     os.makedirs(os.path.join(root, "peak"), exist_ok=True)
     ctx = dict(io.windows(today), site=site, author=a.author, sections=[s for s in ORDER if s in sections],
                dir=root, site_file=os.path.abspath(a.site), hours=a.hours,
-               brand={"override": brand_override()})
+               brand=brand())
     with open(os.path.join(root, "plan.json"), "w") as fh:
         json.dump(ctx, fh, indent=1)
     calls = [c for s in active(ctx) for c in module(s).calls(ctx)]
@@ -120,14 +120,16 @@ def cmd_plan(a):
     show(calls, 1)
 
 
-def brand_override():
-    """True when BRAND.md sets any key, so platform strings read PEAK rather than CIM PEAK."""
+def brand():
+    """BRAND.md's identity: any key set means platform strings read PEAK rather than
+    CIM PEAK, and name / service-name replace the masthead's CIM defaults."""
     path = os.path.join(ROOT, "BRAND.md")
-    if not os.path.isfile(path):
-        return False
-    text = open(path, encoding="utf-8").read()
+    text = open(path, encoding="utf-8").read() if os.path.isfile(path) else ""
     m = re.match(r"---\n(.*?)\n---", text, re.S)
-    return bool(m and re.search(r"^\s*[a-z-]+:\s*\S", m.group(1), re.M))
+    head = m.group(1) if m else ""
+    get = lambda k: (re.search(r"^%s:\s*(\S.*?)\s*$" % k, head, re.M) or [None, None])[1]
+    return {"override": bool(re.search(r"^\s*[a-z-]+:\s*\S", head, re.M)),
+            "name": get("name") or "CIM", "service": get("service-name") or "Data Driven Operations"}
 
 
 # ── next ────────────────────────────────────────────────────────────────────
@@ -176,6 +178,8 @@ def cmd_bundle(a):
     data["impact"] = [{k: v for k, v in r.items() if k != "order"}
                       for r in sorted(data.get("impact", []), key=lambda r: r["order"])
                       if not ((r["order"] == 5 and "alerts-resolved" in data.get("drop", [])))]
+    if not data["impact"]:
+        data.pop("impact")                 # no row-owning section is in, so neither is the frame
     data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]],
                       "trend": [io.mon(m) for m in ctx["trend_months"]]}
     with open(os.path.join(work.root, "data.json"), "w") as fh:

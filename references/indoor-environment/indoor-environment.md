@@ -1,6 +1,15 @@
 # Indoor environment
 
-Owns the operational impact thermal comfort row, the indoor environment health snapshot, and monthly thermal comfort. Scaffold parts: `indoor-environment-snapshot`, `monthly-thermal-comfort`.
+Owns the operational impact thermal comfort row, the indoor environment health snapshot, and monthly thermal comfort. Scaffold parts: `indoor-environment-snapshot`, `monthly-thermal-comfort`. Script: `scripts/indoor_environment.py`, which builds every figure, row, chart and link below.
+
+## What you write
+
+Two notes in `prose.json`, from the facts `report.py bundle` prints:
+
+- `ie_snapshot`, under comfort by level: where in the building comfort moved and why, naming the levels that moved most and any that sit below Good
+- `ie_trend`, under the six-month chart: the direction against the benchmark lines
+
+Levels with configured points but no score this quarter are in neither the table nor the thermal zones figure. `facts.md` names them: say so in chat, not on the page.
 
 ## Operational impact row
 
@@ -77,20 +86,17 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 - **Thermal comfort score.** Share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK, typically 21-24.9C (68-79F), so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows
 - **Zones.** The count is the zone temperature points configured for comfort scoring on each level shown, and the site row is the thermal zones figure in the analytics overview. A level whose points returned no score in the quarter is left out of both
 
-## Data recipes
+## Data
 
-The scores are `search_indoor_environment(metric:"temperature")`, and the zone counts are one `count_indoor_environment_zones` call.
+Four calls in the main batch: three `search_indoor_environment(metric:"temperature")` and one `count_indoor_environment_zones`.
 
-| `aggregate_entity` | `aggregate_period` | Window   | Feeds                                                        |
-| ------------------ | ------------------ | -------- | ------------------------------------------------------------ |
-| `level`            | `month`            | quarter  | the snapshot grid                                            |
-| `site`             | `month`            | 6 months | the snapshot closing row (last 3) and the trend              |
-| `site`             | `all`              | quarter  | the headline score in the operational impact row             |
-| `zone`             | `all`              | quarter  | the zone rows, only for a single-level site                  |
+| Call | Window | Feeds |
+| --- | --- | --- |
+| `level` × `month`, `limit:80` | quarter | the snapshot grid; paged by `report.py next` when levels × 3 passes 80 |
+| `site` × `month` | 6 months | the snapshot closing row (last 3) and the trend |
+| `site` × `all` | quarter | the headline score and the section link |
+| `count_indoor_environment_zones`, `aggregate_entity:"level"` | current configuration | the Zones column and the thermal zones figure |
 
-- `local_end_date` is exclusive, so pass the first of the month after the last complete month
-- Level rows are levels x months, so page at `limit:80` when levels x 3 exceeds 80
-- The Zones column is `count_indoor_environment_zones(metric:"temperature", site_ids:[id], aggregate_entity:"level")`: one row per level carrying `included_point_count`, joined to the level rows on `level_id`, and a level it does not return counts 0. It reads current configuration and takes no dates, so it goes in the main batch with the rest. Summed over the levels the level rows return, it is the site row and the analytics overview's thermal zones figure. Never page zone rows to count them
-- The zone rows are for the single-level case only, which the level rows reveal, so fetch them after, paging at `limit:80`. They carry `zone_name` and `zone_value`, which is what that case lists
-- The column stays however tall the building: the one count call answers every level at once, so a tower costs no more than a single floor
-- Do not substitute `search_zones`, `platform.levels` or `platform.zones`. They list zone objects, not zone temperature points
+- The Zones column joins the count's `included_point_count` to the level rows on `level_id`, and a level the count does not return counts 0. Summed over the levels shown, it is the site row and the analytics overview's thermal zones figure. Never page zone rows to count them, and never substitute `search_zones`, `platform.levels` or `platform.zones`: they list zone objects, not zone temperature points
+- A single-level site is the one follow-up: `next` asks for `zone` × `month` rows, which carry `zone_name` and `zone_value`
+- Levels sort into building order from their names: a name with no readable floor first, then numbered floors highest first, ground, then basements. `facts.md` prints the order; a building PEAK names oddly is worth a line in chat

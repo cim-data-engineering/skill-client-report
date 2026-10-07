@@ -2,7 +2,13 @@
 
 Owns the operational impact faults resolved row, monthly alerts raised vs resolved, and the actions leaderboard. Scaffold parts: `monthly-alerts`, `actions-leaderboard`.
 
-The two answer the same question from either end: how much fault work the site took on, and who closed it. Both come from counts of action tickets.
+The two answer the same question from either end: how much fault work the site took on, and who closed it. Both come from counts of action tickets. Script: `scripts/alerts_resolved.py`, which builds every figure, row, link and note below. This reference and `key-wins.md` are one choice in the section prompt, Actions and key wins.
+
+## What you write
+
+One note in `prose.json`, from the facts `report.py bundle` prints:
+
+- `alerts_trend`, under raised vs resolved: the balance across the six months. Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved, or a resolved peak that a bulk close-out explains, is worth a sentence
 
 Nothing resolved in the window means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. Delete the section, its operational impact row and its notes items, and give the open count in chat instead. Key wins follows the same rule. A newly onboarded site is where this happens.
 
@@ -75,20 +81,21 @@ Date: the 6 month window
 - **Completion rate** is resolved / (resolved + currently open) as at the issue date, so 100% reflects holding no open work
 - Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved is worth a sentence in the chart note
 
-## Data recipes
+## Data
 
-All of it comes from the action ticket block in SKILL.md, plus two alert counts.
+Eighteen calls in the main batch, all counts but four:
 
-| Need                         | Call                                                               |
-| ---------------------------- | ------------------------------------------------------------------ |
-| Leaderboard Resolved         | Its Resolved by assignee count, over the 6 month window            |
-| Leaderboard Open now         | Its Open now by assignee count, no date bound                      |
-| Raised and resolved series   | Its by-month counts, one call per month per series                 |
-| Median, assignee company     | Its Resolved rows, plus its Open now rows for company              |
-| Verified recovery            | Two alert counts, below                                            |
+| Need | Call |
+| --- | --- |
+| Leaderboard Resolved | `count_tickets` by `assignee`, resolved over the 6 month window |
+| Leaderboard Open now | `count_tickets` by `assignee`, statuses open, in progress and on hold, no date bound |
+| Raised and resolved series | `count_tickets` ungrouped, one per month per series, on each month's own bounds: twelve small calls, since it has no month bucket |
+| Median, company names | `tickets.tickets` resolved over the 6 month window, fields `age`, `resolved_at`, `status_id`, `assignees{id, entity{name}}` |
+| Company of anyone with only open work, in-flight key win candidates | `tickets.tickets` Open now, `status_ids:[1,3,7]`, with `summary`, `comments` and `equipment_ids` |
+| Verified recovery | `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter, plain and with `fault_statuses:["recovered"]`, `limit:1` each: the two `pagination.total` values |
 
-- Open now is a different question from resolved: work raised before the window can still be open today, so count by assignee as at the issue date
-- The leaderboard joins the two assignee counts on `assignee_id`, keeping anyone with open work and nothing resolved. Leave out the row with a null id, which is unassigned work, and any agent by name. `count_tickets` names each assignee but not their company, so take `entity{name}` for the same id off the Resolved rows, or off the Open now rows for someone with nothing resolved
-- Verified recovery needs a rate, not rows. Call `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter twice with `limit:1`, once plain and once with `fault_statuses:["recovered"]`, and divide the two `pagination.total` values. Never page the alerts to count them by hand. The plain call also carries the section link, so `limit:1` still answers both
-- `count_tickets` is no substitute here: it cannot filter on alert status or rule state, so its rate takes in alerts this one leaves out
-- Those two are the only calls in the report that read alert tickets, so they do not run at all when this section is out
+- Every count carries `ticket_types:["escalated"]`, which counts actions, one per ticket, never the alerts behind them: an action can be bulk-linked to dozens of alerts. Every status list leaves out Not Doing. The server reads each window in site time, and a count cannot be cut short by a `limit`
+- The leaderboard joins the two assignee counts on `assignee_id`, keeping anyone with open work and nothing resolved, leaving out the null id (unassigned work) and any agent by name. Company is `entity{name}` for the same id off the rows
+- The median runs over the actions resolved in the quarter, the operational impact row's own window, from `age`, which on a resolved action is the milliseconds from creation to resolution. Under a day it reads in hours
+- `count_tickets` is no substitute for the alert counts: it cannot filter on alert status or rule state
+- Closures that land minutes apart, ten or more in a run, are a bulk close-out rather than repairs. `facts.md` names them, since they explain a resolved peak

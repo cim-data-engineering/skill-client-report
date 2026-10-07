@@ -21,7 +21,7 @@ def xs(n):
     return [round(80 + step * i) for i in range(n)]
 BASELINE, LEFT, RIGHT = 196, 36, 670
 # Win impact tags. The key is the PEAK `impacts` value, which is also the class
-# the dot colour hangs off; the label is what prints. See references/key-wins.md
+# the dot colour hangs off; the label is what prints. See references/actions-and-wins/key-wins.md
 # for how a win's impact is chosen from its action tickets.
 IMPACTS = {"energy": "Energy", "comfort": "Comfort", "reliability": "Reliability",
            "water": "Water", "safety": "Safety", "other": "Other"}
@@ -312,6 +312,8 @@ def fill_slots(s, D):
             s = sub_one(s, r'\s*<!-- Site photo slot:.*?-->\s*<div class="sitephoto"[^>]*>.*?</div>',
                         lambda _: '\n    <div class="sitephoto"><img src="%s" alt="%s"></div>' % (m["photo_url"], site),
                         "site photo slot")
+        if m.get("prepared"):
+            s = sub_one(s, r'<p class="prepared">.*?</p>', lambda _: '<p class="prepared">%s</p>' % m["prepared"], "prepared by")
         for label, key in (("Reporting period", "period"), ("Author", "author"), ("Issued", "issued")):
             s = sub_one(s, r"<dt>%s</dt><dd>[^<]*</dd>" % label,
                         lambda _, label=label, key=key: "<dt>%s</dt><dd>%s</dd>" % (label, m[key]), label)
@@ -388,7 +390,7 @@ def main():
         s = set_links(s, D["links"])
 
     # operational impact rows, in the order the skill fixes
-    if "impact" in D:
+    if D.get("impact"):
         rows = []
         for r in D["impact"]:
             sub = r["sub"]
@@ -460,7 +462,7 @@ def main():
         for wn, w in enumerate(D["wins"], 1):
             photos = w.get("photos") or []
             if len(photos) > MAX_PHOTOS:
-                sys.exit("fill: %d photos on %r — %d at most (references/key-wins.md)"
+                sys.exit("fill: %d photos on %r — %d at most (references/actions-and-wins/key-wins.md)"
                          % (len(photos), w["heading"], MAX_PHOTOS))
             # One photo sits beside the text; two to four run in a row under the heading.
             side = len(photos) == 1

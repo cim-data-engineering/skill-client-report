@@ -1,6 +1,14 @@
 # Equipment health
 
-Owns three of the operational impact rows (the equipment health score, the automated health checks and the labor cost avoided) plus the equipment health snapshot and both charts in monthly equipment health. The checks and the cost model measure what the equipment health rules did, so they belong to this section. Scaffold parts: `equipment-health-snapshot`, `monthly-equipment-health`.
+Owns three of the operational impact rows (the equipment health score, the automated health checks and the labor cost avoided) plus the equipment health snapshot and both charts in monthly equipment health. The checks and the cost model measure what the equipment health rules did, so they belong to this section. Scaffold parts: `equipment-health-snapshot`, `monthly-equipment-health`. Script: `scripts/equipment_health.py`, which builds every figure, row, chart and link below.
+
+## What you write
+
+Three notes in `prose.json`, from the facts `report.py bundle` prints:
+
+- `eh_snapshot`, under the heatmap: what moved across the quarter and why. Lead with the biggest move, and name a type that sits below Good
+- `eh_score_trend`, under Chart 1: the direction of the site score. A step change often tracks a change in what is being scored rather than the building: newly deployed rules commonly fault until their thresholds settle, and the facts carry the rule count by month and by type so you can say which it was
+- `eh_checks_trend`, under Chart 2: what moved the volume, usually the rule count and sometimes a shorter month
 
 ## Operational impact rows
 
@@ -100,20 +108,21 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 
 - **Labor cost avoided.** The model above, with the region's rate named
 
-## Data recipes
+## Data
 
-All six calls are `search_equipment_health_scores`. It takes no `limit` and returns every group, so none of them page.
+Eight calls, all in the main batch. Type names come from `platform.metadata_types` selecting `type_id` and `type`, about 4K characters where `search_equipment_types(limit:200)` returns 24K. The rest are `search_equipment_health_scores`, which takes no `limit` and returns every group, so none of them page:
 
 | `aggregate_entities` | `aggregate_period` | Window   | Feeds                                            |
 | -------------------- | ------------------ | -------- | ------------------------------------------------ |
 | `metadata_type`      | `month`            | quarter  | heatmap cells                                    |
-| `metadata_type`      | `all`              | quarter  | the Equipment and Rules counts                   |
+| `metadata_type`      | `all`              | quarter  | the Rules count                                  |
+| `equipment`          | `all`              | quarter  | the Equipment count, distinct equipment per type |
 | `site`               | `month`            | 6 months | snapshot site row (last 3), Chart 1 (all 6)      |
 | `site`               | `all`              | quarter  | the headline score in the operational impact row |
 | `priority`           | `all`              | quarter  | the checks and labor cost rows                   |
 | `priority`           | `month`            | 6 months | Chart 2 bars                                     |
 
-- `local_end_date` is exclusive, so pass the first of the month after the last complete month. A mid-month bound is refused for scanning too many rows
-- Executions sum across priorities for the checks total, and the per-priority split drives the labor model
-- Take distinct equipment and rule counts from an `all` call, never by summing months or picking one. It counts distinct across the whole window, so it is legitimately higher than any single month
-- Scores never sum. The site row is its own rollup
+- `local_end_date` is exclusive, so the scripts pass the first of the month after the last complete month. A mid-month bound is refused for scanning too many rows
+- The type rows carry rules but no equipment count, and grouping by `metadata_type` and `equipment` together errors, so the Equipment column counts distinct `equipment_id` per type off the `equipment` rows, which return their type
+- Executions sum across priorities for the checks total, and the per-priority split drives the labor model, each month priced over its own days in Chart 2
+- Distinct equipment and rule counts come from an `all` call, never by summing months: it counts distinct across the whole window, so it is legitimately higher than any single month. Scores never sum, and the site row is its own rollup

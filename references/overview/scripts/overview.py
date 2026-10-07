@@ -88,6 +88,8 @@ def build(ctx, work, shared):
             "period": io.period(q0, qlast, short=True),
             "author": ctx["author"],
             "issued": io.day_short(ctx["today"]),
+            "prepared": "Prepared by <strong>%s — %s</strong> · Powered by PEAK" % (brand.get("name", "CIM"),
+                                                                                  brand.get("service", "Data Driven Operations")),
             "footer": "%s · %s, %s" % (platform, name, place(site)) if place(site) else "%s · %s" % (platform, name),
         },
         "overview": {

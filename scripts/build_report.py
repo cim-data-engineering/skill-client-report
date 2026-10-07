@@ -169,7 +169,8 @@ def cmd_check(args):
     rid = re.search(r"site_ids=(\d+)", ref)
     rname = re.search(r"PEAK · ([^,<]+)", ref)
     for token in [m.group(1) for m in (rid, rname) if m]:
-        if token in text:
+        # a whole id, not the same digits inside a longer one such as a favourite id
+        if re.search(r"(?<!\d)%s(?!\d)" % re.escape(token), text):
             warnings.append("reference site's own %s appears — fine only if this "
                             "report really is for it" % ("id %s" % token if token.isdigit() else "name %r" % token))
 
@@ -178,7 +179,7 @@ def cmd_check(args):
     kw = text.find('<p class="eyebrow">Key wins</p>')
     if kw != -1 and not re.search(r'class="win[ "]', text[kw:text.find("</section>", kw)]):
         errors.append("Key wins section carries no wins — delete the section rather "
-                      "than shipping the heading (references/key-wins.md)")
+                      "than shipping the heading (references/actions-and-wins/key-wins.md)")
 
     # A win photo has to travel inside the file. An attachment link is signed and
     # short-lived, so a photo left as a link breaks soon after the report is sent.
@@ -188,7 +189,7 @@ def cmd_check(args):
             errors.append("placeholder photo tile still in the report — fill the wins from the bundle")
         elif not src.startswith("data:"):
             errors.append("win photo linked rather than embedded: %.60s… — download it and pass "
-                          "the file to fill_report.py (references/key-wins.md)" % src)
+                          "the file to fill_report.py (references/actions-and-wins/key-wins.md)" % src)
 
     # The run hours sample chart is a placeholder; the script draws the real one.
     if 'data-sample="run-hours"' in text:
