@@ -9,7 +9,9 @@ their photos, the run hours chart and the platform links. The narrative
 sentences are written by the model and passed in through the bundle; nothing in
 this file invents prose.
 
-The bundle's keys, each drawn by the code below that reads it:
+The bundle's keys, each drawn by the code below that reads it. Scores go in
+unrounded: the fill rounds each to its table's or chart's precision, and takes a
+heatmap's Chg between the two scores as printed.
 
     sections        the --sections list the scaffold is built from
     months          {"quarter": [...], "trend": [...]}, the column and axis labels
@@ -132,7 +134,7 @@ def heatmap(d, months):
             for i, v in enumerate(mo))
         link = ('<a href="%s">%s &rsaquo;</a>' % (href(r["link"]), r["name"])) if r.get("link") else r["name"]
         delta = ('<span class="chg flat">&mdash;</span>' if None in (mo[0], mo[-1])
-                 else chg(mo[-1] - mo[0], dp))
+                 else chg(round(mo[-1], dp) - round(mo[0], dp), dp))
         body.append('      <tr><td class="lv">%s</td>%s<td class="cg">%s</td></tr>'
                     % (link, cells, delta))
     sr = d["site"]
@@ -142,7 +144,7 @@ def heatmap(d, months):
                      % (band(v, t), " now" if i == len(mo) - 1 else "", dp, v)
                      for i, v in enumerate(mo))
     body.append('      <tr class="total"><td class="lv">Site</td>%s<td class="cg">%s</td></tr>'
-                % (cells, chg(mo[-1] - mo[0], dp)))
+                % (cells, chg(round(mo[-1], dp) - round(mo[0], dp), dp)))
     return ('<table class="hm">\n    <thead>\n      <tr>\n' + "\n".join(head)
             + '\n      </tr>\n    </thead>\n    <tbody>\n' + "\n".join(body)
             + '\n    </tbody>\n  </table>')
