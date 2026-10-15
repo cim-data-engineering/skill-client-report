@@ -35,7 +35,8 @@ A reading holds for up to an hour, or one and a half times the point's own inter
 
 ## Display
 
-- One chart per page of plant, **Central plant** then **Field units**, each a static SVG the script draws in the report's tokens. A page with no rows is left out
+- One chart per page of plant, **Central plant** then **Field units**, each static SVG the script draws in the report's tokens. A page with no rows is left out
+- Each chart is a table of SVG strips, one per unit, with the day header as its `thead`, so a chart that runs onto another printed page breaks between units and repeats the header there
 - Groups by equipment type, in the order of the signals reference's types table; rows by level, then name in natural order
 - A grey working-hours column on each day, headed with the day and its hours; "closed" where it has none
 - Bars in muted grey during working hours, `warning` outside them, hatched where there is no reliable data. Legend above the chart, as on the other charts
