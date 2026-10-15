@@ -267,8 +267,6 @@ def assemble(ctx, work):
             win["level"] = names[0] if len(names) == 1 else names
         if pics:
             win["photos"] = pics
-        if w.get("snap") and "equipment-health" in ctx["sections"]:
-            win["snap"] = w["snap"]
         win["_state"] = w.get("state", "fixed")
         out.append(win)
     out.sort(key=lambda w: 0 if len(w.get("photos", [])) >= 2 else 1 if w.get("photos") else 2)

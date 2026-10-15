@@ -121,12 +121,9 @@ def sample_strings():
     found = set()
     for pat in (r'<td class="name">([^<]+)</td>', r'<td class="co">([^<]+)</td>',
                 r'<h3>([^<]+)</h3>', r'<title>([^<]+)</title>',
-                # a win's snap line: a long, site-specific sentence, so an exact
-                # match means the sample's commentary was left in place. h2note
-                # and chartnote are deliberately absent — they carry window and
+                # h2note and chartnote are deliberately absent — they carry window and
                 # method wording that is correct for every report and recurs legitimately.
-                r'<p class="snap">([^<]+)</p>',
-                # an operational impact row is matched whole, figure to sentence: the
+                # An operational impact row is matched whole, figure to sentence: the
                 # sentence alone is a template a real site can repeat word for word.
                 r'(<span class="fig">[^<]+</span> <span class="figcap">[^<]+</span>\s*<div class="isub">.*?</div>)'):
         for m in re.finditer(pat, src, re.S):

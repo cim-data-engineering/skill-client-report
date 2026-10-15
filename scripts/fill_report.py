@@ -479,8 +479,6 @@ def main():
             if photos and not side:
                 b += pad + photo_row(photos, base, a.photos_out, "win%d" % wn) + "\n"
             b += pad + '<p>%s</p>\n' % w["body"]
-            if w.get("snap"):
-                b += pad + '<p class="snap">%s</p>\n' % w["snap"]
             b += pad + '<p class="refs">' + " &middot; ".join(
                 '<a href="%s">%s</a>' % (href(r["url"]), r["title"]) for r in w["refs"]) + '</p>\n'
             if side:

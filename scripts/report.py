@@ -195,9 +195,8 @@ def cmd_bundle(a):
         lines += ["", "## wins.json", "",
                   "Choose from the two key win candidate pulls by references/actions-and-wins/key-wins.md, and "
                   "write %s/wins.json: a list, best first, of {\"tickets\": [full ticket ids], \"state\": "
-                  "\"fixed\" or \"in_flight\", \"heading\": ..., \"body\": ...%s}. Then run report.py next "
-                  "for the impact and photo calls, and next again for the level call." % (
-                      a.dir, ", \"snap\": ..." if "equipment-health" in ctx["sections"] else "")]
+                  "\"fixed\" or \"in_flight\", \"heading\": ..., \"body\": ...}. Then run report.py next "
+                  "for the impact and photo calls, and next again for the level call." % a.dir]
     with open(os.path.join(work.root, "facts.md"), "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
     print("Wrote %s/data.json and %s/facts.md." % (a.dir, a.dir))
