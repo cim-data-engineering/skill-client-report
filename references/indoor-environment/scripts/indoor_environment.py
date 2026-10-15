@@ -96,7 +96,13 @@ def build(ctx, work, shared):
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
     month_of = lambda r: (r.get("date") or "")[:7]
     site_all = work.get("ie/site-all.json")
-    link = site_all.link
+    sid = ctx["site"]["site_id"]
+    host = re.match(r"https?://[^/]+", ctx["site"].get("site_link") or "")
+    host = host.group(0) if host else "https://ace.cimenviro.com"
+    dashboard = lambda start: ("%s/indoor-environment/thermal-comfort?summary_site_id=%s&summary_ts=%s&site_ids=%s"
+                               "&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
+                               % (host, sid, qm[-1], sid, start, io.last_day(ctx["quarter"][1]).isoformat()))
+    link = dashboard(ctx["quarter"][0])
 
     by_level, names, unit = defaultdict(dict), {}, "°C"
     for r in level_rows(work):
@@ -129,7 +135,7 @@ def build(ctx, work, shared):
         label, counts_head = "Zone", ["Avg temp"]
     else:
         order = sorted(by_level, key=lambda l: (floor_key(names[l]) is not None, -(floor_key(names[l]) or 0), names[l]))
-        rows = [{"name": names[l], "link": (link + "&level_ids=%s" % l) if link else None,
+        rows = [{"name": names[l], "link": link + "&level_ids=%s" % l,
                  "counts": [zones.get(l, 0)],
                  "months": [io.pct(by_level[l][m[:7]], 1) if m[:7] in by_level[l] else None for m in qm]}
                 for l in order]
@@ -184,7 +190,7 @@ def build(ctx, work, shared):
         "impact": impact,
         "comfort": heat,
         "trend_comfort": trend,
-        "links": {"comfort": link, "trend_comfort": work.get("ie/site-month.json").link},
+        "links": {"comfort": link, "trend_comfort": dashboard(ctx["trend"][0])},
         "datelines": {"Indoor environment health snapshot":
                       "%s. Share of zone readings inside the ASHRAE comfort band during working hours, by %s, in "
                       "building order." % (io.span(qm[0], qm[-1]), "zone" if single else "level"),

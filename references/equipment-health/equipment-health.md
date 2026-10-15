@@ -23,7 +23,8 @@ The row carries a movement, not a baseline: the quarter's last month minus its f
 | Continuous  | x automated equipment health checks ran 24/7 | Total executions over the quarter | Averaging x monthly checks across y scored rules |
 | Modelled    | $x labor cost avoided                        | See the labor cost model below | x hours and y.y working days of inspection time  |
 
-Section link, labelled "See live equipment health dashboard": the `platform_link` off any of the quarter calls below, since they share a window. Bundle slot `equipment_health`.
+Section link, labelled "See live equipment health dashboard", over the quarter. Bundle slot `equipment_health`:
+`https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Labor cost avoided model
 
@@ -102,7 +103,8 @@ Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avo
 
 **Links:**
 
-- Source link on Chart 1: the `platform_link` off the `site` × `month` 6 month call, so it opens the window the chart draws. Bundle slot `trend_eh`
+- Source link on Chart 1, over the 6 month window the chart draws. Bundle slot `trend_eh`
+- `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Notes band items
 

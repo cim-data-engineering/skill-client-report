@@ -31,12 +31,11 @@ PHOTO_PX = 480
 SOFT_PX = 300     # below this a tile has under 1.5x its printed size, and prints visibly soft
 MAX_PHOTOS = 4
 # Section and chart-source links, keyed by bundle slot and found in the scaffold
-# by the link text that follows them. Each one is the platform_link that section's
-# own PEAK call returned; see the platform links rules in SKILL.md. Row links ride
-# on their rows and ticket links on their wins, so neither is a slot here.
+# by the link text that follows them. Each one is built by its section's script;
+# see the links rules in SKILL.md. Row links ride on their rows and ticket links
+# on their wins, so neither is a slot here.
 LINK_SLOTS = {"equipment_health": "See live equipment health dashboard",
               "comfort": "See live indoor environment dashboard",
-              "alerts": "See live issues being resolved",
               "leaderboard": "See live actions leaderboard",
               "trend_eh": "PEAK equipment health dashboard",
               "trend_comfort": "PEAK indoor environment dashboard"}
@@ -79,8 +78,8 @@ def href(url):
 
 
 def set_links(s, links):
-    """Point each link row at the URL its own PEAK call returned. A slot set to
-    null drops that link rather than leaving the scaffold's sample one standing."""
+    """Point each link row at its URL. A slot set to null drops that link rather
+    than leaving the scaffold's sample one standing."""
     for slot, url in links.items():
         if slot not in LINK_SLOTS:
             raise SystemExit("fill: unknown link slot %r — one of %s" % (slot, ", ".join(LINK_SLOTS)))
@@ -385,7 +384,7 @@ def main():
     # named slots: masthead, overview, statements, date lines, notes, run hours
     s = fill_slots(s, D)
 
-    # platform links, each one straight off the call that answered its section
+    # section and chart-source links, by slot
     if "links" in D:
         s = set_links(s, D["links"])
 

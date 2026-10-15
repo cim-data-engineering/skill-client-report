@@ -179,8 +179,7 @@ def build(ctx, work, shared):
                           "Resolved %s and %d." % (io.span(tm[0], tm[-1], sep=" to "), ", ".join(map(str, raised[:-1])), raised[-1],
                                                    ", ".join(map(str, resolved[:-1])), resolved[-1])},
         "leaderboard": leaderboard,
-        "links": {"alerts": work.get("ar/alerts-closed.json").link,
-                  "leaderboard": "%s/reports/tickets?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
+        "links": {"leaderboard": "%s/reports/tickets?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
                                  "&grouping=assignee" % (host, site["site_id"], t0, io.last_day(t1).isoformat())},
         "datelines": {
             "Monthly alerts raised vs resolved":

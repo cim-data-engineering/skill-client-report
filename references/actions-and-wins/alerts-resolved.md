@@ -18,8 +18,6 @@ Nothing resolved in the window means no section. The recovery rate has no denomi
 | ---------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | See below alert recovery benchmark | x faults resolved with x% verified recovery | Resolved alerts with status closed over the quarter, on rules still running | Median time to resolve of x days. Based on the alert's linked action creation and resolution date, not the alert's own creation and resolution date |
 
-Section link, labelled "See live issues being resolved": the `platform_link` off the plain verified recovery count in Data recipes, which opens the alerts this row is counting. Bundle slot `alerts`.
-
 ## Alert recovery benchmark
 
 Recovery rate is alerts resolved in the period with fault status recovered divided by all alerts resolved in the period. Filter for alerts with status closed.
@@ -70,7 +68,7 @@ Date: the 6 month window
 
 **Links:**
 
-- Add link to the PEAK actions leaderboard over the same 6 month window. No call answers this page, `count_tickets` included, so it is the one link in the report built from parts: substitute the site id, the 6 month window's first day and the quarter's last day, both `YYYY-MM-DD`. Bundle slot `leaderboard`
+- Add link to the PEAK actions leaderboard over the same 6 month window. Bundle slot `leaderboard`
 - `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=assignee`
 
 ## Notes band items

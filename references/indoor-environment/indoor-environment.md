@@ -19,7 +19,8 @@ Levels with configured points but no score this quarter are in neither the table
 
 Same movement definition as the snapshot Chg column, the quarter's last month minus its first in pp, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months. Both endpoints come from the `site` series already fetched. Score to 1dp, matching the snapshot.
 
-Section link, labelled "See live indoor environment dashboard": the `platform_link` off the `site` × `all` quarter call. Bundle slot `comfort`.
+Section link, labelled "See live indoor environment dashboard", over the quarter. Bundle slot `comfort`:
+`https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Thermal comfort score benchmark
 
@@ -61,7 +62,6 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 **Links:**
 
 - Hyperlink level name to the section link with `&level_ids={level_id}` appended, the row's own id off the level call. Add chevron indicating link >
-- The level and zone groupings come back with `platform_link: null`, because that page cannot express them, so a row link is the site call's link narrowed and never a call of its own
 
 ## Monthly thermal comfort
 
@@ -79,7 +79,8 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 
 **Links:**
 
-- Source link on the chart: the `platform_link` off the `site` × `month` 6 month call, so it opens the window the chart draws. Bundle slot `trend_comfort`
+- Source link on the chart, over the 6 month window the chart draws. Bundle slot `trend_comfort`
+- `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Notes band items
 
@@ -94,7 +95,7 @@ All in the main batch: `search_indoor_environment(metric:"temperature")` at thre
 | --- | --- | --- |
 | `level` × `month`, `limit:80` | quarter | the snapshot grid; paged by `report.py next` when levels × 3 passes 80 |
 | `site` × `month` | 6 months | the snapshot closing row (last 3) and the trend |
-| `site` × `all` | quarter | the headline score and the section link |
+| `site` × `all` | quarter | the headline score |
 | `count_indoor_environment_zones`, `aggregate_entity:"level"` | current configuration | the Zones column and the thermal zones figure |
 
 - The Zones column joins the count's `included_point_count` to the level rows on `level_id`, and a level the count does not return counts 0. Summed over the levels shown, it is the site row and the analytics overview's thermal zones figure. Never page zone rows to count them, and never substitute `search_zones`, `platform.levels` or `platform.zones`: they list zone objects, not zone temperature points

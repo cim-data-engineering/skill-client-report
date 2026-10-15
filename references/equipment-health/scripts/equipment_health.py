@@ -5,6 +5,7 @@ references/equipment-health/equipment-health.md for what each figure means;
 this module is that reference's arithmetic.
 """
 import os
+import re
 import sys
 from collections import defaultdict
 
@@ -70,8 +71,12 @@ def build(ctx, work, shared):
     for r in work.get("eh/equipment-all.json").rows:
         equip[r["metadata_type_id"]].add(r["equipment_id"])
     type_all = work.get("eh/type-all.json")
-    link = next((x.link for x in (tm_rows, type_all, work.get("eh/site-all.json"),
-                                  work.get("eh/priority-all.json")) if x.link), None)
+    host = re.match(r"https?://[^/]+", ctx["site"].get("site_link") or "")
+    host = host.group(0) if host else "https://ace.cimenviro.com"
+    dashboard = lambda start: ("%s/dashboard/equipment-health?site_ids=%s&start_date=%sT00:00:00.000"
+                               "&end_date=%sT00:00:00.000" % (host, ctx["site"]["site_id"], start,
+                                                              io.last_day(q1).isoformat()))
+    link = dashboard(q0)
     rows = []
     for r in type_all.rows:
         tid = r["metadata_type_id"]
@@ -81,7 +86,7 @@ def build(ctx, work, shared):
         if all(v is None for v in months):
             continue
         rows.append({"name": names.get(tid, "Type %d" % tid), "type_id": tid,
-                     "link": (link + "&equipment_type_ids=%d" % tid) if link else None,
+                     "link": link + "&equipment_type_ids=%d" % tid,
                      "counts": [len(equip.get(tid, ())), r.get("task_count") or 0], "months": months})
     chg = lambda r: (r["months"][-1] - r["months"][0]) if None not in (r["months"][0], r["months"][-1]) else -1e9
     rows.sort(key=lambda r: (-chg(r), -(r["months"][-1] or 0), r["name"]))   # ties: the higher score leads
@@ -177,7 +182,7 @@ def build(ctx, work, shared):
         "equipment_health": heat,
         "trend_eh": trend_eh,
         "trend_checks": trend_checks,
-        "links": {"equipment_health": link, "trend_eh": work.get("eh/site-month.json").link},
+        "links": {"equipment_health": link, "trend_eh": dashboard(ctx["trend"][0])},
         "datelines": {"Equipment health snapshot":
                       "%s, the three months of the reporting quarter. Share of rule executions returning no fault, "
                       "by equipment type, sorted by change across the quarter." % io.span(qm[0], qm[-1]),
