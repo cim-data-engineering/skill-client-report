@@ -185,24 +185,53 @@ def ampm(slot):
     return "%d%s%s" % (h % 12 or 12, (":%02d" % m) if m else "", "am" if h < 12 else "pm")
 
 
-def page_svg(page, days, n):
+def page_table(page, days, n):
+    """One page of plant as a table of SVG strips. The day header is the thead, so
+    a printed page repeats it, and every unit is a row of its own, so a page break
+    falls between units and never through one. Each strip draws its share of the
+    working-hours columns and day rules, overlapping its neighbours by half a unit
+    so the columns print without a seam; the header rounds their tops and a closing
+    strip their bottoms."""
     x0, x1 = LABEL, W - RIGHT_PAD
     dw = (x1 - x0) / 7
     sw = dw / 96
     px = lambda s: x0 + s * sw
-    fg, y = [], HEAD
+    cols = [(x0 + i * dw + d["wh"][0] * sw, (d["wh"][1] - d["wh"][0]) * sw) for i, d in enumerate(days) if d["wh"]]
+    mids = [x0 + i * dw for i in range(8)]
+
+    def strip(h, body, cls=None):
+        return ('<tr%s><td><svg viewBox="0 0 %d %g">%s</svg></td></tr>'
+                % (' class="%s"' % cls if cls else "", W, h, body))
+
+    def ground(h):
+        """The working-hours columns and day rules behind a strip h tall."""
+        return "".join(['<rect class="rh-wh" x="%.2f" y="-0.5" width="%.2f" height="%g"/>' % (x, w, h + 1)
+                        for x, w in cols]
+                       + ['<line class="rh-mid" x1="%.2f" y1="-0.5" x2="%.2f" y2="%g"/>' % (x, x, h + 0.5)
+                          for x in mids])
+
+    head = ['<defs><pattern id="rh-hatch-%d" width="4" height="4" patternUnits="userSpaceOnUse" '
+            'patternTransform="rotate(45)"><rect class="rh-hatch-bg" width="4" height="4"/>'
+            '<line class="rh-hatch" x1="0" y1="0" x2="0" y2="4"/></pattern></defs>' % n]
+    top = HEAD - 4
+    head += ['<path class="rh-wh" d="M%.2f,%g V%g Q%.2f,%g %.2f,%g H%.2f Q%.2f,%g %.2f,%g V%g Z"/>'
+             % (x, HEAD + 0.5, top + 3, x, top, x + 3, top, x + w - 3, x + w, top, x + w, top + 3, HEAD + 0.5)
+             for x, w in cols]
+    head += ['<line class="rh-mid" x1="%.2f" y1="2" x2="%.2f" y2="%g"/>' % (x, x, HEAD + 0.5) for x in mids]
     for i, d in enumerate(days):
         cx = x0 + i * dw + dw / 2
-        fg.append('<text class="rh-day" x="%.1f" y="12" text-anchor="middle">%s</text>' % (cx, escape(d["label"])))
-        fg.append('<text class="rh-hours" x="%.1f" y="24" text-anchor="middle">%s</text>'
-                  % (cx, "closed" if not d["wh"] else "%s-%s" % (ampm(d["wh"][0]), ampm(d["wh"][1]))))
+        head.append('<text class="rh-day" x="%.1f" y="12" text-anchor="middle">%s</text>' % (cx, escape(d["label"])))
+        head.append('<text class="rh-hours" x="%.1f" y="24" text-anchor="middle">%s</text>'
+                    % (cx, "closed" if not d["wh"] else "%s-%s" % (ampm(d["wh"][0]), ampm(d["wh"][1]))))
+    rows = []
     for g in page["groups"]:
-        fg.append('<text class="rh-group" x="0" y="%.1f">%s</text>' % (y + 14, escape(g["name"])))
-        y += GROUP_H
+        rows.append(strip(GROUP_H, ground(GROUP_H) + '<text class="rh-group" x="0" y="14">%s</text>'
+                          % escape(g["name"]), "rh-g"))
         for r in g["rows"]:
-            if r.get("level_break"):
-                y += LEVEL_GAP
-            ty, by = y + ROW_H / 2 + 3.5, y + (ROW_H - BAR_H) / 2
+            gap = LEVEL_GAP if r.get("level_break") else 0
+            h = gap + ROW_H
+            ty, by = gap + ROW_H / 2 + 3.5, gap + (ROW_H - BAR_H) / 2
+            fg = []
             where = " · ".join(x for x in (r.get("where") or []) if x)
             name_w = LABEL - 14 - (min(len(where), 14) * FS_SMALL * CHAR + 8 if where else 0)
             tip = escape("%s%s%s" % (r["name"], " (%s)" % r["point"] if r.get("point") else "",
@@ -229,18 +258,14 @@ def page_svg(page, days, n):
                             if hi > lo:
                                 fg.append('<rect class="%s" x="%.2f" y="%.1f" width="%.2f" height="%d"/>'
                                           % (cls, px(o + lo), by, (hi - lo) * sw + 0.3, BAR_H))
-            y += ROW_H
-    bottom = y + BOTTOM
-    bg = ['<rect class="rh-wh" x="%.2f" y="%d" width="%.2f" height="%.1f" rx="3"/>'
-          % (x0 + i * dw + d["wh"][0] * sw, HEAD - 4, (d["wh"][1] - d["wh"][0]) * sw, bottom - HEAD + 4)
-          for i, d in enumerate(days) if d["wh"]]
-    bg += ['<line class="rh-mid" x1="%.2f" y1="%d" x2="%.2f" y2="%.1f"/>' % (x0 + i * dw, 2, x0 + i * dw, bottom)
-           for i in range(8)]
-    defs = ('<defs><pattern id="rh-hatch-%d" width="4" height="4" patternUnits="userSpaceOnUse" '
-            'patternTransform="rotate(45)"><rect class="rh-hatch-bg" width="4" height="4"/>'
-            '<line class="rh-hatch" x1="0" y1="0" x2="0" y2="4"/></pattern></defs>' % n)
-    return ('<svg viewBox="0 0 %d %.0f" role="img" aria-label="%s run times against working hours">%s%s%s</svg>'
-            % (W, bottom, escape(page["title"]), defs, "".join(bg), "".join(fg)))
+            rows.append(strip(h, ground(h) + "".join(fg)))
+    b = BOTTOM
+    end = "".join(['<path class="rh-wh" d="M%.2f,-0.5 V%g Q%.2f,%g %.2f,%g H%.2f Q%.2f,%g %.2f,%g V-0.5 Z"/>'
+                   % (x, b - 3, x, b, x + 3, b, x + w - 3, x + w, b, x + w, b - 3) for x, w in cols]
+                  + ['<line class="rh-mid" x1="%.2f" y1="-0.5" x2="%.2f" y2="%g"/>' % (x, x, b) for x in mids])
+    rows.append(strip(b, end, "rh-end"))
+    return ('<table aria-label="%s run times against working hours">\n<thead>%s</thead>\n<tbody>\n%s\n</tbody>\n</table>'
+            % (escape(page["title"]), strip(HEAD, "".join(head)), "\n".join(rows)))
 
 
 def render(agg):
@@ -249,7 +274,7 @@ def render(agg):
         if not any(g["rows"] for g in page["groups"]):
             continue
         out.append('<div class="rhpage"><h3 class="charttitle">%s</h3>\n%s\n</div>'
-                   % (escape(page["title"]), page_svg(page, agg["days"], n)))
+                   % (escape(page["title"]), page_table(page, agg["days"], n)))
     return "\n".join(out)
 
 
