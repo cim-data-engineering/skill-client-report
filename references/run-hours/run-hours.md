@@ -6,13 +6,7 @@ When each unit of plant ran across one week, against the site's working hours: M
 
 ## What you write
 
-One prose slot, `run_hours` in `prose.json`: the note under the chart. Two to four sentences, from the facts `report.py bundle` prints:
-
-- Lead with the plant that ran most outside working hours, named, and whether that is its job (a domestic hot water pump or a comms-room unit on all week is expected; an air handler is not)
-- Then anything on all week with nothing to check it against, which may be a stuck status rather than the unit running, and central plant that did not run at all
-- Say what it means for the building, not how the chart is drawn. The legend and the notes item carry the encoding
-
-Report in chat, not on the page: units left off the chart and why (only an enable or schedule, no points in PEAK, plant alarms but no run point), equipment types the signals reference does not cover yet, and any units beyond the first pass of 100. The build notes in `facts.md` list them.
+Nothing. Report in chat, not on the page: units left off the chart and why (only an enable or schedule, no points in PEAK, plant alarms but no run point), equipment types the signals reference does not cover yet, and any units beyond the first pass of 100. The build notes in `facts.md` list them.
 
 ## Scope
 

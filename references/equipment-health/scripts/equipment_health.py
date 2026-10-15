@@ -129,8 +129,15 @@ def build(ctx, work, shared):
     values = [io.pct(r["score"], 1) for r in trend]
     tmonths = [m for m in tm if m[:7] in site_m]
     th = io.thresholds(values, BANDS)
-    trend_eh = {"values": values, "thresholds": th, "dp": 1, "note_after": "Site equipment health score",
+    trend_eh = {"values": values, "thresholds": th, "dp": 1,
                 "alt": io.line_alt("site equipment health score", tmonths, values, th, 1)}
+
+    # the labour cost method, worded once for the notes band and the note under Chart 2
+    method = lambda window: (
+        "<strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by "
+        "priority: P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. "
+        "Savings prorate that annual effort over %s, valued at %s %d/hr for this site's region. A working day "
+        "is taken as %.1f hours." % (window, code, per_hr, HOURS_PER_DAY))
 
     # Chart 2: checks and labour cost by month, each month priced over its own days
     by_month = defaultdict(list)
@@ -146,12 +153,13 @@ def build(ctx, work, shared):
         rule_counts.append(sum(r.get("task_count") or 0 for r in rs))
     money = "dollars" if sym == "$" else ("pounds" if sym == "£" else "euros")
     trend_checks = {"a": a, "b": b, "labels_a": [io.compact(v) for v in a],
-                    "labels_b": ["%s%.1fk" % (sym, v / 1000) for v in b], "note_after": "Automated health checks",
+                    "labels_b": ["%s%.1fk" % (sym, v / 1000) for v in b],
+                    "note_after": "Automated health checks", "note": method("each month's own days"),
                     "alt": "Grouped bar chart, %s. Automated checks: %s and %s million. Labour cost avoided: %s and %s thousand %s."
                            % (io.span(tm[0], tm[-1], sep=" to "), ", ".join("%.2f" % (v / 1e6) for v in a[:-1]), "%.2f" % (a[-1] / 1e6),
                               ", ".join("%.1f" % (v / 1e3) for v in b[:-1]), "%.1f" % (b[-1] / 1e3), money)}
 
-    # facts the three notes are written from
+    # facts for facts.md: what moved, and the rule counts behind it
     movers = [r for r in rows if None not in (r["months"][0], r["months"][-1])]
     up = sorted(movers, key=lambda r: r["months"][-1] - r["months"][0], reverse=True)
     down = sorted(movers, key=lambda r: r["months"][-1] - r["months"][0])
@@ -187,16 +195,6 @@ def build(ctx, work, shared):
                       "%s, the three months of the reporting quarter. Share of rule executions returning no fault, "
                       "by equipment type, sorted by change across the quarter." % io.span(qm[0], qm[-1]),
                       "Monthly equipment health": "%s, the last six complete months." % io.span(tm[0], tm[-1])},
-        "notes": {"Labour cost avoided":
-                  "<strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by "
-                  "priority: P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. "
-                  "Savings prorate that annual effort over the %d-day period, valued at %s %d/hr for this site's "
-                  "region. A working day is taken as %.1f hours." % (days, code, per_hr, HOURS_PER_DAY)},
-        "prose": {
-            "eh_snapshot": "The note under the health-by-type heatmap: what moved across the quarter and why.",
-            "eh_score_trend": "The note under Chart 1, the six-month site score: the direction, and any step change "
-                              "and its cause (a rule count change is often the cause, not the building).",
-            "eh_checks_trend": "The note under Chart 2, checks and labour cost by month: what moved the volume.",
-        },
+        "notes": {"Labour cost avoided": method("the %d-day period" % days)},
         "facts": facts,
     }

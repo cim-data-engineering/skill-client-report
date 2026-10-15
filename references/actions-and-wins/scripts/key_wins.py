@@ -133,7 +133,7 @@ def more(ctx, work):
 
 
 def build(ctx, work, shared):
-    return {"facts": [], "prose": {}}
+    return {"facts": []}
 
 
 # ── photos ──────────────────────────────────────────────────────────────────

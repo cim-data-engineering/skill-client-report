@@ -5,9 +5,9 @@
 
 Everything mechanical lives here: heatmap rows and their band colours, chart
 geometry recomputed from each series' own range, the leaderboard, the wins and
-their photos, the platform links and every masthead slot. The narrative
-sentences are written by the model and passed in through the bundle; nothing in
-this file invents prose.
+their photos, the platform links and every masthead slot. The wins are
+written by the model and passed in through the bundle; nothing in this file
+invents prose.
 """
 import argparse, base64, io, json, os, re, subprocess, sys, tempfile
 
@@ -64,9 +64,9 @@ def swap(s, anchor, new, end='</table>'):
     return s[:start] + new + s[stop:]
 
 
-def note(s, eyebrow, text):
-    """Rewrite the chartnote that follows a given section eyebrow."""
-    i = s.index(eyebrow)
+def note(s, anchor, text):
+    """Rewrite the chartnote that follows `anchor`, a chart's title."""
+    i = s.index(anchor)
     k = s.index('<p class="chartnote">', i)
     return s[:k] + '<p class="chartnote">' + text + '</p>' + s[s.index("</p>", k) + 4:]
 
@@ -340,8 +340,6 @@ def fill_slots(s, D):
         i = s.index('<div class="rh">')
         j = s.index("<!-- /rh -->", i)
         s = s[:i] + '<div class="rh">\n' + rh["html"] + "\n  </div>" + s[j + len("<!-- /rh -->"):]
-        if rh.get("note"):
-            s = note(s, '<p class="eyebrow">Equipment run hours</p>', rh["note"])
     return s
 
 
@@ -409,10 +407,8 @@ def main():
     # heatmaps
     if "equipment_health" in D:
         s = swap(s, '<th class="ct">Equip</th>', heatmap(D["equipment_health"], months["quarter"]))
-        s = note(s, "Equipment health snapshot", D["equipment_health"]["note"])
     if "comfort" in D:
         s = swap(s, '<th class="lv">Level</th>', heatmap(D["comfort"], months["quarter"]))
-        s = note(s, "Indoor environment health snapshot", D["comfort"]["note"])
 
     # charts
     for key, anchor, kind in (("trend_eh", "Site equipment health score", "line"),
@@ -424,7 +420,8 @@ def main():
         c = D[key]
         svg = line_chart(c, months["trend"]) if kind == "line" else grouped_bar(c, months["trend"])
         s = swap_svg(s, anchor, svg)
-        s = note(s, c["note_after"], c["note"])
+        if c.get("note"):
+            s = note(s, c["note_after"], c["note"])
 
     # leaderboard
     if "leaderboard" in D:

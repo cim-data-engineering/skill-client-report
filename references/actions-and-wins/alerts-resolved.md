@@ -6,11 +6,9 @@ The two answer the same question from either end: how much fault work the site t
 
 ## What you write
 
-One note in `prose.json`, from the facts `report.py bundle` prints:
+Nothing. The script fills the chart and the leaderboard.
 
-- `alerts_trend`, under raised vs resolved: the balance across the six months. Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved, or a resolved peak that a bulk close-out explains, is worth a sentence
-
-Nothing resolved in the window means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. The script leaves out the section, its operational impact row and its notes items, and `facts.md` gives the open count to say in chat instead. Key wins goes with it. A newly onboarded site is where this happens.
+A window with nothing resolved means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. The script leaves out the section, its operational impact row and its notes items, and `facts.md` gives the open count to say in chat instead. Key wins goes with it. A newly onboarded site is where this happens.
 
 ## Operational impact row
 
@@ -77,7 +75,6 @@ Date: the 6 month window
 - **Median time to resolve** is measured from the linked action's creation to its resolution, not from the alert's own dates, since detection is automatic but resolution is human work
 - **Raised vs resolved.** Raised counts action tickets created in the month, not the alerts behind them: detection is automatic, raising an action is a human triage decision, and one action can be linked to many alerts. Resolved counts actions on their resolution date. Actions marked Not Doing are excluded from both series
 - **Completion rate** is resolved / (resolved + currently open) as at the issue date, so 100% reflects holding no open work
-- Every bar covers a whole month, so a fall in either series is real. A month where raised runs far above resolved is worth a sentence in the chart note
 
 ## Data
 

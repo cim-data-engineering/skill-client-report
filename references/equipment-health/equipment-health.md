@@ -4,11 +4,7 @@ Owns three of the operational impact rows (the equipment health score, the autom
 
 ## What you write
 
-Three notes in `prose.json`, from the facts `report.py bundle` prints:
-
-- `eh_snapshot`, under the heatmap: what moved across the quarter and why. Lead with the biggest move, and name a type that sits below Good
-- `eh_score_trend`, under Chart 1: the direction of the site score. A step change often tracks a change in what is being scored rather than the building: newly deployed rules commonly fault until their thresholds settle, and the facts carry the rule count by month and by type so you can say which it was
-- `eh_checks_trend`, under Chart 2: what moved the volume, usually the rule count and sometimes a shorter month
+Nothing. The script fills the whole section, the note under Chart 2 included.
 
 ## Operational impact rows
 
@@ -93,13 +89,13 @@ Monthly line chart. Render the two nearest benchmark thresholds and label them: 
 Chart 2: Site automated health checks and labor cost avoided
 Grouped monthly bar chart of total automated rule checks (LHS) vs labor cost avoided (RHS), the monthly view of the two rows above. Price each month with the labor cost model, prorated over that month's days.
 
+Under it, a chart note carrying the labor cost avoided notes item word for word, except that it prorates over each month's own days rather than the quarter's, so the method sits beside the figures it prices. The script writes both from one sentence.
+
 **Display:**
 
 - Display values on points. Chart 1 display 1dp x.x% and Chart 2 compact number formatting
 - Add chart titles
 - Chart 1's score is the same `site` series as the snapshot site row, so the months they share must agree
-- A step change in the site score often tracks a change in what is being scored, not a change in the building. Check the rule count per month before writing the note: newly deployed rules commonly fault until their thresholds settle, and that is the more useful thing to tell the reader
-- Every bucket is a whole month, so a dip in Chart 2 is a real fall in volume. Say what moved it, usually the rule count and sometimes a shorter month, rather than leaving the reader to guess
 
 **Links:**
 

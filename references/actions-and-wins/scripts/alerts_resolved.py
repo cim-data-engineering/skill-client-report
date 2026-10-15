@@ -174,7 +174,7 @@ def build(ctx, work, shared):
     ]
     return {
         "impact": impact,
-        "alerts": {"a": raised, "b": resolved, "scale": "shared", "note_after": "Faults triaged and resolved",
+        "alerts": {"a": raised, "b": resolved, "scale": "shared",
                    "alt": "Grouped bar chart of actions raised and resolved each month, %s. Raised %s and %d. "
                           "Resolved %s and %d." % (io.span(tm[0], tm[-1], sep=" to "), ", ".join(map(str, raised[:-1])), raised[-1],
                                                    ", ".join(map(str, resolved[:-1])), resolved[-1])},
@@ -202,7 +202,5 @@ def build(ctx, work, shared):
             "Completion rate": "<strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the "
                                "issue date, so 100% reflects holding no open work.",
         },
-        "prose": {"alerts_trend": "The note under raised vs resolved: the balance across the six months, and any "
-                                  "month where raised ran far above resolved or a bulk close-out drove a peak."},
         "facts": facts,
     }

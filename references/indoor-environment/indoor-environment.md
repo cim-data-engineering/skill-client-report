@@ -4,12 +4,7 @@ Owns the operational impact thermal comfort row, the indoor environment health s
 
 ## What you write
 
-Two notes in `prose.json`, from the facts `report.py bundle` prints:
-
-- `ie_snapshot`, under comfort by level: where in the building comfort moved and why, naming the levels that moved most and any that sit below Good
-- `ie_trend`, under the six-month chart: the direction against the benchmark lines
-
-Levels with configured points but no score this quarter are in neither the table nor the thermal zones figure. `facts.md` names them: say so in chat, not on the page.
+Nothing. Levels with configured points but no score this quarter are in neither the table nor the thermal zones figure. `facts.md` names them: say so in chat, not on the page.
 
 ## Operational impact row
 

@@ -220,7 +220,7 @@ def build(ctx, work, shared):
     facts = ["Run hours: %s, %d units drawn, working hours from the %s."
              % (window["label"], rows, "user" if window.get("hours_source") == "user" else "site's settings in PEAK"),
              "Most running outside working hours: " + ("; ".join("%s (%s) %.1f h" % (n, g, h) for h, n, g in ooh[:6]) or "none"),
-             "Build notes, for chat and the chart note: " + " ".join(
+             "Build notes, for chat: " + " ".join(
                  l[2:] for l in notes.splitlines() if l.startswith("- "))]
     if later:
         facts.append("Not drawn, beyond the first pass of 100 units: %d units. Name them in chat." % len(later))
@@ -235,7 +235,5 @@ def build(ctx, work, shared):
                   "was told to do, not that it ran, so it never draws a row. Where status and speed disagree, the "
                   "one showing less running is kept, since the usual faults all add hours. Grey columns are the "
                   "site's working hours in PEAK; hatching marks no reliable data."},
-        "prose": {"run_hours": "The note under the run hours chart: which plant ran outside working hours, and "
-                               "anything on all week or not at all, from the facts below."},
         "facts": facts,
     }

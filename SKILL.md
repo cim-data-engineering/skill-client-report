@@ -7,7 +7,7 @@ description: Generates a client-facing quarterly building performance review for
 
 A quarterly building performance review for one PEAK site: a self-contained A4 print-first HTML page the partner hands to a facilities manager. The reader chooses which sections it carries, and that choice decides what you fetch and what the page shows. A section that is out should cost nothing.
 
-Every figure, row, series, link, date line and methodology note comes from the section scripts. Your part is the PEAK calls, the key wins and the prose. Layout belongs to `scripts/fill_report.py`, which draws every table and chart from the bundle, so a change to how something looks is a change to that script or to `DESIGN.md`, never to a filled file.
+Every figure, row, series, link, date line and methodology note comes from the section scripts. Your part is the PEAK calls and the key wins. Layout belongs to `scripts/fill_report.py`, which draws every table and chart from the bundle, so a change to how something looks is a change to that script or to `DESIGN.md`, never to a filled file.
 
 ## Build order
 
@@ -16,8 +16,8 @@ Work in one directory, `report/` below.
 1. **Resolve the site and the sections**: [Section selection](#section-selection). Call `search_sites(keyword:"<site>", include_working_hours:true)` and `who_am_i` together, and save the `search_sites` response as `report/site.json`. Nothing else is fetched before the sections settle.
 2. **Plan**: `python3 scripts/report.py plan report --site report/site.json --author "<who_am_i user_name>" --sections <names>`. It fixes the quarter from today in site time and prints every call the sections need, each with the file under `report/peak/` its response is saved as.
 3. **Fetch**: make every printed call in one parallel batch, exactly as printed. Save each response the plan lists to save as its file: an offloaded one by copying the file you were handed, an inline one by writing it to its file exactly as returned, one file per response. Those responses hold counts, scores, ids and type, level or company names only. The plan lists the key win candidate pulls apart: read those where they come back and never save them, since they carry what people wrote on the tickets. Then `python3 scripts/report.py next report`, and make whatever it prints the same way until it says there are no more calls.
-4. **Bundle**: `python3 scripts/report.py bundle report` writes every figure into `report/data.json`, and `report/facts.md`: the facts each note is written from, and the prose slots to fill.
-5. **Write**: `report/prose.json`, one entry per slot `facts.md` names, by [Writing the narrative](#writing-the-narrative) and the "What you write" part of each chosen section's reference. The rest of a reference is what its script already did; read it only to answer a question it raises. With Actions and key wins in, choose the wins from the two candidate pulls and write `report/wins.json`; `next` then prints the impact and photo calls for them, and once those are saved, the level call. Make those, run `python3 references/actions-and-wins/scripts/key_wins.py photos report`, look at the one numbered contact sheet it makes per win, and add your picks to `wins.json`.
+4. **Bundle**: `python3 scripts/report.py bundle report` writes every figure into `report/data.json`, and `report/facts.md`: what the data shows, what to say in chat, and what `wins.json` takes.
+5. **Write**: with Actions and key wins in, choose the wins from the two candidate pulls by `references/actions-and-wins/key-wins.md` and [Writing the narrative](#writing-the-narrative), and write `report/wins.json`; `next` then prints the impact and photo calls for them, and once those are saved, the level call. Make those, run `python3 references/actions-and-wins/scripts/key_wins.py photos report`, look at the one numbered contact sheet it makes per win, and add your picks to `wins.json`. Every other reference is what its script already did; read it only to answer a question it raises.
 6. **Fill and check**: `python3 scripts/report.py fill report` fills the report, saves every photo tile as it prints, and runs the check. Look at the tiles. Then say in chat whatever it lists, name the sections left out, and hand over the file.
 
 ## Section selection
@@ -41,28 +41,20 @@ Each folder holds the section's reference and a `scripts/` folder with its arith
 - Skip the prompt when the invocation already names the sections ("/client-report Skyline Tower: equipment health and key wins only") and state the resolved list in your reply instead
 - Resolve the list before the first PEAK call. A section that is out is never fetched
 - [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when a section that owns one is in. The scaffold builds it that way
-- Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scripts handle the parts they know about; check the prose yourself
+- Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scripts handle the parts they know about; check the wins yourself
 - Three things can come up empty after the fetch, and only the fetch can tell: Actions and key wins when nothing was resolved in the window, Key wins alone when no win qualifies, and run hours when no plant carries a sensor that shows it running. The scripts leave the section out and `facts.md` says why; say so in chat, not on the page
 
 ## Writing the narrative
 
-Every sentence on the page is written by the partner's engineer to the building's facility manager: the statement under each section name, the note under each table and chart, the key wins, the methodology notes. Write like a building performance engineer, not a marketer.
+Every sentence on the page is written by the partner's engineer to the building's facility manager: the statement under each section name, the key wins, the methodology notes. Write like a building performance engineer, not a marketer.
 
-- Open with the most meaningful improvement. If nothing improved, open with what held steady
 - Use numbers as evidence and round them sensibly. 79%, not 79.08%. A move of 0.01 pp is not a move, so call it stable
 - Explain a known cause plainly, and say when something is still open or needs a follow-up. Never imply an issue is resolved unless the data says so
-- Do not narrate the table row by row. The table is already on the page and the reader runs the plant; the note says what it means
-- Three or four short sentences. Facts carry it, so drop the summing-up line that tells the reader what to think
+- Facts carry it, so drop the summing-up line that tells the reader what to think
 - No superlatives, no congratulation, no editorial framing. Past tense, active, plain words. Not "leveraged", "robust", "significant", "it is worth noting", "demonstrates"
 - No em dashes. A full stop, a comma or a colon does the same work and does not read as generated. Ticket titles and the brand line are quoted verbatim, so leave their punctuation alone
 - Nor the other tells: "not just X, but Y", rhetorical questions, a list of three where two would do, a sentence that opens by restating the one before it, stacked hedges like "may potentially"
 - Never describe the report itself or how it was made. The reader wants the building, not the method
-
-A chart note before and after. The first packs everything in, opens on an editorial framing, quotes 99.67% and closes on a movement too small to be one:
-
-> Chillers are the story on an otherwise steady page: their 42 rules sat in Average through June and July, then climbed to 99.67% in August after evaporator pressure sensing was restored on CH-01 and CH-02. Everything else held inside Good or better all quarter, and the only fall is primary chilled water pumps at 0.18 pp. Variable air volume moved 0.06 pp in August.
-
-> Chiller health improved from 94.7% to 99.7% in August, after evaporator pressure sensing was restored on CH-01 and CH-02. Air handling units eased back in August but remain in Good at 98.4%. Overall site health rose to 99.1%.
 
 ## What always renders
 
@@ -120,7 +112,7 @@ Numbered methodology items in report order, each owned by the section it explain
 A follow-up on a report that already exists is not a rebuild. Match the reading to the ask:
 
 - **A number, a date, a name, a sentence**: edit the file. One PEAK call if the answer needs one, no references, no `DESIGN.md`
-- **A section that was left out**: run the build again in a fresh directory with the report's full new list, copying `prose.json` and `wins.json` across, so only the new section's prose is left to write
+- **A section that was left out**: run the build again in a fresh directory with the report's full new list, copying `wins.json` across, so the wins already chosen carry over
 - **A visual or structural change**, such as a new component, a table re-laid out or a different chart form: read `DESIGN.md`. `## Colors` and `## Typography` for the tokens and their roles, `## Components` for what a component owes, `## Layout` for the print rules. The rendered file carries the CSS but not the reasoning behind it
 - **A rebrand**: `BRAND.md` and the logo assets it names, per [Output & theming](#output--theming). Both files stay at the repo root. The tokens sit in one `:root` block and the masthead logo is one inlined SVG, so this is a handful of edits on the file you already have
 
@@ -133,9 +125,9 @@ A site can have less history than the window asks for, and `facts.md` says so wh
 - A movement needs two months. With one, state the score and drop the delta. "Up 0.00 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column, and sort the rows by score with the lowest first, so the plant needing attention leads
 - A trend needs three points. With fewer, drop the trend chart and keep the snapshot; two months drawn as a line invites the reader to extend it. Where that empties a trends section, delete the section
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
-- An equipment type or a level can start later than the site did, when new rules go on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in the section note when its rules began scoring
+- An equipment type or a level can start later than the site did, when new rules go on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in chat when its rules began scoring
 - Prorate the labor cost model over the days actually monitored, not the calendar quarter, or it credits the monitoring with time it wasn't running
-- A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules. One rule against 850 either side is an outage wearing a score. Treat both alike: plot the months that exist, leave the gap visible, and say so in the chart note
+- A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules. One rule against 850 either side is an outage wearing a score. Treat both alike: plot the months that exist, leave the gap visible, and say so in chat
 
 ## Output & theming
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Drive a client report from the section scripts, so the model only makes the
-PEAK calls, picks the key wins and writes the prose.
+PEAK calls and picks and writes the key wins.
 
     python3 scripts/report.py plan   <dir> --site <dir>/site.json --author "Full Name" [--sections ...]
     python3 scripts/report.py next   <dir>
@@ -13,10 +13,10 @@ next    Checks every printed call was saved, then prints the follow-up calls the
         responses call for (paging, a single-level site's zones, run hours history,
         key win evidence once wins.json exists), or says there are none.
 bundle  Builds every figure, row, series, link and note into <dir>/data.json, and
-        writes <dir>/facts.md: what each prose slot is for and the facts to write
-        it from, plus the key win candidates.
-fill    Merges <dir>/prose.json and <dir>/wins.json into the bundle, fills the
-        report and runs the check.
+        writes <dir>/facts.md: what the data shows, what to say in chat, and
+        what wins.json takes.
+fill    Merges <dir>/wins.json into the bundle, fills the report and runs the
+        check.
 
 Each section is a folder under references/ holding its reference and its
 scripts; MODULES below is the whole registry. A module exposes calls(ctx),
@@ -49,11 +49,6 @@ MODULES = {"overview": ("overview", "overview"),
            "key-wins": ("actions-and-wins", "key_wins"),
            "run-hours": ("run-hours", "run_hours")}
 ORDER = ["equipment-health", "indoor-environment", "alerts-resolved", "key-wins", "run-hours"]
-# prose.json key -> (bundle object, field) it fills
-PROSE = {"eh_snapshot": ("equipment_health", "note"), "eh_score_trend": ("trend_eh", "note"),
-         "eh_checks_trend": ("trend_checks", "note"), "ie_snapshot": ("comfort", "note"),
-         "ie_trend": ("trend_comfort", "note"), "alerts_trend": ("alerts", "note"),
-         "run_hours": ("run_hours", "note")}
 
 
 def module(section):
@@ -171,7 +166,7 @@ def merge(into, part):
     for k, v in part.items():
         if k in ("impact", "facts", "drop", "chat"):
             into.setdefault(k, []).extend(v)
-        elif isinstance(v, dict) and k in ("links", "datelines", "notes", "prose", "statements"):
+        elif isinstance(v, dict) and k in ("links", "datelines", "notes", "statements"):
             into.setdefault(k, {}).update(v)
         else:
             into[k] = v
@@ -194,13 +189,8 @@ def cmd_bundle(a):
                       "trend": [io.mon(m) for m in ctx["trend_months"]]}
     with open(os.path.join(work.root, "data.json"), "w") as fh:
         json.dump(data, fh, indent=1, ensure_ascii=False)
-    prose = {k: v for k, v in data.get("prose", {}).items() if k in PROSE and PROSE[k][0] in data}
-    lines = ["# Facts for the prose, %s" % ctx["site"]["site_name"], ""]
+    lines = ["# Facts, %s" % ctx["site"]["site_name"], ""]
     lines += ["- " + f for f in data.get("facts", [])]
-    lines += ["", "## prose.json", "",
-              "Write %s/prose.json with these keys, each two to four sentences, by Writing the narrative in "
-              "SKILL.md and the section's reference:" % a.dir, ""]
-    lines += ["- `%s`: %s" % (k, v) for k, v in prose.items()]
     if "key-wins" in ctx["sections"] and "key-wins" not in data.get("drop", []):
         lines += ["", "## wins.json", "",
                   "Choose from the two key win candidate pulls by references/actions-and-wins/key-wins.md, and "
@@ -220,14 +210,6 @@ def cmd_fill(a):
     ctx = work.ctx
     with open(os.path.join(work.root, "data.json"), encoding="utf-8") as fh:
         data = json.load(fh)
-    prose_path = os.path.join(work.root, "prose.json")
-    prose = json.load(open(prose_path, encoding="utf-8")) if os.path.isfile(prose_path) else {}
-    missing = [k for k, (obj, _) in PROSE.items() if obj in data and k in data.get("prose", {}) and not prose.get(k)]
-    if missing:
-        sys.exit("prose.json is missing %s" % ", ".join(missing))
-    for k, text in prose.items():
-        if k in PROSE and PROSE[k][0] in data:
-            data[PROSE[k][0]][PROSE[k][1]] = text
     sections = data["sections"].split(",")
     chat = []
     if "key-wins" in sections:
@@ -240,7 +222,7 @@ def cmd_fill(a):
             merge(data, kw.assemble(ctx, work))
     data["sections"] = ",".join(sections)
     chat = data.pop("chat", []) + chat
-    for k in ("prose", "facts", "drop"):
+    for k in ("facts", "drop"):
         data.pop(k, None)
     final = os.path.join(work.root, "report-data.json")
     with open(final, "w", encoding="utf-8") as fh:

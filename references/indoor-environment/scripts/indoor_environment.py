@@ -157,7 +157,7 @@ def build(ctx, work, shared):
     tmonths = [m for m in tm if m[:7] in site_m]
     values = [io.pct(site_m[m[:7]]["score"], 1) for m in tmonths]
     th = io.thresholds(values, BANDS)
-    trend = {"values": values, "thresholds": th, "dp": 1, "note_after": "Site thermal comfort score",
+    trend = {"values": values, "thresholds": th, "dp": 1,
              "alt": io.line_alt("site thermal comfort score", tmonths, values, th, 1)}
 
     facts_site = shared.get("site_facts") or {}
@@ -205,10 +205,6 @@ def build(ctx, work, shared):
                 "<strong>Zones</strong> in the indoor environment snapshot counts the zone temperature points "
                 "configured for comfort scoring on each level shown, and its site row is the thermal zones figure "
                 "in the analytics overview. A level whose points returned no score in the quarter is left out of both.",
-        },
-        "prose": {
-            "ie_snapshot": "The note under comfort by level: where in the building comfort moved and why.",
-            "ie_trend": "The note under the six-month comfort chart: the direction against the benchmark lines.",
         },
         "facts": facts,
     }
