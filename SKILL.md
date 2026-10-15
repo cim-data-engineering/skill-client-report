@@ -1,20 +1,24 @@
 ---
 name: client-report
-description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the actions leaderboard, and key wins, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the actions leaderboard and key wins, and equipment run hours against working hours, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
 
-A quarterly building performance review for one PEAK site: a self-contained A4 print-first HTML page the partner hands to a facilities manager. The reader chooses which sections it carries, and that choice decides what you fetch, what markup you build and which references you read. A section that is out should cost nothing.
+A quarterly building performance review for one PEAK site: a self-contained A4 print-first HTML page the partner hands to a facilities manager. The reader chooses which sections it carries, and that choice decides what you fetch and what the page shows. A section that is out should cost nothing.
+
+Every figure, row, series, link, date line and methodology note comes from the section scripts. Your part is the PEAK calls and the key wins. Layout belongs to `scripts/fill_report.py`, which draws every table and chart from the bundle, so a change to how something looks is a change to that script or to `DESIGN.md`, never to a filled file.
 
 ## Build order
 
-1. **Resolve the site and the sections**: [Section selection](#section-selection). Nothing is fetched before this settles, because the selection decides what there is to fetch.
-2. **Read one reference per chosen section**: `references/<section>.md`. Each carries its table spec, benchmark, links and notes items, and closes with a Data recipes block holding the PEAK calls behind them. The others describe sections you are not building; leave them unread.
-3. **Fetch in two rounds**: [Data recipes](#data-recipes), then the Data recipes block at the end of each chosen reference. Nothing else. One call resolves the site; every remaining call then goes out in a single parallel batch, since none of them depend on each other once the site id is known. Break the two dependencies that would otherwise split that batch: resolve equipment type names with an unfiltered `search_equipment_types(limit:200)` rather than waiting on the health scores for their ids, and select `comments` inline on the Open now call rather than fetching them after.
-4. **Write the data bundle**: one `data.json` carrying every figure, row, series and sentence the report needs. Derive it from the fetched rows with a short python script, reading the large pulls off the files the gateway spilled them to rather than out of the conversation. The prose is yours and follows [Writing the narrative](#writing-the-narrative); the bundle is where it lives. `scripts/fill_report.py` is the schema: its key names are the contract.
-5. **Fill**: `python3 scripts/fill_report.py data.json --out skyline-q3.html`. It scaffolds the chosen sections, then renders both heatmaps with their band colours, recomputes each chart's y geometry from its own data range, and lays in the operational impact rows, the leaderboard, the wins, the platform links and every masthead slot. Hand-editing the scaffold instead puts the chart arithmetic back on you, which is what this script exists to remove. `build_report.py parts` still lists what a section owns, and `build_report.py part <name>` prints one part when you are adding a section to a report that already exists.
-6. **Check and hand over**: `python3 scripts/build_report.py check <file>` catches sample values, unresolved placeholders and markers left behind. It is a backstop, not a substitute for reading the numbers. Then name the sections you left out, so the reader knows the omission was asked for.
+Work in one directory, `report/` below.
+
+1. **Resolve the site and the sections**: [Section selection](#section-selection). Call `search_sites(keyword:"<site>", include_working_hours:true)` and `who_am_i` together, and save the `search_sites` response as `report/site.json`. Nothing else is fetched before the sections settle.
+2. **Plan**: `python3 scripts/report.py plan report --site report/site.json --author "<who_am_i user_name>" --sections <names>`. It fixes the quarter from today in site time and prints every call the sections need, each with the file under `report/peak/` its response is saved as.
+3. **Fetch**: make every printed call in one parallel batch, exactly as printed. Save each response the plan lists to save as its file: an offloaded one by copying the file you were handed, an inline one by writing it to its file exactly as returned, one file per response. Those responses hold counts, scores, ids and type, level or company names only. The plan lists the key win candidate pulls apart: read those where they come back and never save them, since they carry what people wrote on the tickets. Then `python3 scripts/report.py next report`, and make whatever it prints the same way until it says there are no more calls.
+4. **Bundle**: `python3 scripts/report.py bundle report` writes every figure into `report/data.json`, and `report/facts.md`: what the data shows, what to say in chat, and what `wins.json` takes.
+5. **Write**: with Actions and key wins in, choose the wins from the two candidate pulls by `references/actions-and-wins/key-wins.md` and [Writing the narrative](#writing-the-narrative), and write `report/wins.json`; `next` then prints the impact and photo calls for them, and once those are saved, the level call. Make those, run `python3 references/actions-and-wins/scripts/key_wins.py photos report`, look at the one numbered contact sheet it makes per win, and add your picks to `wins.json`. Every other reference is what its script already did; read it only to answer a question it raises.
+6. **Fill and check**: `python3 scripts/report.py fill report` fills the report, saves every photo tile as it prints, and runs the check. Look at the tiles. Then say in chat whatever it lists, name the sections left out, and hand over the file.
 
 ## Section selection
 
@@ -22,50 +26,45 @@ Ask before fetching anything. The masthead and [Analytics overview](#analytics-o
 
 Ask with one `AskUserQuestion` call and one multi-select question, header "Sections": "Which sections should the report cover from last quarter?" Four options is the tool's limit, and four is the whole list. Describe each by what it adds:
 
-| Choice                           | `--sections` name    | Reference                          | Adds                                                                                                                            |
-| -------------------------------- | -------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Equipment health                 | `equipment-health`   | `references/equipment-health.md`   | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends |
-| Indoor environment               | `indoor-environment` | `references/indoor-environment.md` | the thermal comfort row, comfort by level, the six month comfort trend                                                          |
-| Actions resolved and leaderboard | `alerts-resolved`    | `references/alerts-resolved.md`    | the faults resolved row with verified recovery, six months of raised vs resolved, and who closed the work                       |
-| Key wins                         | `key-wins`           | `references/key-wins.md`           | what was found and acted on: repairs made, plus live work the owner should see                                                  |
+| Choice                | `--sections` name    | Folder under `references/` | Adds                                                                                                                                       |
+| --------------------- | -------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Equipment health      | `equipment-health`   | `equipment-health/`        | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends            |
+| Indoor environment    | `indoor-environment` | `indoor-environment/`      | the thermal comfort row, comfort by level, the six month comfort trend                                                                     |
+| Actions and key wins  | `actions-and-wins`   | `actions-and-wins/`        | the faults resolved row with verified recovery, six months of raised vs resolved, who closed the work, and the key wins: repairs made plus live work the owner should see |
+| Equipment run hours   | `run-hours`          | `run-hours/`               | when each unit of plant ran across the latest full Monday-to-Sunday week, against the site's working hours                                |
+
+Each folder holds the section's reference and a `scripts/` folder with its arithmetic. Actions and key wins is one choice with two references, `alerts-resolved.md` and `key-wins.md`, because the two answer the same question from either end and share their pulls. `references/overview/` is the part every report carries.
 
 **Rules:**
 
 - Everything is included by default. A dismissed prompt, an unanswered question, or an invocation naming only a site gets the full report
 - Skip the prompt when the invocation already names the sections ("/client-report Skyline Tower: equipment health and key wins only") and state the resolved list in your reply instead
 - Resolve the list before the first PEAK call. A section that is out is never fetched
-- [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when at least one of the first three sections is in. Key wins on its own gives the masthead, the analytics overview and the wins. The scaffold builds it that way
-- The notes band is an `<ol>`, so items dropped with their section renumber themselves. Trim the shared reporting-window item to the series that survive
-- Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scaffold handles the parts it knows about; check the prose yourself
-- Two sections can come up empty after the fetch, and only the fetch can tell you: Key wins, when no closure qualifies, and Actions resolved, when nothing was resolved in the window. Either way, delete the section from the built file and say so in chat, not on the page. The two references carry the rule
+- [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when a section that owns one is in. The scaffold builds it that way
+- Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scripts handle the parts they know about; check the wins yourself
+- Three things can come up empty after the fetch, and only the fetch can tell: Actions and key wins when nothing was resolved in the window, Key wins alone when no win qualifies, and run hours when no plant carries a sensor that shows it running. The scripts leave the section out and `facts.md` says why; say so in chat, not on the page
 
 ## Writing the narrative
 
-Every sentence on the page is written by the partner's engineer to the building's facility manager: the statement under each section name, the note under each table and chart, the key wins, the methodology notes. Write like a building performance engineer, not a marketer.
+Every sentence on the page is written by the partner's engineer to the building's facility manager: the statement under each section name, the key wins, the methodology notes. Write like a building performance engineer, not a marketer.
 
-- Open with the most meaningful improvement. If nothing improved, open with what held steady
 - Use numbers as evidence and round them sensibly. 79%, not 79.08%. A move of 0.01 pp is not a move, so call it stable
 - Explain a known cause plainly, and say when something is still open or needs a follow-up. Never imply an issue is resolved unless the data says so
-- Do not narrate the table row by row. The table is already on the page and the reader runs the plant; the note says what it means
-- Three or four short sentences. Facts carry it, so drop the summing-up line that tells the reader what to think
+- Facts carry it, so drop the summing-up line that tells the reader what to think
 - No superlatives, no congratulation, no editorial framing. Past tense, active, plain words. Not "leveraged", "robust", "significant", "it is worth noting", "demonstrates"
 - No em dashes. A full stop, a comma or a colon does the same work and does not read as generated. Ticket titles and the brand line are quoted verbatim, so leave their punctuation alone
 - Nor the other tells: "not just X, but Y", rhetorical questions, a list of three where two would do, a sentence that opens by restating the one before it, stacked hedges like "may potentially"
 - Never describe the report itself or how it was made. The reader wants the building, not the method
 
-A chart note before and after. The first packs everything in, opens on an editorial framing, quotes 79.08% and closes on a movement too small to be one:
-
-> Water meters are the exception on an otherwise flat page: three meters on five rules sat at 54% through June and July, then recovered to 79.08% in August after the flatlined sub-meters on the podium cold water and cooling tower make-up lines were chased down. Everything else stayed inside Excellent all quarter, and the only fall is air handling units at 0.75 pp, which tracks the fan motor failure on AHU-6-3 in July. The site line moved 0.01 pp.
-
-> Water meter health improved from 54% to 79% in August, although flatlined sub-meters on the podium cold water and cooling tower make-up lines still require attention. Overall site health remained stable at 99.6%. The small reduction in AHU health was linked to a fan motor failure on AHU-6-3.
-
 ## What always renders
+
+The overview script fills every slot below; these are the rules it follows.
 
 ### Report title
 
 - {Site name} Quarterly Building Performance Review
 - Prepared by: {Company name} {Company service name}. Powered by PEAK
-- Reporting period: the quarter as a date range, per [Data recipes](#data-recipes), or the site's own coverage per [Newly onboarded sites](#newly-onboarded-sites)
+- Reporting period: the quarter as a date range, per [How the scripts fetch](#how-the-scripts-fetch), or the site's own coverage per [Newly onboarded sites](#newly-onboarded-sites)
 - Author: full name of the logged-in PEAK MCP user, from `who_am_i`, always present, never omitted or substituted
 - Issue date: issue date
 - Disclaimer, verbatim, below the masthead metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
@@ -100,41 +99,40 @@ Each row belongs to a section and is specified in that reference: three to equip
 
 - No red in this section. The rating chip reads Excellent or Good on the positive chip, Average or Poor on the warning chip, never the negative one. A movement takes the positive delta when it improves and the muted delta when it declines or holds flat. State a fall plainly in the figure, the glyph and the word: reported, not colour coded. Red stays available to the snapshot tables and charts below
 - Keep the surviving rows in this order: equipment health score, thermal comfort, automated checks, labor cost avoided, faults resolved
-- Where a row states a movement, it runs from the quarter's first month to its last: the reporting period, and nothing outside it
+- Where a row states a movement, it runs from the reporting period's first month to its last, the month to date where the report carries one: the reporting period, and nothing outside it
 
 ## Notes band
 
 Numbered methodology items in report order, each owned by the section it explains, plus one shared item:
 
-- **The reporting window**: every monthly series closes on the last complete month, so no column or bar covers a part-month and the volume series can be read against each other directly. Name the series the report actually shows, and the three complete months the quarter covers
+- **The reporting window**: with no month to date, every monthly series closes on the last complete month, so no column or bar covers a part-month and the volume series can be read against each other directly. With one, every series runs to the issue date: name the month to date and how many of its days it holds, the volume series that are short there by construction, and that scores are rates over the days that exist. Either way, name the series the report actually shows and the three complete months the quarter covers
 
 ## After the render
 
 A follow-up on a report that already exists is not a rebuild. Match the reading to the ask:
 
 - **A number, a date, a name, a sentence**: edit the file. One PEAK call if the answer needs one, no references, no `DESIGN.md`
-- **A section that was left out**: `python3 scripts/build_report.py part key-wins --sections <the report's full new list>` prints that part's markup on its own. Paste it in report order, read its reference, fetch only its calls. Re-scaffolding would throw away the report you have. Where the new section owns operational impact rows or notes items, add those too; if the report has neither of those frames, it was built with none of the three data sections in, so scaffold a fresh file instead
+- **A section that was left out**: run the build again in a fresh directory with the report's full new list, copying `wins.json` across, so the wins already chosen carry over
 - **A visual or structural change**, such as a new component, a table re-laid out or a different chart form: read `DESIGN.md`. `## Colors` and `## Typography` for the tokens and their roles, `## Components` for what a component owes, `## Layout` for the print rules. The rendered file carries the CSS but not the reasoning behind it
 - **A rebrand**: `BRAND.md` and the logo assets it names, per [Output & theming](#output--theming). Both files stay at the repo root. The tokens sit in one `:root` block and the masthead logo is one inlined SVG, so this is a handful of edits on the file you already have
 
 ## Newly onboarded sites
 
-A site can have less history than the window asks for. Read that from the first fetch rather than assuming: if the earliest month returned by the `site` × `month` call is later than the window start, the site went live inside the window and the report covers what exists.
+A site can have less history than the window asks for, and `facts.md` says so when a section's six-month series comes back short. The site went live inside the window, and the report covers what exists.
 
-- Trim both windows to the months that returned data, still whole months only. The month a site went live in is not a complete month for it unless it went live on the 1st, so drop it
+- Trim both windows to the months that returned data, still whole months only apart from the month to date. The month a site went live in is not a complete month for it unless it went live on the 1st, so drop it
 - Say it once, in the masthead: "Reporting period: 1 – 31 August 2026, monitoring live since 14 July 2026". The reader needs to know the report is short because the site is new, not because something failed. Don't repeat it section by section
 - A movement needs two months. With one, state the score and drop the delta. "Up 0.00 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column, and sort the rows by score with the lowest first, so the plant needing attention leads
 - A trend needs three points. With fewer, drop the trend chart and keep the snapshot; two months drawn as a line invites the reader to extend it. Where that empties a trends section, delete the section
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
-- An equipment type or a level can start later than the site did, when new rules go on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in the section note when its rules began scoring
+- An equipment type or a level can start later than the site did, when new rules go on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in chat when its rules began scoring
 - Prorate the labor cost model over the days actually monitored, not the calendar quarter, or it credits the monitoring with time it wasn't running
-- A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules. One rule against 850 either side is an outage wearing a score. Treat both alike: plot the months that exist, leave the gap visible, and say so in the chart note
+- A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules. One rule against 850 either side is an outage wearing a score. Treat both alike: plot the months that exist, leave the gap visible, and say so in chat
 
 ## Output & theming
 
-One self-contained A4 print-first HTML file: all CSS inline, charts as hand-authored inline SVG, no JS. The scaffold supplies the stylesheet and every component, so this is a handful of edits rather than a rebuild:
+One self-contained A4 print-first HTML file: all CSS inline, charts as inline SVG, no JS. The scaffold supplies the stylesheet and every component, and `fill_report.py` draws every chart from the bundle, so the geometry is never yours to compute:
 
-- The scaffold's chart SVGs already run six columns at x = 80, 190 … 630, so the x positions carry over. The y geometry does not: recompute every point, bar top, benchmark line and value label from your own data range, and pick the range from the data plus the thresholds you are drawing. Reusing the sample's y values plots the sample's data, not yours
 - Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex, because SVG presentation attributes cannot read `var()`. Heatmap band fills work the same way (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor)
 - Section headers are three stacked lines: the section name as an uppercase eyebrow in `primary`, the statement beneath it as the `h2` headline, and the date line as a muted byline. The statement is the headline, never the section name
 
@@ -142,7 +140,7 @@ Resolve the theme in this order:
 
 1. **The scaffold**: its `:root` and component CSS are DESIGN.md compiled. A default CIM build needs nothing further; don't re-derive values the file already carries
 2. **`BRAND.md`** (repo root): if present, apply its YAML frontmatter overrides by editing `:root`, the `@font-face` block and the masthead logo. Honor only these keys and ignore everything else:
-  - `name`, `service-name`: replace the company name and service name defaults in [Report title](#report-title)
+  - `name`, `service-name`: replace the company name and service name defaults in [Report title](#report-title). The scripts read these two and fill the masthead with them
   - `colors:`: `primary`, `primary-container`, `on-primary-container`, `secondary`, `on-secondary`, `on-secondary-muted`, `chart-benchmark`, `text-heading` only
   - `fonts:`: `display`, `text`, `mono` family swaps mapped onto the DESIGN.md typography roles (display → h1/h2/card-title/metric; text → body/body-sm/label/eyebrow; mono → mono). Sizes, weights and line-heights always keep DESIGN.md values. Families on Google Fonts load from the CDN, and the `font-family` stack carries the offline case; a family that is not on Google Fonts is embedded from `assets/fonts` as a base64 data URI, since a relative font path does not survive the report leaving this repo
   - `logos:`: `reversed` (masthead) and `full-color`, paths to partner files. Inline the referenced SVG contents (data URI for PNG) so the report stays self-contained
@@ -155,54 +153,14 @@ Derived rules when overrides are active:
 - Any brand override active → platform strings read `PEAK` (drop the CIM prefix) in the masthead metadata row and footer. `Powered by PEAK` is always kept, in every brand
 - No overrides → keep `CIM PEAK` and the CIM masthead logo the scaffold already carries from `assets/logo-white.svg`
 
-## Data recipes
+## How the scripts fetch
 
-A full four-section report is about two dozen calls, and a long session has a call budget. Every recipe here is written to answer a whole section in one request, so the discipline is: pull a window, not a month; pass a set, not one id at a time; read `pagination.total` when you only need a count; and derive locally anything already sitting in rows you hold. A per-item loop is the sign you have missed a batch filter.
+Every call in a section's `calls()` answers a whole need in one request: rows for a window, not a month at a time; a set of ids, never one id at a time; a count wherever a count is all that is needed, from `count_tickets`, `count_indoor_environment_zones` or `pagination.total`; and everything else derived locally from rows already held. A change to a section's calls goes in its script, with the reason in its reference's Data block.
 
-Every window closes on the **last complete month**, so nothing in the report covers a part-month. Two reasons: a quarterly review should read as of the quarter, not as of the day it was generated; and equipment health scores are stored pre-aggregated on month boundaries, so a mid-month bound forces a raw scan and a wide call is then refused for scanning too many rows.
+The **quarter** is the three complete months before the issue date's month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use. Once more than a week of the current month has passed, that **month to date** joins both windows as their last month, so the snapshots carry four columns and the trends seven points, and the reporting period runs from the quarter's first day to the issue date. Before then, every window closes on the last complete month and nothing covers a part-month. Every bound is a month boundary, the month to date included: it is fetched up to the first of the next month and holds whatever exists so far, because equipment health scores are stored pre-aggregated on month boundaries and a mid-month bound forces a raw scan. The scripts mark the month to date wherever it shows: "to date" under its column and axis labels, a tinted column behind it on every chart, and on a line chart a dashed last segment onto an open point. Its scores are rates and stand as they are; its volumes are short by construction, which the reporting window note says.
 
-Two windows, named here because the references reuse them. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use, so a trend carries the quarter plus the three months before it. Both close on the same month, so trends and snapshots share that bucket and must not disagree on it.
+Run hours takes the latest full Monday-to-Sunday week before the issue date, in site time. Where the site's data is missing from that week, because no run point reported in it or every periodically logged point went quiet together for 12 hours or more, it takes the latest full week before the data stopped, provided that week falls inside the reporting period. Otherwise the section leaves the missing stretch hatched, or drops out when the week holds nothing, and `facts.md` says why.
 
-Links come back with the data, so the report does not build them. `search_equipment_health_scores`, `search_indoor_environment`, `search_alert_tickets` and `search_action_tickets` each return `platform_link`, that call's own filters and window opened in the PEAK web app, and a section's links are the ones its own calls returned:
+The section scripts build every link from the URL its reference writes out, on the host of the site's `site_link`. `{{site_id}}` is the PEAK site id; `{{quarter_start}}` and `{{trend_start}}` are the first days of the quarter and the 6 month window, `{{quarter_end}}` is the last day the reporting period covers, the issue date where it carries a month to date, and `{{quarter_last_month}}` the first day of its last month, all `YYYY-MM-DD`. A row link is the section link with the row's own filter appended, `&equipment_type_ids={id}` or `&level_ids={id}`. Key win evidence links to the `ticket_link` on each action ticket row.
 
-- A section link comes off one of that section's quarter calls, a chart's source link off its 6 month call. Take the URL as it is returned, so the report keeps showing its own window as it ages
-- A row link narrows the section link with that row's own filter appended, `&equipment_type_ids={id}` or `&level_ids={id}`. That is the URL the tool returns for the same call filtered that way, at no extra call, so never fetch a link per row
-- `platform_link` is null where the page cannot show what the call answered, which on this report is the indoor environment level and zone groupings. Those rows take the site call's link and narrow it, per the rule above. If a link a section needs ever comes back null, drop it and say so in chat rather than assembling a URL by hand
-- Ticket links are per row: `search_action_tickets` carries `ticket_link` on every ticket, which is the evidence url Key wins links to
-- Pass the section and chart links to `fill_report.py` in `links`, keyed by slot, and it lays them into the scaffold. Row links ride on their rows and ticket links on their wins, so those two are already covered
-- The actions leaderboard is the one link no call returns. `references/alerts-resolved.md` carries it written out, and it is the only URL in this skill built from parts
-
-Always:
-
-- Author: `who_am_i`, the user's full name for the masthead
-- Site facts: `search_sites` omits these, so use GraphQL: `platform.sites` args `{site_id}` fields `[site_name, photo_url, building_size, monetary_currency]`
-- Equipment type names: equipment health scores come back as `metadata_type_id` with no names, so resolve every id the heatmap needs in one `search_equipment_types(type_ids:[...])` call. Never one call per type
-- Counts for the analytics overview: never fetch rows. Call with `limit:1` and read `pagination.total`: `search_rules(task_state:running)`, `search_favourites` for sensors, and `search_equipment` twice, once plain and once filtered to system types 21,37,69,70,87,105,114 so you can subtract them
-- Thermal zones: the zones PEAK scores for thermal comfort: `search_indoor_environment(metric:"temperature", aggregate_entity:"zone", aggregate_period:"all", limit:1)` over the quarter, read `pagination.total`. When Indoor environment is in, its zone pull is this same call and its first page carries the same total, so read it from there and skip this one. Do not count sensor points instead. The point code differs by equipment type, so a fixed list of codes misses whatever the building happens to use
-
-Only when Actions resolved and leaderboard, or Key wins, is in:
-
-Every action ticket read is one GraphQL query, `tickets.tickets`, carrying `type:"escalated"`, `site_ids` and `ticket_archived:false` on all of them. Five calls cover both sections at most, and three when only one of them is in.
-
-What makes it cheap:
-
-- It carries `summary`, the ticket title, so any pull that needs titles gets them inline. `search_action_tickets` is the fallback for equipment names, and only when a summary does not already carry them — Key wins runs it once over its shortlist regardless, since the win impact tags come off its `impacts` field and the GraphQL rows carry only raw `impact_ids`
-- `comments` is a sub-field taking its own `limit` and `user_only`, and its body field is `text`, not `comment_text`. A comment history rides along with the row it belongs to, so a shortlist of fifteen is one call and not fifteen
-- Array filters throughout, `status_ids` and `ticket_ids`, so a set of statuses or a set of tickets never costs a call each
-- `limit` goes well past what the search tools page at, so size the pull to the site rather than assuming. Read `pagination.total` off the first response and check `has_more`: a `limit` under the total returns a full page and sets `has_more:true` instead of erring, so an unchecked pull silently drops rows and the series it feeds is quietly wrong. A busy site runs to hundreds of actions in a window
-
-The calls:
-
-- **Raised**: `created_at_local_start`/`created_at_local_end` over the 6 month window, fields `ticket_id`, `created_at`, `status_id`, `limit:300`. Bucket by month yourself and drop status 8. One call for the whole series, and `pagination.total` checks your bucketing without a second one
-- **Resolved**: the same shape on `resolved_at_local_start`/`resolved_at_local_end`, adding `created_at` and `assignees{firstname, lastname, entity{name}}`. It answers the leaderboard, the resolved series and the median. Keep it lean: `summary` and `comment_count` belong to the Key wins pull, and carrying them across a thousand rows pushes the response past the size cap
-- **Open now**: `status_ids:[1,3,7]`, no date bound, since work raised before the window can still be open today. It serves the leaderboard's Open now column and the Key wins in-flight candidates together
-- **Key wins candidates**: `status_id:6`, `has_comments:true`, resolved inside the quarter, carrying `summary`, `comment_count` and `comments` inline, rather than widening the Resolved pull. Only when Key wins is in
-- **Shortlist comments**: `ticket_ids:[the in-flight candidates you chose]` with the `comments` sub-field, since Open now carries their titles but not their histories. Only when Key wins is in
-
-A large response is not a failure. Past roughly 60,000 characters the gateway writes the result to a file and hands you the path, which keeps a thousand rows out of the conversation entirely. Read it with `jq` or a short python script rather than re-fetching in smaller pages: one fat call and a local script beats four thin calls on both counts.
-
-Then, on the rows:
-
-- `created_at` and `resolved_at` come back as UTC instants while the `_local` filters read site time, so convert before bucketing by month or a late-evening ticket lands in the wrong one. Leave `orderBy` alone, it errors; sort the rows yourself
-- Count actions, one per ticket, in both series. Never alerts. An action can be bulk-linked to dozens of them, so weighting by alerts makes a month spike on a triage decision rather than on work
-- Drop status Not Doing throughout. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing
+A response too large to return inline comes back as a file: copy it under its name and the scripts read it from there. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing, which every count and pull leaves out.

@@ -4,11 +4,12 @@
     python3 scripts/fill_report.py data.json --out report.html
 
 Everything mechanical lives here: heatmap rows and their band colours, chart
-geometry recomputed from each series' own range, the leaderboard, the wins, the
-platform links and every masthead slot. The narrative sentences are written by
-the model and passed in through the bundle; nothing in this file invents prose.
+geometry recomputed from each series' own range, the leaderboard, the wins and
+their photos, the platform links and every masthead slot. The wins are
+written by the model and passed in through the bundle; nothing in this file
+invents prose.
 """
-import argparse, json, os, re, subprocess, sys, tempfile
+import argparse, base64, io, json, os, re, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 def xs(n):
@@ -19,18 +20,23 @@ def xs(n):
     step = (630 - 80) / (n - 1) if n > 1 else 0
     return [round(80 + step * i) for i in range(n)]
 BASELINE, LEFT, RIGHT = 196, 36, 670
+TODATE_TOP = 30           # the month to date's tinted column runs from here to the baseline
 # Win impact tags. The key is the PEAK `impacts` value, which is also the class
-# the dot colour hangs off; the label is what prints. See references/key-wins.md
+# the dot colour hangs off; the label is what prints. See references/actions-and-wins/key-wins.md
 # for how a win's impact is chosen from its action tickets.
 IMPACTS = {"energy": "Energy", "comfort": "Comfort", "reliability": "Reliability",
            "water": "Water", "safety": "Safety", "other": "Other"}
+# Win photos embed at this height in pixels, about twice their printed size, so
+# they stay sharp on paper without carrying a phone camera's megabytes.
+PHOTO_PX = 480
+SOFT_PX = 300     # below this a tile has under 1.5x its printed size, and prints visibly soft
+MAX_PHOTOS = 4
 # Section and chart-source links, keyed by bundle slot and found in the scaffold
-# by the link text that follows them. Each one is the platform_link that section's
-# own PEAK call returned; see the platform links rules in SKILL.md. Row links ride
-# on their rows and ticket links on their wins, so neither is a slot here.
+# by the link text that follows them. Each one is built by its section's script;
+# see the links rules in SKILL.md. Row links ride on their rows and ticket links
+# on their wins, so neither is a slot here.
 LINK_SLOTS = {"equipment_health": "See live equipment health dashboard",
               "comfort": "See live indoor environment dashboard",
-              "alerts": "See live issues being resolved",
               "leaderboard": "See live actions leaderboard",
               "trend_eh": "PEAK equipment health dashboard",
               "trend_comfort": "PEAK indoor environment dashboard"}
@@ -59,9 +65,9 @@ def swap(s, anchor, new, end='</table>'):
     return s[:start] + new + s[stop:]
 
 
-def note(s, eyebrow, text):
-    """Rewrite the chartnote that follows a given section eyebrow."""
-    i = s.index(eyebrow)
+def note(s, anchor, text):
+    """Rewrite the chartnote that follows `anchor`, a chart's title."""
+    i = s.index(anchor)
     k = s.index('<p class="chartnote">', i)
     return s[:k] + '<p class="chartnote">' + text + '</p>' + s[s.index("</p>", k) + 4:]
 
@@ -73,8 +79,8 @@ def href(url):
 
 
 def set_links(s, links):
-    """Point each link row at the URL its own PEAK call returned. A slot set to
-    null drops that link rather than leaving the scaffold's sample one standing."""
+    """Point each link row at its URL. A slot set to null drops that link rather
+    than leaving the scaffold's sample one standing."""
     for slot, url in links.items():
         if slot not in LINK_SLOTS:
             raise SystemExit("fill: unknown link slot %r — one of %s" % (slot, ", ".join(LINK_SLOTS)))
@@ -92,11 +98,14 @@ def set_links(s, links):
 
 
 # ── heatmaps ────────────────────────────────────────────────────────────────
-def heatmap(d, months):
+def heatmap(d, months, to_date=False):
+    """A month to date closes the columns: its header says so, and its cells band like the
+    rest, since a score is a rate over whatever days exist."""
     dp, t, counts = d["dp"], d["bands"], d.get("counts", [])
     head = ['        <th class="lv">%s</th>' % d["label"]]
     head += ['        <th class="ct">%s</th>' % c for c in counts]
-    head += ['        <th class="mo">%s</th>' % m for m in months]
+    head += ['        <th class="mo">%s%s</th>' % (m, "<em>to date</em>" if to_date and i == len(months) - 1 else "")
+             for i, m in enumerate(months)]
     head += ['        <th class="cg">Chg</th>']
     body = []
     for r in d["rows"]:
@@ -126,8 +135,22 @@ def heatmap(d, months):
 
 
 # ── charts ──────────────────────────────────────────────────────────────────
-def line_chart(d, months):
-    """Y range spans the data and whichever thresholds are drawn, plus padding."""
+def to_date_marks(months, to_date):
+    """The month to date's marks, shared by every monthly chart: a tinted column behind
+    it and 'to date' under its axis label."""
+    if not to_date:
+        return [], []
+    C = xs(len(months))
+    step = (C[-1] - C[-2]) if len(C) > 1 else 110
+    band = ['        <rect class="todate" x="%.1f" y="%d" width="%.1f" height="%d" rx="3"/>'
+            % (C[-1] - step / 2, TODATE_TOP, step, BASELINE - TODATE_TOP)]
+    sub = ['        <text class="axis-sub" x="%d" y="228" text-anchor="middle">to date</text>' % C[-1]]
+    return band, sub
+
+
+def line_chart(d, months, to_date=False):
+    """Y range spans the data and whichever thresholds are drawn, plus padding. A month to
+    date closes the line dashed, on an open point: its score can still move."""
     v, th, dp = d["values"], d["thresholds"], d["dp"]
     lo, hi = min(v + [t[0] for t in th]), max(v + [t[0] for t in th])
     pad = max((hi - lo) * 0.18, 0.15)
@@ -135,30 +158,62 @@ def line_chart(d, months):
     top, bot = 50.0, 190.0
     y = lambda val: top + (hi - val) * (bot - top) / (hi - lo)
     out = []
+    # Value labels sit above or below each point; a threshold label takes the first of
+    # four places (left or right end, above or below its line) that no value label covers.
+    boxes = []
+    for x, val in zip(xs(len(v)), v):
+        ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
+        w = 6.2 * len("%.*f%%" % (dp, val))
+        boxes.append((x - w / 2 - 3, ly - 10, x + w / 2 + 3, ly + 3))
+        boxes.append((x - 6, y(val) - 6, x + 6, y(val) + 6))
+    def clear(x0, y0, x1, y1):
+        return all(x1 < a or x0 > c or y1 < b or y0 > e for a, b, c, e in boxes)
     for tv, tlabel in th:
-        out.append('        <text class="axis" x="44" y="%.1f">%s threshold</text>' % (y(tv) - 8, tlabel))
+        text, ty = "%s threshold" % tlabel, y(tv)
+        w = 6.0 * len(text)          # the axis face is mono at 10px: 6px a character
+        for x, yy, anchor in ((44, ty - 8, "start"), (44, ty + 14, "start"),
+                              (RIGHT - 4, ty - 8, "end"), (RIGHT - 4, ty + 14, "end")):
+            x0 = x if anchor == "start" else x - w
+            if clear(x0, yy - 9, x0 + w, yy + 2):
+                break
+        else:
+            x, yy, anchor = 44, ty - 8, "start"
+        out.append('        <text class="axis" x="%d" y="%.1f"%s>%s</text>'
+                   % (x, yy, ' text-anchor="end"' if anchor == "end" else "", text))
         out.append('        <line class="benchline" x1="%d" y1="%.1f" x2="%d" y2="%.1f"/>'
                    '<text class="axis" x="4" y="%.1f">%.1f</text>'
                    % (LEFT, y(tv), RIGHT, y(tv), y(tv) + 3, tv))
     out.append('        <line class="baseline" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (LEFT, BASELINE, RIGHT, BASELINE))
-    out.append('        <polyline class="series-line" points="%s"/>'
-               % " ".join("%d,%.1f" % (x, y(val)) for x, val in zip(xs(len(v)), v)))
-    out += ['        <circle cx="%d" cy="%.1f" r="4.5" class="pt"/>' % (x, y(val)) for x, val in zip(xs(len(v)), v)]
+    pts = ["%d,%.1f" % (x, y(val)) for x, val in zip(xs(len(v)), v)]
+    part = to_date and len(v) == len(months) and len(v) > 1
+    out.append('        <polyline class="series-line" points="%s"/>' % " ".join(pts[:-1] if part else pts))
+    if part:
+        out.append('        <polyline class="series-line todate-line" points="%s"/>' % " ".join(pts[-2:]))
+    out += ['        <circle cx="%d" cy="%.1f" r="4.5" class="%s"/>'
+            % (x, y(val), "pt todate-pt" if part and i == len(v) - 1 else "pt")
+            for i, (x, val) in enumerate(zip(xs(len(v)), v))]
     for x, val in zip(xs(len(v)), v):
         ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
         out.append('        <text class="val" x="%d" y="%.1f" text-anchor="middle">%.*f%%</text>' % (x, ly, dp, val))
     out += ['        <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m)
             for x, m in zip(xs(len(months)), months)]
+    band, sub = to_date_marks(months, to_date and len(v) == len(months))
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n      </svg>'
-            % (d["alt"], "\n".join(out)))
+            % (d["alt"], "\n".join(band + out + sub)))
 
 
-def grouped_bar(d, months):
+def grouped_bar(d, months, to_date=False):
+    """A month to date sits in a tinted column: its bars count only the days so far."""
     a, b = d["a"], d["b"]
     # Compact labels keep long values from colliding; the bundle may supply its own.
     la = d.get("labels_a") or [d.get("fmt_a", "%s") % v for v in a]
     lb = d.get("labels_b") or [d.get("fmt_b", "%s") % v for v in b]
-    amax, bmax = max(a) * 1.06, max(b) * 1.06
+    # Two units (checks against dollars) take a scale each; one unit (actions raised
+    # against resolved) shares one, or a 17 draws as tall as a 69.
+    if d.get("scale") == "shared":
+        amax = bmax = max(max(a), max(b), 1) * 1.06
+    else:
+        amax, bmax = max(max(a), 1) * 1.06, max(max(b), 1) * 1.06
     H = 140.0
     out = []
     C = xs(len(months))
@@ -180,8 +235,9 @@ def grouped_bar(d, months):
                    % (C[k] - w / 2 - 3, ta - 8, la[k], C[k] + w / 2 + 3, tb - 8, lb[k]))
     out += ['      <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m)
             for x, m in zip(xs(len(months)), months)]
+    band, sub = to_date_marks(months, to_date)
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n    </svg>'
-            % (d["alt"], "\n".join(out)))
+            % (d["alt"], "\n".join(band + out + sub)))
 
 
 def swap_svg(s, after, svg):
@@ -189,14 +245,141 @@ def swap_svg(s, after, svg):
     return s[:i] + svg + s[s.index("</svg>", i) + 6:]
 
 
+# ── win photos ──────────────────────────────────────────────────────────────
+def photo_jpeg(path, aspect, focus=None, zoom=1):
+    """A ticket photo as JPEG bytes: turned upright, cropped to its tile around
+    `focus` (x, y as fractions of the frame, centre by default) and `zoom` times
+    tighter than the largest crop that fits, shrunk and re-encoded. Re-encoding
+    also drops the camera's EXIF block, GPS position included, which the
+    original upload carries and a client report must not."""
+    try:
+        from PIL import Image, ImageOps
+    except ImportError:
+        sys.exit("fill: win photos need Pillow — pip install pillow")
+    if not os.path.isfile(path):
+        sys.exit("fill: photo not found: %s" % path)
+    try:
+        im = Image.open(path)
+        icc = im.info.get("icc_profile")
+        im = ImageOps.exif_transpose(im)
+    except Exception as e:
+        sys.exit("fill: cannot read photo %s (%s) — pass a JPEG or PNG" % (path, e))
+    if "A" in im.getbands():
+        im = Image.alpha_composite(Image.new("RGBA", im.size, "white"), im.convert("RGBA"))
+    im = im.convert("RGB")
+    w, h = im.size
+    fx, fy = focus or (0.5, 0.5)
+    if not (0 <= fx <= 1 and 0 <= fy <= 1):
+        sys.exit("fill: focus %r on %s — [x, y] as fractions of the frame, 0 to 1" % (focus, path))
+    if zoom < 1:
+        sys.exit("fill: zoom %r on %s — 1 or more, where 2 keeps half the width" % (zoom, path))
+    cw, ch = (h * aspect, h) if w / h > aspect else (w, w / aspect)
+    cw, ch = round(cw / zoom), round(ch / zoom)
+    x = min(max(round(fx * w - cw / 2), 0), w - cw)
+    y = min(max(round(fy * h - ch / 2), 0), h - ch)
+    im = im.crop((x, y, x + cw, y + ch))
+    if ch > PHOTO_PX:
+        im = im.resize((round(PHOTO_PX * aspect), PHOTO_PX), Image.LANCZOS)
+    elif ch < SOFT_PX:
+        print("fill: warning: %s is only %d px tall once cropped, so it prints soft; "
+              "pass the original rather than the preview, or zoom less" % (path, ch), file=sys.stderr)
+    buf = io.BytesIO()
+    im.save(buf, "JPEG", quality=80, optimize=True, progressive=True, icc_profile=icc)
+    return buf.getvalue()
+
+
+def photo_row(photos, base, out=None, name="win"):
+    """Figures in the order given, each a path or {src, focus, zoom}. A pair
+    crops to 3:2 so its row keeps the height of three squares; one, three or
+    four crop square. No caption: the win's text explains its photos, and a
+    caption would be one more claim to get wrong. With `out`, each tile is also
+    saved there as <name>-<n>.jpg, exactly as embedded, to be looked at."""
+    pair = len(photos) == 2
+    figs = []
+    for n, p in enumerate(photos, 1):
+        p = {"src": p} if isinstance(p, str) else p
+        src = p["src"] if os.path.isabs(p["src"]) else os.path.join(base, p["src"])
+        jpg = photo_jpeg(src, 1.5 if pair else 1.0, p.get("focus"), p.get("zoom", 1))
+        if out:
+            open(os.path.join(out, "%s-%d.jpg" % (name, n)), "wb").write(jpg)
+        figs.append('<figure><img src="data:image/jpeg;base64,%s" alt="Photo from the action ticket"></figure>'
+                    % base64.b64encode(jpg).decode())
+    return '<div class="photos%s">%s</div>' % (" pair" if pair else "", "".join(figs))
+
+
+# ── named slots ─────────────────────────────────────────────────────────────
+# The section scripts hand over every mechanical string by name, so nothing has to
+# find the scaffold's sample text first. Each slot is located by the markup around it.
+def sub_one(s, pattern, repl, what):
+    s2, n = re.subn(pattern, lambda m: repl(m), s, count=1, flags=re.S)
+    if not n:
+        sys.exit("fill: no %s in the scaffold" % what)
+    return s2
+
+
+def after_eyebrow(s, eyebrow, tag_open, tag_close, text, what):
+    """Rewrite the first `tag_open...tag_close` after a section eyebrow."""
+    i = s.find('<p class="eyebrow">%s</p>' % eyebrow)
+    if i == -1:
+        return s                          # the section is out of this report
+    k = s.index(tag_open, i)
+    j = s.index(tag_close, k)
+    return s[:k] + tag_open + text + s[j:]
+
+
+def fill_slots(s, D):
+    m = D.get("masthead")
+    if m:
+        site = m["site_name"]
+        s = sub_one(s, r"<title>[^<]*</title>", lambda _: "<title>%s Quarterly Building Performance Review</title>" % site, "title")
+        s = sub_one(s, r"<h1>[^<]*</h1>", lambda _: "<h1>%s</h1>" % site, "h1")
+        if m.get("photo_url"):
+            s = sub_one(s, r'\s*<!-- Site photo slot:.*?-->\s*<div class="sitephoto"[^>]*>.*?</div>',
+                        lambda _: '\n    <div class="sitephoto"><img src="%s" alt="%s"></div>' % (m["photo_url"], site),
+                        "site photo slot")
+        if m.get("prepared"):
+            s = sub_one(s, r'<p class="prepared">.*?</p>', lambda _: '<p class="prepared">%s</p>' % m["prepared"], "prepared by")
+        for label, key in (("Reporting period", "period"), ("Author", "author"), ("Issued", "issued")):
+            s = sub_one(s, r"<dt>%s</dt><dd>[^<]*</dd>" % label,
+                        lambda _, label=label, key=key: "<dt>%s</dt><dd>%s</dd>" % (label, m[key]), label)
+        s = sub_one(s, r"<footer>\s*<span>[^<]*</span>\s*<span>[^<]*</span>",
+                    lambda _: "<footer>\n  <span>%s</span>\n  <span>Issued %s</span>" % (m["footer"], m["issued"]), "footer")
+        s = after_eyebrow(s, "Analytics overview", "<h2>", "</h2>", "What we monitor at %s" % site, "overview")
+    o = D.get("overview")
+    if o:
+        s = after_eyebrow(s, "Analytics overview", '<p class="h2note">', "</p>", o["as_at"], "as at")
+        for label, value in o["stats"].items():
+            s = sub_one(s, r'<p class="k">%s</p><p class="n">.*?</p>' % re.escape(label),
+                        lambda _, label=label, value=value: '<p class="k">%s</p><p class="n">%s</p>' % (label, value),
+                        "the %s stat" % label)
+    for eyebrow, text in D.get("statements", {}).items():
+        s = after_eyebrow(s, eyebrow, "<h2>", "</h2>", text, eyebrow)
+    for eyebrow, text in D.get("datelines", {}).items():
+        s = after_eyebrow(s, eyebrow, '<p class="h2note">', "</p>", text, eyebrow)
+    for key, inner in D.get("notes", {}).items():
+        i = s.find("<li><strong>%s" % key)
+        if i != -1:
+            j = s.index("</li>", i)
+            s = s[:i] + "<li>" + inner + s[j:]
+    rh = D.get("run_hours")
+    if rh:
+        i = s.index('<div class="rh">')
+        j = s.index("<!-- /rh -->", i)
+        s = s[:i] + '<div class="rh">\n' + rh["html"] + "\n  </div>" + s[j + len("<!-- /rh -->"):]
+    return s
+
+
 # ── main ────────────────────────────────────────────────────────────────────
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("data")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--photos-out", help="also save each win photo here, cropped exactly as embedded")
     a = ap.parse_args()
+    if a.photos_out:
+        os.makedirs(a.photos_out, exist_ok=True)
     D = json.load(open(a.data, encoding="utf-8"))
-    sections = D.get("sections") or "equipment-health,indoor-environment,alerts-resolved,key-wins"
+    sections = D.get("sections") or "all"
 
     tmp = tempfile.mktemp(suffix=".html")
     subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "scaffold",
@@ -204,7 +387,8 @@ def main():
     s = open(tmp, encoding="utf-8").read()
     os.unlink(tmp)
 
-    site, meta, months = D["site"], D["meta"], D["months"]
+    months = D["months"]
+    to_date = months.get("to_date", False)
 
     # global swaps first: the sample site id and window live in every link
     for old, new in D.get("global_replace", []):
@@ -217,17 +401,20 @@ def main():
         s = s.replace(old, new)
 
     # exactly one occurrence: a second match means the anchor is not specific enough
-    for old, new in D["replace"]:
+    for old, new in D.get("replace", []):
         if s.count(old) != 1:
             sys.exit("fill: anchor matched %d times: %.70s" % (s.count(old), old))
         s = s.replace(old, new)
 
-    # platform links, each one straight off the call that answered its section
+    # named slots: masthead, overview, statements, date lines, notes, run hours
+    s = fill_slots(s, D)
+
+    # section and chart-source links, by slot
     if "links" in D:
         s = set_links(s, D["links"])
 
     # operational impact rows, in the order the skill fixes
-    if "impact" in D:
+    if D.get("impact"):
         rows = []
         for r in D["impact"]:
             sub = r["sub"]
@@ -246,11 +433,9 @@ def main():
 
     # heatmaps
     if "equipment_health" in D:
-        s = swap(s, '<th class="ct">Equip</th>', heatmap(D["equipment_health"], months["quarter"]))
-        s = note(s, "Equipment health snapshot", D["equipment_health"]["note"])
+        s = swap(s, '<th class="ct">Equip</th>', heatmap(D["equipment_health"], months["quarter"], to_date))
     if "comfort" in D:
-        s = swap(s, '<th class="lv">Level</th>', heatmap(D["comfort"], months["quarter"]))
-        s = note(s, "Indoor environment health snapshot", D["comfort"]["note"])
+        s = swap(s, '<th class="lv">Level</th>', heatmap(D["comfort"], months["quarter"], to_date))
 
     # charts
     for key, anchor, kind in (("trend_eh", "Site equipment health score", "line"),
@@ -260,9 +445,11 @@ def main():
         if key not in D:
             continue
         c = D[key]
-        svg = line_chart(c, months["trend"]) if kind == "line" else grouped_bar(c, months["trend"])
+        svg = (line_chart(c, months["trend"], to_date) if kind == "line"
+               else grouped_bar(c, months["trend"], to_date))
         s = swap_svg(s, anchor, svg)
-        s = note(s, c["note_after"], c["note"])
+        if c.get("note"):
+            s = note(s, c["note_after"], c["note"])
 
     # leaderboard
     if "leaderboard" in D:
@@ -294,28 +481,50 @@ def main():
 
     # key wins
     if "wins" in D:
+        base = os.path.dirname(os.path.abspath(a.data))   # photo paths are relative to the bundle
         blocks = []
-        for w in D["wins"]:
-            b = '  <div class="win">\n'
-            # No impact key means an older bundle: fill it without a tag rather
-            # than guessing one the action tickets never carried.
+        for wn, w in enumerate(D["wins"], 1):
+            photos = w.get("photos") or []
+            if len(photos) > MAX_PHOTOS:
+                sys.exit("fill: %d photos on %r — %d at most (references/actions-and-wins/key-wins.md)"
+                         % (len(photos), w["heading"], MAX_PHOTOS))
+            # One photo sits beside the text; two to four run in a row under the heading.
+            side = len(photos) == 1
+            pad = "      " if side else "    "
+            b = ""
+            # A win without an impact prints no tag, never one its action
+            # tickets did not carry.
             if w.get("impact"):
                 k = w["impact"]
                 if k not in IMPACTS:
                     sys.exit("fill: unknown win impact %r — one of %s" % (k, ", ".join(IMPACTS)))
-                b += '    <p class="impact %s"><i></i>%s</p>\n' % (k, IMPACTS[k])
-            b += '    <h3>%s</h3>\n    <p>%s</p>\n' % (w["heading"], w["body"])
-            if w.get("snap"):
-                b += '    <p class="snap">%s</p>\n' % w["snap"]
-            b += ('    <p class="refs">' + " &middot; ".join(
-                '<a href="%s">%s</a>' % (href(r["url"]), r["title"]) for r in w["refs"]) + '</p>\n  </div>')
+                b += pad + '<p class="impact %s"><i></i>%s</p>\n' % (k, IMPACTS[k])
+            b += pad + '<h3>%s</h3>\n' % w["heading"]
+            if w.get("level"):
+                lv = w["level"] if isinstance(w["level"], list) else [w["level"]]
+                b += pad + '<p class="where"><span class="k">%s</span>%s</p>\n' % (
+                    "Levels" if len(lv) > 1 else "Level", ", ".join(lv))
+            if photos and not side:
+                b += pad + photo_row(photos, base, a.photos_out, "win%d" % wn) + "\n"
+            b += pad + '<p>%s</p>\n' % w["body"]
+            b += pad + '<p class="refs">' + " &middot; ".join(
+                '<a href="%s">%s</a>' % (href(r["url"]), r["title"]) for r in w["refs"]) + '</p>\n'
+            if side:
+                b = ('  <div class="win compact">\n    %s\n    <div class="wtext">\n%s    </div>\n  </div>'
+                     % (photo_row(photos, base, a.photos_out, "win%d" % wn), b))
+            else:
+                b = '  <div class="win">\n' + b + '  </div>'
             blocks.append(b)
-        i = s.index('  <div class="win">')
+        m = re.search(r'  <div class="win[ "]', s)
+        if not m:
+            sys.exit("fill: the bundle carries wins but key-wins is not in its sections")
+        i = m.start()
         j = s.rindex("</div>", i, s.index("</section>", i)) + len("</div>")
         s = s[:i] + "\n\n".join(blocks) + s[j:]
 
     open(a.out, "w", encoding="utf-8").write(s)
-    print("wrote %s" % a.out)
+    n = s.count("<figure>")
+    print("wrote %s" % a.out + (", %d KB with %d photos embedded" % (len(s) // 1024, n) if n else ""))
 
 
 if __name__ == "__main__":

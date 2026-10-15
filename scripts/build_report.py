@@ -3,8 +3,8 @@
 
 The reference report is the design system compiled: its <style> block holds every
 DESIGN.md token and component, and each report section is marked off as a part.
-Rather than re-emit ~19KB of CSS and the markup of sections nobody asked for,
-scaffold the file you need and edit the sample data in place.
+fill_report.py scaffolds the chosen sections from it and fills them from the bundle,
+so a report carries only the parts it was asked for.
 
     scaffold  copy the shell, the always-on parts and the selected sections
     part      print one part's markup, to add a section to a report already built
@@ -26,11 +26,12 @@ SECTION_PARTS = {
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],
     "alerts-resolved": ["monthly-alerts", "actions-leaderboard"],
     "key-wins": ["key-wins"],
+    "run-hours": ["equipment-run-hours"],
 }
 # Parts that render for any of several sections. Operational impact is a frame
 # around rows the sections own, so it only stands if one of them is in.
 ROW_SECTIONS = ["equipment-health", "indoor-environment", "alerts-resolved"]
-PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS}
+PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS + ["run-hours"]}
 PART_RE = re.compile(r"^\s*<!-- part: ([a-z-]+) -->\s*$")
 IF_RE = re.compile(r"^\s*<!-- if: ([a-z-, ]+) -->\s*$")
 ENDIF_RE = re.compile(r"^\s*<!-- endif -->\s*$")
@@ -120,19 +121,17 @@ def sample_strings():
     found = set()
     for pat in (r'<td class="name">([^<]+)</td>', r'<td class="co">([^<]+)</td>',
                 r'<h3>([^<]+)</h3>', r'<title>([^<]+)</title>',
-                # narrative slots: long, site-specific sentences, so an exact
-                # match means the sample's commentary was left in place. h2note
-                # is deliberately absent — it carries window and method wording
-                # that is correct for every report and recurs legitimately.
-                r'<p class="chartnote">([^<]+)</p>', r'<p class="snap">([^<]+)</p>',
-                # the impact tag sits between the win's div and its heading, so
-                # the body pattern has to step over it or it stops matching
-                r'<div class="win">\s*(?:<p class="impact[^"]*">.*?</p>\s*)?<h3>[^<]*</h3>\s*<p>([^<]+)</p>',
-                # operational impact carries the sample's headline figures and the
-                # sentence under each; both are site data, and both were slipping through.
-                r'<span class="fig">([^<]+)</span>', r'<div class="isub">(.*?)</div>'):
+                # h2note and chartnote are deliberately absent — they carry window and
+                # method wording that is correct for every report and recurs legitimately.
+                # An operational impact row is matched whole, figure to sentence: the
+                # sentence alone is a template a real site can repeat word for word.
+                r'(<span class="fig">[^<]+</span> <span class="figcap">[^<]+</span>\s*<div class="isub">.*?</div>)'):
         for m in re.finditer(pat, src, re.S):
             found.add(m.group(1))
+    # a win's body is its one unclassed paragraph, wherever the impact tag, the
+    # level line and the photos put it, so read it off each win in turn
+    for m in re.finditer(r'<div class="win[^"]*">(.*?)<p class="refs">', src, re.S):
+        found |= set(re.findall(r'<p>([^<]+)</p>', m.group(1)))
     for m in re.finditer(r'<p class="refs">(.*?)</p>', src, re.S):
         found |= set(re.findall(r'>([^<>]{8,})</a>', m.group(1)))
     # only platform links are report data — font and preconnect hosts stay
@@ -153,6 +152,7 @@ def cmd_check(args):
 
     hits = [s for s in sample_strings() if s in text]
     for h in hits[:20]:
+        h = " ".join(re.sub(r"<[^>]+>", " ", h).split())
         errors.append("sample data still in the report: %s" % (h[:90] + ("…" if len(h) > 90 else "")))
     if len(hits) > 20:
         errors.append("... and %d more sample values" % (len(hits) - 20))
@@ -167,16 +167,32 @@ def cmd_check(args):
     rid = re.search(r"site_ids=(\d+)", ref)
     rname = re.search(r"PEAK · ([^,<]+)", ref)
     for token in [m.group(1) for m in (rid, rname) if m]:
-        if token in text:
+        # the id where a link carries it, not the same digits in a count or a chart coordinate
+        pat = (r"(?:site_ids?=|/escalated/)%s(?!\d)" if token.isdigit() else "%s") % re.escape(token)
+        if re.search(pat, text):
             warnings.append("reference site's own %s appears — fine only if this "
                             "report really is for it" % ("id %s" % token if token.isdigit() else "name %r" % token))
 
     # Key wins is the one section that can be scaffolded and then find nothing
     # to say: an empty heading is worse than no heading, so it must be deleted.
     kw = text.find('<p class="eyebrow">Key wins</p>')
-    if kw != -1 and 'class="win"' not in text[kw:text.find("</section>", kw)]:
+    if kw != -1 and not re.search(r'class="win[ "]', text[kw:text.find("</section>", kw)]):
         errors.append("Key wins section carries no wins — delete the section rather "
-                      "than shipping the heading (references/key-wins.md)")
+                      "than shipping the heading (references/actions-and-wins/key-wins.md)")
+
+    # A win photo has to travel inside the file. An attachment link is signed and
+    # short-lived, so a photo left as a link breaks soon after the report is sent.
+    # The sample's placeholder tiles are SVG; every real photo is embedded as JPEG.
+    for src in sorted(set(re.findall(r'<figure><img src="([^"]*)"', text))):
+        if src.startswith("data:image/svg"):
+            errors.append("placeholder photo tile still in the report — fill the wins from the bundle")
+        elif not src.startswith("data:"):
+            errors.append("win photo linked rather than embedded: %.60s… — download it and pass "
+                          "the file to fill_report.py (references/actions-and-wins/key-wins.md)" % src)
+
+    # The run hours sample chart is a placeholder; the script draws the real one.
+    if 'data-sample="run-hours"' in text:
+        errors.append("sample run hours chart still in the report — fill it from the bundle's run_hours")
 
     # A heatmap trimmed for a short-history site has to lose the same columns
     # from its header and from every row, so a ragged table means a missed row.
