@@ -30,7 +30,7 @@ Recovery rate is alerts resolved in the period with fault status recovered divid
 ## Monthly alerts raised vs resolved
 
 Faults triaged and resolved
-Date: the six complete months ending with the quarter
+Date: the six complete months ending with the quarter, and the month to date where the report carries one
 
 Grouped bars by month.
 

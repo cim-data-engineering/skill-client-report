@@ -20,6 +20,7 @@ def xs(n):
     step = (630 - 80) / (n - 1) if n > 1 else 0
     return [round(80 + step * i) for i in range(n)]
 BASELINE, LEFT, RIGHT = 196, 36, 670
+TODATE_TOP = 30           # the month to date's tinted column runs from here to the baseline
 # Win impact tags. The key is the PEAK `impacts` value, which is also the class
 # the dot colour hangs off; the label is what prints. See references/actions-and-wins/key-wins.md
 # for how a win's impact is chosen from its action tickets.
@@ -97,11 +98,14 @@ def set_links(s, links):
 
 
 # ── heatmaps ────────────────────────────────────────────────────────────────
-def heatmap(d, months):
+def heatmap(d, months, to_date=False):
+    """A month to date closes the columns: its header says so, and its cells band like the
+    rest, since a score is a rate over whatever days exist."""
     dp, t, counts = d["dp"], d["bands"], d.get("counts", [])
     head = ['        <th class="lv">%s</th>' % d["label"]]
     head += ['        <th class="ct">%s</th>' % c for c in counts]
-    head += ['        <th class="mo">%s</th>' % m for m in months]
+    head += ['        <th class="mo">%s%s</th>' % (m, "<em>to date</em>" if to_date and i == len(months) - 1 else "")
+             for i, m in enumerate(months)]
     head += ['        <th class="cg">Chg</th>']
     body = []
     for r in d["rows"]:
@@ -131,8 +135,22 @@ def heatmap(d, months):
 
 
 # ── charts ──────────────────────────────────────────────────────────────────
-def line_chart(d, months):
-    """Y range spans the data and whichever thresholds are drawn, plus padding."""
+def to_date_marks(months, to_date):
+    """The month to date's marks, shared by every monthly chart: a tinted column behind
+    it and 'to date' under its axis label."""
+    if not to_date:
+        return [], []
+    C = xs(len(months))
+    step = (C[-1] - C[-2]) if len(C) > 1 else 110
+    band = ['        <rect class="todate" x="%.1f" y="%d" width="%.1f" height="%d" rx="3"/>'
+            % (C[-1] - step / 2, TODATE_TOP, step, BASELINE - TODATE_TOP)]
+    sub = ['        <text class="axis-sub" x="%d" y="228" text-anchor="middle">to date</text>' % C[-1]]
+    return band, sub
+
+
+def line_chart(d, months, to_date=False):
+    """Y range spans the data and whichever thresholds are drawn, plus padding. A month to
+    date closes the line dashed, on an open point: its score can still move."""
     v, th, dp = d["values"], d["thresholds"], d["dp"]
     lo, hi = min(v + [t[0] for t in th]), max(v + [t[0] for t in th])
     pad = max((hi - lo) * 0.18, 0.15)
@@ -152,7 +170,7 @@ def line_chart(d, months):
         return all(x1 < a or x0 > c or y1 < b or y0 > e for a, b, c, e in boxes)
     for tv, tlabel in th:
         text, ty = "%s threshold" % tlabel, y(tv)
-        w = 5.6 * len(text)
+        w = 6.0 * len(text)          # the axis face is mono at 10px: 6px a character
         for x, yy, anchor in ((44, ty - 8, "start"), (44, ty + 14, "start"),
                               (RIGHT - 4, ty - 8, "end"), (RIGHT - 4, ty + 14, "end")):
             x0 = x if anchor == "start" else x - w
@@ -166,19 +184,26 @@ def line_chart(d, months):
                    '<text class="axis" x="4" y="%.1f">%.1f</text>'
                    % (LEFT, y(tv), RIGHT, y(tv), y(tv) + 3, tv))
     out.append('        <line class="baseline" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (LEFT, BASELINE, RIGHT, BASELINE))
-    out.append('        <polyline class="series-line" points="%s"/>'
-               % " ".join("%d,%.1f" % (x, y(val)) for x, val in zip(xs(len(v)), v)))
-    out += ['        <circle cx="%d" cy="%.1f" r="4.5" class="pt"/>' % (x, y(val)) for x, val in zip(xs(len(v)), v)]
+    pts = ["%d,%.1f" % (x, y(val)) for x, val in zip(xs(len(v)), v)]
+    part = to_date and len(v) == len(months) and len(v) > 1
+    out.append('        <polyline class="series-line" points="%s"/>' % " ".join(pts[:-1] if part else pts))
+    if part:
+        out.append('        <polyline class="series-line todate-line" points="%s"/>' % " ".join(pts[-2:]))
+    out += ['        <circle cx="%d" cy="%.1f" r="4.5" class="%s"/>'
+            % (x, y(val), "pt todate-pt" if part and i == len(v) - 1 else "pt")
+            for i, (x, val) in enumerate(zip(xs(len(v)), v))]
     for x, val in zip(xs(len(v)), v):
         ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
         out.append('        <text class="val" x="%d" y="%.1f" text-anchor="middle">%.*f%%</text>' % (x, ly, dp, val))
     out += ['        <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m)
             for x, m in zip(xs(len(months)), months)]
+    band, sub = to_date_marks(months, to_date and len(v) == len(months))
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n      </svg>'
-            % (d["alt"], "\n".join(out)))
+            % (d["alt"], "\n".join(band + out + sub)))
 
 
-def grouped_bar(d, months):
+def grouped_bar(d, months, to_date=False):
+    """A month to date sits in a tinted column: its bars count only the days so far."""
     a, b = d["a"], d["b"]
     # Compact labels keep long values from colliding; the bundle may supply its own.
     la = d.get("labels_a") or [d.get("fmt_a", "%s") % v for v in a]
@@ -210,8 +235,9 @@ def grouped_bar(d, months):
                    % (C[k] - w / 2 - 3, ta - 8, la[k], C[k] + w / 2 + 3, tb - 8, lb[k]))
     out += ['      <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m)
             for x, m in zip(xs(len(months)), months)]
+    band, sub = to_date_marks(months, to_date)
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n    </svg>'
-            % (d["alt"], "\n".join(out)))
+            % (d["alt"], "\n".join(band + out + sub)))
 
 
 def swap_svg(s, after, svg):
@@ -362,6 +388,7 @@ def main():
     os.unlink(tmp)
 
     months = D["months"]
+    to_date = months.get("to_date", False)
 
     # global swaps first: the sample site id and window live in every link
     for old, new in D.get("global_replace", []):
@@ -406,9 +433,9 @@ def main():
 
     # heatmaps
     if "equipment_health" in D:
-        s = swap(s, '<th class="ct">Equip</th>', heatmap(D["equipment_health"], months["quarter"]))
+        s = swap(s, '<th class="ct">Equip</th>', heatmap(D["equipment_health"], months["quarter"], to_date))
     if "comfort" in D:
-        s = swap(s, '<th class="lv">Level</th>', heatmap(D["comfort"], months["quarter"]))
+        s = swap(s, '<th class="lv">Level</th>', heatmap(D["comfort"], months["quarter"], to_date))
 
     # charts
     for key, anchor, kind in (("trend_eh", "Site equipment health score", "line"),
@@ -418,7 +445,8 @@ def main():
         if key not in D:
             continue
         c = D[key]
-        svg = line_chart(c, months["trend"]) if kind == "line" else grouped_bar(c, months["trend"])
+        svg = (line_chart(c, months["trend"], to_date) if kind == "line"
+               else grouped_bar(c, months["trend"], to_date))
         s = swap_svg(s, anchor, svg)
         if c.get("note"):
             s = note(s, c["note_after"], c["note"])

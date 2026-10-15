@@ -168,6 +168,10 @@ table.hm{table-layout:fixed}
 /* Chart series — tokens only; SVG presentation attributes can't read var(), so series colour lives in these classes */
 .series-line{fill:none;stroke:var(--primary);stroke-width:2}
 .pt{fill:var(--primary);stroke:var(--surface);stroke-width:2}
+/* The month to date: a tinted column behind it, and on a line its last segment dashed onto an open point */
+.todate{fill:var(--surface-tint)}
+.todate-line{stroke-dasharray:4 3}
+.todate-pt{fill:var(--surface);stroke:var(--primary)}
 .bar-primary{fill:var(--primary)}
 .bar-benchmark{fill:var(--chart-benchmark)}
 .sw-primary{background:var(--primary)}
@@ -603,7 +607,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
   <div class="sechead">
     <p class="eyebrow">Equipment run hours</p>
     <h2>When the plant ran</h2>
-    <p class="h2note">Mon 24 to Sun 30 Aug 2026, the last full week of the quarter, against the site's working hours. Bars are exact to 15 minutes.</p>
+    <p class="h2note">Mon 24 to Sun 30 Aug 2026, the latest full week, against the site's working hours. Bars are exact to 15 minutes.</p>
   </div>
   <div class="legend">
     <span><span class="sw sw-rh-in"></span>During working hours</span>

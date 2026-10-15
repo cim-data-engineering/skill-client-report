@@ -94,6 +94,7 @@ def band(v):
 
 def build(ctx, work, shared):
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
+    qw, tw = io.whole(ctx, qm), io.whole(ctx, tm)
     month_of = lambda r: (r.get("date") or "")[:7]
     site_all = work.get("ie/site-all.json")
     sid = ctx["site"]["site_id"]
@@ -101,7 +102,7 @@ def build(ctx, work, shared):
     host = host.group(0) if host else "https://ace.cimenviro.com"
     dashboard = lambda start: ("%s/indoor-environment/thermal-comfort?summary_site_id=%s&summary_ts=%s&site_ids=%s"
                                "&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
-                               % (host, sid, qm[-1], sid, start, io.last_day(ctx["quarter"][1]).isoformat()))
+                               % (host, sid, qm[-1], sid, start, ctx["through"]))
     link = dashboard(ctx["quarter"][0])
 
     by_level, names, unit = defaultdict(dict), {}, "°C"
@@ -149,7 +150,7 @@ def build(ctx, work, shared):
             "site": {"counts": [shown_zones], "months": site_q}}
 
     score = io.pct(site_all.first()["score"], 1)
-    delta, sub = io.movement(site_q[0], site_q[-1], 1, io.month(qm[0]), io.month(qm[-1]))
+    delta, sub = io.movement(site_q[0], site_q[-1], 1, io.month(qm[0]), io.month_label(ctx, qm[-1]))
     impact = [dict({"chip": band(score), "chip_class": "pos" if band(score) in ("Excellent", "Good") else "warn",
                     "fig": "%.1f%%" % score, "cap": "thermal comfort maintained", "sub": sub, "order": 2},
                    **({"delta": delta} if delta else {}))]
@@ -158,7 +159,7 @@ def build(ctx, work, shared):
     values = [io.pct(site_m[m[:7]]["score"], 1) for m in tmonths]
     th = io.thresholds(values, BANDS)
     trend = {"values": values, "thresholds": th, "dp": 1,
-             "alt": io.line_alt("site thermal comfort score", tmonths, values, th, 1)}
+             "alt": io.line_alt(ctx, "site thermal comfort score", tmonths, values, th, 1)}
 
     facts_site = shared.get("site_facts") or {}
     lo, hi = facts_site.get("thermal_comfort_min_temp"), facts_site.get("thermal_comfort_max_temp")
@@ -173,10 +174,10 @@ def build(ctx, work, shared):
                                                        r["months"][-1] - r["months"][0])
     facts = [
         "Indoor environment: site %.1f%% over the quarter (%s); %s %.1f%% to %s %.1f%%."
-        % (score, band(score), io.month(qm[0]), site_q[0], io.month(qm[-1]), site_q[-1]),
+        % (score, band(score), io.month(qm[0]), site_q[0], io.month_label(ctx, qm[-1]), site_q[-1]),
         "Biggest rises: " + ("; ".join(fmt(r) for r in up[:3] if r["months"][-1] > r["months"][0]) or "none"),
         "Biggest falls: " + ("; ".join(fmt(r) for r in down[:3] if r["months"][-1] < r["months"][0]) or "none"),
-        "Below Good in %s: " % io.month(qm[-1]) + ("; ".join("%s %.1f%%" % (r["name"], r["months"][-1])
+        "Below Good in %s: " % io.month_label(ctx, qm[-1]) + ("; ".join("%s %.1f%%" % (r["name"], r["months"][-1])
                                                          for r in rows if r["months"][-1] is not None and r["months"][-1] < 85) or "none"),
         "Site comfort by month, %s: %s." % (io.span(tm[0], tm[-1], short=True), ", ".join("%.1f%%" % v for v in values)),
         "Rows in building order as printed: %s." % ", ".join(r["name"] for r in rows),
@@ -184,7 +185,7 @@ def build(ctx, work, shared):
     if unscored:
         facts.append("Not in the table (configured points, no score this quarter, so in neither figure): %s. "
                      "Say so in chat, not on the page." % ", ".join("%s %d points" % u for u in unscored))
-    if len(values) < 6:
+    if len(values) < len(tm):
         facts.append("Only %d months of comfort history: see Newly onboarded sites in SKILL.md." % len(values))
     return {
         "impact": impact,
@@ -193,8 +194,10 @@ def build(ctx, work, shared):
         "links": {"comfort": link, "trend_comfort": dashboard(ctx["trend"][0])},
         "datelines": {"Indoor environment health snapshot":
                       "%s. Share of zone readings inside the ASHRAE comfort band during working hours, by %s, in "
-                      "building order." % (io.span(qm[0], qm[-1]), "zone" if single else "level"),
-                      "Monthly thermal comfort": "%s, the last six complete months." % io.span(tm[0], tm[-1])},
+                      "building order." % (io.span(qw[0], qw[-1]) + io.and_to_date(ctx, " and "),
+                                           "zone" if single else "level"),
+                      "Monthly thermal comfort": "%s, the last six complete months%s."
+                                                 % (io.span(tw[0], tw[-1]), io.and_to_date(ctx))},
         "notes": {
             "Thermal comfort score":
                 "<strong>Thermal comfort score.</strong> The share of zone readings inside the ASHRAE comfort band "

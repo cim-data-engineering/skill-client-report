@@ -157,7 +157,8 @@ def build(ctx, work, shared):
     site = ctx["site"]
     host = re.match(r"https?://[^/]+", site.get("site_link") or "")
     host = host.group(0) if host else "https://ace.cimenviro.com"
-    span6 = io.span(tm[0], tm[-1])
+    tw = io.whole(ctx, tm)
+    span6 = io.span(tw[0], tw[-1])
     facts = [
         "Actions: %d raised and %d resolved over %s. By month, raised %s; resolved %s."
         % (sum(raised), sum(resolved), io.span(tm[0], tm[-1], short=True), ", ".join(map(str, raised)),
@@ -177,17 +178,19 @@ def build(ctx, work, shared):
         "alerts": {"a": raised, "b": resolved, "scale": "shared",
                    "alt": "Grouped bar chart of actions raised and resolved each month, %s. Raised %s and %d. "
                           "Resolved %s and %d." % (io.span(tm[0], tm[-1], sep=" to "), ", ".join(map(str, raised[:-1])), raised[-1],
-                                                   ", ".join(map(str, resolved[:-1])), resolved[-1])},
+                                                   ", ".join(map(str, resolved[:-1])), resolved[-1])
+                          + io.to_date_note(ctx, tm)},
         "leaderboard": leaderboard,
         "links": {"leaderboard": "%s/reports/tickets?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
-                                 "&grouping=assignee" % (host, site["site_id"], t0, io.last_day(t1).isoformat())},
+                                 "&grouping=assignee" % (host, site["site_id"], t0, ctx["through"])},
         "datelines": {
             "Monthly alerts raised vs resolved":
-                "%s, the last six complete months. Raised counts actions created in the month, resolved counts "
-                "actions closed in it. Actions marked Not Doing are excluded from both series." % span6,
+                "%s, the last six complete months%s. Raised counts actions created in the month, resolved "
+                "counts actions closed in it. Actions marked Not Doing are excluded from both series."
+                % (span6, io.and_to_date(ctx)),
             "Actions leaderboard":
-                "Actions resolved %s, ranked by resolved. Completion rate is resolved ÷ (resolved + currently open); "
-                "open now as at %s." % (span6, io.day_long(ctx["today"]))},
+                "Actions resolved %s%s, ranked by resolved. Completion rate is resolved ÷ (resolved + currently "
+                "open); open now as at %s." % (span6, io.and_to_date(ctx, " and "), io.day_long(ctx["today"]))},
         "notes": {
             "Verified recovery": "<strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period "
                                  "with fault status recovered, divided by all alerts resolved in the period, counting "

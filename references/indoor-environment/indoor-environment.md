@@ -10,9 +10,9 @@ Nothing. Levels with configured points but no score this quarter are in neither 
 
 | Rating chip                               | Metric label                    | Value                                       | Subtitle                                                                           |
 | ----------------------------------------- | ------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------- |
-| See below thermal comfort score benchmark | x.x% thermal comfort maintained | Site thermal comfort score over the quarter | {Up|Down} x.x pp from y.y% in {first month of the quarter} to z.z% in {last month} |
+| See below thermal comfort score benchmark | x.x% thermal comfort maintained | Site thermal comfort score over the quarter | {Up|Down} x.x pp from y.y% in {first month of the quarter} to z.z% in {last month, or the month to date} |
 
-Same movement definition as the snapshot Chg column, the quarter's last month minus its first in pp, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months. Both endpoints come from the `site` series already fetched. Score to 1dp, matching the snapshot.
+Same movement definition as the snapshot Chg column, the reporting period's last month minus its first in pp, the last being the month to date where the report carries one, so this figure equals the site row Chg in the snapshot below it. Name both endpoint values and their months. Both endpoints come from the `site` series already fetched. Score to 1dp, matching the snapshot.
 
 Section link, labelled "See live indoor environment dashboard", over the quarter. Bundle slot `comfort`:
 `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
@@ -31,14 +31,14 @@ Section link, labelled "See live indoor environment dashboard", over the quarter
 Thermal comfort by level  
 Date: the quarter
 
-Heatmap table on the same `heatmap` component as the equipment health snapshot. One row per site level, three score columns for the months of the quarter, cell value the thermal comfort score to 1dp, closing with a signed change column.
+Heatmap table on the same `heatmap` component as the equipment health snapshot. One row per site level, a score column for each month of the reporting period, the month to date last and headed "to date" where the report carries one, cell value the thermal comfort score to 1dp, closing with a signed change column.
 
 | Column        | Reference                                            |
 | ------------- | ---------------------------------------------------- |
 | Level         | Site levels that returned a comfort score            |
 | Zones         | Thermal zones configured on that level               |
 | Month columns | Thermal comfort score for that month x.x%            |
-| Chg           | Last month of the quarter minus the first, in pp x.x |
+| Chg           | Last month column minus the first, in pp x.x         |
 
 **Display:**
 
@@ -61,7 +61,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 ## Monthly thermal comfort
 
 Where comfort has been heading  
-Date: the six complete months ending with the quarter
+Date: the six complete months ending with the quarter, and the month to date where the report carries one
 
 Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in monthly equipment health, against the thermal comfort benchmark thresholds.
 
@@ -89,7 +89,7 @@ All in the main batch: `search_indoor_environment(metric:"temperature")` at thre
 | Call | Window | Feeds |
 | --- | --- | --- |
 | `level` × `month`, `limit:80` | quarter | the snapshot grid; paged by `report.py next` when levels × 3 passes 80 |
-| `site` × `month` | 6 months | the snapshot closing row (last 3) and the trend |
+| `site` × `month` | 6 months | the snapshot closing row (the quarter's months) and the trend |
 | `site` × `all` | quarter | the headline score |
 | `count_indoor_environment_zones`, `aggregate_entity:"level"` | current configuration | the Zones column and the thermal zones figure |
 

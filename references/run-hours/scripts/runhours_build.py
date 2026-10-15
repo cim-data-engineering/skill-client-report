@@ -44,6 +44,7 @@ RESET_POINTS    = 10     # a sweep of this many points or more all reading 0 at 
 RESET_BACK      = 0.8    # ... with this share of those on before on again at the next reading ...
 RESET_MIN_BACK  = 3      # ... and at least this many, is a data collector restarting
 SHARED_GAP_UNITS = 3     # a data gap this many units share is named once, with its times
+FEED_GAP_HOURS  = 12     # every periodic point silent this long at once: the site's feed, so the week is not whole
 NAMES_IN_NOTE   = 8      # list names in a note up to this many, then just count
 GENERIC_ZONE    = re.compile(r"(zone|area|default|all|general|none|n/?a|unassigned|site|building)\s*\d*", re.I)
 PAGE_ORDER      = ["Central plant", "Field units", "Other"]
@@ -290,6 +291,18 @@ def both_signals(sp, sr, ap, ar):
                       "so run time is unknown")
 
 
+def feed_gap(readings):
+    """[start, end) slots of the first stretch of FEED_GAP_HOURS or more in which no point
+    logged every 15 minutes reported: the site's data feed stopped, not one unit. None when
+    the week is whole, or when too few such points report to tell. A point logged on change
+    says nothing by being silent, so it is not asked."""
+    periodic = [r["on"] for r in readings if r and not r["on_change"]]
+    if len(periodic) < SHARED_GAP_UNITS:
+        return None
+    quiet = [all(on[i] is None for on in periodic) for i in range(WEEK)]
+    return next((g for g in ranges(quiet, True) if g[1] - g[0] >= FEED_GAP_HOURS * 4), None)
+
+
 # ---- Text helpers --------------------------------------------------------------
 def hhmm(slot):
     return "24:00" if slot >= SLOTS_PER_DAY else f"{slot * 15 // 60:02d}:{slot * 15 % 60:02d}"
@@ -460,6 +473,7 @@ def build(window, plan, rows, max_pass):
                    f"({window['tz_label']})."),
     }
     agg["notes"] = note_lines(window, plan, units, notes, resets, max_pass)
+    agg["feed_gap"] = feed_gap(list(points.values()))
     return agg, csv_rows
 
 

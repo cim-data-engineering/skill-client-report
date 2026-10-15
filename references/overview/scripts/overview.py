@@ -63,8 +63,7 @@ def place(site):
 def build(ctx, work, shared):
     site, facts = ctx["site"], facts_site(work)
     name = facts.get("site_name") or site["site_name"]
-    q0, q1 = ctx["quarter"]
-    qlast = io.last_day(q1).isoformat()
+    q0, qlast = ctx["quarter"][0], ctx["through"]
     total = lambda f: work.get(f).total or 0
 
     if "thermal_zones" in shared:
@@ -105,7 +104,11 @@ def build(ctx, work, shared):
         "datelines": {"Operational impact": io.period(q0, qlast)},
         "notes": {"The reporting window": "<strong>The reporting window.</strong> " + reporting_window(ctx)},
         "facts": ["Analytics overview: %s thermal zones (zone temperature points on the levels that "
-                  "returned a comfort score this quarter)." % "{:,}".format(zones)],
+                  "returned a comfort score this quarter)." % "{:,}".format(zones)]
+                 + (["Reporting period %s: the quarter plus %s to date, %d days, as the last month of every "
+                     "table and chart. Its volume bars are short by construction, which the reporting window "
+                     "note explains." % (io.period(q0, qlast), io.month(ctx["to_date"]),
+                                         io.days_in(ctx, ctx["to_date"]))] if ctx["to_date"] else []),
     }
 
 
@@ -116,10 +119,23 @@ def reporting_window(ctx):
         volume += ["automated checks", "labour cost avoided"]
     if "alerts-resolved" in secs:
         volume += ["actions raised and resolved"]
-    q0, q1 = ctx["quarter"]
-    text = ("Every monthly series closes on %s %d, the last complete month, so no column or bar covers "
-            "a part-month" % (io.month(months[-1]), io.d(months[-1]).year))
-    if len(volume) > 1:
-        text += ", and %s can be read against each other directly" % io.listing(volume)
-    return (text + ". The quarter is %s, the three complete months named in the masthead."
-            % io.span(q0, io.last_day(q1).isoformat()))
+    quarter = io.whole(ctx, ctx["quarter_months"])
+    span = io.span(quarter[0], quarter[-1])
+    m = ctx["to_date"]
+    if not m:
+        text = ("Every monthly series closes on %s %d, the last complete month, so no column or bar covers "
+                "a part-month" % (io.month(months[-1]), io.d(months[-1]).year))
+        if len(volume) > 1:
+            text += ", and %s can be read against each other directly" % io.listing(volume)
+        return text + ". The quarter is %s, the three complete months named in the masthead." % span
+    full = (io.add_months(io.d(m), 1) - io.d(m)).days
+    text = ("Every monthly series runs to the issue date, so %s %d holds %d of its %d days and is marked to "
+            "date in every table and chart. " % (io.month(m), io.d(m).year, io.days_in(ctx, m), full))
+    if volume:
+        text += ("%s %s totals, so %s %s bars are short by construction, while scores are rates over the days "
+                 "that exist. " % (io.listing(volume).capitalize(), "are" if len(volume) > 1 else "is",
+                                   "their" if len(volume) > 1 else "its", io.month(m)))
+    else:
+        text += "Scores are rates over the days that exist, so a short month does not lower them. "
+    return text + "The reporting period is %s, the three complete months of the quarter, plus %s to date." % (
+        span, io.month(m))

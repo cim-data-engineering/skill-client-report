@@ -58,7 +58,8 @@ def band(v):
 
 def build(ctx, work, shared):
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
-    q0, q1 = ctx["quarter"]
+    qw, tw = io.whole(ctx, qm), io.whole(ctx, tm)
+    q0 = ctx["quarter"][0]
     names = {r["type_id"]: r["type"] for r in work.get("eh/types.json").rows}
     month_of = lambda r: (r.get("date") or "")[:7]
 
@@ -75,7 +76,7 @@ def build(ctx, work, shared):
     host = host.group(0) if host else "https://ace.cimenviro.com"
     dashboard = lambda start: ("%s/dashboard/equipment-health?site_ids=%s&start_date=%sT00:00:00.000"
                                "&end_date=%sT00:00:00.000" % (host, ctx["site"]["site_id"], start,
-                                                              io.last_day(q1).isoformat()))
+                                                              ctx["through"]))
     link = dashboard(q0)
     rows = []
     for r in type_all.rows:
@@ -100,12 +101,12 @@ def build(ctx, work, shared):
     # operational impact rows
     site_all = work.get("eh/site-all.json").first()
     score = io.pct(site_all["score"], 2)
-    delta, sub = io.movement(site_q[0], site_q[-1], 2, io.month(qm[0]), io.month(qm[-1]))
+    delta, sub = io.movement(site_q[0], site_q[-1], 2, io.month(qm[0]), io.month_label(ctx, qm[-1]))
     pri = work.get("eh/priority-all.json").rows
     checks = sum(r.get("total_executions") or 0 for r in pri)
     rules = sum(r.get("task_count") or 0 for r in pri)
     code, per_hr, sym = rate(shared.get("site_facts") or {})
-    days = (io.d(q1) - io.d(q0)).days
+    days = io.period_days(ctx)
     mins = sum((r.get("task_count") or 0) * ANNUAL_MINS.get(r.get("priority_id"), 4.0) for r in pri) * days / 365
     cost = mins / 60 * per_hr
     impact = [
@@ -114,7 +115,7 @@ def build(ctx, work, shared):
               "order": 1}, **({"delta": delta} if delta else {})),
         {"chip": "Continuous", "chip_class": "neu", "fig": "{:,}".format(checks),
          "cap": "automated equipment health checks ran 24/7",
-         "sub": "Averaging %s monthly checks across %s scored rules." % (io.words(checks / len(qm)),
+         "sub": "Averaging %s monthly checks across %s scored rules." % (io.words(checks / io.month_count(ctx)),
                                                                         "{:,}".format(rules)),
          "order": 3},
         {"chip": "Modelled", "chip_class": "neu", "fig": "%s%s" % (sym, "{:,}".format(int(round(cost)))),
@@ -130,7 +131,7 @@ def build(ctx, work, shared):
     tmonths = [m for m in tm if m[:7] in site_m]
     th = io.thresholds(values, BANDS)
     trend_eh = {"values": values, "thresholds": th, "dp": 1,
-                "alt": io.line_alt("site equipment health score", tmonths, values, th, 1)}
+                "alt": io.line_alt(ctx, "site equipment health score", tmonths, values, th, 1)}
 
     # the labour cost method, worded once for the notes band and the note under Chart 2
     method = lambda window: (
@@ -146,7 +147,7 @@ def build(ctx, work, shared):
     a, b, rule_counts = [], [], []
     for m in tm:
         rs = by_month.get(m[:7], [])
-        mdays = (io.add_months(io.d(m), 1) - io.d(m)).days
+        mdays = io.days_in(ctx, m)
         a.append(sum(r.get("total_executions") or 0 for r in rs))
         b.append(int(round(sum((r.get("task_count") or 0) * ANNUAL_MINS.get(r.get("priority_id"), 4.0)
                                for r in rs) * mdays / 365 / 60 * per_hr)))
@@ -154,10 +155,13 @@ def build(ctx, work, shared):
     money = "dollars" if sym == "$" else ("pounds" if sym == "£" else "euros")
     trend_checks = {"a": a, "b": b, "labels_a": [io.compact(v) for v in a],
                     "labels_b": ["%s%.1fk" % (sym, v / 1000) for v in b],
-                    "note_after": "Automated health checks", "note": method("each month's own days"),
+                    "note_after": "Automated health checks",
+                    "note": method("each month's own days" + (", %s's so far" % io.month(ctx["to_date"])
+                                                              if ctx["to_date"] else "")),
                     "alt": "Grouped bar chart, %s. Automated checks: %s and %s million. Labour cost avoided: %s and %s thousand %s."
                            % (io.span(tm[0], tm[-1], sep=" to "), ", ".join("%.2f" % (v / 1e6) for v in a[:-1]), "%.2f" % (a[-1] / 1e6),
-                              ", ".join("%.1f" % (v / 1e3) for v in b[:-1]), "%.1f" % (b[-1] / 1e3), money)}
+                              ", ".join("%.1f" % (v / 1e3) for v in b[:-1]), "%.1f" % (b[-1] / 1e3), money)
+                           + io.to_date_note(ctx, tm)}
 
     # facts for facts.md: what moved, and the rule counts behind it
     movers = [r for r in rows if None not in (r["months"][0], r["months"][-1])]
@@ -174,10 +178,10 @@ def build(ctx, work, shared):
                                                        r["months"][-1] - r["months"][0])
     facts = [
         "Equipment health: site %.2f%% over the quarter (%s); %s %.2f%% to %s %.2f%%."
-        % (score, band(score), io.month(qm[0]), site_q[0], io.month(qm[-1]), site_q[-1]),
+        % (score, band(score), io.month(qm[0]), site_q[0], io.month_label(ctx, qm[-1]), site_q[-1]),
         "Biggest rises: " + ("; ".join(fmt(r) for r in up[:3] if r["months"][-1] > r["months"][0]) or "none"),
         "Biggest falls: " + ("; ".join(fmt(r) for r in down[:3] if r["months"][-1] < r["months"][0]) or "none"),
-        "Below Good in %s: " % io.month(qm[-1]) + ("; ".join("%s %.2f%% (%s)" % (r["name"], r["months"][-1], band(r["months"][-1]))
+        "Below Good in %s: " % io.month_label(ctx, qm[-1]) + ("; ".join("%s %.2f%% (%s)" % (r["name"], r["months"][-1], band(r["months"][-1]))
                                                          for r in weak) or "none"),
         "Rule count changes across the quarter: " + ("; ".join(rule_shift) or "none"),
         "Site score by month, %s: %s." % (io.span(tm[0], tm[-1], short=True), ", ".join("%.1f%%" % v for v in values)),
@@ -192,9 +196,11 @@ def build(ctx, work, shared):
         "trend_checks": trend_checks,
         "links": {"equipment_health": link, "trend_eh": dashboard(ctx["trend"][0])},
         "datelines": {"Equipment health snapshot":
-                      "%s, the three months of the reporting quarter. Share of rule executions returning no fault, "
-                      "by equipment type, sorted by change across the quarter." % io.span(qm[0], qm[-1]),
-                      "Monthly equipment health": "%s, the last six complete months." % io.span(tm[0], tm[-1])},
+                      "%s, the three months of the reporting quarter%s. Share of rule executions returning no "
+                      "fault, by equipment type, sorted by change across the %s."
+                      % (io.span(qw[0], qw[-1]), io.and_to_date(ctx), "period" if ctx["to_date"] else "quarter"),
+                      "Monthly equipment health": "%s, the last six complete months%s."
+                                                  % (io.span(tw[0], tw[-1]), io.and_to_date(ctx))},
         "notes": {"Labour cost avoided": method("the %d-day period" % days)},
         "facts": facts,
     }

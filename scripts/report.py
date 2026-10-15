@@ -112,10 +112,10 @@ def cmd_plan(a):
         json.dump(calls, fh, indent=1)
     save = [c for c in calls if not c.get("read")]
     read = [c for c in calls if c.get("read")]
-    q0, q1 = ctx["quarter"]
-    print("%s: quarter %s, trends %s, issued %s." % (site["site_name"], io.period(q0, io.last_day(q1).isoformat(), True),
-                                                    io.span(ctx["trend_months"][0], ctx["trend_months"][-1], True),
-                                                    io.day_short(ctx["today"])))
+    print("%s: quarter %s, trends %s, issued %s%s." % (
+        site["site_name"], io.period(ctx["quarter"][0], ctx["through"], True),
+        io.span(ctx["trend_months"][0], ctx["trend_months"][-1], True), io.day_short(ctx["today"]),
+        io.and_to_date(ctx, "; both windows close on ")))
     print("Sections: %s." % ", ".join(OPTIONS[o][0] if o in OPTIONS else o for o in picked))
     print("\n%d calls. Make them all in one parallel batch, each exactly as printed: the tool, then its "
           "arguments. %s Then run: python3 scripts/report.py next %s\n" % (len(calls), save_rule(a.dir), a.dir))
@@ -186,7 +186,8 @@ def cmd_bundle(a):
     if not data["impact"]:
         data.pop("impact")                 # no row-owning section is in, so neither is the frame
     data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]],
-                      "trend": [io.mon(m) for m in ctx["trend_months"]]}
+                      "trend": [io.mon(m) for m in ctx["trend_months"]],
+                      "to_date": bool(ctx["to_date"])}
     with open(os.path.join(work.root, "data.json"), "w") as fh:
         json.dump(data, fh, indent=1, ensure_ascii=False)
     lines = ["# Facts, %s" % ctx["site"]["site_name"], ""]
@@ -227,8 +228,8 @@ def cmd_fill(a):
     with open(final, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=1, ensure_ascii=False)
     name = re.sub(r"[^a-z0-9]+", "-", ctx["site"]["site_name"].lower()).strip("-")
-    out = a.out or os.path.join(work.root, "%s-q%d-%d.html" % (name, (io.d(ctx["quarter_months"][-1]).month - 1) // 3 + 1,
-                                                              io.d(ctx["quarter_months"][-1]).year))
+    last = io.d(io.whole(ctx, ctx["quarter_months"])[-1])     # the quarter's last complete month names the file
+    out = a.out or os.path.join(work.root, "%s-q%d-%d.html" % (name, (last.month - 1) // 3 + 1, last.year))
     tiles = os.path.join(work.root, "tiles")
     r = subprocess.run([sys.executable, os.path.join(HERE, "fill_report.py"), final, "--out", out,
                         "--photos-out", tiles], capture_output=True, text=True)

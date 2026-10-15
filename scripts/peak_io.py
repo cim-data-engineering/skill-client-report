@@ -89,20 +89,31 @@ def gql(file, query, args, fields):
 
 
 # ── windows ─────────────────────────────────────────────────────────────────
+PART_MONTH_DAYS = 7          # complete days of today's month before it joins the windows
+
+
 def add_months(d, n):
     m = d.year * 12 + d.month - 1 + n
     return date(m // 12, m % 12 + 1, 1)
 
 
 def windows(today):
-    """Every window closes on the last complete month before `today` (site local).
-    The quarter is its three complete months, the trend window its six."""
-    end = date(today.year, today.month, 1)            # exclusive
+    """The report's windows from `today` (site local). The quarter is the three complete
+    months before today's month, the trend window the six. Once more than a week of
+    today's month has passed, that month to date joins both as their last month. Every
+    bound is a month boundary, so the month to date is fetched up to the first of the
+    next month and holds whatever exists so far."""
+    first = date(today.year, today.month, 1)
+    part = (today - first).days >= PART_MONTH_DAYS
+    end = add_months(first, 1) if part else first     # exclusive
+    months = lambda back: [add_months(first, i).isoformat() for i in range(-back, 1 if part else 0)]
     return {"today": today.isoformat(),
-            "quarter": [add_months(end, -3).isoformat(), end.isoformat()],
-            "trend": [add_months(end, -6).isoformat(), end.isoformat()],
-            "quarter_months": [add_months(end, i).isoformat() for i in range(-3, 0)],
-            "trend_months": [add_months(end, i).isoformat() for i in range(-6, 0)]}
+            "quarter": [add_months(first, -3).isoformat(), end.isoformat()],
+            "trend": [add_months(first, -6).isoformat(), end.isoformat()],
+            "quarter_months": months(3),
+            "trend_months": months(6),
+            "to_date": first.isoformat() if part else None,
+            "through": (today if part else last_day(first.isoformat())).isoformat()}
 
 
 def d(s):
@@ -113,6 +124,43 @@ def last_day(start_excl_end):
     """The inclusive last day of a window whose end is exclusive."""
     e = d(start_excl_end)
     return date.fromordinal(e.toordinal() - 1)
+
+
+def whole(ctx, months):
+    """The complete months of a window's month list: all of them but the month to date."""
+    return [m for m in months if m != ctx.get("to_date")]
+
+
+def days_in(ctx, m):
+    """Days a window month covers: all of it, or the month to date's days so far."""
+    if m == ctx.get("to_date"):
+        return d(ctx["through"]).day
+    return (add_months(d(m), 1) - d(m)).days
+
+
+def period_days(ctx):
+    """Days the reporting period covers, the quarter's first day to the last day it holds."""
+    return (d(ctx["through"]) - d(ctx["quarter"][0])).days + 1
+
+
+def month_count(ctx):
+    """The reporting period in months: the quarter's three, plus the share of the month to
+    date that has passed."""
+    m = ctx.get("to_date")
+    return 3 + (days_in(ctx, m) / (add_months(d(m), 1) - d(m)).days if m else 0)
+
+
+def month_label(ctx, m):
+    """'September', or 'October to date' for the month to date."""
+    return month(m) + (" to date" if m == ctx.get("to_date") else "")
+
+
+def and_to_date(ctx, lead=", and "):
+    """', and October to date' when the windows carry a month to date, else ''."""
+    m = ctx.get("to_date")
+    if not m:
+        return ""
+    return "%s%s%s to date" % (lead, month(m), " %d" % d(m).year if d(m).month == 1 else "")
 
 
 # ── formats ─────────────────────────────────────────────────────────────────
@@ -208,12 +256,18 @@ def thresholds(values, bands):
     return [[float(t), label] for t, label in sorted(pick, key=lambda b: -b[0])]
 
 
-def line_alt(what, months, values, th, dp):
+def to_date_note(ctx, months):
+    """' October is to date.' for a chart description whose last month is the month to date."""
+    return " %s is to date." % month(months[-1]) if months and months[-1] == ctx.get("to_date") else ""
+
+
+def line_alt(ctx, what, months, values, th, dp):
     vals = ["%.*f" % (dp, v) for v in values]
     head = "Line chart of monthly %s, %s: %s and %s percent" % (
         what, span(months[0], months[-1], sep=" to "), ", ".join(vals[:-1]), vals[-1])
     (t1, l1), (t2, l2) = th[0], th[-1]
-    return head + ", against the %.1f percent %s threshold and the %.1f percent %s threshold." % (t2, l2, t1, l1)
+    return (head + ", against the %.1f percent %s threshold and the %.1f percent %s threshold." % (t2, l2, t1, l1)
+            + to_date_note(ctx, months))
 
 
 def movement(first, last, dp, m0, m1, unit="pp"):

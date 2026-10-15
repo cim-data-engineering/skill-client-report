@@ -18,8 +18,9 @@ plan    Sorts every discovered point with the rules in
         first pass of up to --cap units and the rest, writes
         <workdir>/plan.json and prints the history calls to make.
 calls   Prints the history calls for the later pass, once the user asks for it.
-last    Reads the latest-reading call the plan prints when nothing logged all
-        week, and says when the site last reported, in site local time.
+last    Reads a latest-reading call, the newest reading before the week of a
+        sample of the site's run points, writes <workdir>/last.json and says
+        when the site last reported, in site local time.
 
 The rules are the reference's tables, parsed at run time — change a rule there,
 not here. Standard library only — no third-party dependencies, by design, so
@@ -43,8 +44,8 @@ SIGNALS = Path(__file__).resolve().parent.parent / "run-hours-signals.md"
 CAP_UNITS       = 100    # first-pass size; central plant is always fetched whole
 POINTS_PER_CALL = 36     # ~672 rows per point-week keeps a call under ~25k rows / ~2 MB
 DISCOVERY_LIMIT = 1000   # units per discovery page: ~170 KB for a 100-unit office tower
-PROBE_POINTS    = 20     # points asked for the latest reading when nothing logged all week,
-                         # a type at a time; the call returns one row, the newest of them all
+PROBE_POINTS    = 20     # points asked for their latest reading before the week, a type at a
+                         # time, to find when the site's data stopped
 HISTORY_FIELDS  = ["fav_id", "ts", "data"]
 DEFAULT_HOST    = "https://ace.cimenviro.com"
 PAGE_ORDER      = ["Central plant", "Field units", "Other"]
@@ -512,6 +513,7 @@ def pick_points(unit, rules):
     unit["pull"] = [dict({k: c[k] for k in ("fav_id", "name", "role")}, **({"state": True} if c["state"] else {}))
                     for c in pull]
     if pull:
+        unit["probe"] = {"fav_id": pull[0]["fav_id"], "unit": unit["name"], "point": pull[0]["name"]}
         return
     sensors = [c for r in SENSOR_ROLES for c in found[r]]
     if sensors:
@@ -606,6 +608,7 @@ def cmd_plan(args):
     known = set(rules.types) | rules.never_charted | include | {None}
     unclassified = Counter({c: n for c, n in unknown.items() if c not in known})
     dead = [u for u in units if u.get("why") == "no history this week"]
+    drawn = [u for u in units if u["pull"] and u["pass"] == 1]
     plan = {
         "units": [{k: u.get(k) for k in ("equipment_id", "name", "type", "type_name", "page",
                                           "level", "zone", "regrouped_from", "around_the_clock",
@@ -616,7 +619,7 @@ def cmd_plan(args):
                          for c, n in unclassified.most_common()],
         "unknown_units": unknown_units or 0,
         "outage": bool(dead) and not any(u["pull"] for u in units),
-        "probe": probe_points(dead) if dead and not chunks else [],
+        "probe": probe_points(drawn if chunks else dead),
     }
     (work / "plan.json").write_text(json.dumps(plan, indent=1))
     print(f"{window['site_name']}: {window['label']}. Wrote {work / 'plan.json'}.")
@@ -627,10 +630,10 @@ def cmd_plan(args):
     print_calls(window, plan, 1, work)
 
 
-def probe_points(dead):
+def probe_points(units):
     """Up to PROBE_POINTS of the units' best points, taken a type at a time so every type is asked."""
     by_type = {}
-    for u in dead:
+    for u in units:
         by_type.setdefault(u["type"], []).append(u["probe"])
     out, queues = [], list(by_type.values())
     while queues and len(out) < PROBE_POINTS:
@@ -677,15 +680,21 @@ def history_call(args):
     return {"query_name": "platform.history", "args": args, "fields": HISTORY_FIELDS}
 
 
+def probe_call(window, plan):
+    """The newest reading before the week of each sampled point: when the site's data stopped."""
+    return history_call({"fav_ids": [p["fav_id"] for p in plan["probe"]], "latest": True,
+                         "end": window["start"], "end_exclusive": True})
+
+
 def print_nothing_to_draw(window, plan, dead, work):
     if plan["outage"]:
         print(f"Nothing to draw: none of the {plural(len(dead), 'unit')} with a run point logged any "
               f"history from {window['start']} to {window['end']}, so the site's data feed looks down. "
               "Say so rather than showing an empty view. To say since when, make this call exactly as "
-              f"printed: it returns one row, the newest reading of any of these "
+              f"printed: it returns the newest reading before the week of these "
               f"{plural(len(plan['probe']), 'point')}. Save it as {work / 'last-reading.json'}, then run "
               f"runhours_plan.py last {work} {work / 'last-reading.json'}")
-        print(json.dumps(history_call({"fav_ids": [p["fav_id"] for p in plan["probe"]], "latest": True})))
+        print(json.dumps(probe_call(window, plan)))
     else:
         print("Nothing to draw: no plant at the site carries a usable run point. Say so with the "
               "summary above rather than showing an empty view.")
@@ -712,26 +721,30 @@ def cmd_calls(args):
 
 
 def cmd_last(args):
-    """When the site last reported: the newest reading of the points the plan probed."""
+    """When the site last reported before the week: the newest reading of the points the plan probed."""
     from zoneinfo import ZoneInfo           # stdlib from 3.9; needs the system tz database
     work = Path(args.workdir)
     window = json.loads((work / "window.json").read_text())
     probe = {str(p["fav_id"]): p for p in json.loads((work / "plan.json").read_text()).get("probe") or []}
     if not probe:
-        raise ValueError("plan.json has no probe: the last step follows a plan with nothing to draw")
+        raise ValueError("plan.json has no probe: the plan found no unit with a run point")
     rows = [r for r in read_results(args.response) if str(r.get("fav_id")) in probe and r.get("ts")]
     if not rows:
-        print(f"None of the {plural(len(probe), 'point')} asked has a reading in PEAK's history at all: "
-              "the site's points have never reported, or their history is not reaching PEAK. Say so.")
+        (work / "last.json").write_text(json.dumps({"local": None}))
+        print(f"None of the {plural(len(probe), 'point')} asked has a reading in PEAK's history before "
+              f"{window['label']}: the site's points have never reported, or their history is not reaching "
+              "PEAK. Say so.")
         return
     newest = max(rows, key=lambda r: datetime.fromisoformat(str(r["ts"]).replace("Z", "+00:00")))
     local = datetime.fromisoformat(str(newest["ts"]).replace("Z", "+00:00")).astimezone(
         ZoneInfo(window["timezone"]))
     p = probe[str(newest["fav_id"])]
-    print(f"The site's run points last reported {local:%a} {local.day} {local:%b %Y %H:%M} {local.tzname()}, "
-          f"the newest reading of the {plural(len(probe), 'point')} sampled across its types "
-          f"({p['unit']}, {p['point']}). Say its data feed has been down since then, and that there is "
-          f"no run-hours view for {window['label']}.")
+    when = f"{local:%a} {local.day} {local:%b %Y %H:%M} {local.tzname()}"
+    (work / "last.json").write_text(json.dumps({"local": local.isoformat(), "text": when,
+                                                "unit": p["unit"], "point": p["point"]}))
+    print(f"Before {window['label']}, the site's run points last reported {when}, the newest reading of "
+          f"the {plural(len(probe), 'point')} sampled across its types ({p['unit']}, {p['point']}). "
+          f"Wrote {work / 'last.json'}.")
 
 
 def main(argv):

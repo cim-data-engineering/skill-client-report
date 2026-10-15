@@ -31,7 +31,7 @@ Ask with one `AskUserQuestion` call and one multi-select question, header "Secti
 | Equipment health      | `equipment-health`   | `equipment-health/`        | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends            |
 | Indoor environment    | `indoor-environment` | `indoor-environment/`      | the thermal comfort row, comfort by level, the six month comfort trend                                                                     |
 | Actions and key wins  | `actions-and-wins`   | `actions-and-wins/`        | the faults resolved row with verified recovery, six months of raised vs resolved, who closed the work, and the key wins: repairs made plus live work the owner should see |
-| Equipment run hours   | `run-hours`          | `run-hours/`               | when each unit of plant ran across the last full week of the quarter, against the site's working hours                                    |
+| Equipment run hours   | `run-hours`          | `run-hours/`               | when each unit of plant ran across the latest full Monday-to-Sunday week, against the site's working hours                                |
 
 Each folder holds the section's reference and a `scripts/` folder with its arithmetic. Actions and key wins is one choice with two references, `alerts-resolved.md` and `key-wins.md`, because the two answer the same question from either end and share their pulls. `references/overview/` is the part every report carries.
 
@@ -99,13 +99,13 @@ Each row belongs to a section and is specified in that reference: three to equip
 
 - No red in this section. The rating chip reads Excellent or Good on the positive chip, Average or Poor on the warning chip, never the negative one. A movement takes the positive delta when it improves and the muted delta when it declines or holds flat. State a fall plainly in the figure, the glyph and the word: reported, not colour coded. Red stays available to the snapshot tables and charts below
 - Keep the surviving rows in this order: equipment health score, thermal comfort, automated checks, labor cost avoided, faults resolved
-- Where a row states a movement, it runs from the quarter's first month to its last: the reporting period, and nothing outside it
+- Where a row states a movement, it runs from the reporting period's first month to its last, the month to date where the report carries one: the reporting period, and nothing outside it
 
 ## Notes band
 
 Numbered methodology items in report order, each owned by the section it explains, plus one shared item:
 
-- **The reporting window**: every monthly series closes on the last complete month, so no column or bar covers a part-month and the volume series can be read against each other directly. Name the series the report actually shows, and the three complete months the quarter covers
+- **The reporting window**: with no month to date, every monthly series closes on the last complete month, so no column or bar covers a part-month and the volume series can be read against each other directly. With one, every series runs to the issue date: name the month to date and how many of its days it holds, the volume series that are short there by construction, and that scores are rates over the days that exist. Either way, name the series the report actually shows and the three complete months the quarter covers
 
 ## After the render
 
@@ -120,7 +120,7 @@ A follow-up on a report that already exists is not a rebuild. Match the reading 
 
 A site can have less history than the window asks for, and `facts.md` says so when a section's six-month series comes back short. The site went live inside the window, and the report covers what exists.
 
-- Trim both windows to the months that returned data, still whole months only. The month a site went live in is not a complete month for it unless it went live on the 1st, so drop it
+- Trim both windows to the months that returned data, still whole months only apart from the month to date. The month a site went live in is not a complete month for it unless it went live on the 1st, so drop it
 - Say it once, in the masthead: "Reporting period: 1 – 31 August 2026, monitoring live since 14 July 2026". The reader needs to know the report is short because the site is new, not because something failed. Don't repeat it section by section
 - A movement needs two months. With one, state the score and drop the delta. "Up 0.00 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column, and sort the rows by score with the lowest first, so the plant needing attention leads
 - A trend needs three points. With fewer, drop the trend chart and keep the snapshot; two months drawn as a line invites the reader to extend it. Where that empties a trends section, delete the section
@@ -157,8 +157,10 @@ Derived rules when overrides are active:
 
 Every call in a section's `calls()` answers a whole need in one request: rows for a window, not a month at a time; a set of ids, never one id at a time; a count wherever a count is all that is needed, from `count_tickets`, `count_indoor_environment_zones` or `pagination.total`; and everything else derived locally from rows already held. A change to a section's calls goes in its script, with the reason in its reference's Data block.
 
-Every window closes on the **last complete month**, so nothing in the report covers a part-month. A quarterly review should read as of the quarter, not as of the day it was generated, and equipment health scores are stored pre-aggregated on month boundaries, so a mid-month bound forces a raw scan. The **quarter** is the three complete months ending on the last complete month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use. Run hours takes the last full Monday-to-Sunday week inside the quarter.
+The **quarter** is the three complete months before the issue date's month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use. Once more than a week of the current month has passed, that **month to date** joins both windows as their last month, so the snapshots carry four columns and the trends seven points, and the reporting period runs from the quarter's first day to the issue date. Before then, every window closes on the last complete month and nothing covers a part-month. Every bound is a month boundary, the month to date included: it is fetched up to the first of the next month and holds whatever exists so far, because equipment health scores are stored pre-aggregated on month boundaries and a mid-month bound forces a raw scan. The scripts mark the month to date wherever it shows: "to date" under its column and axis labels, a tinted column behind it on every chart, and on a line chart a dashed last segment onto an open point. Its scores are rates and stand as they are; its volumes are short by construction, which the reporting window note says.
 
-The section scripts build every link from the URL its reference writes out, on the host of the site's `site_link`. `{{site_id}}` is the PEAK site id; `{{quarter_start}}` and `{{trend_start}}` are the first days of the quarter and the 6 month window, `{{quarter_end}}` is the quarter's last day and `{{quarter_last_month}}` the first day of its last month, all `YYYY-MM-DD`. A row link is the section link with the row's own filter appended, `&equipment_type_ids={id}` or `&level_ids={id}`. Key win evidence links to the `ticket_link` on each action ticket row.
+Run hours takes the latest full Monday-to-Sunday week before the issue date, in site time. Where the site's data is missing from that week, because no run point reported in it or every periodically logged point went quiet together for 12 hours or more, it takes the latest full week before the data stopped, provided that week falls inside the reporting period. Otherwise the section leaves the missing stretch hatched, or drops out when the week holds nothing, and `facts.md` says why.
+
+The section scripts build every link from the URL its reference writes out, on the host of the site's `site_link`. `{{site_id}}` is the PEAK site id; `{{quarter_start}}` and `{{trend_start}}` are the first days of the quarter and the 6 month window, `{{quarter_end}}` is the last day the reporting period covers, the issue date where it carries a month to date, and `{{quarter_last_month}}` the first day of its last month, all `YYYY-MM-DD`. A row link is the section link with the row's own filter appended, `&equipment_type_ids={id}` or `&level_ids={id}`. Key win evidence links to the `ticket_link` on each action ticket row.
 
 A response too large to return inline comes back as a file: copy it under its name and the scripts read it from there. Status ids where a filter needs them: 1 New, 3 In Progress, 6 Closed, 7 On Hold, 8 Not Doing, which every count and pull leaves out.

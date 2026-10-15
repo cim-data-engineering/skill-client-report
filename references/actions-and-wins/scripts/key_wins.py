@@ -272,7 +272,8 @@ def assemble(ctx, work):
     out.sort(key=lambda w: 0 if len(w.get("photos", [])) >= 2 else 1 if w.get("photos") else 2)
     states = [w.pop("_state") for w in out]
     fixed = all(s == "fixed" for s in states)
-    q = io.span(ctx["quarter_months"][0], ctx["quarter_months"][-1])
+    qw = io.whole(ctx, ctx["quarter_months"])
+    q = io.span(qw[0], qw[-1]) + io.and_to_date(ctx, " and ")
     return {"wins": out,
             "statements": {"Key wins": "What changed in the building this quarter" if fixed
                            else "What we found and acted on this quarter"},
