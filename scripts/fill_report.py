@@ -355,7 +355,7 @@ def main():
     if a.photos_out:
         os.makedirs(a.photos_out, exist_ok=True)
     D = json.load(open(a.data, encoding="utf-8"))
-    sections = D.get("sections") or "equipment-health,indoor-environment,alerts-resolved,key-wins"
+    sections = D.get("sections") or "all"
 
     tmp = tempfile.mktemp(suffix=".html")
     subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "scaffold",
@@ -467,8 +467,8 @@ def main():
             side = len(photos) == 1
             pad = "      " if side else "    "
             b = ""
-            # No impact key means an older bundle: fill it without a tag rather
-            # than guessing one the action tickets never carried.
+            # A win without an impact prints no tag, never one its action
+            # tickets did not carry.
             if w.get("impact"):
                 k = w["impact"]
                 if k not in IMPACTS:

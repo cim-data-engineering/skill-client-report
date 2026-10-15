@@ -444,8 +444,7 @@ def signal_grade(unit):
 def read_units(paths):
     """Discovered units with their points, de-duplicated across pages.
 
-    Reads the equipment-rooted discovery (points nested under each unit) and, for
-    older saved runs, the point-per-row pages of platform.favourites.
+    Reads the equipment-rooted discovery: one row per unit, its points nested under it.
     """
     units, seen = {}, set()
 
@@ -459,12 +458,8 @@ def read_units(paths):
 
     for path in paths:
         for row in read_results(path):
-            if "favourites" in row:
-                unit = unit_for(row["equipment_id"], row)
-                points = row.get("favourites") or []
-            else:
-                unit, points = unit_for(row["equipment_id"], row.get("equipment") or {}), [row]
-            for p in points:
+            unit = unit_for(row["equipment_id"], row)
+            for p in row.get("favourites") or []:
                 if p.get("is_active") is False or p.get("fav_id") in seen:
                     continue
                 seen.add(p.get("fav_id"))
@@ -473,28 +468,22 @@ def read_units(paths):
 
 
 def read_census(paths):
-    """(units per type, type names, units of an unknown type) from the saved census.
+    """Units of a type neither table covers, from the two saved census counts.
 
-    A full census — every unit's type, as older runs saved it — is counted
-    by type and names any unknown type. The MCP's two counts — every
-    unit, and units of a type the tables know, each a pagination.total — give
-    only how many units are of an unknown type, the difference.
+    The counts are every unit and units of a type the tables know, each a
+    pagination.total; their difference is the units of an unknown type. None
+    without a census.
     """
-    counts, names, totals = Counter(), {}, []
+    totals = []
     for path in paths or []:
         rows, total = read_page(path)
-        if rows and isinstance(rows[0], dict) and "metadata_type" in rows[0]:
-            for row in rows:
-                mt = row.get("metadata_type") or {}
-                counts[mt.get("type_code")] += 1
-                names[mt.get("type_code")] = mt.get("type")
-        elif total is not None:
+        if total is not None:
             totals.append(int(total))
         elif rows:
-            raise ValueError(f"{path}: a census response with neither unit types nor a count")
+            raise ValueError(f"{path}: a census response with no count")
     if totals and len(totals) != 2:
         raise ValueError("pass both census counts, every unit and units of a known type")
-    return counts, names, (max(totals) - min(totals)) if totals else None
+    return (max(totals) - min(totals)) if totals else None
 
 
 SENSOR_ROLES = ("status", "analog", "compressor")   # a reading of the unit; a command is not
@@ -581,7 +570,7 @@ def cmd_plan(args):
     window = json.loads((work / "window.json").read_text())
     rules = Rules()
     include = set(window.get("include") or [])
-    census, census_names, unknown_units = read_census(args.census)
+    unknown_units = read_census(args.census)
 
     units, unknown = [], Counter()
     for unit in read_units(args.discovery):
@@ -591,7 +580,7 @@ def cmd_plan(args):
             continue
         unit["type"] = rules.charted_type(unit["name"], peak) if peak in rules.types else peak
         ty = rules.types.get(unit["type"])
-        unit["type_name"] = ty["name"] if ty else census_names.get(peak, peak)
+        unit["type_name"] = ty["name"] if ty else peak
         unit["page"] = ty["page"] if ty else "Other"
         if unit["type"] != peak:
             unit["regrouped_from"] = rules.types[peak]["name"]
@@ -615,7 +604,7 @@ def cmd_plan(args):
 
     # Types in neither table: named in the notes, so a new PEAK type is a visible gap.
     known = set(rules.types) | rules.never_charted | include | {None}
-    unclassified = Counter({c: n for c, n in (census or unknown).items() if c not in known})
+    unclassified = Counter({c: n for c, n in unknown.items() if c not in known})
     dead = [u for u in units if u.get("why") == "no history this week"]
     plan = {
         "units": [{k: u.get(k) for k in ("equipment_id", "name", "type", "type_name", "page",
@@ -623,7 +612,7 @@ def cmd_plan(args):
                                           "pass", "pull", "why")}
                   for u in units],
         "chunks": chunks,
-        "unclassified": [{"code": c, "type": census_names.get(c, c), "units": n}
+        "unclassified": [{"code": c, "type": c, "units": n}
                          for c, n in unclassified.most_common()],
         "unknown_units": unknown_units or 0,
         "outage": bool(dead) and not any(u["pull"] for u in units),
@@ -678,7 +667,7 @@ def print_summary(plan):
         print("Regrouped by name: " + ", ".join(f"{k} {n}" for k, n in regrouped.items()) + ".")
     if plan["unclassified"]:
         print("Unclassified types at this site: "
-              + ", ".join(f"{u['type']} ({u['code']}) {u['units']}" for u in plan["unclassified"]))
+              + ", ".join(f"{u['code']} {u['units']}" for u in plan["unclassified"]))
     if plan["unknown_units"]:
         print(f"Unclassified: {plural(plan['unknown_units'], 'unit')} of a type neither table in "
               "run-hours-signals.md covers.")
@@ -760,7 +749,7 @@ def main(argv):
     p.add_argument("workdir")
     p.add_argument("discovery", nargs="+", help="saved discovery pages")
     p.add_argument("--census", nargs="+", action="extend",
-                   help="the two saved census counts, or a full census")
+                   help="the two saved census counts")
     p.add_argument("--cap", type=int, default=CAP_UNITS,
                    help=f"first-pass units (default {CAP_UNITS}; 0 fetches everything)")
     c = sub.add_parser("calls", help="print the history calls for one pass of an existing plan")

@@ -2,9 +2,8 @@
 """Equipment run hours as a report section: when each unit ran across the last
 full week of the quarter, against the site's working hours.
 
-The pipeline is skill-health-check's, copied unchanged beside this file:
-runhours_plan.py fixes the week and picks every unit's points, runhours_build.py
-turns the history into the aggregate. This module drives them through the
+runhours_plan.py fixes the week and picks every unit's points, and
+runhours_build.py turns the history into the aggregate. This module drives them through the
 report's hooks and draws the aggregate as static SVG in the report's design, since
 the report carries no script. See references/run-hours/run-hours.md.
 """
@@ -21,7 +20,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
 NAME = "run-hours"
-DIR = "runhours"                     # under peak/, where the health-check scripts keep their files
+DIR = "runhours"                     # under peak/, where the runhours_*.py scripts keep their files
 
 # Layout, in the report's chart units (the sheet draws every chart 682 wide).
 W, LABEL, RIGHT_PAD = 682, 168, 4
@@ -45,7 +44,7 @@ def script(name, *args):
 
 
 def printed_calls(text):
-    """The calls the health-check scripts print: a label line naming the file, then the call as JSON."""
+    """The calls runhours_plan.py prints: a label line naming the file, then the call as JSON."""
     out, name = [], None
     for line in text.splitlines():
         m = re.search(r"->\s*(\S+?\.json)", line)

@@ -1,6 +1,6 @@
 # Equipment run hours
 
-Owns the equipment run hours section and its notes-band item. No operational impact row. Scaffold part: `equipment-run-hours`. Scripts: `scripts/run_hours.py`, which drives the three `runhours_*.py` scripts beside it, copied unchanged from skill-health-check.
+Owns the equipment run hours section and its notes-band item. No operational impact row. Scaffold part: `equipment-run-hours`. Scripts: `scripts/run_hours.py`, which drives the three `runhours_*.py` scripts beside it.
 
 When each unit of plant ran across one week, against the site's working hours: Monday to Sunday edge to edge, one row per unit, bars exact to 15 minutes. Out-of-hours running and plant that never ran show without reading any text, which is what the reader comes to this section for.
 

@@ -10,8 +10,8 @@ The choosing and the words. Everything else is the script's: the candidates, the
 2. Choose by **Selection** below, and write `report/wins.json`, best first:
 
 ```json
-[{"tickets": ["afbbae74-1afa-4fc2-883e-be510982fbfb"], "state": "fixed", "heading": "...", "body": "...", "snap": "..."},
- {"tickets": ["9df9aa6a-ce4b-4917-a458-06b1794ee01e", "1f788c8e-905b-432f-b4c7-29776c173c10"], "state": "in_flight", "heading": "...", "body": "..."}]
+[{"tickets": ["00000000-0000-4000-8000-000000000001"], "state": "fixed", "heading": "...", "body": "...", "snap": "..."},
+ {"tickets": ["00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003"], "state": "in_flight", "heading": "...", "body": "..."}]
 ```
 
    `tickets` are full ticket ids, every ticket the win stands on. `state` is `fixed` or `in_flight`, which sets the section's statement and date line. `snap` only with equipment health in, per **Display**

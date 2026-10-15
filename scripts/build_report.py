@@ -170,8 +170,9 @@ def cmd_check(args):
     rid = re.search(r"site_ids=(\d+)", ref)
     rname = re.search(r"PEAK · ([^,<]+)", ref)
     for token in [m.group(1) for m in (rid, rname) if m]:
-        # a whole id, not the same digits inside a longer one such as a favourite id
-        if re.search(r"(?<!\d)%s(?!\d)" % re.escape(token), text):
+        # the id where a link carries it, not the same digits in a count or a chart coordinate
+        pat = (r"(?:site_ids?=|/escalated/)%s(?!\d)" if token.isdigit() else "%s") % re.escape(token)
+        if re.search(pat, text):
             warnings.append("reference site's own %s appears — fine only if this "
                             "report really is for it" % ("id %s" % token if token.isdigit() else "name %r" % token))
 

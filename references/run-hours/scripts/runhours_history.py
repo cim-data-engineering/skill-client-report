@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Load offloaded PEAK responses for the run-hours check.
+"""Load saved PEAK responses for the run hours section.
 
-Not a general history loader — this reads the `platform.history` results that
-the platform offloaded to disk for the run-hours check only, keyed on BACnet
-favourite ids, plus the discovery pages the plan reads. The other health-check
-reports do not use it.
+Not a general history loader — this reads the `platform.history` results the
+run hours section pulls, keyed on BACnet favourite ids, plus the discovery
+pages the plan reads.
 
 Two hazards it exists to handle, both of which corrupt results silently:
 

@@ -58,12 +58,11 @@ Every sentence on the page is written by the partner's engineer to the building'
 - Nor the other tells: "not just X, but Y", rhetorical questions, a list of three where two would do, a sentence that opens by restating the one before it, stacked hedges like "may potentially"
 - Never describe the report itself or how it was made. The reader wants the building, not the method
 
-A chart note before and after. The first packs everything in, opens on an editorial framing, quotes 79.08% and closes on a movement too small to be one:
+A chart note before and after. The first packs everything in, opens on an editorial framing, quotes 99.67% and closes on a movement too small to be one:
 
-> Water meters are the exception on an otherwise flat page: three meters on five rules sat at 54% through June and July, then recovered to 79.08% in August after the flatlined sub-meters on the podium cold water and cooling tower make-up lines were chased down. Everything else stayed inside Excellent all quarter, and the only fall is air handling units at 0.75 pp, which tracks the fan motor failure on AHU-6-3 in July. The site line moved 0.01 pp.
+> Chillers are the story on an otherwise steady page: their 42 rules sat in Average through June and July, then climbed to 99.67% in August after evaporator pressure sensing was restored on CH-01 and CH-02. Everything else held inside Good or better all quarter, and the only fall is primary chilled water pumps at 0.18 pp. Variable air volume moved 0.06 pp in August.
 
-> Water meter health improved from 54% to 79% in August, although flatlined sub-meters on the podium cold water and cooling tower make-up lines still require attention. Overall site health remained stable at 99.6%. The small reduction in AHU health was linked to a fan motor failure on AHU-6-3.
-
+> Chiller health improved from 94.7% to 99.7% in August, after evaporator pressure sensing was restored on CH-01 and CH-02. Air handling units eased back in August but remain in Good at 98.4%. Overall site health rose to 99.1%.
 
 ## What always renders
 
@@ -73,7 +72,7 @@ The overview script fills every slot below; these are the rules it follows.
 
 - {Site name} Quarterly Building Performance Review
 - Prepared by: {Company name} {Company service name}. Powered by PEAK
-- Reporting period: the quarter as a date range, per [Data recipes](#data-recipes), or the site's own coverage per [Newly onboarded sites](#newly-onboarded-sites)
+- Reporting period: the quarter as a date range, per [How the scripts fetch](#how-the-scripts-fetch), or the site's own coverage per [Newly onboarded sites](#newly-onboarded-sites)
 - Author: full name of the logged-in PEAK MCP user, from `who_am_i`, always present, never omitted or substituted
 - Issue date: issue date
 - Disclaimer, verbatim, below the masthead metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."

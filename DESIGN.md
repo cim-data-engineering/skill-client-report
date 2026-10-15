@@ -240,7 +240,7 @@ Radii climb with size: 4px chart-bar tops (top corners only), 6px delta chips an
 
 ## Components
 
-- **masthead:** `secondary` field with an `eyebrow` in `on-secondary-muted`, the report title in `h1`, then a metadata row (period, comparison, site, issue date) as `masthead-label` over values, split from the title by a hairline at 18% `on-secondary`.
+- **masthead:** `secondary` field with an `eyebrow` in `on-secondary-muted`, the report title in `h1`, then a metadata row (reporting period, author, issue date) as `masthead-label` over values, split from the title by a hairline at 18% `on-secondary`.
 - **section header:** three stacked lines — an `eyebrow` in `primary` naming the section, a statement in `h2` saying what the section shows ("What we monitor at {site}"), and an optional `body-sm` byline in `text-muted` carrying the as-at date or period — with 24px clear before the content. The statement is the headline, never the section name.
 - **metric row:** `metric-value` with a plain caption beside it, a one-line `body-sm` explanation in `text-muted` beneath, and a rating or delta chip.
 - **delta chip:** `delta-positive` / `delta-negative` chosen by whether the change is *good*, not by its sign, always with a direction glyph and words.
