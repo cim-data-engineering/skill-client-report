@@ -236,8 +236,8 @@ def page_table(page, days, n):
             name_w = LABEL - 14 - (min(len(where), 14) * FS_SMALL * CHAR + 8 if where else 0)
             tip = escape("%s%s%s" % (r["name"], " (%s)" % r["point"] if r.get("point") else "",
                                      "\n" + r["where_full"] if r.get("where_full") else ""))
-            fg.append('<a href="%s"><text class="rh-name" x="8" y="%.1f"><title>%s</title>%s</text></a>'
-                      % (escape(r["href"]), ty, tip, escape(fit(r["name"], name_w, FS_NAME))))
+            fg.append('<a href="%s" target="_blank"><text class="rh-name" x="8" y="%.1f"><title>%s</title>%s &rsaquo;</text></a>'
+                      % (escape(r["href"]), ty, tip, escape(fit(r["name"], name_w - 2 * FS_NAME * CHAR, FS_NAME))))
             if where:
                 fg.append('<text class="rh-where" x="%d" y="%.1f" text-anchor="end">%s</text>'
                           % (LABEL - 6, ty, escape(fit(where, 14 * FS_SMALL * CHAR, FS_SMALL))))
