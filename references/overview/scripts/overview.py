@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""The parts every report carries: masthead, analytics overview, the operational
-impact and notes frames, and the footer. See references/overview/overview.md.
+"""The parts every report carries: masthead, analytics overview, and the operational
+impact and notes frames. See references/overview/overview.md.
 
 Imported by scripts/report.py, which hands each section module the same three
 hooks: calls() before the fetch, more() for any follow-up round, build() to turn
@@ -15,9 +15,6 @@ import peak_io as io  # noqa: E402
 
 NAME = "overview"
 SYSTEM_TYPES = [21, 37, 69, 70, 87, 105, 114]     # the platform checking itself, not plant
-STATES = {"New South Wales": "NSW", "Victoria": "VIC", "Queensland": "QLD", "South Australia": "SA",
-          "Western Australia": "WA", "Tasmania": "TAS", "Australian Capital Territory": "ACT",
-          "Northern Territory": "NT"}
 
 
 def calls(ctx):
@@ -55,11 +52,6 @@ def facts_site(work):
     return work.get("overview/site.json").first() or {}
 
 
-def place(site):
-    state = STATES.get(site.get("state") or "", site.get("state") or "")
-    return " ".join(x for x in (site.get("city"), state, site.get("postcode")) if x)
-
-
 def build(ctx, work, shared):
     site, facts = ctx["site"], facts_site(work)
     name = facts.get("site_name") or site["site_name"]
@@ -78,7 +70,6 @@ def build(ctx, work, shared):
     size = facts.get("building_size")
     unit = "ft²" if (site.get("country") or "").lower() in ("united states", "usa", "us") else "m²"
     brand = ctx.get("brand") or {}
-    platform = "CIM PEAK" if not brand.get("override") else "PEAK"
     shared["site_facts"] = facts
     window = reporting_window(ctx)
     return {
@@ -90,7 +81,6 @@ def build(ctx, work, shared):
             "issued": io.day_short(ctx["today"]),
             "prepared": "Prepared by <strong>%s — %s</strong> · Powered by PEAK" % (brand.get("name", "CIM"),
                                                                                   brand.get("service", "Data Driven Operations")),
-            "footer": "%s · %s, %s" % (platform, name, place(site)) if place(site) else "%s · %s" % (platform, name),
         },
         "overview": {
             "as_at": "As at %s" % io.day_long(ctx["today"]),

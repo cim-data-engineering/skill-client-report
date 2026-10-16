@@ -33,8 +33,7 @@ logos:
 ## What this example shows
 
 - **Identity**: masthead reads "Prepared by **Automated Controls — Smart Building
-  Operations** · Powered by PEAK"; platform strings drop the CIM prefix, so the
-  footer reads `PEAK · Skyline Tower, Brisbane QLD 4000`.
+  Operations** · Powered by PEAK".
 - **Colors**: violet accent replaces CIM blue, deep indigo masthead replaces navy,
   pale violet benchmark series replaces pale blue. Neutrals and the green/amber/red
   measurement colors are untouched — they are not brand.

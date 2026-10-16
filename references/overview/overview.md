@@ -1,10 +1,10 @@
 # Overview
 
-The parts every report carries: the masthead, the analytics overview, the operational impact and notes frames, and the footer. Script: `scripts/overview.py`. The rules it follows are in SKILL.md, [What always renders](../../SKILL.md#what-always-renders), [Operational impact](../../SKILL.md#operational-impact) and [Notes band](../../SKILL.md#notes-band).
+The parts every report carries: the masthead, the analytics overview, and the operational impact and notes frames. Script: `scripts/overview.py`. The rules it follows are in SKILL.md, [What always renders](../../SKILL.md#what-always-renders), [Operational impact](../../SKILL.md#operational-impact) and [Notes band](../../SKILL.md#notes-band).
 
 ## What you write
 
-Nothing. The overview builds last, after the sections, so it can take the thermal zones figure off the indoor environment site row, and it fills every slot from the saved responses: the site's name and photo, the reporting period, the author, the issue date, the five overview figures, the operational impact date line, the reporting window note when there is a month to date, and the footer.
+Nothing. The overview builds last, after the sections, so it can take the thermal zones figure off the indoor environment site row, and it fills every slot from the saved responses: the site's name and photo, the reporting period, the author, the issue date, the five overview figures, the operational impact date line and the reporting window note when there is a month to date.
 
 ## Data
 

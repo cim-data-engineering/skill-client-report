@@ -37,7 +37,7 @@
 # fonts:
 #   display: Space Grotesk          # h1, h2, card-title, metric
 #   text: Inter                     # body, body-sm, label, eyebrow
-#   mono: JetBrains Mono            # table headers, IDs, footer
+#   mono: JetBrains Mono            # table headers, IDs, page numbers
 
 # ── Logos — paths to files you add ──────────────────────────────────────
 # Put your logo files in assets/brand/ (never overwrite assets/logo*.svg).
@@ -83,7 +83,5 @@ time without conflicts.
 - Keys outside the whitelist above are ignored.
 - When `secondary` is overridden, the screen shadow re-derives as that hue at 8%
   opacity (the `shadow` token role in DESIGN.md).
-- When any brand override is active, platform strings read `PEAK`; the CIM prefix
-  is dropped. `Powered by PEAK` is always kept and cannot be removed.
-- Unbranded (default) reports keep `CIM PEAK` and
-  `Prepared by CIM — Data Driven Operations`.
+- `Powered by PEAK` is always kept and cannot be removed.
+- Unbranded (default) reports keep `Prepared by CIM — Data Driven Operations`.

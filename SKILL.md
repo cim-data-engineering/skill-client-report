@@ -70,9 +70,9 @@ The overview script fills every slot below; these are the rules it follows.
 - Disclaimer, verbatim, below the masthead metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
 - Company name default "CIM" unless `name` is set in `BRAND.md` or given by the user
 - Company service name default "Data Driven Operations" unless `service-name` is set in `BRAND.md` or given by the user
-- The footer's platform string reads `CIM PEAK`, and `PEAK` once any `BRAND.md` override is set. `Powered by PEAK` in the masthead stays in every brand
+- `Powered by PEAK` in the masthead stays in every brand
 - Site `photo_url`: square, right of title block
-- Never print the PEAK site id anywhere in the report text, masthead or footer. It is a system id and means nothing to the reader. Links carry it in the URL, which is where it belongs
+- Never print the PEAK site id anywhere in the report text or masthead. It is a system id and means nothing to the reader. Links carry it in the URL, which is where it belongs
 
 ### Analytics overview
 
@@ -125,7 +125,7 @@ A site can have less history than the window asks for, and `facts.md` says so wh
 
 - Trim both windows to the months that returned data, still whole months only apart from the month to date. The month a site went live in is not a complete month for it unless it went live on the 1st, so drop it
 - Say it once, in the masthead: "Reporting period: 1 – 31 August 2026, monitoring live since 14 July 2026". The reader needs to know the report is short because the site is new, not because something failed. Don't repeat it section by section
-- A movement needs two months. With one, state the score and drop the delta. "Up 0.00 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column, and sort the rows by score with the lowest first, so the plant needing attention leads
+- A movement needs two months. With one, state the score and drop the delta. "Up 0.0 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column, and sort the rows by score with the lowest first, so the plant needing attention leads
 - A trend needs three points. With fewer, drop the trend chart and keep the snapshot; two months drawn as a line invites the reader to extend it. Where that empties a trends section, delete the section
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
 - An equipment type or a level can start later than the site did, when new rules go on old plant. The script draws its earlier months and its Chg as dashes with no fill, so the row keeps the table's width; leave them, and say in chat when its rules began scoring

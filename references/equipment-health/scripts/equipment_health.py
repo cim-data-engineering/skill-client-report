@@ -73,7 +73,7 @@ def build(ctx, work, shared):
         tid = r["metadata_type_id"]
         if tid in SYSTEM_TYPES:
             continue
-        months = [io.pct(scores[tid][m[:7]]["score"], 2) if m[:7] in scores[tid] else None for m in qm]
+        months = [io.pct(scores[tid][m[:7]]["score"], 1) if m[:7] in scores[tid] else None for m in qm]
         if all(v is None for v in months):
             continue
         rows.append({"name": names.get(tid, "Type %d" % tid), "type_id": tid,
@@ -82,16 +82,16 @@ def build(ctx, work, shared):
     chg = lambda r: (r["months"][-1] - r["months"][0]) if None not in (r["months"][0], r["months"][-1]) else -1e9
     rows.sort(key=lambda r: (-chg(r), -(r["months"][-1] or 0), r["name"]))   # ties: the higher score leads
     site_m = {month_of(r): r for r in work.get("eh/site-month.json").rows}
-    site_q = [io.pct(site_m[m[:7]]["score"], 2) for m in qm if m[:7] in site_m]
-    heat = {"label": "Equipment type", "dp": 2, "bands": [99, 97, 90], "counts": ["Equip", "Rules"],
+    site_q = [io.pct(site_m[m[:7]]["score"], 1) for m in qm if m[:7] in site_m]
+    heat = {"label": "Equipment type", "dp": 1, "bands": [99, 97, 90], "counts": ["Equip", "Rules"],
             "rows": [{k: v for k, v in r.items() if k != "type_id"} for r in rows],
             "site": {"counts": [sum(r["counts"][0] for r in rows), sum(r["counts"][1] for r in rows)],
                      "months": site_q}}
 
     # operational impact rows
     site_all = work.get("eh/site-all.json").first()
-    score = io.pct(site_all["score"], 2)
-    delta, sub = io.movement(site_q[0], site_q[-1], 2, io.month(qm[0]), io.month_label(ctx, qm[-1]))
+    score = io.pct(site_all["score"], 1)
+    delta, sub = io.movement(site_q[0], site_q[-1], 1, io.month(qm[0]), io.month_label(ctx, qm[-1]))
     pri = work.get("eh/priority-all.json").rows
     checks = sum(r.get("total_executions") or 0 for r in pri)
     rules = sum(r.get("task_count") or 0 for r in pri)
@@ -101,7 +101,7 @@ def build(ctx, work, shared):
     cost = mins / 60 * per_hr
     impact = [
         dict({"chip": band(score), "chip_class": "pos" if band(score) in ("Excellent", "Good") else "warn",
-              "fig": "%.2f%%" % score, "cap": "equipment health maintained", "sub": sub,
+              "fig": "%.1f%%" % score, "cap": "equipment health maintained", "sub": sub,
               "order": 1}, **({"delta": delta} if delta else {})),
         {"chip": "Continuous", "chip_class": "neu", "fig": "{:,}".format(checks),
          "cap": "automated equipment health checks ran 24/7",
@@ -163,14 +163,14 @@ def build(ctx, work, shared):
         f, l = scores[tid].get(qm[0][:7]), scores[tid].get(qm[-1][:7])
         if tid not in SYSTEM_TYPES and f and l and (l.get("task_count") or 0) != (f.get("task_count") or 0):
             rule_shift.append("%s %d to %d rules" % (names.get(tid, tid), f.get("task_count") or 0, l.get("task_count") or 0))
-    fmt = lambda r: "%s %.2f%% to %.2f%% (%+.2f pp)" % (r["name"], r["months"][0], r["months"][-1],
+    fmt = lambda r: "%s %.1f%% to %.1f%% (%+.1f pp)" % (r["name"], r["months"][0], r["months"][-1],
                                                        r["months"][-1] - r["months"][0])
     facts = [
-        "Equipment health: site %.2f%% over the quarter (%s); %s %.2f%% to %s %.2f%%."
+        "Equipment health: site %.1f%% over the quarter (%s); %s %.1f%% to %s %.1f%%."
         % (score, band(score), io.month(qm[0]), site_q[0], io.month_label(ctx, qm[-1]), site_q[-1]),
         "Biggest rises: " + ("; ".join(fmt(r) for r in up[:3] if r["months"][-1] > r["months"][0]) or "none"),
         "Biggest falls: " + ("; ".join(fmt(r) for r in down[:3] if r["months"][-1] < r["months"][0]) or "none"),
-        "Below Good in %s: " % io.month_label(ctx, qm[-1]) + ("; ".join("%s %.2f%% (%s)" % (r["name"], r["months"][-1], band(r["months"][-1]))
+        "Below Good in %s: " % io.month_label(ctx, qm[-1]) + ("; ".join("%s %.1f%% (%s)" % (r["name"], r["months"][-1], band(r["months"][-1]))
                                                          for r in weak) or "none"),
         "Rule count changes across the quarter: " + ("; ".join(rule_shift) or "none"),
         "Site score by month, %s: %s." % (io.span(tm[0], tm[-1], short=True), ", ".join("%.1f%%" % v for v in values)),

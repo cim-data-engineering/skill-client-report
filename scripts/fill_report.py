@@ -351,8 +351,6 @@ def fill_slots(s, D):
         for label, key in (("Reporting period", "period"), ("Author", "author"), ("Issued", "issued")):
             s = sub_one(s, r"<dt>%s</dt><dd>[^<]*</dd>" % label,
                         lambda _, label=label, key=key: "<dt>%s</dt><dd>%s</dd>" % (label, m[key]), label)
-        s = sub_one(s, r"<footer>\s*<span>[^<]*</span>\s*<span>[^<]*</span>",
-                    lambda _: "<footer>\n  <span>%s</span>\n  <span>Issued %s</span>" % (m["footer"], m["issued"]), "footer")
         s = after_eyebrow(s, "Analytics overview", "<h2>", "</h2>", "What we monitor at %s" % site, "overview")
     o = D.get("overview")
     if o:
@@ -484,14 +482,14 @@ def main():
             rows.append('      <tr><td class="rank">%s</td><td class="assignee"><span class="who">%s<span class="nm">%s</span>'
                         '</span></td><td class="co">%s</td>'
                         '<td class="num">%s</td><td><span class="scorecell"><span class="track">'
-                        '<span class="fill" style="width:%.1f%%"></span></span><span class="sval">%.1f%%</span>'
+                        '<span class="fill" style="width:%.1f%%"></span></span><span class="sval">%.0f%%</span>'
                         '</span></td><td class="num %s">%d</td></tr>'
                         % (TR if k == 1 else k, tile, e["name"], e["company"], f"{res:,}", pct, pct,
                            "open-zero" if op == 0 else "open-hot", op))
         tp = tr / (tr + to) * 100 if tr + to else 0
         rows.append('      <tr class="total"><td></td><td>Total</td><td></td><td class="num">%s</td>'
                     '<td><span class="scorecell"><span class="track"><span class="fill" style="width:%.1f%%">'
-                    '</span></span><span class="sval">%.1f%%</span></span></td><td class="num">%d</td></tr>'
+                    '</span></span><span class="sval">%.0f%%</span></span></td><td class="num">%d</td></tr>'
                     % (f"{tr:,}", tp, tp, to))
         i = s.index("Who closed the work")
         t0 = s.index("<tbody>", i) + len("<tbody>")

@@ -20,7 +20,7 @@ import argparse, os, re, sys
 
 REF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "reference-report.html")
 
-ALWAYS = ["shell", "masthead", "analytics-overview", "footer"]
+ALWAYS = ["shell", "masthead", "analytics-overview", "close"]
 SECTION_PARTS = {
     "equipment-health": ["equipment-health-snapshot", "monthly-equipment-health"],
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],

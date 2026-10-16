@@ -56,7 +56,7 @@ Date: the 6 month window
 
 - Rank by resolved descending, tie-break on completion rate descending
 - Trophy glyph replaces the rank numeral at 1. Nothing on 2 or 3
-- Completion rate as a bar on a 0-100 scale with the value beside it
+- Completion rate as a bar on a 0-100 scale with the value beside it, to 0dp
 - Open now emphasised when non-zero, muted at zero
 - Resolved and Open now as plain numerals. No bars
 - Close with a total row, separated from the rank
