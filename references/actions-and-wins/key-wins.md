@@ -6,7 +6,7 @@ Owns the key wins section. No operational impact row. Scaffold part: `key-wins`.
 
 The choosing and the words. Everything else is the script's: the candidates, the evidence calls, the impact tags, the levels, the ticket links, the order, the statement and date line, the photo downloads and crops.
 
-1. Read the two candidate pulls the plan lists to read, where they come back: the quarter's closures with comments and the open actions with comments, each with its comment history. Never save them; they carry what people wrote. One that comes back offloaded as a file prints screened and compact with `key_wins.py digest <that file>`
+1. Read the two candidate pulls the plan lists to read, where they come back: the quarter's closures with comments and the open actions with comments, each with its description, solution, savings and comment history. Never save them; they carry what people wrote. One that comes back offloaded as a file prints screened and compact with `key_wins.py digest <that file>`
 2. Choose by **Selection** below, and write `report/wins.json`, best first:
 
 ```json
@@ -14,7 +14,7 @@ The choosing and the words. Everything else is the script's: the candidates, the
  {"tickets": ["00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003"], "state": "in_flight", "heading": "...", "body": "..."}]
 ```
 
-   `tickets` are full ticket ids, every ticket the win stands on. `state` is `fixed` or `in_flight`, which sets the section's statement and date line
+   `tickets` are full ticket ids, every ticket the win stands on. `state` is `fixed` or `in_flight`, which sets the section's statement and date line. Where the tickets reference a saving, the body states it, per **Display**
 3. `report.py next` prints the impact and photo calls for those tickets, and once they are saved, the level call; make them, then run `key_wins.py photos report`
 4. Look at the one numbered contact sheet per win, choose by **Photos** below, and add the picks to each win: `"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]`. A win with nothing worth showing gets none
 5. After `report.py fill`, look at every tile in `report/tiles/`: a crop can cut off the very detail that earned the photo its place. Adjust `focus` and `zoom` and fill again
@@ -52,6 +52,7 @@ Either way it needs a comment history showing a person engaged with it. Exclude 
 - Where the tickets carry no impact at all, or carry `other`, tag it `Other` rather than picking the one that would look best. Then say so in chat — name the ticket and its title — so the user can set the impact in PEAK and re-run. Fixing the ticket fixes every report that reads it; guessing here fixes nothing and puts a claim on the page the ticket does not support
 - Say where it stands. A win in flight is written as in flight: what was found, who has it, what happens next. The date line under the section heading follows the wins too, so do not leave a line promising everything was fixed when some of it is still open
 - Two to three sentences: what was wrong, what was changed, why it matters
+- Where any of the win's tickets reference a saving, in the savings field, the description, the solution or a comment, state it, and wrap the figure in `**` to set it bold: "…closed by 24 June, with an estimated saving of **$6,800**." Give it in the site's currency, rounded sensibly and summed across the win's tickets, with a period only where the ticket gives one. On a win in flight it is the expected saving. Where the savings field holds a figure the text leaves out, `report.py fill` says so in chat
 - Lead with the building outcome: comfort, reliability, energy, tenant experience
 - Rank by what the owner cares about. Critical plant over terminal units, permanent fixes over one-off resets
 - Link the action ticket as evidence with the `ticket_link` its row carries, using the action title as the link name, not the id
@@ -86,9 +87,9 @@ This is a client deliverable, so the section carries wins or it does not appear.
 
 | Step | Call |
 | --- | --- |
-| Fixed | In the main batch, read and not saved: `tickets.tickets` `status_id:6`, `has_comments:true`, resolved inside the quarter, with `summary`, `equipment_ids` and `comments` (`limit:8`, `user_only:true`) inline |
+| Fixed | In the main batch, read and not saved: `tickets.tickets` `status_id:6`, `has_comments:true`, resolved inside the quarter, with `summary`, `description`, `solution`, `savings`, `equipment_ids` and `comments` (`limit:8`, `user_only:true`) inline |
 | In flight | In the main batch, read and not saved: the same, `status_ids:[1,3,7]`, no date bound |
-| Impact, link, title | Once `wins.json` exists: one `search_action_tickets` on the wins' tickets, reading `impacts`, `ticket_link`, `title` and `equipment_ids` |
+| Impact, link, title | Once `wins.json` exists: one `search_action_tickets` on the wins' tickets, reading `impacts`, `savings`, `ticket_link`, `title` and `equipment_ids` |
 | Photos | In the same batch: one `tickets.tickets` on the wins' tickets selecting `attachments.attachment_id`, `file_name`, `mime_type`, `preview.link.url` and `link.url` |
 | Level | Once the impact rows are saved: one `platform.equipment` on their `equipment_ids`, selecting `zone.level.level_name` and `zone.level.system` |
 

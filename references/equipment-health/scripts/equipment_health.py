@@ -18,12 +18,6 @@ BANDS = [(99.0, "Excellent"), (97.0, "Good"), (90.0, "Average")]
 # Labour model: annual minutes saved per scored rule, by priority id.
 ANNUAL_MINS = {1: 365 * 0.5, 2: 52 * 1.0, 3: 12 * 1.0, 4: 4 * 1.0, 5: 4 * 1.0}
 HOURS_PER_DAY = 7.6
-CURRENCIES = {"australian dollar": ("AUD", 150, "$"), "us dollar": ("USD", 100, "$"),
-              "united states dollar": ("USD", 100, "$"), "new zealand dollar": ("NZD", 150, "$"),
-              "british pound": ("GBP", 75, "£"), "pound sterling": ("GBP", 75, "£"),
-              "canadian dollar": ("CAD", 150, "$"), "euro": ("EUR", 100, "€")}
-
-
 def calls(ctx):
     sid, (q0, q1), (t0, t1) = ctx["site"]["site_id"], ctx["quarter"], ctx["trend"]
     eh = lambda f, ent, per, a, b: io.call(f, "search_equipment_health_scores", site_ids=[sid],
@@ -43,10 +37,6 @@ def calls(ctx):
 
 def more(ctx, work):
     return []
-
-
-def rate(facts):
-    return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", 100, "$"))
 
 
 def band(v):
@@ -105,7 +95,7 @@ def build(ctx, work, shared):
     pri = work.get("eh/priority-all.json").rows
     checks = sum(r.get("total_executions") or 0 for r in pri)
     rules = sum(r.get("task_count") or 0 for r in pri)
-    code, per_hr, sym = rate(shared.get("site_facts") or {})
+    code, per_hr, sym = io.currency(shared.get("site_facts") or {})
     days = io.period_days(ctx)
     mins = sum((r.get("task_count") or 0) * ANNUAL_MINS.get(r.get("priority_id"), 4.0) for r in pri) * days / 365
     cost = mins / 60 * per_hr

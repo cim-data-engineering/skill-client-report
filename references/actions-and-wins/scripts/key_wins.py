@@ -30,7 +30,9 @@ AGENT = re.compile(r"^\s*agent\b", re.I)
 IMAGE = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp"}
 PER_WIN = 16           # images tiled per win; a ticket can carry dozens of uploads
 COMMENT_CHARS = 420
-FIELDS = ["ticket_id", "summary", "comment_count", "created_at", "resolved_at", "equipment_ids",
+SAVING = re.compile(r"\*\*(.+?)\*\*")   # a saving the win's tickets reference, set bold
+FIELDS = ["ticket_id", "summary", "description", "solution", "savings", "comment_count", "created_at",
+          "resolved_at", "equipment_ids",
           "assignees.id", "assignees.entity.name",
           {"path": "comments", "args": {"limit": 8, "user_only": True},
            "sub_fields": ["text", "created_at", "author_full_name"]}]
@@ -81,13 +83,19 @@ def digest(paths):
         len(rows), len(keep), "; ".join("%d %s" % (n, w) for w, n in why.items()) or "nothing"))
     for r in sorted(keep, key=lambda r: -len(human(r))):
         state = ("closed %s" % day(r.get("resolved_at"))) if r.get("resolved_at") else "open"
-        print("\n[%s] %s, raised %s · %s" % (r["ticket_id"], state, day(r.get("created_at")),
-                                            (r.get("summary") or "").strip()))
+        saved = (" · savings %s" % "{:,}".format(round(r["savings"]))) if round(r.get("savings") or 0) else ""
+        print("\n[%s] %s, raised %s%s · %s" % (r["ticket_id"], state, day(r.get("created_at")), saved,
+                                              (r.get("summary") or "").strip()))
+        for k in ("description", "solution"):
+            if clip(r.get(k)):
+                print("  %s: %s" % (k, clip(r.get(k))))
         for c in sorted(human(r), key=lambda c: c.get("created_at") or ""):
-            text = " ".join((c.get("text") or "").split())
-            if len(text) > COMMENT_CHARS:
-                text = text[:COMMENT_CHARS].rsplit(" ", 1)[0] + " …"
-            print("  - %s, %s: %s" % (day(c.get("created_at")), c.get("author_full_name") or "?", text))
+            print("  - %s, %s: %s" % (day(c.get("created_at")), c.get("author_full_name") or "?", clip(c.get("text"))))
+
+
+def clip(text):
+    text = " ".join((text or "").split())
+    return text[:COMMENT_CHARS].rsplit(" ", 1)[0] + " …" if len(text) > COMMENT_CHARS else text
 
 
 # ── the chosen wins ─────────────────────────────────────────────────────────
@@ -234,6 +242,7 @@ def assemble(ctx, work):
             lv = ((r.get("zone") or {}).get("level") or {})
             if lv.get("level_name") and not lv.get("system"):
                 levels[r["equipment_id"]] = lv["level_name"]
+    sym = io.currency(work.get("overview/site.json").first() or {})[2]
     chat, out = [], []
     for w in wins:
         tags = []
@@ -261,7 +270,12 @@ def assemble(ctx, work):
             if not hit:
                 raise SystemExit("wins.json: photo %r is not on disk — run key_wins.py photos first" % pick)
             pics.append(dict(p, src=os.path.join("kw", "photos", hit[0])))
-        win = {"impact": impact, "heading": w["heading"], "body": w["body"],
+        saved = round(sum(imp[t].get("savings") or 0 for t in w["tickets"]))
+        if saved and not SAVING.search(w["body"]):
+            chat.append("The tickets behind \"%s\" record %s%s in savings, which its text does not mention."
+                        % (w["heading"], sym, "{:,}".format(saved)))
+        body = SAVING.sub(r"<strong>\1</strong>", w["body"])
+        win = {"impact": impact, "heading": w["heading"], "body": body,
                "refs": [{"url": imp[t]["ticket_link"], "title": imp[t].get("title")} for t in w["tickets"]]}
         if names:
             win["level"] = names[0] if len(names) == 1 else names

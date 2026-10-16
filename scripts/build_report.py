@@ -131,7 +131,7 @@ def sample_strings():
     # a win's body is its one unclassed paragraph, wherever the impact tag, the
     # level line and the photos put it, so read it off each win in turn
     for m in re.finditer(r'<div class="win[^"]*">(.*?)<p class="refs">', src, re.S):
-        found |= set(re.findall(r'<p>([^<]+)</p>', m.group(1)))
+        found |= set(re.findall(r'<p>(.+?)</p>', m.group(1)))
     for m in re.finditer(r'<p class="refs">(.*?)</p>', src, re.S):
         found |= set(re.findall(r'>([^<>]{8,})</a>', m.group(1)))
     # only platform links are report data — font and preconnect hosts stay
