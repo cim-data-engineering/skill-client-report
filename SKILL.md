@@ -104,9 +104,11 @@ Each row belongs to a section and is specified in that reference: three to equip
 
 ## Notes band
 
-Numbered methodology items in report order, each owned by the section it explains, plus one shared item:
+Numbered notes in report order, each owned by the section it explains. A note carries business logic the page does not already show: an assumption, a scope rule, or why two figures differ. Anything a legend, chart heading, date line or impact row already says stays out. Write each as a short professional definition, not an explanation.
 
-- **The reporting window**: with no month to date, every monthly series closes on the last complete month, so no column or bar covers a part-month and the volume series can be read against each other directly. With one, every series runs to the issue date: name the month to date and how many of its days it holds, the volume series that are short there by construction, and that scores are rates over the days that exist. Either way, name the series the report actually shows and the three complete months the quarter covers
+One item is shared, and only when the report carries a month to date:
+
+- **The reporting window**: the month to date and how many of its days it holds, the volume series the report shows that are partial there, and that scores are unaffected. It closes the band
 
 ## After the render
 

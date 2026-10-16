@@ -45,7 +45,7 @@ A reading holds for up to an hour, or one and a half times the point's own inter
 
 ## Notes band item
 
-- **Run hours.** How a row is drawn and what the hatching means. The script writes it
+- **Run hours.** Which signals draw a row and which win when they disagree. The script writes it
 
 ## Data
 

@@ -135,10 +135,9 @@ def build(ctx, work, shared):
 
     # the labour cost method, worded once for the notes band and the note under Chart 2
     method = lambda window: (
-        "<strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by "
-        "priority: P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. "
-        "Savings prorate that annual effort over %s, valued at %s %d/hr for this site's region. A working day "
-        "is taken as %.1f hours." % (window, code, per_hr, HOURS_PER_DAY))
+        "<strong>Labour cost avoided.</strong> Assumes each rule replaces one manual check: P1 daily at "
+        "30 seconds; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Prorated over %s at %s %d/hr "
+        "(regional rate) and a %.1f-hour working day." % (window, code, per_hr, HOURS_PER_DAY))
 
     # Chart 2: checks and labour cost by month, each month priced over its own days
     by_month = defaultdict(list)
@@ -156,7 +155,7 @@ def build(ctx, work, shared):
     trend_checks = {"a": a, "b": b, "labels_a": [io.compact(v) for v in a],
                     "labels_b": ["%s%.1fk" % (sym, v / 1000) for v in b],
                     "note_after": "Automated health checks",
-                    "note": method("each month's own days" + (", %s's so far" % io.month(ctx["to_date"])
+                    "note": method("each month's days" + (" (%s to date)" % io.month(ctx["to_date"])
                                                               if ctx["to_date"] else "")),
                     "alt": "Grouped bar chart, %s. Automated checks: %s and %s million. Labour cost avoided: %s and %s thousand %s."
                            % (io.span(tm[0], tm[-1], sep=" to "), ", ".join("%.2f" % (v / 1e6) for v in a[:-1]), "%.2f" % (a[-1] / 1e6),

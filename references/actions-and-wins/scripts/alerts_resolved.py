@@ -192,18 +192,10 @@ def build(ctx, work, shared):
                 "Actions resolved %s%s, ranked by resolved. Completion rate is resolved ÷ (resolved + currently "
                 "open); open now as at %s." % (span6, io.and_to_date(ctx, " and "), io.day_long(ctx["today"]))},
         "notes": {
-            "Verified recovery": "<strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period "
-                                 "with fault status recovered, divided by all alerts resolved in the period, counting "
-                                 "alerts with status closed on rules still running.",
-            "Median time to resolve": "<strong>Median time to resolve</strong> is measured from the linked action's "
-                                      "creation to its resolution, over the actions resolved in the quarter, not from "
-                                      "the alert's own dates, since detection is automatic but resolution is human work.",
-            "Raised vs resolved": "<strong>Raised vs resolved.</strong> Raised counts action tickets created in the "
-                                  "month, not the alerts behind them: detection is automatic, raising an action is a "
-                                  "human triage decision, and one action can be linked to many alerts. Resolved counts "
-                                  "actions on their resolution date. Actions marked Not Doing are excluded from both series.",
-            "Completion rate": "<strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the "
-                               "issue date, so 100% reflects holding no open work.",
+            "Verified recovery": "<strong>Verified recovery.</strong> Share of alerts closed in the period with the "
+                                 "fault recovered. Includes only alerts on active rules.",
+            "Raised vs resolved": "<strong>Raised vs resolved.</strong> Counts actions, not alerts. One action can "
+                                  "cover several alerts.",
         },
         "facts": facts,
     }

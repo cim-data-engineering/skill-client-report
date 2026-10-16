@@ -71,10 +71,8 @@ Date: the 6 month window
 
 ## Notes band items
 
-- **Verified recovery.** Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running
-- **Median time to resolve** is measured from the linked action's creation to its resolution, not from the alert's own dates, since detection is automatic but resolution is human work
-- **Raised vs resolved.** Raised counts action tickets created in the month, not the alerts behind them: detection is automatic, raising an action is a human triage decision, and one action can be linked to many alerts. Resolved counts actions on their resolution date. Actions marked Not Doing are excluded from both series
-- **Completion rate** is resolved / (resolved + currently open) as at the issue date, so 100% reflects holding no open work
+- **Verified recovery.** Share of alerts closed in the period with the fault recovered. Includes only alerts on active rules
+- **Raised vs resolved.** Counts actions, not alerts. One action can cover several alerts
 
 ## Data
 

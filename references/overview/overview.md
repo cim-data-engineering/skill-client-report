@@ -4,7 +4,7 @@ The parts every report carries: the masthead, the analytics overview, the operat
 
 ## What you write
 
-Nothing. The overview builds last, after the sections, so it can take the thermal zones figure off the indoor environment site row, and it fills every slot from the saved responses: the site's name and photo, the reporting period, the author, the issue date, the five overview figures, the operational impact date line, the reporting window note and the footer.
+Nothing. The overview builds last, after the sections, so it can take the thermal zones figure off the indoor environment site row, and it fills every slot from the saved responses: the site's name and photo, the reporting period, the author, the issue date, the five overview figures, the operational impact date line, the reporting window note when there is a month to date, and the footer.
 
 ## Data
 

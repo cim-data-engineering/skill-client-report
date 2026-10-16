@@ -340,10 +340,8 @@ def build(ctx, work, shared):
                       "%s, the latest full week%s, against the site's working hours. Bars are exact to 15 minutes."
                       % (window["label"], " with complete data" if rel == EARLIER else "")},
         "notes": {"Run hours":
-                  "<strong>Run hours.</strong> Each row is one unit, drawn from a sensor that reports it running: "
-                  "a run status, or a speed, current or power reading. An enable or schedule says what the unit "
-                  "was told to do, not that it ran, so it never draws a row. Where status and speed disagree, the "
-                  "one showing less running is kept, since the usual faults all add hours. Grey columns are the "
-                  "site's working hours in PEAK; hatching marks no reliable data."},
+                  "<strong>Run hours.</strong> Drawn from run status or a speed, current or power reading. Enables "
+                  "and schedules are not used, as they show commanded state only. Where signals disagree, the lower "
+                  "runtime is used."},
         "facts": facts,
     }

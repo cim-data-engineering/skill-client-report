@@ -586,7 +586,7 @@ footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;paddin
         <text class="axis" x="630" y="216" text-anchor="middle">Aug 26</text>
       </svg>
     </div>
-    <p class="chartnote"><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over each month's own days, valued at AUD 150/hr for this site's region. A working day is taken as 7.6 hours.</p>
+    <p class="chartnote"><strong>Labour cost avoided.</strong> Assumes each rule replaces one manual check: P1 daily at 30 seconds; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Prorated over each month's days at AUD 150/hr (regional rate) and a 7.6-hour working day.</p>
   </div>
 </section>
 
@@ -801,31 +801,22 @@ L06</title>AC-07 &rsaquo;</text></a><text class="rh-where" x="162" y="15.0" text
   </div>
   <ol>
     <!-- if: equipment-health -->
-    <li><strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Savings prorate that annual effort over the 92-day period, valued at AUD 150/hr for this site's region.</li>
+    <li><strong>Labour cost avoided.</strong> Assumes each rule replaces one manual check: P1 daily at 30 seconds; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Prorated over the 92-day period at AUD 150/hr (regional rate) and a 7.6-hour working day.</li>
     <!-- endif -->
     <!-- if: indoor-environment -->
-    <li><strong>Thermal comfort score.</strong> The share of zone readings inside the ASHRAE comfort band during site working hours. The band is set per zone in PEAK and is 21–24.9 °C across this building, so a level scores 100% when every zone reading in working hours fell inside it. The site row comes from the site rollup and will not equal the average of the level rows.</li>
+    <li><strong>Thermal comfort score.</strong> Comfort band set per zone in PEAK, 21–24.9 °C across this building. The site row is PEAK's site-level score, not an average of the rows below.</li>
     <!-- endif -->
     <!-- if: indoor-environment -->
-    <li><strong>Zones</strong> in the indoor environment snapshot counts the zone temperature points configured for comfort scoring on each level shown, and its site row is the thermal zones figure in the analytics overview. A level whose points returned no score in the quarter is left out of both.</li>
+    <li><strong>Zones.</strong> Zone temperature points configured for comfort scoring. Levels with no score in the period are excluded here and from the thermal zones figure in the analytics overview.</li>
     <!-- endif -->
     <!-- if: alerts-resolved -->
-    <li><strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running.</li>
+    <li><strong>Verified recovery.</strong> Share of alerts closed in the period with the fault recovered. Includes only alerts on active rules.</li>
     <!-- endif -->
     <!-- if: alerts-resolved -->
-    <li><strong>Median time to resolve</strong> is measured from the linked action's creation to its resolution, not from the alert's own dates, since detection is automatic but resolution is human work.</li>
-    <!-- endif -->
-    <!-- if: alerts-resolved -->
-    <li><strong>Raised vs resolved.</strong> Raised counts action tickets created in the month, not the alerts behind them: detection is automatic, raising an action is a human triage decision, and one action can be linked to many alerts. Resolved counts actions on their resolution date. Actions marked Not Doing are excluded from both series.</li>
+    <li><strong>Raised vs resolved.</strong> Counts actions, not alerts. One action can cover several alerts.</li>
     <!-- endif -->
     <!-- if: run-hours -->
-    <li><strong>Run hours.</strong> Each row is one unit, drawn from a sensor that reports it running: a run status, or a speed, current or power reading. An enable or schedule says what the unit was told to do, not that it ran, so it never draws a row. Where status and speed disagree, the one showing less running is kept, since the usual faults all add hours. Grey columns are the site's working hours in PEAK; hatching marks no reliable data.</li>
-    <!-- endif -->
-    <!-- if: equipment-health,indoor-environment,alerts-resolved -->
-    <li><strong>The reporting window.</strong> Every monthly series closes on the last complete month, so no column or bar covers a part-month. Automated checks, labour cost avoided, and actions raised and resolved can therefore be read against each other directly. The quarter itself is the three complete months named in the masthead.</li>
-    <!-- endif -->
-    <!-- if: alerts-resolved -->
-    <li><strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the issue date, so 100% reflects holding no open work.</li>
+    <li><strong>Run hours.</strong> Drawn from run status or a speed, current or power reading. Enables and schedules are not used, as they show commanded state only. Where signals disagree, the lower runtime is used.</li>
     <!-- endif -->
   </ol>
 </section>

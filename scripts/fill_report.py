@@ -361,6 +361,10 @@ def fill_slots(s, D):
         if i != -1:
             j = s.index("</li>", i)
             s = s[:i] + "<li>" + inner + s[j:]
+        elif '<section class="notes">' in s:
+            # the reporting window has no slot: it shows only with a month to date, last in the band
+            k = s.index("</ol>", s.index('<section class="notes">'))
+            s = s[:k] + "  <li>" + inner + "</li>\n  " + s[k:]
     rh = D.get("run_hours")
     if rh:
         i = s.index('<div class="rh">')
