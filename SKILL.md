@@ -70,6 +70,7 @@ The overview script fills every slot below; these are the rules it follows.
 - Disclaimer, verbatim, below the masthead metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
 - Company name default "CIM" unless `name` is set in `BRAND.md` or given by the user
 - Company service name default "Data Driven Operations" unless `service-name` is set in `BRAND.md` or given by the user
+- The footer's platform string reads `CIM PEAK`, and `PEAK` once any `BRAND.md` override is set. `Powered by PEAK` in the masthead stays in every brand
 - Site `photo_url`: square, right of title block
 - Never print the PEAK site id anywhere in the report text, masthead or footer. It is a system id and means nothing to the reader. Links carry it in the URL, which is where it belongs
 
@@ -125,41 +126,35 @@ A site can have less history than the window asks for, and `facts.md` says so wh
 - A movement needs two months. With one, state the score and drop the delta. "Up 0.00 pp" against a month that does not exist is worse than no delta. That covers the heatmap Chg column too: with one month, drop the column, and sort the rows by score with the lowest first, so the plant needing attention leads
 - A trend needs three points. With fewer, drop the trend chart and keep the snapshot; two months drawn as a line invites the reader to extend it. Where that empties a trends section, delete the section
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
-- An equipment type or a level can start later than the site did, when new rules go on old plant. Keep its cell so the row stays the table's width, as `<td class="c none">&mdash;</td>`: no band class, so no fill, which is what a month with no reading should look like. Dash its Chg too, and say in chat when its rules began scoring
+- An equipment type or a level can start later than the site did, when new rules go on old plant. The script draws its earlier months and its Chg as dashes with no fill, so the row keeps the table's width; leave them, and say in chat when its rules began scoring
 - Prorate the labor cost model over the days actually monitored, not the calendar quarter, or it credits the monitoring with time it wasn't running
 - A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules. One rule against 850 either side is an outage wearing a score. Treat both alike: plot the months that exist, leave the gap visible, and say so in chat
 
 ## Output & theming
 
-One self-contained A4 print-first HTML file: all CSS inline, charts as inline SVG, no JS. The scaffold supplies the stylesheet and every component, and `fill_report.py` draws every chart from the bundle, so the geometry is never yours to compute:
-
-- Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex, because SVG presentation attributes cannot read `var()`. Heatmap band fills work the same way (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor)
-- Section headers are three stacked lines: the section name as an uppercase eyebrow in `secondary`, the statement beneath it as the `h2` headline, and the date line as a muted byline. The statement is the headline, never the section name
+One self-contained A4 print-first HTML file: all CSS inline, charts as inline SVG, no JS. The scaffold supplies the stylesheet and every component, and `fill_report.py` draws every chart from the bundle, so the geometry is never yours to compute.
 
 Resolve the theme in this order:
 
 1. **The scaffold**: its `:root` and component CSS are DESIGN.md compiled. A default CIM build needs nothing further; don't re-derive values the file already carries
 2. **`BRAND.md`** (repo root): if present, apply its YAML frontmatter overrides by editing `:root`, the `@font-face` block and the masthead logo. Honor only these keys and ignore everything else:
-  - `name`, `service-name`: replace the company name and service name defaults in [Report title](#report-title). The scripts read these two and fill the masthead with them
+  - `name`, `service-name`: the company and service names, per [Report title](#report-title)
   - `colors:`: `primary`, `primary-container`, `on-primary-container`, `secondary`, `on-secondary`, `on-secondary-muted`, `chart-benchmark`, `text-heading` only
   - `fonts:`: `display`, `text`, `mono` family swaps mapped onto the DESIGN.md typography roles (display → h1/h2/card-title/metric; text → body/body-sm/label/eyebrow; mono → mono). Sizes, weights and line-heights always keep DESIGN.md values. Families on Google Fonts load from the CDN, and the `font-family` stack carries the offline case; a family that is not on Google Fonts is embedded from `assets/fonts` as a base64 data URI, since a relative font path does not survive the report leaving this repo
   - `logos:`: `reversed` (masthead) and `full-color`, paths to partner files. Inline the referenced SVG contents (data URI for PNG) so the report stays self-contained
-3. **`DESIGN.md`** (repo root, alongside BRAND.md): read its `## Colors` and `## Typography` sections when an override needs the role mapping, and the rest when you need a component the scaffold has no CSS for or are changing the design itself, per [After the render](#after-the-render). DESIGN.md is the source of truth; the scaffold is its output
+3. **`DESIGN.md`** (repo root, alongside BRAND.md): read `## Colors` and `## Typography` when an override needs the role mapping, and anything else per [After the render](#after-the-render)
 4. A missing BRAND.md, or any key left commented or absent, keeps the CIM default. An untouched fork must render identically to CIM's own output
 
 Derived rules when overrides are active:
 
 - `secondary` overridden → re-derive the `shadow` token as the new `secondary` hue at 8% opacity
-- Any brand override active → platform strings read `PEAK` (drop the CIM prefix) in the masthead metadata row and footer. `Powered by PEAK` is always kept, in every brand
-- No overrides → keep `CIM PEAK` and the CIM masthead logo the scaffold already carries from `assets/logo-white.svg`
+- No overrides → keep the CIM masthead logo the scaffold already carries from `assets/logo-white.svg`
 
 ## How the scripts fetch
 
 Every call in a section's `calls()` answers a whole need in one request: rows for a window, not a month at a time; a set of ids, never one id at a time; a count wherever a count is all that is needed, from `count_tickets`, `count_indoor_environment_zones` or `pagination.total`; and everything else derived locally from rows already held. A change to a section's calls goes in its script, with the reason in its reference's Data block.
 
 The **quarter** is the three complete months before the issue date's month, and the snapshots use it column for column. The **6 month window** is the six complete months ending there, which the trends use. Once more than a week of the current month has passed, that **month to date** joins both windows as their last month, so the snapshots carry four columns and the trends seven points, and the reporting period runs from the quarter's first day to the issue date. Before then, every window closes on the last complete month and nothing covers a part-month. Every bound is a month boundary, the month to date included: it is fetched up to the first of the next month and holds whatever exists so far, because equipment health scores are stored pre-aggregated on month boundaries and a mid-month bound forces a raw scan. The scripts mark the month to date wherever it shows: "to date" under its column and axis labels, a tinted column behind it on every chart, and on a line chart a dashed last segment onto an open point. Its scores are rates and stand as they are; its volumes are short by construction, which the reporting window note says.
-
-Run hours takes the latest full Monday-to-Sunday week before the issue date, in site time. Where the site's data is missing from that week, because no run point reported in it or every periodically logged point went quiet together for 12 hours or more, it takes the latest full week before the data stopped, provided that week falls inside the reporting period. Otherwise the section leaves the missing stretch hatched, or drops out when the week holds nothing, and `facts.md` says why.
 
 The section scripts build every link from the URL its reference writes out, on the host of the site's `site_link`. `{{site_id}}` is the PEAK site id; `{{quarter_start}}` and `{{trend_start}}` are the first days of the quarter and the 6 month window, `{{quarter_end}}` is the last day the reporting period covers, the issue date where it carries a month to date, and `{{quarter_last_month}}` the first day of its last month, all `YYYY-MM-DD`. A row link is the section link with the row's own filter appended, `&equipment_type_ids={id}` or `&level_ids={id}`. Key win evidence links to the `ticket_link` on each action ticket row.
 
