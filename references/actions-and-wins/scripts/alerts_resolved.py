@@ -2,12 +2,15 @@
 """Actions resolved and the leaderboard: the faults resolved impact row, six
 months of raised vs resolved, and who closed the work. Every number printed is a
 count from count_tickets or a pagination.total; rows only add what a count
-cannot, the median and company names. See
+cannot, the median and company names and logos. See
 references/actions-and-wins/alerts-resolved.md.
 """
+import base64
 import os
 import re
 import sys
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from statistics import median
 
@@ -26,10 +29,30 @@ def esc(ctx):
     return {"type": "escalated", "site_ids": [ctx["site"]["site_id"]], "ticket_archived": False}
 
 
+def fetch_logos(urls):
+    """{company: data URI} for each company logo PEAK links, embedded so the report stays
+    one file. A logo that cannot be fetched is left out, and the company's initials stand in."""
+    def get(item):
+        name, url = item
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "client-report"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                kind, body = r.headers.get_content_type(), r.read()
+        except OSError:
+            return name, None
+        if not kind.startswith("image/"):
+            return name, None
+        return name, "data:%s;base64,%s" % (kind, base64.b64encode(body).decode())
+    with ThreadPoolExecutor(8) as pool:
+        return dict(pool.map(get, urls.items()))
+
+
 # Open now carries only what the leaderboard needs, the company of anyone holding open
-# work: saved responses hold numbers, ids and type, level or company names, never what
-# people wrote. The key win candidates, comments and all, are read where they arrive.
-OPEN_FIELDS = ["status_id", "assignees.id", "assignees.entity.name"]
+# work: saved responses hold numbers, ids and type, level or company names and logo
+# links, never what people wrote. The key win candidates, comments and all, are read
+# where they arrive.
+COMPANY = ["assignees.id", "assignees.entity.name", "assignees.entity.logo_url"]
+OPEN_FIELDS = ["status_id"] + COMPANY
 
 
 def calls(ctx):
@@ -48,7 +71,7 @@ def calls(ctx):
     out += [
         io.gql("ar/resolved-rows.json", "tickets.tickets",
                dict(esc(ctx), resolved_at_local_start=t0 + "T00:00:00", resolved_at_local_end=t1 + "T00:00:00", limit=1000),
-               ["age", "resolved_at", "status_id", "assignees.id", "assignees.entity.name"]),
+               ["age", "resolved_at", "status_id"] + COMPANY),
         # Open now: the company of anyone holding open work and nothing resolved.
         io.gql("ar/open-rows.json", "tickets.tickets", dict(esc(ctx), status_ids=[1, 3, 7], limit=1000), OPEN_FIELDS),
         io.call("ar/alerts-closed.json", "search_alert_tickets", site_ids=[sid], status="closed",
@@ -125,11 +148,14 @@ def build(ctx, work, shared):
 
     res_rows = rows(work, "ar/resolved-rows.json")
     open_rows = rows(work, "ar/open-rows.json")
-    company = {}
+    company, logo_url = {}, {}
     for r in res_rows + open_rows:
         for a in r.get("assignees") or []:
-            if a.get("id") and (a.get("entity") or {}).get("name"):
-                company.setdefault(a["id"], a["entity"]["name"])
+            ent = a.get("entity") or {}
+            if a.get("id") and ent.get("name"):
+                company.setdefault(a["id"], ent["name"])
+                if ent.get("logo_url"):
+                    logo_url.setdefault(ent["name"], ent["logo_url"])
 
     board = {}
     for f, key in (("ar/resolved-by-assignee.json", "resolved"), ("ar/open-by-assignee.json", "open")):
@@ -141,6 +167,12 @@ def build(ctx, work, shared):
             e[key] += r.get("ticket_count") or 0
     rate = lambda e: e["resolved"] / (e["resolved"] + e["open"]) if e["resolved"] + e["open"] else 0
     leaderboard = sorted(board.values(), key=lambda e: (-e["resolved"], -rate(e), e["name"]))
+    names = list(dict.fromkeys(e["company"] for e in leaderboard if e["company"]))
+    logos = fetch_logos({n: logo_url[n] for n in names if n in logo_url})
+    for e in leaderboard:
+        if logos.get(e["company"]):
+            e["logo"] = logos[e["company"]]
+    unlogged = [n for n in names if not logos.get(n)]
 
     in_q = [r for r in res_rows if r.get("status_id") != 8 and r.get("age") is not None and r.get("resolved_at")
             and q0 <= local_day(r["resolved_at"], tz).isoformat() < q1]
@@ -173,6 +205,9 @@ def build(ctx, work, shared):
         "Open now: %d actions; %d people on the leaderboard hold open work." % (
             open_now, sum(1 for e in leaderboard if e["open"])),
     ]
+    if unlogged:
+        facts.append("Leaderboard logos: initials stand in for %s, with no logo in PEAK or none that could "
+                     "be fetched. Say so in chat." % io.listing(unlogged))
     return {
         "impact": impact,
         "alerts": {"a": raised, "b": resolved, "scale": "shared",
@@ -192,18 +227,10 @@ def build(ctx, work, shared):
                 "Actions resolved %s%s, ranked by resolved. Completion rate is resolved ÷ (resolved + currently "
                 "open); open now as at %s." % (span6, io.and_to_date(ctx, " and "), io.day_long(ctx["today"]))},
         "notes": {
-            "Verified recovery": "<strong>Verified recovery.</strong> Recovery rate is alerts resolved in the period "
-                                 "with fault status recovered, divided by all alerts resolved in the period, counting "
-                                 "alerts with status closed on rules still running.",
-            "Median time to resolve": "<strong>Median time to resolve</strong> is measured from the linked action's "
-                                      "creation to its resolution, over the actions resolved in the quarter, not from "
-                                      "the alert's own dates, since detection is automatic but resolution is human work.",
-            "Raised vs resolved": "<strong>Raised vs resolved.</strong> Raised counts action tickets created in the "
-                                  "month, not the alerts behind them: detection is automatic, raising an action is a "
-                                  "human triage decision, and one action can be linked to many alerts. Resolved counts "
-                                  "actions on their resolution date. Actions marked Not Doing are excluded from both series.",
-            "Completion rate": "<strong>Completion rate</strong> is resolved ÷ (resolved + currently open) as at the "
-                               "issue date, so 100% reflects holding no open work.",
+            "Verified recovery": "<strong>Verified recovery.</strong> Share of alerts closed in the period with the "
+                                 "fault recovered. Includes only alerts on active rules.",
+            "Raised vs resolved": "<strong>Raised vs resolved.</strong> Counts actions, not alerts. One action can "
+                                  "cover several alerts.",
         },
         "facts": facts,
     }

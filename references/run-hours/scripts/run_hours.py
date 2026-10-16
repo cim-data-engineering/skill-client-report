@@ -236,8 +236,8 @@ def page_table(page, days, n):
             name_w = LABEL - 14 - (min(len(where), 14) * FS_SMALL * CHAR + 8 if where else 0)
             tip = escape("%s%s%s" % (r["name"], " (%s)" % r["point"] if r.get("point") else "",
                                      "\n" + r["where_full"] if r.get("where_full") else ""))
-            fg.append('<a href="%s"><text class="rh-name" x="8" y="%.1f"><title>%s</title>%s</text></a>'
-                      % (escape(r["href"]), ty, tip, escape(fit(r["name"], name_w, FS_NAME))))
+            fg.append('<a href="%s" target="_blank"><text class="rh-name" x="8" y="%.1f"><title>%s</title>%s &rsaquo;</text></a>'
+                      % (escape(r["href"]), ty, tip, escape(fit(r["name"], name_w - 2 * FS_NAME * CHAR, FS_NAME))))
             if where:
                 fg.append('<text class="rh-where" x="%d" y="%.1f" text-anchor="end">%s</text>'
                           % (LABEL - 6, ty, escape(fit(where, 14 * FS_SMALL * CHAR, FS_SMALL))))
@@ -340,10 +340,8 @@ def build(ctx, work, shared):
                       "%s, the latest full week%s, against the site's working hours. Bars are exact to 15 minutes."
                       % (window["label"], " with complete data" if rel == EARLIER else "")},
         "notes": {"Run hours":
-                  "<strong>Run hours.</strong> Each row is one unit, drawn from a sensor that reports it running: "
-                  "a run status, or a speed, current or power reading. An enable or schedule says what the unit "
-                  "was told to do, not that it ran, so it never draws a row. Where status and speed disagree, the "
-                  "one showing less running is kept, since the usual faults all add hours. Grey columns are the "
-                  "site's working hours in PEAK; hatching marks no reliable data."},
+                  "<strong>Run hours.</strong> Drawn from run status or a speed, current or power reading. Enables "
+                  "and schedules are not used, as they show commanded state only. Where signals disagree, the lower "
+                  "runtime is used."},
         "facts": facts,
     }

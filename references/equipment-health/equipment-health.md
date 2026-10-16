@@ -62,7 +62,7 @@ Heatmap table of monthly equipment health scores, one row per equipment type, a 
 **Display:**
 
 - Color cells per the equipment score benchmark. Color the cell, not the text
-- Score to 2dp. The benchmark bands sit close together, and 1dp rounds a value across a band edge so the numeral and its color disagree
+- Score to 1dp. A cell takes its band from the printed value, so the numeral and its color always agree
 - Emphasise only the closing month column. Earlier months step back to body weight, per the `heatmap` component. A grid of bold figures reads as noise
 - Equipment and Rules as plain numerals, left of the score columns, never colored and never barred
 - Chg signed with a direction glyph. Green up, red down, muted when flat

@@ -20,7 +20,7 @@ import argparse, os, re, sys
 
 REF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "reference-report.html")
 
-ALWAYS = ["shell", "masthead", "analytics-overview", "footer"]
+ALWAYS = ["shell", "masthead", "analytics-overview", "close"]
 SECTION_PARTS = {
     "equipment-health": ["equipment-health-snapshot", "monthly-equipment-health"],
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],
@@ -119,10 +119,12 @@ def sample_strings():
     that a match means unreplaced markup, not a coincidence."""
     src = open(REF, encoding="utf-8").read()
     found = set()
-    for pat in (r'<td class="name">([^<]+)</td>', r'<td class="co">([^<]+)</td>',
+    for pat in (r'<td class="name">([^<]+)</td>', r'<span class="nm">([^<]+)</span>',
                 r'<h3>([^<]+)</h3>', r'<title>([^<]+)</title>',
                 # h2note and chartnote are deliberately absent — they carry window and
                 # method wording that is correct for every report and recurs legitimately.
+                # So are leaderboard companies: the sample's are real PEAK companies,
+                # which any report can carry.
                 # An operational impact row is matched whole, figure to sentence: the
                 # sentence alone is a template a real site can repeat word for word.
                 r'(<span class="fig">[^<]+</span> <span class="figcap">[^<]+</span>\s*<div class="isub">.*?</div>)'):
@@ -131,7 +133,7 @@ def sample_strings():
     # a win's body is its one unclassed paragraph, wherever the impact tag, the
     # level line and the photos put it, so read it off each win in turn
     for m in re.finditer(r'<div class="win[^"]*">(.*?)<p class="refs">', src, re.S):
-        found |= set(re.findall(r'<p>([^<]+)</p>', m.group(1)))
+        found |= set(re.findall(r'<p>(.+?)</p>', m.group(1)))
     for m in re.finditer(r'<p class="refs">(.*?)</p>', src, re.S):
         found |= set(re.findall(r'>([^<>]{8,})</a>', m.group(1)))
     # only platform links are report data — font and preconnect hosts stay

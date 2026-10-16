@@ -9,7 +9,7 @@ their photos, the platform links and every masthead slot. The wins are
 written by the model and passed in through the bundle; nothing in this file
 invents prose.
 """
-import argparse, base64, io, json, os, re, subprocess, sys, tempfile
+import argparse, base64, html, io, json, os, re, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 def xs(n):
@@ -63,6 +63,15 @@ def swap(s, anchor, new, end='</table>'):
     if s.count("<table", start, i) != 1:
         raise SystemExit("fill: anchor %.30s is not inside its own table" % anchor)
     return s[:start] + new + s[stop:]
+
+
+def initials(name):
+    """'Johnson Controls (JCI)' -> 'JC', 'Honeywell' -> 'H', 'CIM' -> 'CIM': a missing logo's stand-in."""
+    words = [w for w in re.findall(r"[A-Za-z0-9]+", re.sub(r"\(.*?\)", "", name))
+             if w.lower() not in ("and", "of", "the", "pty", "ltd", "limited", "inc", "co")]
+    if len(words) == 1 and words[0].isupper() and len(words[0]) <= 3:
+        return words[0]
+    return "".join(w[0] for w in words[:2]).upper()
 
 
 def note(s, anchor, text):
@@ -342,8 +351,6 @@ def fill_slots(s, D):
         for label, key in (("Reporting period", "period"), ("Author", "author"), ("Issued", "issued")):
             s = sub_one(s, r"<dt>%s</dt><dd>[^<]*</dd>" % label,
                         lambda _, label=label, key=key: "<dt>%s</dt><dd>%s</dd>" % (label, m[key]), label)
-        s = sub_one(s, r"<footer>\s*<span>[^<]*</span>\s*<span>[^<]*</span>",
-                    lambda _: "<footer>\n  <span>%s</span>\n  <span>Issued %s</span>" % (m["footer"], m["issued"]), "footer")
         s = after_eyebrow(s, "Analytics overview", "<h2>", "</h2>", "What we monitor at %s" % site, "overview")
     o = D.get("overview")
     if o:
@@ -361,6 +368,10 @@ def fill_slots(s, D):
         if i != -1:
             j = s.index("</li>", i)
             s = s[:i] + "<li>" + inner + s[j:]
+        elif '<section class="notes">' in s:
+            # the reporting window has no slot: it shows only with a month to date, last in the band
+            k = s.index("</ol>", s.index('<section class="notes">'))
+            s = s[:k] + "  <li>" + inner + "</li>\n  " + s[k:]
     rh = D.get("run_hours")
     if rh:
         i = s.index('<div class="rh">')
@@ -464,16 +475,21 @@ def main():
             res, op = e["resolved"], e["open"]
             tr += res; to += op
             pct = res / (res + op) * 100 if res + op else 0
-            rows.append('      <tr><td class="rank">%s</td><td class="name">%s</td><td class="co">%s</td>'
+            # the company logo in a square tile beside the name, as PEAK shows it; its initials without one
+            co = html.escape(e["company"])
+            tile = ('<span class="logo"><img src="%s" alt="%s" title="%s"></span>' % (e["logo"], co, co) if e.get("logo")
+                    else '<span class="logo none" title="%s">%s</span>' % (co, initials(e["company"])))
+            rows.append('      <tr><td class="rank">%s</td><td class="assignee"><span class="who">%s<span class="nm">%s</span>'
+                        '</span></td><td class="co">%s</td>'
                         '<td class="num">%s</td><td><span class="scorecell"><span class="track">'
-                        '<span class="fill" style="width:%.1f%%"></span></span><span class="sval">%.1f%%</span>'
+                        '<span class="fill" style="width:%.1f%%"></span></span><span class="sval">%.0f%%</span>'
                         '</span></td><td class="num %s">%d</td></tr>'
-                        % (TR if k == 1 else k, e["name"], e["company"], f"{res:,}", pct, pct,
+                        % (TR if k == 1 else k, tile, e["name"], e["company"], f"{res:,}", pct, pct,
                            "open-zero" if op == 0 else "open-hot", op))
         tp = tr / (tr + to) * 100 if tr + to else 0
         rows.append('      <tr class="total"><td></td><td>Total</td><td></td><td class="num">%s</td>'
                     '<td><span class="scorecell"><span class="track"><span class="fill" style="width:%.1f%%">'
-                    '</span></span><span class="sval">%.1f%%</span></span></td><td class="num">%d</td></tr>'
+                    '</span></span><span class="sval">%.0f%%</span></span></td><td class="num">%d</td></tr>'
                     % (f"{tr:,}", tp, tp, to))
         i = s.index("Who closed the work")
         t0 = s.index("<tbody>", i) + len("<tbody>")

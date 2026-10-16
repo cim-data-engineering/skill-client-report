@@ -126,15 +126,13 @@ def cmd_plan(a):
 
 
 def brand():
-    """BRAND.md's identity: any key set means platform strings read PEAK rather than
-    CIM PEAK, and name / service-name replace the masthead's CIM defaults."""
+    """BRAND.md's identity: name / service-name replace the masthead's CIM defaults."""
     path = os.path.join(ROOT, "BRAND.md")
     text = open(path, encoding="utf-8").read() if os.path.isfile(path) else ""
     m = re.match(r"---\n(.*?)\n---", text, re.S)
     head = m.group(1) if m else ""
     get = lambda k: (re.search(r"^%s:\s*(\S.*?)\s*$" % k, head, re.M) or [None, None])[1]
-    return {"override": bool(re.search(r"^\s*[a-z-]+:\s*\S", head, re.M)),
-            "name": get("name") or "CIM", "service": get("service-name") or "Data Driven Operations"}
+    return {"name": get("name") or "CIM", "service": get("service-name") or "Data Driven Operations"}
 
 
 # ── next ────────────────────────────────────────────────────────────────────

@@ -40,12 +40,12 @@ A reading holds for up to an hour, or one and a half times the point's own inter
 - Groups by equipment type, in the order of the signals reference's types table; rows by level, then name in natural order
 - A grey working-hours column on each day, headed with the day and its hours; "closed" where it has none
 - Bars in muted grey during working hours, `warning` outside them, hatched where there is no reliable data. Legend above the chart, as on the other charts
-- Each unit name links to its PEAK chart for the same week with working hours on, built by the build step: no tool returns that page
+- Each unit name links to its PEAK chart for the same week with working hours on, built by the build step: no tool returns that page. Add chevron indicating link >, the name in `primary` like every other link
 - Level and zone sit right-aligned before the week where they fit; the full name, the point drawn and the location are in the hover
 
 ## Notes band item
 
-- **Run hours.** How a row is drawn and what the hatching means. The script writes it
+- **Run hours.** Which signals draw a row and which win when they disagree. The script writes it
 
 ## Data
 

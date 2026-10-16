@@ -163,8 +163,8 @@ def build(ctx, work, shared):
 
     facts_site = shared.get("site_facts") or {}
     lo, hi = facts_site.get("thermal_comfort_min_temp"), facts_site.get("thermal_comfort_max_temp")
-    band_text = ("is %g–%g %s across this building" % (lo, hi, unit)) if lo is not None and hi is not None \
-        else "is typically 21–24.9 °C (68–79 °F)"
+    band_text = ("%g–%g %s across this building" % (lo, hi, unit)) if lo is not None and hi is not None \
+        else "typically 21–24.9 °C (68–79 °F)"
 
     unscored = [(names.get(l, str(l)), n) for l, n in zones.items() if n and l not in by_level]
     movers = [r for r in rows if None not in (r["months"][0], r["months"][-1])]
@@ -200,14 +200,11 @@ def build(ctx, work, shared):
                                                  % (io.span(tw[0], tw[-1]), io.and_to_date(ctx))},
         "notes": {
             "Thermal comfort score":
-                "<strong>Thermal comfort score.</strong> The share of zone readings inside the ASHRAE comfort band "
-                "during site working hours. The band is set per zone in PEAK and %s, so a level scores 100%% when "
-                "every zone reading in working hours fell inside it. The site row comes from the site rollup and "
-                "will not equal the average of the level rows." % band_text,
+                "<strong>Thermal comfort score.</strong> Comfort band set per zone in PEAK, %s. The site row is "
+                "PEAK's site-level score, not an average of the rows below." % band_text,
             "Zones":
-                "<strong>Zones</strong> in the indoor environment snapshot counts the zone temperature points "
-                "configured for comfort scoring on each level shown, and its site row is the thermal zones figure "
-                "in the analytics overview. A level whose points returned no score in the quarter is left out of both.",
+                "<strong>Zones.</strong> Zone temperature points configured for comfort scoring. Levels with no "
+                "score in the period are excluded here and from the thermal zones figure in the analytics overview.",
         },
         "facts": facts,
     }

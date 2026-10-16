@@ -164,6 +164,18 @@ def and_to_date(ctx, lead=", and "):
 
 
 # ── formats ─────────────────────────────────────────────────────────────────
+# the site's currency as PEAK names it: (code, labour rate per hour for the region, symbol)
+CURRENCIES = {"australian dollar": ("AUD", 150, "$"), "us dollar": ("USD", 100, "$"),
+              "united states dollar": ("USD", 100, "$"), "new zealand dollar": ("NZD", 150, "$"),
+              "british pound": ("GBP", 75, "£"), "pound sterling": ("GBP", 75, "£"),
+              "canadian dollar": ("CAD", 150, "$"), "euro": ("EUR", 100, "€")}
+
+
+def currency(facts):
+    """(code, labour rate per hour, symbol) for a site, from its site facts."""
+    return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", 100, "$"))
+
+
 def mon(s):
     """Column label for a month: 'Jul 26'."""
     m = d(s)

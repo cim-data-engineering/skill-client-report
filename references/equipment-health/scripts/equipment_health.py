@@ -18,12 +18,6 @@ BANDS = [(99.0, "Excellent"), (97.0, "Good"), (90.0, "Average")]
 # Labour model: annual minutes saved per scored rule, by priority id.
 ANNUAL_MINS = {1: 365 * 0.5, 2: 52 * 1.0, 3: 12 * 1.0, 4: 4 * 1.0, 5: 4 * 1.0}
 HOURS_PER_DAY = 7.6
-CURRENCIES = {"australian dollar": ("AUD", 150, "$"), "us dollar": ("USD", 100, "$"),
-              "united states dollar": ("USD", 100, "$"), "new zealand dollar": ("NZD", 150, "$"),
-              "british pound": ("GBP", 75, "£"), "pound sterling": ("GBP", 75, "£"),
-              "canadian dollar": ("CAD", 150, "$"), "euro": ("EUR", 100, "€")}
-
-
 def calls(ctx):
     sid, (q0, q1), (t0, t1) = ctx["site"]["site_id"], ctx["quarter"], ctx["trend"]
     eh = lambda f, ent, per, a, b: io.call(f, "search_equipment_health_scores", site_ids=[sid],
@@ -43,10 +37,6 @@ def calls(ctx):
 
 def more(ctx, work):
     return []
-
-
-def rate(facts):
-    return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", 100, "$"))
 
 
 def band(v):
@@ -83,7 +73,7 @@ def build(ctx, work, shared):
         tid = r["metadata_type_id"]
         if tid in SYSTEM_TYPES:
             continue
-        months = [io.pct(scores[tid][m[:7]]["score"], 2) if m[:7] in scores[tid] else None for m in qm]
+        months = [io.pct(scores[tid][m[:7]]["score"], 1) if m[:7] in scores[tid] else None for m in qm]
         if all(v is None for v in months):
             continue
         rows.append({"name": names.get(tid, "Type %d" % tid), "type_id": tid,
@@ -92,26 +82,26 @@ def build(ctx, work, shared):
     chg = lambda r: (r["months"][-1] - r["months"][0]) if None not in (r["months"][0], r["months"][-1]) else -1e9
     rows.sort(key=lambda r: (-chg(r), -(r["months"][-1] or 0), r["name"]))   # ties: the higher score leads
     site_m = {month_of(r): r for r in work.get("eh/site-month.json").rows}
-    site_q = [io.pct(site_m[m[:7]]["score"], 2) for m in qm if m[:7] in site_m]
-    heat = {"label": "Equipment type", "dp": 2, "bands": [99, 97, 90], "counts": ["Equip", "Rules"],
+    site_q = [io.pct(site_m[m[:7]]["score"], 1) for m in qm if m[:7] in site_m]
+    heat = {"label": "Equipment type", "dp": 1, "bands": [99, 97, 90], "counts": ["Equip", "Rules"],
             "rows": [{k: v for k, v in r.items() if k != "type_id"} for r in rows],
             "site": {"counts": [sum(r["counts"][0] for r in rows), sum(r["counts"][1] for r in rows)],
                      "months": site_q}}
 
     # operational impact rows
     site_all = work.get("eh/site-all.json").first()
-    score = io.pct(site_all["score"], 2)
-    delta, sub = io.movement(site_q[0], site_q[-1], 2, io.month(qm[0]), io.month_label(ctx, qm[-1]))
+    score = io.pct(site_all["score"], 1)
+    delta, sub = io.movement(site_q[0], site_q[-1], 1, io.month(qm[0]), io.month_label(ctx, qm[-1]))
     pri = work.get("eh/priority-all.json").rows
     checks = sum(r.get("total_executions") or 0 for r in pri)
     rules = sum(r.get("task_count") or 0 for r in pri)
-    code, per_hr, sym = rate(shared.get("site_facts") or {})
+    code, per_hr, sym = io.currency(shared.get("site_facts") or {})
     days = io.period_days(ctx)
     mins = sum((r.get("task_count") or 0) * ANNUAL_MINS.get(r.get("priority_id"), 4.0) for r in pri) * days / 365
     cost = mins / 60 * per_hr
     impact = [
         dict({"chip": band(score), "chip_class": "pos" if band(score) in ("Excellent", "Good") else "warn",
-              "fig": "%.2f%%" % score, "cap": "equipment health maintained", "sub": sub,
+              "fig": "%.1f%%" % score, "cap": "equipment health maintained", "sub": sub,
               "order": 1}, **({"delta": delta} if delta else {})),
         {"chip": "Continuous", "chip_class": "neu", "fig": "{:,}".format(checks),
          "cap": "automated equipment health checks ran 24/7",
@@ -135,10 +125,9 @@ def build(ctx, work, shared):
 
     # the labour cost method, worded once for the notes band and the note under Chart 2
     method = lambda window: (
-        "<strong>Labour cost avoided.</strong> Each rule replaces a manual inspection at a set frequency by "
-        "priority: P1 daily at 0.5 minutes per check; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. "
-        "Savings prorate that annual effort over %s, valued at %s %d/hr for this site's region. A working day "
-        "is taken as %.1f hours." % (window, code, per_hr, HOURS_PER_DAY))
+        "<strong>Labour cost avoided.</strong> Assumes each rule replaces one manual check: P1 daily at "
+        "30 seconds; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Prorated over %s at %s %d/hr "
+        "(regional rate) and a %.1f-hour working day." % (window, code, per_hr, HOURS_PER_DAY))
 
     # Chart 2: checks and labour cost by month, each month priced over its own days
     by_month = defaultdict(list)
@@ -156,7 +145,7 @@ def build(ctx, work, shared):
     trend_checks = {"a": a, "b": b, "labels_a": [io.compact(v) for v in a],
                     "labels_b": ["%s%.1fk" % (sym, v / 1000) for v in b],
                     "note_after": "Automated health checks",
-                    "note": method("each month's own days" + (", %s's so far" % io.month(ctx["to_date"])
+                    "note": method("each month's days" + (" (%s to date)" % io.month(ctx["to_date"])
                                                               if ctx["to_date"] else "")),
                     "alt": "Grouped bar chart, %s. Automated checks: %s and %s million. Labour cost avoided: %s and %s thousand %s."
                            % (io.span(tm[0], tm[-1], sep=" to "), ", ".join("%.2f" % (v / 1e6) for v in a[:-1]), "%.2f" % (a[-1] / 1e6),
@@ -174,14 +163,14 @@ def build(ctx, work, shared):
         f, l = scores[tid].get(qm[0][:7]), scores[tid].get(qm[-1][:7])
         if tid not in SYSTEM_TYPES and f and l and (l.get("task_count") or 0) != (f.get("task_count") or 0):
             rule_shift.append("%s %d to %d rules" % (names.get(tid, tid), f.get("task_count") or 0, l.get("task_count") or 0))
-    fmt = lambda r: "%s %.2f%% to %.2f%% (%+.2f pp)" % (r["name"], r["months"][0], r["months"][-1],
+    fmt = lambda r: "%s %.1f%% to %.1f%% (%+.1f pp)" % (r["name"], r["months"][0], r["months"][-1],
                                                        r["months"][-1] - r["months"][0])
     facts = [
-        "Equipment health: site %.2f%% over the quarter (%s); %s %.2f%% to %s %.2f%%."
+        "Equipment health: site %.1f%% over the quarter (%s); %s %.1f%% to %s %.1f%%."
         % (score, band(score), io.month(qm[0]), site_q[0], io.month_label(ctx, qm[-1]), site_q[-1]),
         "Biggest rises: " + ("; ".join(fmt(r) for r in up[:3] if r["months"][-1] > r["months"][0]) or "none"),
         "Biggest falls: " + ("; ".join(fmt(r) for r in down[:3] if r["months"][-1] < r["months"][0]) or "none"),
-        "Below Good in %s: " % io.month_label(ctx, qm[-1]) + ("; ".join("%s %.2f%% (%s)" % (r["name"], r["months"][-1], band(r["months"][-1]))
+        "Below Good in %s: " % io.month_label(ctx, qm[-1]) + ("; ".join("%s %.1f%% (%s)" % (r["name"], r["months"][-1], band(r["months"][-1]))
                                                          for r in weak) or "none"),
         "Rule count changes across the quarter: " + ("; ".join(rule_shift) or "none"),
         "Site score by month, %s: %s." % (io.span(tm[0], tm[-1], short=True), ", ".join("%.1f%%" % v for v in values)),

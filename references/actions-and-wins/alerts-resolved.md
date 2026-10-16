@@ -46,7 +46,7 @@ Date: the 6 month window
 | Column          | Reference                                |
 | --------------- | ---------------------------------------- |
 | Rank            | Position by actions resolved             |
-| Assignee        | Action ticket assignee full name         |
+| Assignee        | Company logo, then assignee full name    |
 | Company         | Assignee company name                    |
 | Resolved        | Actions resolved in the window           |
 | Completion rate | Resolved / (resolved + open now) x%      |
@@ -56,12 +56,13 @@ Date: the 6 month window
 
 - Rank by resolved descending, tie-break on completion rate descending
 - Trophy glyph replaces the rank numeral at 1. Nothing on 2 or 3
-- Completion rate as a bar on a 0-100 scale with the value beside it
+- Completion rate as a bar on a 0-100 scale with the value beside it, to 0dp
 - Open now emphasised when non-zero, muted at zero
 - Resolved and Open now as plain numerals. No bars
 - Close with a total row, separated from the rank
 - Include assignees with zero resolved but open actions. Exclude actions marked as Not Doing
 - Exclude non-human users from the leaderboard: Agent Hannah, or any other agent. They still count in raised vs resolved. No need to call this out in the report
+- Each assignee sits beside their company's logo in a square tile, as PEAK shows it. The script fetches each logo once from its `logo_url` and embeds it. A company without one gets its initials instead, and `facts.md` names it to say in chat
 - Truncate assignee and company name with ellipsis, do not wrap rows
 
 **Links:**
@@ -71,10 +72,8 @@ Date: the 6 month window
 
 ## Notes band items
 
-- **Verified recovery.** Recovery rate is alerts resolved in the period with fault status recovered, divided by all alerts resolved in the period, counting alerts with status closed on rules still running
-- **Median time to resolve** is measured from the linked action's creation to its resolution, not from the alert's own dates, since detection is automatic but resolution is human work
-- **Raised vs resolved.** Raised counts action tickets created in the month, not the alerts behind them: detection is automatic, raising an action is a human triage decision, and one action can be linked to many alerts. Resolved counts actions on their resolution date. Actions marked Not Doing are excluded from both series
-- **Completion rate** is resolved / (resolved + currently open) as at the issue date, so 100% reflects holding no open work
+- **Verified recovery.** Share of alerts closed in the period with the fault recovered. Includes only alerts on active rules
+- **Raised vs resolved.** Counts actions, not alerts. One action can cover several alerts
 
 ## Data
 
@@ -85,12 +84,12 @@ All in the main batch:
 | Leaderboard Resolved | `count_tickets` by `assignee`, resolved over the 6 month window |
 | Leaderboard Open now | `count_tickets` by `assignee`, statuses open, in progress and on hold, no date bound |
 | Raised and resolved series | `count_tickets` ungrouped, one per month per series, on each month's own bounds, since it has no month bucket |
-| Median, company names | `tickets.tickets` resolved over the 6 month window, fields `age`, `resolved_at`, `status_id`, `assignees{id, entity{name}}` |
-| Company of anyone with only open work | `tickets.tickets` Open now, `status_ids:[1,3,7]`, selecting only `status_id` and `assignees{id, entity{name}}` |
+| Median, companies | `tickets.tickets` resolved over the 6 month window, fields `age`, `resolved_at`, `status_id`, `assignees{id, entity{name, logo_url}}` |
+| Company of anyone with only open work | `tickets.tickets` Open now, `status_ids:[1,3,7]`, selecting only `status_id` and `assignees{id, entity{name, logo_url}}` |
 | Verified recovery | `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter, plain and with `fault_statuses:["recovered"]`, `limit:1` each: the two `pagination.total` values |
 
 - Every count carries `ticket_types:["escalated"]`, which counts actions, one per ticket, never the alerts behind them: an action can be bulk-linked to dozens of alerts. Every status list leaves out Not Doing. The server reads each window in site time, and a count cannot be cut short by a `limit`
-- The leaderboard joins the two assignee counts on `assignee_id`, keeping anyone with open work and nothing resolved, leaving out the null id (unassigned work) and any agent by name. Company is `entity{name}` for the same id off the rows
+- The leaderboard joins the two assignee counts on `assignee_id`, keeping anyone with open work and nothing resolved, leaving out the null id (unassigned work) and any agent by name. Company is `entity{name}` for the same id off the rows, and its logo `entity{logo_url}`, a PNG on PEAK's public downloads
 - The median runs over the actions resolved in the quarter, the operational impact row's own window, from `age`, which on a resolved action is the milliseconds from creation to resolution. Under a day it reads in hours
 - `count_tickets` is no substitute for the alert counts: it cannot filter on alert status or rule state
 - Closures that land minutes apart, ten or more in a run, are a bulk close-out rather than repairs. `facts.md` names them, since they explain a resolved peak
