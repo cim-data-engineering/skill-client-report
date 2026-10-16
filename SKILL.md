@@ -134,7 +134,7 @@ A site can have less history than the window asks for, and `facts.md` says so wh
 One self-contained A4 print-first HTML file: all CSS inline, charts as inline SVG, no JS. The scaffold supplies the stylesheet and every component, and `fill_report.py` draws every chart from the bundle, so the geometry is never yours to compute:
 
 - Chart series colours are CSS classes backed by `:root` tokens (`.bar-primary`, `.bar-benchmark`, `.series-line`, `.pt`, `.sw-primary`, `.sw-benchmark`), never hardcoded hex, because SVG presentation attributes cannot read `var()`. Heatmap band fills work the same way (`.b4`, `.b3`, `.b2`, `.b1` for Excellent, Good, Average, Poor)
-- Section headers are three stacked lines: the section name as an uppercase eyebrow in `primary`, the statement beneath it as the `h2` headline, and the date line as a muted byline. The statement is the headline, never the section name
+- Section headers are three stacked lines: the section name as an uppercase eyebrow in `secondary`, the statement beneath it as the `h2` headline, and the date line as a muted byline. The statement is the headline, never the section name
 
 Resolve the theme in this order:
 

@@ -108,7 +108,7 @@ components:
     textColor: "{colors.on-secondary-muted}"
     typography: "{typography.label}"
   eyebrow:
-    textColor: "{colors.primary}"
+    textColor: "{colors.secondary}"
     typography: "{typography.eyebrow}"
   card:
     backgroundColor: "{colors.surface}"
@@ -218,8 +218,8 @@ This file is a theme. Every rule below is written against token roles (`primary`
 
 `secondary` is identity, `primary` is accent, green and red are *only* ever measurement. The **impact tag** dot is the single place colour marks a *category* instead, and it earns that by staying an 8px dot beside a word that already says the same thing.
 
-- **primary:** the single accent — links, eyebrows, the primary chart series, inline score-bar fills. Never decorative.
-- **secondary:** the identity anchor — the masthead field, all headings, and every 2px strong rule. The masthead is the only dark field on the page.
+- **primary:** the single accent — links, the primary chart series, inline score-bar fills. Never decorative. The only text set in `primary` is a link, so no label or heading reads as one.
+- **secondary:** the identity anchor — the masthead field, all headings and section eyebrows, and every 2px strong rule. The masthead is the only dark field on the page.
 - **surface / surface-dim:** the white sheet, previewed on a `surface-dim` backdrop on screen; `surface-dim` also backs the notes/methodology band. Neutrals are tinted toward `secondary` — never warm grey, never pure black text.
 - **success / warning / error:** carry meaning only — delta chips and rating chips. Green means the movement is *good* (falling energy is green), not that the number went up.
 - **chart-benchmark:** the comparison series beside `primary`; **on-secondary-muted** is its counterpart for labels sitting on the masthead.
@@ -244,7 +244,7 @@ Radii climb with size: 4px chart-bar tops (top corners only), 6px delta chips an
 ## Components
 
 - **masthead:** `secondary` field with an `eyebrow` in `on-secondary-muted`, the report title in `h1`, then a metadata row (reporting period, author, issue date) as `masthead-label` over values, split from the title by a hairline at 18% `on-secondary`.
-- **section header:** three stacked lines — an `eyebrow` in `primary` naming the section, a statement in `h2` saying what the section shows ("What we monitor at {site}"), and an optional `body-sm` byline in `text-muted` carrying the as-at date or period — with 24px clear before the content. The statement is the headline, never the section name.
+- **section header:** three stacked lines — an `eyebrow` in `secondary` naming the section, a statement in `h2` saying what the section shows ("What we monitor at {site}"), and an optional `body-sm` byline in `text-muted` carrying the as-at date or period — with 24px clear before the content. The statement is the headline, never the section name.
 - **metric row:** `metric-value` with a plain caption beside it, a one-line `body-sm` explanation in `text-muted` beneath, and a rating or delta chip.
 - **delta chip:** `delta-positive` / `delta-negative` chosen by whether the change is *good*, not by its sign, always with a direction glyph and words.
 - **rating chip:** benchmark-band label in the matching `rating-*` container — always words, never colour alone. Excellent and Good are both `rating-positive`; Average is `rating-warning`; Poor is `rating-negative`; `rating-neutral` is for non-benchmark labels (e.g. Continuous, Modelled).
