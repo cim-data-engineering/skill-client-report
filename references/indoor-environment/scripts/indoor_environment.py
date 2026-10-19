@@ -166,27 +166,14 @@ def build(ctx, work, shared):
     band_text = ("%g–%g %s across this building" % (lo, hi, unit)) if lo is not None and hi is not None \
         else "typically 21–24.9 °C (68–79 °F)"
 
-    unscored = [(names.get(l, str(l)), n) for l, n in zones.items() if n and l not in by_level]
-    movers = [r for r in rows if None not in (r["months"][0], r["months"][-1])]
-    up = sorted(movers, key=lambda r: r["months"][-1] - r["months"][0], reverse=True)
-    down = sorted(movers, key=lambda r: r["months"][-1] - r["months"][0])
-    fmt = lambda r: "%s %.1f%% to %.1f%% (%+.1f pp)" % (r["name"], r["months"][0], r["months"][-1],
-                                                       r["months"][-1] - r["months"][0])
-    facts = [
-        "Indoor environment: site %.1f%% over the quarter (%s); %s %.1f%% to %s %.1f%%."
-        % (score, band(score), io.month(qm[0]), site_q[0], io.month_label(ctx, qm[-1]), site_q[-1]),
-        "Biggest rises: " + ("; ".join(fmt(r) for r in up[:3] if r["months"][-1] > r["months"][0]) or "none"),
-        "Biggest falls: " + ("; ".join(fmt(r) for r in down[:3] if r["months"][-1] < r["months"][0]) or "none"),
-        "Below Good in %s: " % io.month_label(ctx, qm[-1]) + ("; ".join("%s %.1f%%" % (r["name"], r["months"][-1])
-                                                         for r in rows if r["months"][-1] is not None and r["months"][-1] < 85) or "none"),
-        "Site comfort by month, %s: %s." % (io.span(tm[0], tm[-1], short=True), ", ".join("%.1f%%" % v for v in values)),
-        "Rows in building order as printed: %s." % ", ".join(r["name"] for r in rows),
-    ]
+    unscored = ["%s (%d points)" % (names.get(l, "level %s" % l), n) for l, n in zones.items() if n and l not in by_level]
+    chat = []
     if unscored:
-        facts.append("Not in the table (configured points, no score this quarter, so in neither figure): %s. "
-                     "Say so in chat, not on the page." % ", ".join("%s %d points" % u for u in unscored))
+        chat.append("Comfort points are configured on %s, but none returned a score this quarter, so they are in "
+                    "neither the comfort table nor the thermal zones figure." % io.listing(unscored))
     if len(values) < len(tm):
-        facts.append("Only %d months of comfort history: see Newly onboarded sites in SKILL.md." % len(values))
+        chat.append("Indoor environment has %d months of comfort history, short of the %d the trend covers."
+                    % (len(values), len(tm)))
     return {
         "impact": impact,
         "comfort": heat,
@@ -206,5 +193,5 @@ def build(ctx, work, shared):
                 "<strong>Zones.</strong> Zone temperature points configured for comfort scoring. Levels with no "
                 "score in the period are excluded here and from the thermal zones figure in the analytics overview.",
         },
-        "facts": facts,
+        "chat": chat,
     }

@@ -142,9 +142,9 @@ def build(ctx, work, shared):
     open_now = work.get("ar/open-rows.json").total or 0
     if not faults or not sum(resolved):
         return {"drop": ["alerts-resolved", "key-wins"],
-                "facts": ["Actions resolved: nothing resolved in the window (%d alerts closed in the quarter, "
-                          "%d actions resolved in six months), so the section and Key wins are left out. Say in "
-                          "chat instead that %d actions are open now." % (faults, sum(resolved), open_now)]}
+                "chat": ["Actions and key wins are left out: nothing was resolved in the window (%d alerts closed "
+                         "in the quarter, %d actions resolved in six months). %d actions are open now."
+                         % (faults, sum(resolved), open_now)]}
 
     res_rows = rows(work, "ar/resolved-rows.json")
     open_rows = rows(work, "ar/open-rows.json")
@@ -191,23 +191,13 @@ def build(ctx, work, shared):
     host = host.group(0) if host else "https://ace.cimenviro.com"
     tw = io.whole(ctx, tm)
     span6 = io.span(tw[0], tw[-1])
-    facts = [
-        "Actions: %d raised and %d resolved over %s. By month, raised %s; resolved %s."
-        % (sum(raised), sum(resolved), io.span(tm[0], tm[-1], short=True), ", ".join(map(str, raised)),
-           ", ".join(map(str, resolved))),
-        "Faults resolved this quarter: %d alerts closed on running rules, %d recovered (%.1f%%); median time to "
-        "resolve %s over %d actions resolved in the quarter." % (faults, recovered, pct_rec, med_text, len(in_q)),
-        "Bulk close-outs (%d or more closed minutes apart): " % BULK + ("; ".join(
-            "%d on %s" % (n, io.day_short(local_day(t, tz).isoformat())) for t, n in bulk) or "none"),
-        "Leaderboard top three: " + "; ".join("%s (%s) %d resolved, %d open" % (e["name"], e["company"] or "no company",
-                                                                             e["resolved"], e["open"])
-                                              for e in leaderboard[:3]),
-        "Open now: %d actions; %d people on the leaderboard hold open work." % (
-            open_now, sum(1 for e in leaderboard if e["open"])),
-    ]
+    chat = []
+    if bulk:
+        chat.append("Resolved counts include bulk close-outs, %d or more actions closed minutes apart: %s."
+                    % (BULK, io.listing("%d on %s" % (n, io.day_short(local_day(t, tz).isoformat())) for t, n in bulk)))
     if unlogged:
-        facts.append("Leaderboard logos: initials stand in for %s, with no logo in PEAK or none that could "
-                     "be fetched. Say so in chat." % io.listing(unlogged))
+        chat.append("Leaderboard initials stand in for %s, with no logo in PEAK or none that could be fetched."
+                    % io.listing(unlogged))
     return {
         "impact": impact,
         "alerts": {"a": raised, "b": resolved, "scale": "shared",
@@ -232,5 +222,5 @@ def build(ctx, work, shared):
             "Raised vs resolved": "<strong>Raised vs resolved.</strong> Counts actions, not alerts. One action can "
                                   "cover several alerts.",
         },
-        "facts": facts,
+        "chat": chat,
     }

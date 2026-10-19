@@ -278,23 +278,6 @@ def render(agg):
     return "\n".join(out)
 
 
-def out_of_hours(agg):
-    """Hours each drawn unit ran outside working hours, most first."""
-    hours = []
-    for page in agg["pages"]:
-        for g in page["groups"]:
-            for r in g["rows"]:
-                n = 0
-                for a, b in r.get("runs") or []:
-                    for s in range(a, b):
-                        wh = agg["days"][s // 96]["wh"]
-                        if not wh or not (wh[0] <= s % 96 < wh[1]):
-                            n += 1
-                if n:
-                    hours.append((n / 4, r["name"], g["name"]))
-    return sorted(hours, reverse=True)
-
-
 def build(ctx, work, shared):
     moved = load(work, DIR, "earlier.json") or {}
     rel = EARLIER if load(work, EARLIER, "plan.json") else DIR
@@ -310,30 +293,24 @@ def build(ctx, work, shared):
                    "the reporting period has data. The site's data feed looks down." % (
                        window["label"], "they have never reported" if stop == "never"
                        else "they last reported %s" % stop))
-        return {"drop": ["run-hours"], "facts": ["Run hours: nothing to draw, so the section is left out. Say why "
-                                                 "in chat: " + " ".join(why.split())]}
+        return {"drop": ["run-hours"], "chat": ["Run hours is left out, with nothing to draw. " + " ".join(why.split())]}
     notes = aggregate(work, rel)
     agg = load(work, rel, "agg.json")
-    rows = sum(len(g["rows"]) for p in agg["pages"] for g in p["groups"])
-    ooh = out_of_hours(agg)
     later = [u for u in plan["units"] if u.get("pass") == 2 and u.get("pull")]
-    facts = ["Run hours: %s, %d units drawn, working hours from the %s."
-             % (window["label"], rows, "user" if window.get("hours_source") == "user" else "site's settings in PEAK"),
-             "Most running outside working hours: " + ("; ".join("%s (%s) %.1f h" % (n, g, h) for h, n, g in ooh[:6]) or "none"),
-             "Build notes, for chat: " + " ".join(
-                 l[2:] for l in notes.splitlines() if l.startswith("- "))]
+    built = [l[2:] for l in notes.splitlines() if l.startswith("- ")]
+    chat = ["Run hours: " + " ".join(built)] if built else []
     latest = load(work, DIR, "window.json")["label"]
     if rel == EARLIER:
-        facts.append("Run hours moved off %s, the latest full week: the site's data stopped at %s, so it shows %s, "
-                     "the latest full week before that. Say so in chat." % (latest, stop, window["label"]))
+        chat.append("Run hours shows %s, the latest full week before the site's data stopped at %s, rather than "
+                    "%s, the latest full week." % (window["label"], stop, latest))
     elif stop == "never":
-        facts.append("Run hours: the site's run points hold no history before %s, so there is no earlier full week "
-                     "to show and it is drawn with its gap hatched. Say so in chat." % latest)
+        chat.append("Run hours draws %s with its gap hatched: the site's run points hold no history before it, so "
+                    "there is no earlier full week to show." % latest)
     elif stop:
-        facts.append("Run hours: the site's data stopped at %s, and the full week before that falls outside the "
-                     "reporting period, so %s is drawn with the gap hatched. Say so in chat." % (stop, latest))
+        chat.append("Run hours draws %s with its gap hatched: the site's data stopped at %s, and the full week "
+                    "before that falls outside the reporting period." % (latest, stop))
     if later:
-        facts.append("Not drawn, beyond the first pass of 100 units: %d units. Name them in chat." % len(later))
+        chat.append("Run hours draws the first pass of 100 units; %d more units are not drawn." % len(later))
     return {
         "run_hours": {"html": render(agg)},
         "datelines": {"Equipment run hours":
@@ -343,5 +320,5 @@ def build(ctx, work, shared):
                   "<strong>Run hours.</strong> Drawn from run status or a speed, current or power reading. Enables "
                   "and schedules are not used, as they show commanded state only. Where signals disagree, the lower "
                   "runtime is used."},
-        "facts": facts,
+        "chat": chat,
     }

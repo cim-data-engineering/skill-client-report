@@ -8,7 +8,7 @@ The two answer the same question from either end: how much fault work the site t
 
 Nothing. The script fills the chart and the leaderboard.
 
-A window with nothing resolved means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. The script leaves out the section, its operational impact row and its notes items, and `facts.md` gives the open count to say in chat instead. Key wins goes with it. A newly onboarded site is where this happens.
+A window with nothing resolved means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. The script leaves out the section, its operational impact row and its notes items, and gives the open count to say in chat instead. Key wins goes with it. A newly onboarded site is where this happens.
 
 ## Operational impact row
 
@@ -62,7 +62,7 @@ Date: the 6 month window
 - Close with a total row, separated from the rank
 - Include assignees with zero resolved but open actions. Exclude actions marked as Not Doing
 - Exclude non-human users from the leaderboard: Agent Hannah, or any other agent. They still count in raised vs resolved. No need to call this out in the report
-- Each assignee sits beside their company's logo in a square tile, as PEAK shows it. The script fetches each logo once from its `logo_url` and embeds it. A company without one gets its initials instead, and `facts.md` names it to say in chat
+- Each assignee sits beside their company's logo in a square tile, as PEAK shows it. The script fetches each logo once from its `logo_url` and embeds it. A company without one gets its initials instead, and the script names it to say in chat
 - Truncate assignee and company name with ellipsis, do not wrap rows
 
 **Links:**
@@ -92,4 +92,4 @@ All in the main batch:
 - The leaderboard joins the two assignee counts on `assignee_id`, keeping anyone with open work and nothing resolved, leaving out the null id (unassigned work) and any agent by name. Company is `entity{name}` for the same id off the rows, and its logo `entity{logo_url}`, a PNG on PEAK's public downloads
 - The median runs over the actions resolved in the quarter, the operational impact row's own window, from `age`, which on a resolved action is the milliseconds from creation to resolution. Under a day it reads in hours
 - `count_tickets` is no substitute for the alert counts: it cannot filter on alert status or rule state
-- Closures that land minutes apart, ten or more in a run, are a bulk close-out rather than repairs. `facts.md` names them, since they explain a resolved peak
+- Closures that land minutes apart, ten or more in a run, are a bulk close-out rather than repairs. The script names them to say in chat, since they explain a resolved peak

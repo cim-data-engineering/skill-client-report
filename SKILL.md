@@ -1,6 +1,6 @@
 ---
 name: client-report
-description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the actions leaderboard and key wins, and equipment run hours against working hours, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, the site's NABERS ratings, monthly trends, alerts resolved with the actions leaderboard and key wins, and equipment run hours against working hours, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
@@ -16,7 +16,7 @@ Work in one directory, `report/` below.
 1. **Resolve the site and the sections**: [Section selection](#section-selection). Call `search_sites(keyword:"<site>", include_working_hours:true)` and `who_am_i` together, and save the `search_sites` response as `report/site.json`. Nothing else is fetched before the sections settle.
 2. **Plan**: `python3 scripts/report.py plan report --site report/site.json --author "<who_am_i user_name>" --sections <names>`. It fixes the quarter from today in site time and prints every call the sections need, each with the file under `report/peak/` its response is saved as.
 3. **Fetch**: make every printed call in one parallel batch, exactly as printed. Save each response the plan lists to save as its file: an offloaded one by copying the file you were handed, an inline one by writing it to its file exactly as returned, one file per response. Those responses hold counts, scores, ids and type, level or company names only. The plan lists the key win candidate pulls apart: read those where they come back and never save them, since they carry what people wrote on the tickets. Then `python3 scripts/report.py next report`, and make whatever it prints the same way until it says there are no more calls.
-4. **Bundle**: `python3 scripts/report.py bundle report` writes every figure into `report/data.json`, and `report/facts.md`: what the data shows, what to say in chat, and what `wins.json` takes.
+4. **Bundle**: `python3 scripts/report.py bundle report` writes every figure into `report/data.json`, and prints anything to say in chat at hand-over, then the next step.
 5. **Write**: with Actions and key wins in, choose the wins from the two candidate pulls by `references/actions-and-wins/key-wins.md` and [Writing the narrative](#writing-the-narrative), and write `report/wins.json`; `next` then prints the impact and photo calls for them, and once those are saved, the level call. Make those, run `python3 references/actions-and-wins/scripts/key_wins.py photos report`, look at the one numbered contact sheet it makes per win, and add your picks to `wins.json`. Every other reference is what its script already did; read it only to answer a question it raises.
 6. **Fill and check**: `python3 scripts/report.py fill report` fills the report, saves every photo tile as it prints, and runs the check. Look at the tiles. Then say in chat whatever it lists, name the sections left out, and hand over the file.
 
@@ -42,7 +42,15 @@ Each folder holds the section's reference and a `scripts/` folder with its arith
 - Resolve the list before the first PEAK call. A section that is out is never fetched
 - [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when a section that owns one is in. The scaffold builds it that way
 - Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scripts handle the parts they know about; check the wins yourself
-- Three things can come up empty after the fetch, and only the fetch can tell: Actions and key wins when nothing was resolved in the window, Key wins alone when no win qualifies, and run hours when no plant carries a sensor that shows it running. The scripts leave the section out and `facts.md` says why; say so in chat, not on the page
+- Three things can come up empty after the fetch, and only the fetch can tell: Actions and key wins when nothing was resolved in the window, Key wins alone when no win qualifies, and run hours when no plant carries a sensor that shows it running. The scripts leave the section out and print why; say so in chat, not on the page
+
+### Automatic sections
+
+| Section | `--sections` name | Folder under `references/` | Adds |
+| --- | --- | --- | --- |
+| Sustainability ratings | `sustainability-ratings` | `sustainability-ratings/` | a card per NABERS energy, indoor environment and water rating, current or expired, and each one's rating history |
+
+Never offered in the prompt and never asked about. `report.py plan` adds it to every report, so its one call is always in the main batch, and its script leaves it out when PEAK holds no current rating for the site. Say nothing about it in chat, whether it is in or out.
 
 ## Writing the narrative
 
@@ -121,7 +129,7 @@ A follow-up on a report that already exists is not a rebuild. Match the reading 
 
 ## Newly onboarded sites
 
-A site can have less history than the window asks for, and `facts.md` says so when a section's six-month series comes back short. The site went live inside the window, and the report covers what exists.
+A site can have less history than the window asks for, and `report.py bundle` says so when a section's six-month series comes back short. The site went live inside the window, and the report covers what exists.
 
 - Trim both windows to the months that returned data, still whole months only apart from the month to date. The month a site went live in is not a complete month for it unless it went live on the 1st, so drop it
 - Say it once, in the masthead: "Reporting period: 1 – 31 August 2026, monitoring live since 14 July 2026". The reader needs to know the report is short because the site is new, not because something failed. Don't repeat it section by section
@@ -130,7 +138,7 @@ A site can have less history than the window asks for, and `facts.md` says so wh
 - Delete the surplus month columns from the heatmap header and every row, so the table is only as wide as the data
 - An equipment type or a level can start later than the site did, when new rules go on old plant. The script draws its earlier months and its Chg as dashes with no fill, so the row keeps the table's width; leave them, and say in chat when its rules began scoring
 - Prorate the labor cost model over the days actually monitored, not the calendar quarter, or it credits the monitoring with time it wasn't running
-- A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules. One rule against 850 either side is an outage wearing a score. Treat both alike: plot the months that exist, leave the gap visible, and say so in chat
+- A gap in the middle of a series is an outage, not onboarding. So is a month that scored off a fraction of the usual rules. One rule against 850 either side is an outage wearing a score. Treat both alike: plot the months that exist, leave the gap visible, and say so in chat. The equipment health script names any such month
 
 ## Output & theming
 

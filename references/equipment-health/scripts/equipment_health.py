@@ -152,32 +152,15 @@ def build(ctx, work, shared):
                               ", ".join("%.1f" % (v / 1e3) for v in b[:-1]), "%.1f" % (b[-1] / 1e3), money)
                            + io.to_date_note(ctx, tm)}
 
-    # facts for facts.md: what moved, and the rule counts behind it
-    movers = [r for r in rows if None not in (r["months"][0], r["months"][-1])]
-    up = sorted(movers, key=lambda r: r["months"][-1] - r["months"][0], reverse=True)
-    down = sorted(movers, key=lambda r: r["months"][-1] - r["months"][0])
-    weak = [r for r in rows if r["months"][-1] is not None and r["months"][-1] < 97]
-    rule_shift = []
-    for r in type_all.rows:
-        tid = r["metadata_type_id"]
-        f, l = scores[tid].get(qm[0][:7]), scores[tid].get(qm[-1][:7])
-        if tid not in SYSTEM_TYPES and f and l and (l.get("task_count") or 0) != (f.get("task_count") or 0):
-            rule_shift.append("%s %d to %d rules" % (names.get(tid, tid), f.get("task_count") or 0, l.get("task_count") or 0))
-    fmt = lambda r: "%s %.1f%% to %.1f%% (%+.1f pp)" % (r["name"], r["months"][0], r["months"][-1],
-                                                       r["months"][-1] - r["months"][0])
-    facts = [
-        "Equipment health: site %.1f%% over the quarter (%s); %s %.1f%% to %s %.1f%%."
-        % (score, band(score), io.month(qm[0]), site_q[0], io.month_label(ctx, qm[-1]), site_q[-1]),
-        "Biggest rises: " + ("; ".join(fmt(r) for r in up[:3] if r["months"][-1] > r["months"][0]) or "none"),
-        "Biggest falls: " + ("; ".join(fmt(r) for r in down[:3] if r["months"][-1] < r["months"][0]) or "none"),
-        "Below Good in %s: " % io.month_label(ctx, qm[-1]) + ("; ".join("%s %.1f%% (%s)" % (r["name"], r["months"][-1], band(r["months"][-1]))
-                                                         for r in weak) or "none"),
-        "Rule count changes across the quarter: " + ("; ".join(rule_shift) or "none"),
-        "Site score by month, %s: %s." % (io.span(tm[0], tm[-1], short=True), ", ".join("%.1f%%" % v for v in values)),
-        "Scored rules by month: %s." % ", ".join("{:,}".format(v) for v in rule_counts),
-        "Checks by month: %s; labour cost by month: %s." % (", ".join(io.compact(v) for v in a),
-                                                           ", ".join("%s%s" % (sym, "{:,}".format(v)) for v in b)),
-    ]
+    # A month that scored off a fraction of the usual rules, or none after the site went live, is a
+    # data outage wearing a score
+    live = sorted(n for n in rule_counts if n)
+    usual = live[len(live) // 2] if live else 0
+    start = next((i for i, n in enumerate(rule_counts) if n), len(rule_counts))
+    out = ["%s scored %s" % (io.month_label(ctx, m), "{:,} rule{}".format(n, "" if n == 1 else "s") if n else "none")
+           for m, n in zip(tm[start:], rule_counts[start:]) if n < usual / 2]
+    chat = ["Equipment health data was out for part of the window: %s, against about %s scored rules in other "
+            "months." % (io.listing(out), "{:,}".format(usual))] if out else []
     return {
         "impact": impact,
         "equipment_health": heat,
@@ -191,5 +174,5 @@ def build(ctx, work, shared):
                       "Monthly equipment health": "%s, the last six complete months%s."
                                                   % (io.span(tw[0], tw[-1]), io.and_to_date(ctx))},
         "notes": {"Labour cost avoided": method("the %d-day period" % days)},
-        "facts": facts,
+        "chat": chat,
     }

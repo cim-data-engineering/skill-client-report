@@ -22,6 +22,7 @@ REF = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "
 
 ALWAYS = ["shell", "masthead", "analytics-overview", "close"]
 SECTION_PARTS = {
+    "sustainability-ratings": ["sustainability-ratings"],
     "equipment-health": ["equipment-health-snapshot", "monthly-equipment-health"],
     "indoor-environment": ["indoor-environment-snapshot", "monthly-thermal-comfort"],
     "alerts-resolved": ["monthly-alerts", "actions-leaderboard"],
@@ -136,8 +137,11 @@ def sample_strings():
         found |= set(re.findall(r'<p>(.+?)</p>', m.group(1)))
     for m in re.finditer(r'<p class="refs">(.*?)</p>', src, re.S):
         found |= set(re.findall(r'>([^<>]{8,})</a>', m.group(1)))
-    # only platform links are report data — font and preconnect hosts stay
-    found |= {h for h in re.findall(r'href="([^"]+)"', src) if "cimenviro.com" in h}
+    # only platform links are report data — font and preconnect hosts stay. The ratings
+    # link carries no dates, so a report for the sample site prints it exactly; the
+    # data-sample marker catches an unfilled ratings section instead.
+    found |= {h for h in re.findall(r'href="([^"]+)"', src)
+              if "cimenviro.com" in h and "/dashboard/ratings" not in h}
     stop = {"CIM", "Total"}
     return sorted(s.strip() for s in found if len(s.strip()) >= 5 and s.strip() not in stop)
 
@@ -195,6 +199,10 @@ def cmd_check(args):
     # The run hours sample chart is a placeholder; the script draws the real one.
     if 'data-sample="run-hours"' in text:
         errors.append("sample run hours chart still in the report — fill it from the bundle's run_hours")
+
+    # So are the sustainability ratings sample cards and charts; the fill draws the real ones.
+    if 'data-sample="ratings"' in text:
+        errors.append("sample sustainability ratings still in the report — fill them from the bundle's ratings")
 
     # A heatmap trimmed for a short-history site has to lose the same columns
     # from its header and from every row, so a ragged table means a missed row.

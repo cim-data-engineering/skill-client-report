@@ -94,12 +94,6 @@ def build(ctx, work, shared):
         },
         "datelines": {"Operational impact": io.period(q0, qlast)},
         "notes": {"The reporting window": "<strong>The reporting window.</strong> " + window} if window else {},
-        "facts": ["Analytics overview: %s thermal zones (zone temperature points on the levels that "
-                  "returned a comfort score this quarter)." % "{:,}".format(zones)]
-                 + (["Reporting period %s: the quarter plus %s to date, %d days, as the last month of every "
-                     "table and chart. Its volume bars are short by construction, which the reporting window "
-                     "note explains." % (io.period(q0, qlast), io.month(ctx["to_date"]),
-                                         io.days_in(ctx, ctx["to_date"]))] if ctx["to_date"] else []),
     }
 
 

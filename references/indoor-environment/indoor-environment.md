@@ -4,7 +4,7 @@ Owns the operational impact thermal comfort row, the indoor environment health s
 
 ## What you write
 
-Nothing. Levels with configured points but no score this quarter are in neither the table nor the thermal zones figure. `facts.md` names them: say so in chat, not on the page.
+Nothing. Levels with configured points but no score this quarter are in neither the table nor the thermal zones figure. The script names them to say in chat, not on the page.
 
 ## Operational impact row
 
@@ -95,4 +95,4 @@ All in the main batch: `search_indoor_environment(metric:"temperature")` at thre
 
 - The Zones column joins the count's `included_point_count` to the level rows on `level_id`, and a level the count does not return counts 0. Summed over the levels shown, it is the site row and the analytics overview's thermal zones figure. Never page zone rows to count them, and never substitute `search_zones`, `platform.levels` or `platform.zones`: they list zone objects, not zone temperature points
 - A single-level site is the one follow-up: `next` asks for `zone` × `month` rows, which carry `zone_name` and `zone_value`
-- Levels sort into building order from their names: a name with no readable floor first, then numbered floors highest first, ground, then basements. `facts.md` prints the order; a building PEAK names oddly is worth a line in chat
+- Levels sort into building order from their names: a name with no readable floor first, then numbered floors highest first, ground, then basements. A building PEAK names oddly is worth a line in chat

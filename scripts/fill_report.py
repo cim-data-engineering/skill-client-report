@@ -10,6 +10,7 @@ written by the model and passed in through the bundle; nothing in this file
 invents prose.
 """
 import argparse, base64, html, io, json, os, re, subprocess, sys, tempfile
+from datetime import date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 def xs(n):
@@ -39,7 +40,8 @@ LINK_SLOTS = {"equipment_health": "See live equipment health dashboard",
               "comfort": "See live indoor environment dashboard",
               "leaderboard": "See live actions leaderboard",
               "trend_eh": "PEAK equipment health dashboard",
-              "trend_comfort": "PEAK indoor environment dashboard"}
+              "trend_comfort": "PEAK indoor environment dashboard",
+              "ratings": "See sustainability ratings"}
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -249,6 +251,60 @@ def grouped_bar(d, months, to_date=False):
             % (d["alt"], "\n".join(band + out + sub)))
 
 
+# ── sustainability ratings ──────────────────────────────────────────────────
+def rating_cards(cards):
+    """A card per measure: the score out of its maximum on a 0 to max score bar, the change
+    from the previous rating, then the month the rating expires, or an Expired chip."""
+    out = []
+    for c in cards:
+        d, chips = c.get("delta"), []
+        if d and d["dir"] == "flat":
+            chips.append('<span class="delta neu">No change from %s</span>' % d["from"])
+        elif d:
+            chips.append('<span class="delta %s">%s %s from %s</span>' % (
+                "pos" if d["dir"] == "up" else "neu", "&uarr; Up" if d["dir"] == "up" else "&darr; Down",
+                d["amount"], d["from"]))
+        if c.get("expired"):
+            chips.append('<span class="chip neu">Expired</span>')
+        out.append('    <div class="stat"><p class="k">%s</p><p class="n">%.1f <span>/ %g stars</span></p>'
+                   '<span class="track"><span class="fill" style="width:%.1f%%"></span></span>%s%s</div>'
+                   % (c["name"], c["score"], c["max"], c["score"] / c["max"] * 100,
+                      '<div class="nbsub">%s</div>' % "".join(chips) if chips else "",
+                      "" if c.get("expired") else '<p class="nbexp">Expires %s</p>' % c["expires"]))
+    return '  <div class="nbgrid">\n' + "\n".join(out) + "\n  </div>"
+
+
+def rating_chart(c):
+    """A rating history on its own time axis and y range, lo to hi: the top a dashed line,
+    the bottom the baseline, both labelled. Values sit under their points, or above where
+    the baseline is too close. The axis is labelled every January and July, or every
+    January alone once it spans more than four years."""
+    t0, t1 = (date.fromisoformat(a) for a in c["axis"])
+    x = lambda t: 60 + (t - t0).days / (t1 - t0).days * 590
+    top, base, h = 26, 118, 140
+    y = lambda v: base - (v - c["lo"]) / (c["hi"] - c["lo"]) * (base - top)
+    out = ['        <line class="benchline" x1="%d" y1="%d" x2="%d" y2="%d"/><text class="axis" x="4" y="%d">%.1f</text>'
+           % (LEFT, top, RIGHT, top, top + 3, c["hi"]),
+           '        <line class="baseline" x1="%d" y1="%d" x2="%d" y2="%d"/><text class="axis" x="4" y="%d">%.1f</text>'
+           % (LEFT, base, RIGHT, base, base + 3, c["lo"])]
+    pts = [(x(date.fromisoformat(t)), y(v), v) for t, v in c["points"]]
+    if len(pts) > 1:
+        out.append('        <polyline class="series-line" points="%s"/>' % " ".join("%.1f,%.1f" % p[:2] for p in pts))
+    out += ['        <circle cx="%.1f" cy="%.1f" r="4.5" class="pt"/>' % p[:2] for p in pts]
+    out += ['        <text class="val" x="%.1f" y="%.1f" text-anchor="middle">%.1f</text>'
+            % (px, py + 18 if py + 18 <= base - 6 else py - 10, v) for px, py, v in pts]
+    yearly = (t1 - t0).days > 4 * 366
+    m = t0
+    while m <= t1:
+        if not (yearly and m.month == 7):
+            out.append('        <text class="axis" x="%.1f" y="%d" text-anchor="middle">%s %02d</text>'
+                       % (x(m), h - 4, m.strftime("%b"), m.year % 100))
+        m = date(m.year + 1, 1, 1) if m.month == 7 else date(m.year, 7, 1)
+    return ('  <div class="chartblock">\n    <h3 class="charttitle">%s</h3>\n    <div class="chart">\n'
+            '      <svg viewBox="0 0 682 %d" role="img" aria-label="%s">\n%s\n      </svg>\n    </div>\n  </div>'
+            % (c["name"], h, html.escape(c["alt"]), "\n".join(out)))
+
+
 def swap_svg(s, after, svg):
     i = s.index('<svg viewBox="0 0 682 236"', s.index(after))
     return s[:i] + svg + s[s.index("</svg>", i) + 6:]
@@ -390,7 +446,7 @@ def main():
     if a.photos_out:
         os.makedirs(a.photos_out, exist_ok=True)
     D = json.load(open(a.data, encoding="utf-8"))
-    sections = D.get("sections") or "all"
+    sections = D.get("sections", "all")     # empty when every section dropped itself: the frame alone
 
     tmp = tempfile.mktemp(suffix=".html")
     subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "scaffold",
@@ -461,6 +517,13 @@ def main():
         s = swap_svg(s, anchor, svg)
         if c.get("note"):
             s = note(s, c["note_after"], c["note"])
+
+    # sustainability ratings: the scaffold's sample cards and charts swapped for the site's own
+    if "ratings" in D:
+        i = s.index('<div class="ratings"')
+        j = s.index("<!-- /ratings -->", i) + len("<!-- /ratings -->")
+        body = [rating_cards(D["ratings"]["cards"])] + [rating_chart(c) for c in D["ratings"]["charts"]]
+        s = s[:i] + '<div class="ratings">\n' + "\n".join(body) + "\n  </div>" + s[j:]
 
     # leaderboard
     if "leaderboard" in D:
