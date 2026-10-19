@@ -47,8 +47,13 @@ MODULES = {"overview": ("overview", "overview"),
            "indoor-environment": ("indoor-environment", "indoor_environment"),
            "alerts-resolved": ("actions-and-wins", "alerts_resolved"),
            "key-wins": ("actions-and-wins", "key_wins"),
-           "run-hours": ("run-hours", "run_hours")}
-ORDER = ["equipment-health", "indoor-environment", "alerts-resolved", "key-wins", "run-hours"]
+           "run-hours": ("run-hours", "run_hours"),
+           "sustainability-ratings": ("sustainability-ratings", "sustainability_ratings")}
+ORDER = ["sustainability-ratings", "equipment-health", "indoor-environment", "alerts-resolved", "key-wins",
+         "run-hours"]
+# Sections the prompt never offers. Every report fetches them, and each drops itself
+# when the site has nothing to show.
+AUTO = ["sustainability-ratings"]
 
 
 def module(section):
@@ -97,7 +102,7 @@ def cmd_plan(a):
     unknown = [s for s in picked if s not in OPTIONS and s not in ORDER]
     if unknown:
         sys.exit("unknown section %s; choose from %s" % (", ".join(unknown), ", ".join(OPTIONS)))
-    sections = [s for o in picked for s in (OPTIONS[o][1] if o in OPTIONS else [o])]
+    sections = [s for o in picked for s in (OPTIONS[o][1] if o in OPTIONS else [o])] + AUTO
     from zoneinfo import ZoneInfo
     today = io.d(a.today) if a.today else datetime.now(ZoneInfo(site["timezone"])).date()
     root = os.path.abspath(a.dir)

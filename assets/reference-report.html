@@ -218,6 +218,13 @@ table.hm{table-layout:fixed}
 .chartnote{font-size:.875rem;color:var(--text-muted);margin:16px 0 0}
 .chartsource{font-family:var(--mono);font-size:.6875rem;color:var(--text-muted);margin:12px 0 0}
 
+/* Sustainability ratings: a card per measure on the stat card, its score on the inline
+   score bar from 0 to the rating's maximum, then its chips and expiry */
+.nbgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:0 0 24px}
+.nbgrid .track{display:block;width:auto;margin:12px 0}
+.nbsub{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.nbexp{font-size:.8125rem;color:var(--text-muted);margin:10px 0 0}
+
 /* Key wins */
 .win{border:1px solid var(--outline);border-radius:14px;padding:20px 24px}
 .win + .win{margin-top:16px}
@@ -269,7 +276,7 @@ section.notes{background:var(--surface-dim)}
      padding with it, so nothing prints against the paper's edge either side of a break. */
   section{-webkit-box-decoration-break:clone;box-decoration-break:clone}
   /* Never split across pages */
-  .mast,.sechead,.statgrid,.irow,.chartblock,.chart,.win,.notes li,table,tr{break-inside:avoid}
+  .mast,.sechead,.statgrid,.nbgrid,.irow,.chartblock,.chart,.win,.notes li,table,tr{break-inside:avoid}
   /* A heading or key stays with what it introduces */
   .sechead,.charttitle,.legend,.bandkey,.rh-g{break-after:avoid}
   /* and a link, source line, total or closing strip stays with what it follows */
@@ -418,6 +425,91 @@ section.notes{background:var(--surface-dim)}
     <!-- if: indoor-environment -->
     <a href="https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id=371&amp;summary_ts=2026-08-01&amp;site_ids=371&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000">See live indoor environment dashboard ›</a>
     <!-- endif -->
+  </div>
+</section>
+
+<!-- part: sustainability-ratings -->
+<section>
+  <div class="sechead">
+    <p class="eyebrow">Sustainability ratings</p>
+    <h2>How the building rates under NABERS</h2>
+    <p class="h2note">As at 1 September 2026. Each rating is plotted at the end of its rating period.</p>
+  </div>
+  <!-- Sustainability ratings: drawn by scripts/fill_report.py, a card per measure, then each one's rating history. -->
+  <div class="ratings" data-sample="ratings">
+  <div class="nbgrid">
+    <div class="stat"><p class="k">Energy</p><p class="n">5.5 <span>/ 6 stars</span></p><span class="track"><span class="fill" style="width:91.7%"></span></span><div class="nbsub"><span class="delta pos">&uarr; Up 0.5 from 5.0</span></div><p class="nbexp">Expires Oct 2026</p></div>
+    <div class="stat"><p class="k">Indoor environment</p><p class="n">5.0 <span>/ 6 stars</span></p><span class="track"><span class="fill" style="width:83.3%"></span></span><div class="nbsub"><span class="delta pos">&uarr; Up 0.5 from 4.5</span><span class="chip neu">Expired</span></div></div>
+    <div class="stat"><p class="k">Water</p><p class="n">4.5 <span>/ 6 stars</span></p><span class="track"><span class="fill" style="width:75.0%"></span></span><div class="nbsub"><span class="delta neu">&darr; Down 0.5 from 5.0</span></div><p class="nbexp">Expires Oct 2026</p></div>
+  </div>
+  <div class="chartblock">
+    <h3 class="charttitle">Energy</h3>
+    <div class="chart">
+      <svg viewBox="0 0 682 140" role="img" aria-label="Line chart of the NABERS energy rating by the end of each rating period, between 4.0 and 6.0 stars: 4.5 for the period to Jun 2020, 5.0 for the period to Jun 2021, 5.0 for the period to Jun 2022, 5.5 for the period to Jun 2023, 5.0 for the period to Jun 2024, 5.5 for the period to Jun 2025.">
+        <line class="benchline" x1="36" y1="26" x2="670" y2="26"/><text class="axis" x="4" y="29">6.0</text>
+        <line class="baseline" x1="36" y1="118" x2="670" y2="118"/><text class="axis" x="4" y="121">4.0</text>
+        <polyline class="series-line" points="113.2,95.0 220.4,72.0 327.7,72.0 434.9,49.0 542.5,72.0 649.7,49.0"/>
+        <circle cx="113.2" cy="95.0" r="4.5" class="pt"/>
+        <circle cx="220.4" cy="72.0" r="4.5" class="pt"/>
+        <circle cx="327.7" cy="72.0" r="4.5" class="pt"/>
+        <circle cx="434.9" cy="49.0" r="4.5" class="pt"/>
+        <circle cx="542.5" cy="72.0" r="4.5" class="pt"/>
+        <circle cx="649.7" cy="49.0" r="4.5" class="pt"/>
+        <text class="val" x="113.2" y="85.0" text-anchor="middle">4.5</text>
+        <text class="val" x="220.4" y="90.0" text-anchor="middle">5.0</text>
+        <text class="val" x="327.7" y="90.0" text-anchor="middle">5.0</text>
+        <text class="val" x="434.9" y="67.0" text-anchor="middle">5.5</text>
+        <text class="val" x="542.5" y="90.0" text-anchor="middle">5.0</text>
+        <text class="val" x="649.7" y="67.0" text-anchor="middle">5.5</text>
+        <text class="axis" x="60.0" y="136" text-anchor="middle">Jan 20</text>
+        <text class="axis" x="167.5" y="136" text-anchor="middle">Jan 21</text>
+        <text class="axis" x="274.8" y="136" text-anchor="middle">Jan 22</text>
+        <text class="axis" x="382.0" y="136" text-anchor="middle">Jan 23</text>
+        <text class="axis" x="489.3" y="136" text-anchor="middle">Jan 24</text>
+        <text class="axis" x="596.8" y="136" text-anchor="middle">Jan 25</text>
+      </svg>
+    </div>
+  </div>
+  <div class="chartblock">
+    <h3 class="charttitle">Indoor environment</h3>
+    <div class="chart">
+      <svg viewBox="0 0 682 140" role="img" aria-label="Line chart of the NABERS indoor environment rating by the end of each rating period, between 4.0 and 5.5 stars: 4.5 for the period to Mar 2023, 5.0 for the period to Mar 2024.">
+        <line class="benchline" x1="36" y1="26" x2="670" y2="26"/><text class="axis" x="4" y="29">5.5</text>
+        <line class="baseline" x1="36" y1="118" x2="670" y2="118"/><text class="axis" x="4" y="121">4.0</text>
+        <polyline class="series-line" points="156.0,87.3 550.8,56.7"/>
+        <circle cx="156.0" cy="87.3" r="4.5" class="pt"/>
+        <circle cx="550.8" cy="56.7" r="4.5" class="pt"/>
+        <text class="val" x="156.0" y="105.3" text-anchor="middle">4.5</text>
+        <text class="val" x="550.8" y="74.7" text-anchor="middle">5.0</text>
+        <text class="axis" x="60.0" y="136" text-anchor="middle">Jan 23</text>
+        <text class="axis" x="255.2" y="136" text-anchor="middle">Jul 23</text>
+        <text class="axis" x="453.7" y="136" text-anchor="middle">Jan 24</text>
+        <text class="axis" x="650.0" y="136" text-anchor="middle">Jul 24</text>
+      </svg>
+    </div>
+  </div>
+  <div class="chartblock">
+    <h3 class="charttitle">Water</h3>
+    <div class="chart">
+      <svg viewBox="0 0 682 140" role="img" aria-label="Line chart of the NABERS water rating by the end of each rating period, between 4.0 and 5.5 stars: 5.0 for the period to Jun 2024, 4.5 for the period to Jun 2025.">
+        <line class="benchline" x1="36" y1="26" x2="670" y2="26"/><text class="axis" x="4" y="29">5.5</text>
+        <line class="baseline" x1="36" y1="118" x2="670" y2="118"/><text class="axis" x="4" y="121">4.0</text>
+        <polyline class="series-line" points="255.2,56.7 648.9,87.3"/>
+        <circle cx="255.2" cy="56.7" r="4.5" class="pt"/>
+        <circle cx="648.9" cy="87.3" r="4.5" class="pt"/>
+        <text class="val" x="255.2" y="74.7" text-anchor="middle">5.0</text>
+        <text class="val" x="648.9" y="105.3" text-anchor="middle">4.5</text>
+        <text class="axis" x="60.0" y="136" text-anchor="middle">Jan 24</text>
+        <text class="axis" x="256.3" y="136" text-anchor="middle">Jul 24</text>
+        <text class="axis" x="454.8" y="136" text-anchor="middle">Jan 25</text>
+        <text class="axis" x="650.0" y="136" text-anchor="middle">Jul 25</text>
+      </svg>
+    </div>
+  </div>
+  </div><!-- /ratings -->
+  <p class="chartsource">Source: NABERS ratings recorded in PEAK</p>
+  <div class="seclinks">
+    <a href="https://ace.cimenviro.com/dashboard/ratings?site_ids=371&amp;ratings_type_id_or_filter=all_ratings">See sustainability ratings &rsaquo;</a>
   </div>
 </section>
 

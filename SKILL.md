@@ -1,6 +1,6 @@
 ---
 name: client-report
-description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, monthly trends, alerts resolved with the actions leaderboard and key wins, and equipment run hours against working hours, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, the site's NABERS ratings, monthly trends, alerts resolved with the actions leaderboard and key wins, and equipment run hours against working hours, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
@@ -43,6 +43,14 @@ Each folder holds the section's reference and a `scripts/` folder with its arith
 - [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when a section that owns one is in. The scaffold builds it that way
 - Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scripts handle the parts they know about; check the wins yourself
 - Three things can come up empty after the fetch, and only the fetch can tell: Actions and key wins when nothing was resolved in the window, Key wins alone when no win qualifies, and run hours when no plant carries a sensor that shows it running. The scripts leave the section out and `facts.md` says why; say so in chat, not on the page
+
+### Automatic sections
+
+| Section | `--sections` name | Folder under `references/` | Adds |
+| --- | --- | --- | --- |
+| Sustainability ratings | `sustainability-ratings` | `sustainability-ratings/` | a card per NABERS energy, indoor environment and water rating, current or expired, and each one's rating history |
+
+Never offered in the prompt and never asked about. `report.py plan` adds it to every report, so its one call is always in the main batch, and its script leaves it out when PEAK holds no current rating for the site. Say nothing about it in chat, whether it is in or out.
 
 ## Writing the narrative
 
