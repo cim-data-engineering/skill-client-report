@@ -6,12 +6,12 @@ Not one of the section choices. Every report fetches the site's ratings, and the
 
 ## What you write
 
-Nothing, on the page or in chat. The section is never asked for, so neither its presence nor its absence is mentioned when the report is handed over. `facts.md` records what was found.
+Nothing, on the page or in chat. The section is never asked for, so neither its presence nor its absence is mentioned when the report is handed over.
 
 ## Scope
 
 - **Measures**: NABERS energy, indoor environment and water, read off the rating type name in PEAK. Waste and every non-NABERS rating type are out of scope and never appear
-- **Rating type**: a measure carries only the rating type of its latest rating. Energy can be rated as base building or whole building, and the two are not comparable, so the card and chart never mix them. `facts.md` names any ratings this leaves out
+- **Rating type**: a measure carries only the rating type of its latest rating. Energy can be rated as base building or whole building, and the two are not comparable, so the card and chart never mix them
 - **Current**: a measure is current when its latest rating, by rating period end, has not expired by the issue date
 - **When it renders**: only when at least one measure is current. Once it renders, every in-scope measure with a rating shows, current or expired, however long ago it lapsed
 - **Order**: energy, indoor environment, water, in cards and charts alike

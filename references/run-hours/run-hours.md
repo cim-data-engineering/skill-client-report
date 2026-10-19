@@ -6,12 +6,12 @@ When each unit of plant ran across one week, against the site's working hours: M
 
 ## What you write
 
-Nothing. Report in chat, not on the page: units left off the chart and why (only an enable or schedule, no points in PEAK, plant alarms but no run point), equipment types the signals reference does not cover yet, and any units beyond the first pass of 100. The build notes in `facts.md` list them.
+Nothing. Report in chat, not on the page: units left off the chart and why (only an enable or schedule, no points in PEAK, plant alarms but no run point), equipment types the signals reference does not cover yet, and any units beyond the first pass of 100. The script lists them to say in chat.
 
 ## Scope
 
 - **The week**: the latest full Monday-to-Sunday week before the issue date, in site local time. The window step converts local midnights to UTC, daylight saving included
-- **Missing data**: where no run point reported in that week, or every point that logs at a fixed interval went quiet together for 12 hours or more, the site's data feed stopped rather than the plant, and the week is not whole. The section then shows the latest full week before the data stopped, dated "the latest full week with complete data", provided it falls inside the reporting period. A stretch shorter than that stays hatched. Where the earlier week falls outside the period, the latest week is drawn with its gap hatched, or the section is left out when the week holds nothing; `facts.md` says which, to say in chat
+- **Missing data**: where no run point reported in that week, or every point that logs at a fixed interval went quiet together for 12 hours or more, the site's data feed stopped rather than the plant, and the week is not whole. The section then shows the latest full week before the data stopped, dated "the latest full week with complete data", provided it falls inside the reporting period. A stretch shorter than that stays hatched. Where the earlier week falls outside the period, the latest week is drawn with its gap hatched, or the section is left out when the week holds nothing; the script says which, to say in chat
 - **Working hours** come from the site in PEAK, each day its own; a closed day has no working-hours column and all its running is outside hours. All days closed or all `00:00` stops the plan step: ask the user what hours to assess against, never guess, and run `report.py plan` again with `--hours "Mon-Fri 08:00-18:00, Sat 09:00-13:00"`
 - **Equipment**: every type in `run-hours-signals.md`, central plant first, then field units. VAVs, chilled beams, lighting, lifts and meters stay out
 - **Sensors only**: a row is drawn only from a sensor that reports the unit running, a run status, a speed, current or power reading, or a compressor status. An enable, command or occupancy schedule says what the unit was told to do, not that it ran

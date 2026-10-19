@@ -13,8 +13,7 @@ next    Checks every printed call was saved, then prints the follow-up calls the
         responses call for (paging, a single-level site's zones, run hours history,
         key win evidence once wins.json exists), or says there are none.
 bundle  Builds every figure, row, series, link and note into <dir>/data.json, and
-        writes <dir>/facts.md: what the data shows, what to say in chat, and
-        what wins.json takes.
+        prints anything to say in chat at hand-over, then the next step.
 fill    Merges <dir>/wins.json into the bundle, fills the report and runs the
         check.
 
@@ -167,7 +166,7 @@ def cmd_next(a):
 # ── bundle ──────────────────────────────────────────────────────────────────
 def merge(into, part):
     for k, v in part.items():
-        if k in ("impact", "facts", "drop", "chat"):
+        if k in ("impact", "drop", "chat"):
             into.setdefault(k, []).extend(v)
         elif isinstance(v, dict) and k in ("links", "datelines", "notes", "statements"):
             into.setdefault(k, {}).update(v)
@@ -193,18 +192,14 @@ def cmd_bundle(a):
                       "to_date": bool(ctx["to_date"])}
     with open(os.path.join(work.root, "data.json"), "w") as fh:
         json.dump(data, fh, indent=1, ensure_ascii=False)
-    lines = ["# Facts, %s" % ctx["site"]["site_name"], ""]
-    lines += ["- " + f for f in data.get("facts", [])]
+    print("Wrote %s/data.json." % a.dir)
+    for c in data.get("chat", []):
+        print("Say in chat at hand-over: " + c)
     if "key-wins" in ctx["sections"] and "key-wins" not in data.get("drop", []):
-        lines += ["", "## wins.json", "",
-                  "Choose from the two key win candidate pulls by references/actions-and-wins/key-wins.md, and "
-                  "write %s/wins.json: a list, best first, of {\"tickets\": [full ticket ids], \"state\": "
-                  "\"fixed\" or \"in_flight\", \"heading\": ..., \"body\": ...}. Then run report.py next "
-                  "for the impact and photo calls, and next again for the level call." % a.dir]
-    with open(os.path.join(work.root, "facts.md"), "w", encoding="utf-8") as fh:
-        fh.write("\n".join(lines) + "\n")
-    print("Wrote %s/data.json and %s/facts.md." % (a.dir, a.dir))
-    print("\n".join(lines))
+        print("Next: choose the key wins from the two candidate pulls and write %s/wins.json, both by "
+              "references/actions-and-wins/key-wins.md. Then run: python3 scripts/report.py next %s" % (a.dir, a.dir))
+    else:
+        print("Next: python3 scripts/report.py fill %s" % a.dir)
 
 
 # ── fill ────────────────────────────────────────────────────────────────────
@@ -225,8 +220,7 @@ def cmd_fill(a):
             merge(data, kw.assemble(ctx, work))
     data["sections"] = ",".join(sections)
     chat = data.pop("chat", []) + chat
-    for k in ("facts", "drop"):
-        data.pop(k, None)
+    data.pop("drop", None)
     final = os.path.join(work.root, "report-data.json")
     with open(final, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=1, ensure_ascii=False)

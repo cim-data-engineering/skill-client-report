@@ -49,7 +49,7 @@ def half_year(x, up=False):
 
 def build(ctx, work, shared):
     today = io.d(ctx["today"])
-    by, left = {}, []
+    by = {}
     for r in work.get("ratings/ratings.json").rows:
         t = r.get("sustainability_rating_type") or {}
         label = measure(t.get("name"))
@@ -62,7 +62,6 @@ def build(ctx, work, shared):
         # Energy can be rated base building or whole building, and the two are not
         # comparable, so a measure carries only the rating type of its latest rating.
         kind = rows[-1]["type"]
-        left += [r for r in rows if r["type"] != kind]
         rows[:] = [r for r in rows if r["type"] == kind]
 
     # A measure is current when its latest rating has not expired by the issue date. One
@@ -70,12 +69,7 @@ def build(ctx, work, shared):
     live = lambda rows: bool(rows[-1].get("expiry_date")) and io.d(rows[-1]["expiry_date"]) >= today
     shown = [label for label, _ in MEASURES if label in by]
     if not any(live(by[label]) for label in shown):
-        seen = "; ".join("%s %.1f, expired %s" % (label, by[label][-1]["score"], mon_year(by[label][-1]["expiry_date"]))
-                         for label in shown if by[label][-1].get("expiry_date"))
-        return {"drop": [NAME],
-                "facts": ["Sustainability ratings left out: PEAK holds no current NABERS energy, indoor environment "
-                          "or water rating for the site%s. Say nothing about it in chat."
-                          % (" (latest: %s)" % seen if seen else "")]}
+        return {"drop": [NAME]}
 
     cards, charts = [], []
     for label in shown:
@@ -107,19 +101,7 @@ def build(ctx, work, shared):
     host = host.group(0) if host else "https://ace.cimenviro.com"
     link = "%s/dashboard/ratings?site_ids=%s&ratings_type_id_or_filter=all_ratings" % (host, ctx["site"]["site_id"])
 
-    def fact(c):
-        d = c.get("delta")
-        move = ((" (no change from %s)" % d["from"]) if d["dir"] == "flat" else
-                (" (%s %s from %s)" % (d["dir"], d["amount"], d["from"]))) if d else ", first rating"
-        return "%s %.1f of %g%s, %s" % (c["name"], c["score"], c["max"], move,
-                                        "expired" if c.get("expired") else "expires " + c["expires"])
-    facts = ["Sustainability ratings: %s. Say nothing about it in chat." % "; ".join(fact(c) for c in cards)]
-    if left:
-        facts.append("Sustainability ratings not shown, being a different type from their measure's latest "
-                     "rating: %s." % "; ".join("%s %.1f for the period to %s" % (r["type"], r["score"], mon_year(r["end"]))
-                                               for r in left))
     return {"ratings": {"cards": cards, "charts": charts},
             "links": {"ratings": link},
             "datelines": {"Sustainability ratings": "As at %s. Each rating is plotted at the end of its rating "
-                                                    "period." % io.day_long(ctx["today"])},
-            "facts": facts}
+                                                    "period." % io.day_long(ctx["today"])}}
