@@ -254,6 +254,16 @@ def currency(facts):
     return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", 100, "$"))
 
 
+MIN_SAVING = 200           # a key win states a saving only from this much, in the site's currency
+
+
+def small_saving(text):
+    """True when a figure a win sets bold, "$67" or "$1.2k", is under MIN_SAVING."""
+    m = re.search(r"(\d[\d,]*(?:\.\d+)?)\s*(k|thousand|m|million)?\b", text, re.I)
+    scale = {"k": 1e3, "thousand": 1e3, "m": 1e6, "million": 1e6}.get((m.group(2) or "").lower(), 1) if m else 1
+    return bool(m) and float(m.group(1).replace(",", "")) * scale < MIN_SAVING
+
+
 WORKING_DAY = 7.5          # hours in the working day the labour model counts, every region
 
 
