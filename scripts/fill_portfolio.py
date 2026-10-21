@@ -36,6 +36,7 @@ CLIMB = ('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="cu
          '<polyline points="16 7 22 7 22 13"/></svg>')
 DASHES = re.compile("[\u2013\u2014]|&ndash;|&mdash;")
 REGION = re.compile(r"[ \t]*<!-- fill: ([a-z-]+) -->\n(.*?)[ \t]*<!-- /fill: \1 -->\n?", re.S)
+SITES_LINE = 76         # characters the company sites line's two lines hold, site names, open counts and the rest
 
 
 def esc(s):
@@ -120,7 +121,7 @@ def change(mo, dp):
 
 def heatmap(d, months, to_date):
     dp, t = d["dp"], d["bands"]
-    head = ['<th class="rank"></th>', '<th class="lv">Site</th>', '<th class="ct">Size <span class="u">%s</span></th>' % d["unit"]]
+    head = ['<th class="rank"></th>', '<th class="lv">Site</th>', '<th class="ct sz">Size <span class="u">%s</span></th>' % d["unit"]]
     head += ['<th class="ct">%s</th>' % c for c in d["counts"]]
     head += ['<th class="mo">%s%s</th>' % (m, "<em>to date</em>" if to_date and i == len(months) - 1 else "")
              for i, m in enumerate(months)]
@@ -153,10 +154,15 @@ def companies(d):
         co = esc(r["company"])
         tile = ('<span class="logo"><img src="%s" alt="%s" title="%s"></span>' % (r["logo"], co, co) if r.get("logo")
                 else '<span class="logo none" title="%s">%s</span>' % (co, esc(initials(r["company"]))))
+        label = lambda s: s["name"] + (" %d open" % s["open"] if s["open"] else "")
+        # Two lines hold about SITES_LINE characters: past that, one site is named, so the count of the rest shows
+        rest = len(r["sites"]) - 2
+        two = len(" · ".join(label(s) for s in r["sites"][:2])) + (len(" · +%d more sites" % rest) if rest > 0 else 0)
+        k = 2 if two <= SITES_LINE else 1
         named = ['<span class="vs">%s%s</span>' % (esc(s["name"]), " <b>%d open</b>" % s["open"] if s["open"] else "")
-                 for s in r["sites"][:2]]
-        if len(r["sites"]) > 2:
-            more = len(r["sites"]) - 2
+                 for s in r["sites"][:k]]
+        if len(r["sites"]) > k:
+            more = len(r["sites"]) - k
             named.append('<span class="vs more">+%d more site%s</span>' % (more, "" if more == 1 else "s"))
         line = '<span class="sep"> &middot; </span>'.join(named)
         res, op = r["resolved"], r["open"]

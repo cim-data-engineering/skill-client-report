@@ -176,6 +176,10 @@ def photos(root):
                 jobs.append((pick, urls, os.path.join(out_dir, "%s.%s" % (pick, ext))))
                 plan.setdefault(k, []).append(pick)
 
+    if not jobs:
+        print("No win's tickets carry an image, so there are no sheets. Next: python3 scripts/report.py fill %s" % root)
+        return
+
     def get(job):
         pick, urls, dest = job
         for u in urls:

@@ -136,8 +136,12 @@ def build(ctx, work, shared):
 
     chat = []
     if loose["resolved"] or loose["open"]:
-        chat.append("%d actions resolved this quarter and %d open now have no assignee with a company, so they count "
-                    "in the total row and in no company's row." % (loose["resolved"], loose["open"]))
+        n = lambda k: "%d action%s" % (k, "" if k == 1 else "s")
+        held = [w % n(loose[k]) for k, w in (("resolved", "%s resolved this quarter"), ("open", "%s open now"))
+                if loose[k]]
+        one = loose["resolved"] + loose["open"] == 1
+        chat.append("%s %s no assignee with a company, so %s in the total row and in no company's row."
+                    % (io.listing(held), "has" if one else "have", "it counts" if one else "they count"))
     unlogged = [c for c in companies if not logos.get(c)]
     if unlogged:
         chat.append("Company table initials stand in for %s, with no logo in PEAK or none that could be fetched."

@@ -32,7 +32,7 @@ import portfolio_io as pio  # noqa: E402
 NAME = "key-wins"
 MAX_WINS = 10
 MAX_SHORTLIST = 25     # tickets read in full: enough to find ten wins, few enough to read
-TOP = 60               # candidates the digest prints, best first
+TOP = 60               # candidates the digest prints, best first, a third of them kept for work in flight
 SEVERITY = ["safety", "reliability", "comfort", "energy", "water", "other"]
 AGENT = re.compile(r"^\s*agent\b", re.I)
 IMAGE = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp"}
@@ -94,6 +94,15 @@ def rank(r):
             r.get("priority_id") or 9, -(r.get("savings") or 0))
 
 
+def best(keep, top):
+    """The best `top` of the ranked candidates, a third of them work in flight, so a portfolio's
+    closures never crowd it out; a kind short of its share hands the rest to the other."""
+    done = [r for r in keep if r.get("resolved_at")]
+    live = [r for r in keep if not r.get("resolved_at")]
+    n = min(len(live), max(top // 3, top - len(done)))
+    return done[:top - n] + live[:n]
+
+
 def digest(root, paths, top=TOP):
     """Candidate pulls, screened and ranked, one line each with the site. With the light
     first-pass rows this is the list to shortlist from; with the full second-pass rows each
@@ -106,9 +115,11 @@ def digest(root, paths, top=TOP):
     print("%d candidates, %d left after screening. Screened out: %s." % (
         len(rows), len(keep), "; ".join("%d %s" % (n, w) for w, n in why.items()) or "nothing"))
     if top and len(keep) > top:
-        print("The %d best by the ranking below; %d more not shown (--top 0 prints all). Ranked: finished before "
-              "open, then most people commenting, priority, a recorded saving." % (top, len(keep) - top))
-        keep = keep[:top]
+        shown = best(keep, top)
+        print("The %d best by the ranking below, %d of them work in flight; %d more not shown (--top 0 prints all). "
+              "Ranked: finished before open, then most people commenting, priority, a recorded saving."
+              % (top, sum(1 for r in shown if not r.get("resolved_at")), len(keep) - top))
+        keep = shown
     for r in keep:
         site = sites.get(r.get("site_id")) or {"site_name": "site %s" % r.get("site_id")}
         state = ("closed %s" % day(r.get("resolved_at"))) if r.get("resolved_at") else "open"
@@ -234,6 +245,10 @@ def photos(root):
                 urls = [u for u in ((a.get("link") or {}).get("url"), ((a.get("preview") or {}).get("link") or {}).get("url")) if u]
                 jobs.append((pick, urls, os.path.join(out_dir, "%s.%s" % (pick, ext))))
                 plan.setdefault(k, []).append(pick)
+
+    if not jobs:
+        print("No win's tickets carry an image, so there are no sheets. Next: python3 scripts/report.py fill %s" % root)
+        return
 
     def get(job):
         pick, urls, dest = job
