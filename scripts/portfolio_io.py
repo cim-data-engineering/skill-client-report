@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Helpers the portfolio report's section scripts share: calls split across the
-sites a tool takes at once, their saved chunks and pages read back as one, each
-site's state and building size, the ranking and the building-size weighting every
-portfolio row uses, and dates printed with a spaced hyphen, since the portfolio
-page carries no en or em dash.
+"""Helpers the portfolio report's section scripts share: the report's windows, calls
+split across the sites a tool takes at once, their saved chunks and pages read back
+as one, each site's state and building size, the ranking and the building-size
+weighting every portfolio row uses, and dates printed with a spaced hyphen, since
+the portfolio page carries no en or em dash.
 
-Imported by the scripts under references/portfolio-leaderboard/ only.
+Imported by scripts/report.py and the scripts under references/portfolio-leaderboard/ only.
 """
 import os
 import re
 import sys
+from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import peak_io as io  # noqa: E402
@@ -35,6 +36,37 @@ STATES = {
 }
 FEET = ("united states", "usa", "us")
 SQFT_PER_SQM = 10.7639
+WINS_DAYS = 90
+
+
+# ── windows ─────────────────────────────────────────────────────────────────
+def windows(today):
+    """The report's windows from `today` (the first site's local date), every one but
+    the key wins' on month boundaries, end exclusive:
+        month       the leaderboard month, the last complete month
+        quarter     the three complete months ending on it; quarter_months their firsts
+        prev_board  the quarter a month earlier, which last month's leaderboard ranked
+        wins        the 90 days to today
+        through     the leaderboard month's last day"""
+    first = date(today.year, today.month, 1)
+    return {"today": today.isoformat(),
+            "month": io.add_months(first, -1).isoformat(),
+            "quarter": [io.add_months(first, -3).isoformat(), first.isoformat()],
+            "quarter_months": [io.add_months(first, k).isoformat() for k in (-3, -2, -1)],
+            "prev_board": [io.add_months(first, -4).isoformat(), io.add_months(first, -1).isoformat()],
+            "wins": [(today - timedelta(days=WINS_DAYS - 1)).isoformat(), (today + timedelta(days=1)).isoformat()],
+            "through": io.last_day(first.isoformat()).isoformat()}
+
+
+def closing(ctx):
+    """True on the 1st: the leaderboard month has only just closed, so a site west of the
+    first one can still be in it, and its scores may not have settled."""
+    return io.d(ctx["today"]).day == 1
+
+
+def month_name(ctx):
+    """'September 2026': the leaderboard month."""
+    return "%s %d" % (io.month(ctx["month"]), io.d(ctx["month"]).year)
 
 
 # ── calls across many sites ─────────────────────────────────────────────────
@@ -182,10 +214,18 @@ def period(first, last_incl, short=False):
 
 
 def reporting_period(ctx, short=False):
+    """The quarter: '1 July - 30 September 2026'."""
     return period(ctx["quarter"][0], ctx["through"], short)
 
 
-def prev_quarter(ctx):
-    """The three whole months before the quarter, [start, end) as dates."""
-    q0 = io.d(ctx["quarter"][0])
-    return [io.add_months(q0, -3).isoformat(), q0.isoformat()]
+def wins_period(ctx, short=False):
+    """The key wins' 90 days: '24 July - 21 October 2026'."""
+    return period(ctx["wins"][0], ctx["today"], short)
+
+
+def span(first, last):
+    """'July - September', or across a year 'November 2025 - January 2026'."""
+    a, b = io.d(first), io.d(last)
+    if a.year == b.year:
+        return "%s - %s" % (io.month(first), io.month(last))
+    return "%s %d - %s %d" % (io.month(first), a.year, io.month(last), b.year)

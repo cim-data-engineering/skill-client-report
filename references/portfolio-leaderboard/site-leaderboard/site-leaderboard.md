@@ -1,6 +1,6 @@
 # Site leaderboard
 
-Owns the building performance leaderboard: a board for each ranking it takes, each ranking the sites on one figure. Scaffold part: `site-leaderboard`. Script: `scripts/site_leaderboard.py`, which builds every board from those rankings.
+Owns the leaderboard month's performance leaderboard: a board for each ranking it takes, each ranking the sites on one figure and moving them against last month's board. Scaffold part: `site-leaderboard`. Script: `scripts/site_leaderboard.py`, which builds every board from those rankings.
 
 ## What you write
 
@@ -9,7 +9,7 @@ Nothing, on the page or in chat.
 ## Section header
 
 Eyebrow: Site rankings  
-Statement: Building performance leaderboard  
+Statement: "{Leaderboard month} performance leaderboard": "September 2026 performance leaderboard"  
 No date line: each board's caption carries its window. With more than 10 sites, the header carries "Top 10 of {N} sites on each board.", N being the sites in the report.
 
 ## Boards
@@ -19,15 +19,15 @@ One board per ranking, in the order the rankings come.
 | Part | Content |
 | --- | --- |
 | Title | "{label} leaders", from the ranking's label |
-| Value | the site's figure on the ranking's later window, at the ranking's decimals |
-| Caption | by the ranking's window. Months: "{Last month} · moves since {first month}", the last month read "October to date" where it is the month to date. Quarters: "This quarter · moves since last quarter" |
-| Movement | against the site's rank on the ranking's earlier window |
+| Value | the site's figure now, at the ranking's decimals |
+| Caption | by the ranking's window. Month: "{Leaderboard month} · moves since {the month before}", "September · moves since August". Quarter: "{First month} - {Leaderboard month} · moves since {the month before}", "July - September · moves since August" |
+| Movement | against the site's place on last month's board |
 
 **Ranking:**
 
 - Best first on the unrounded value. Equal values split alphabetically by site name, ignoring case. No shared places, and no note explaining a tie
-- A site with no value on the later window is not on that board
-- Movement is the site's rank on the earlier window less its rank now, among the sites on the board that have both. A site with no value on the earlier window shows "New" and is never a climber
+- A site with no figure now is not on that board
+- Last month's board ranks every site with a figure on the window it ranked, whether or not the site is on the board now. Movement is the site's place there less its place now. A site with no figure there shows "New" and is never a climber
 
 **Each board:**
 
@@ -58,5 +58,5 @@ None.
 
 No calls of its own. **Takes:**
 
-- **Rankings**: each a label, an anchor, a window (months or quarters), each site's figure on the later and the earlier window, and the decimals to show
+- **Rankings**: each a label, an anchor, a window (month or quarter), each site's figure now and on the window last month's board ranked, and the decimals to show
 - **Site facts**: each leader's state and building size

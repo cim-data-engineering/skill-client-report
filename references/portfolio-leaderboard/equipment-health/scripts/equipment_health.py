@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Equipment health by site: the ranked heatmap and its portfolio row, and the sites'
-scores handed on as a ranking. See
+leaderboard month scores handed on as a ranking. See
 references/portfolio-leaderboard/equipment-health/equipment-health.md for what each
 figure means; this module is that reference's arithmetic.
 """
@@ -57,8 +57,8 @@ def build(ctx, work, shared):
     if not scored:
         return {"drop": [NAME]}
 
-    now = {s["site_id"]: months(s["site_id"])[-1] for s in scored}
-    start = {s["site_id"]: months(s["site_id"])[0] for s in scored}
+    now = {s["site_id"]: months(s["site_id"])[-1] for s in scored}         # the leaderboard month
+    start = {s["site_id"]: months(s["site_id"])[-2] for s in scored}       # the month last month's board ranked
     ranked = pio.rank(scored, lambda s: now[s["site_id"]])
     tail = sorted((s for s in scored if now[s["site_id"]] is None), key=pio.name_key)
     order = ranked + [(len(ranked) + k, s) for k, s in enumerate(tail, 1)]
@@ -80,24 +80,25 @@ def build(ctx, work, shared):
                           "months": portfolio}}
     if any(v is not None for v in portfolio):
         shared["weighted"] = True
-    shared.setdefault("rankings", []).append({"label": "Equipment health", "anchor": ANCHOR, "window": "months",
+    shared.setdefault("rankings", []).append({"label": "Equipment health", "anchor": ANCHOR, "window": "month",
                                               "now": now, "start": start, "dp": 1})
 
     chat = []
     if missing:
-        chat.append("No equipment health score this quarter for %s: left out of the equipment health table and "
-                    "ranking." % io.listing(missing))
+        chat.append("No equipment health score from %s to %s for %s: left out of the equipment health table and "
+                    "ranking." % (io.month(qm[0]), io.month(qm[-1]), io.listing(missing)))
     # A month that scored off under half of a site's busiest month is an outage, or rules still going live:
-    # either way its score covers part of the plant, and it moves the site's change and the portfolio row.
+    # either way its score covers part of the plant, and it moves the site's change, its place on the board
+    # and the portfolio row.
     for s in scored:
         n = [rules_by_month[s["site_id"]].get(m[:7], 0) for m in qm]
         most = max(n)
-        low = ["%s %s" % (io.month_label(ctx, m), "{:,}".format(x)) for m, x in zip(qm, n) if x and x < most / 2]
+        low = ["%s %s" % (io.month(m), "{:,}".format(x)) for m, x in zip(qm, n) if x and x < most / 2]
         if low:
             chat.append("Equipment health at %s scored off far fewer rules in some months: %s, against %s in its "
                         "busiest. Those months cover part of the plant, from an outage or rules still going live, so "
-                        "its change is not the plant's alone." % (s["site_name"].strip(), io.listing(low),
-                                                                   "{:,}".format(most)))
+                        "its change and its place on the board are not the plant's alone."
+                        % (s["site_name"].strip(), io.listing(low), "{:,}".format(most)))
     return {
         "equipment_health": heat,
         "datelines": {"Equipment health snapshot": "%s. Share of rule executions returning no fault."

@@ -1,16 +1,16 @@
 # Equipment health
 
-Owns the equipment health by site table and its portfolio row, and hands on the sites' scores as a ranking. Scaffold part: `equipment-health`. Script: `scripts/equipment_health.py`, which builds every row, cell, link and note below.
+Owns the equipment health by site table and its portfolio row, and hands on the sites' leaderboard month scores as a ranking. Scaffold part: `equipment-health`. Script: `scripts/equipment_health.py`, which builds every row, cell, link and note below.
 
 ## What you write
 
-Nothing on the page. In chat, say what the script prints: any site with no score in the quarter, which is left out of the table and the ranking, and any site whose scored rules in a month fell below half of its busiest month. That month covers part of the plant, from an outage or rules still going live, so it moves the site's change and the portfolio row without the plant having changed.
+Nothing on the page. In chat, say what the script prints: any site with no score in the quarter, which is left out of the table and the ranking, and any site whose scored rules in a month fell below half of its busiest month. That month covers part of the plant, from an outage or rules still going live, so it moves the site's change, its place on the board and the portfolio row without the plant having changed.
 
 ## Section header
 
 Eyebrow: Equipment health snapshot  
 Statement: Equipment health by site  
-Date line: "{period}. Share of rule executions returning no fault." The period runs from the quarter's first day to its last, or to the issue date where the report carries a month to date, with a spaced hyphen: "1 July - 21 October 2026".
+Date line: "{period}. Share of rule executions returning no fault." The period runs from the quarter's first day to its last, with a spaced hyphen: "1 July - 30 September 2026".
 
 ## Equipment score benchmark
 
@@ -23,22 +23,22 @@ Date line: "{period}. Share of rule executions returning no fault." The period r
 
 ## Ranked heatmap
 
-One row per site with a score in the quarter, ranked by its score for the period's last month, then a portfolio row.
+One row per site with a score in the quarter, ranked by its score for the leaderboard month, then a portfolio row.
 
 | Column | Content |
 | --- | --- |
-| Rank | Position by the last month's score; the trophy replaces 1 |
+| Rank | Position by the leaderboard month's score; the trophy replaces 1 |
 | Site | The site name with its state abbreviation in muted brackets, "88 Example St (NSW)" |
 | Size | Building size, in the portfolio's unit, named in the header |
 | Equip | Equipment with a scored rule in the quarter |
 | Rules | Scored rules in the quarter |
-| Month columns | The site's equipment health score for each month of the quarter, then the month to date headed "to date" |
+| Month columns | The site's equipment health score for each month of the quarter |
 | Chg | Last month column minus the first, 1dp, signed with a glyph |
 
 **Ranking:**
 
 - Best first on the unrounded score. Equal scores split alphabetically by site name, ignoring case. No shared places and no notes explaining ties
-- A site with scores in the quarter but none in its last month ranks after every site that has one, alphabetically
+- A site with scores in the quarter but none in the leaderboard month ranks after every site that has one, alphabetically
 
 **Portfolio row:**
 
@@ -62,7 +62,7 @@ One row per site with a score in the quarter, ranked by its score for the period
   `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 - The section carries the anchor `eh-by-site`
 
-**Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, over months: each site's score for the period's first and last month, to 1dp.
+**Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp.
 
 ## Notes band items
 
@@ -80,6 +80,6 @@ All in the main batch: `search_equipment_health_scores` over the quarter with ev
 
 - Six sites a call. Every grouping scans each rule's month rows for its sites, about 10,000 a site over a quarter and three times that at the largest, and PEAK refuses a call that would scan more than 200,000
 - `metadata_type` groups within each site already, so it carries `site_id` and takes no `site` beside it
-- `local_end_date` is exclusive and every bound a month boundary, the month to date included, so the month to date holds whatever exists so far
+- `local_end_date` is exclusive and every bound a month boundary: the quarter runs to the first of the issue month
 - Distinct counts come from an `all` call, never by summing months. Scores never sum: the site cell is PEAK's site rollup, and the portfolio row is the size-weighted mean of those
 - A site's scored rules in a month below half of its busiest month is what the script names in chat

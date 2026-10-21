@@ -8,7 +8,7 @@ The choosing and the words. Everything else is the script's: the candidates, the
 
 A portfolio can hold more candidates than anyone can read, so you read them in two passes, and save neither.
 
-1. **Shortlist.** Read the candidate pulls the plan lists to read, where they come back: the quarter's closures with comments and the open actions with comments, twenty sites a pull. Each row carries the ticket's title, site, priority, saving and who commented, nothing more. A pull whose pagination says `has_more` is read on with the same call at the next `start_index`. One that comes back offloaded as a file prints screened and ranked with `key_wins.py digest report <that file> [...]`: the best 60, a third of them work in flight where there is that much; `--top 0` prints them all. One read inline is screened by eye, by the patterns under **Data**. From the titles, the sites and the ranking, pick up to 25 tickets worth reading in full, by **Selection** and **Ranking** below, and write their full ticket ids to `report/shortlist.json`: `["00000000-0000-4000-8000-000000000001", ...]`
+1. **Shortlist.** Read the candidate pulls the plan lists to read, where they come back: the closures with comments over the 90 days to the issue date and the open actions with comments, twenty sites a pull. Each row carries the ticket's title, site, priority, saving and who commented, nothing more. A pull whose pagination says `has_more` is read on with the same call at the next `start_index`. One that comes back offloaded as a file prints screened and ranked with `key_wins.py digest report <that file> [...]`: the best 60, a third of them work in flight where there is that much; `--top 0` prints them all. One read inline is screened by eye, by the patterns under **Data**. From the titles, the sites and the ranking, pick up to 25 tickets worth reading in full, by **Selection** and **Ranking** below, and write their full ticket ids to `report/shortlist.json`: `["00000000-0000-4000-8000-000000000001", ...]`
 2. **Read in full.** `report.py next` prints one pull of the shortlist with its descriptions, solutions and comments. Read it where it comes back and never save it; offloaded, it prints with `key_wins.py digest report <that file> --top 0`, an agent's comments marked as such. Choose by **Selection**, and write `report/wins.json`, best first by **Ranking**:
 
 ```json
@@ -26,8 +26,8 @@ This is the section an owner reads to see the portfolio is in good hands: proble
 ## Section header
 
 Eyebrow: Key wins  
-Statement: What was found and acted on this quarter  
-Date line: the period alone, "1 July - 21 October 2026."
+Statement: What was found and acted on in the last 90 days  
+Date line: the 90 days to the issue date alone, "24 July - 21 October 2026."
 
 ## Selection
 
@@ -38,7 +38,7 @@ The test is whether the owner would take it as evidence their buildings are in g
 
 Either way it needs a comment history showing a person engaged with it. Exclude alerts resolved by stopping, tuning or ignoring a rule, platform, integration or data mapping work, and actions marked as not doing.
 
-**How many:** the strongest wins across the portfolio, ten at most. A site can carry several, or none; never pad a site in for balance.
+**How many:** the strongest wins across the portfolio, ten at most. A site can carry several, or none; never pad a site in for balance. Choose from the 90 days alone: a win an earlier month's report showed can show again.
 
 ## Ranking
 
@@ -100,7 +100,7 @@ Engineers often attach photos to an action ticket as they work it, screenshots a
 
 | Step | Call |
 | --- | --- |
-| Fixed | In the main batch, read and not saved: `tickets.tickets` `status_id:6`, `has_comments:true`, resolved inside the quarter, twenty sites a call, with `site_id`, `summary`, `priority_id`, `savings`, `status_id` and the `comments` (`limit:8`, `user_only:true`) authors and times only |
+| Fixed | In the main batch, read and not saved: `tickets.tickets` `status_id:6`, `has_comments:true`, resolved inside the 90 days to the issue date, twenty sites a call, with `site_id`, `summary`, `priority_id`, `savings`, `status_id` and the `comments` (`limit:8`, `user_only:true`) authors and times only |
 | In flight | In the main batch, read and not saved: the same, `status_ids:[1,3,7]`, no date bound |
 | The shortlist in full | Once `shortlist.json` exists: one `tickets.tickets` on its tickets, read and not saved, with `description`, `solution`, `equipment_ids`, `assignees` and the comments' text |
 | Impact, link, title, site | Once `wins.json` exists: one `search_action_tickets` on the wins' tickets, reading `impacts`, `savings`, `ticket_link`, `title`, `site_id` and `equipment_ids` |
@@ -108,9 +108,9 @@ Engineers often attach photos to an action ticket as they work it, screenshots a
 | Level | Once the impact rows are saved: one `platform.equipment` on their `equipment_ids`, selecting `zone.level.level_name` and `zone.level.system` |
 
 - The candidate pulls are the only responses the report reads without saving. Every saved response holds counts, scores, ids and type, level or company names: what people wrote on a ticket never goes into a file
-- `has_comments:true` drops each closure nobody wrote on, and holding to the quarter cuts it again. The first pass carries no text but the title, so a large portfolio's candidates stay small enough to come back whole; only the shortlist carries what people wrote
+- `has_comments:true` drops each closure nobody wrote on, and holding to the 90 days cuts it again. The first pass carries no text but the title, so a large portfolio's candidates stay small enough to come back whole; only the shortlist carries what people wrote
 - The digest ranks finished repairs before open work, then by how many people commented, then priority, then a recorded saving, and keeps a third of the list it prints for work in flight. The ranking orders your reading; it never decides a win
-- The digest screens out patterns that need no reading: a closure created and resolved the same moment; three or more at one site sharing a resolved second, a bulk cleanup; a ticket whose only commenter is an agent. Two more are left to you, since only the comments show them: closures summarised as still in fault, and alerts closed by stopping or tuning a rule
+- The digest screens out patterns that need no reading: a closure created and resolved the same moment; three or more at one site sharing a resolved second, a bulk cleanup; a ticket whose only commenter is an agent; open work no person has commented on in the 90 days. Comments come newest first, so the eight each candidate carries hold its latest. Two more are left to you, since only the comments show them: closures summarised as still in fault, and alerts closed by stopping or tuning a rule
 - `impacts` comes back as a list, sometimes `[]`, which is the `Other` case in **Display**. A level with `system:true` is PEAK's placeholder, not a place, so that equipment gets no level line
 - `key_wins.py photos` keeps the image attachments, one copy per file name and sixteen per win, downloads the originals in parallel and tiles them into `report/kw/sheet-w<n>.jpg`. The links are signed and lapse twenty minutes after the call: if the photos step reports them lapsed, make the photo call again and re-run it. Where they cannot be fetched, the wins go out without photos; say so in chat
 - The fill turns each photo upright, crops it to its tile around `focus` (fractions across and down the frame) and `zoom` (that many times tighter), shrinks and re-encodes it, which also drops the original's EXIF block, GPS position included. A photo reaches the report only through the script

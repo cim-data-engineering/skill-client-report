@@ -6,9 +6,10 @@ the writing.
     python3 references/portfolio-leaderboard/actions-and-wins/scripts/key_wins.py photos <dir>
 
 A portfolio can hold more candidates than anyone can read, so they are read in two
-passes, and neither pass is saved. The candidate pulls, closures with comments and
-open actions with comments across every site, carry each ticket's title, site,
-priority, saving and who commented, but nothing anyone wrote. `digest` screens a pull
+passes, and neither pass is saved. The candidate pulls, the closures with comments
+over the 90 days to the issue date and the open actions with comments across every
+site, carry each ticket's title, site, priority, saving and who commented, but
+nothing anyone wrote. `digest` screens a pull
 that came back as a file and ranks what is left. Once <dir>/shortlist.json names the
 tickets worth reading in full, scripts/report.py next prints one pull of their
 descriptions, solutions and comments. Once <dir>/wins.json names the chosen tickets,
@@ -55,10 +56,10 @@ def esc(ids):
 
 
 def calls(ctx):
-    q0, q1 = ctx["quarter"]
+    w0, w1 = ctx["wins"]
     closed = pio.split(ctx, "kw/closed.json", CHUNK, lambda f, ids: dict(io.gql(
-        f, "tickets.tickets", dict(esc(ids), status_id=6, has_comments=True, resolved_at_local_start=q0 + "T00:00:00",
-                                   resolved_at_local_end=q1 + "T00:00:00", limit=1000), LIGHT), read=True))
+        f, "tickets.tickets", dict(esc(ids), status_id=6, has_comments=True, resolved_at_local_start=w0 + "T00:00:00",
+                                   resolved_at_local_end=w1 + "T00:00:00", limit=1000), LIGHT), read=True))
     flight = pio.split(ctx, "kw/in-flight.json", CHUNK, lambda f, ids: dict(io.gql(
         f, "tickets.tickets", dict(esc(ids), status_ids=[1, 3, 7], has_comments=True, limit=1000),
         [x for x in LIGHT if x != "resolved_at"]), read=True))
@@ -70,9 +71,10 @@ def human(r):
     return [c for c in r.get("comments") or [] if not AGENT.match(c.get("author_full_name") or "")]
 
 
-def screen(rows):
-    """Drop what needs no reading: closures nobody worked, bulk close-outs, and tickets
-    whose only commenter is an agent. Returns (kept, reasons)."""
+def screen(rows, since):
+    """Drop what needs no reading: closures nobody worked, bulk close-outs, tickets whose
+    only commenter is an agent, and open work no person has commented on since `since`,
+    the first of the 90 days. Returns (kept, reasons)."""
     stamps = Counter((r.get("site_id"), r["resolved_at"][:19]) for r in rows if r.get("resolved_at"))
     why, keep = Counter(), []
     for r in rows:
@@ -82,6 +84,9 @@ def screen(rows):
             why["bulk close-out, three or more at one site sharing a resolved second"] += 1
         elif not human(r):
             why["only an agent commented"] += 1
+        # comments come newest first, so the eight read always hold the latest
+        elif not r.get("resolved_at") and max(c.get("created_at") or "" for c in human(r))[:10] < since:
+            why["open, with no person commenting in the 90 days"] += 1
         else:
             keep.append(r)
     return keep, why
@@ -107,9 +112,10 @@ def digest(root, paths, top=TOP):
     """Candidate pulls, screened and ranked, one line each with the site. With the light
     first-pass rows this is the list to shortlist from; with the full second-pass rows each
     line carries the description, solution and comments to choose and write from."""
-    sites = {s["site_id"]: s for s in io.Work(root).ctx["sites"]}
+    ctx = io.Work(root).ctx
+    sites = {s["site_id"]: s for s in ctx["sites"]}
     rows = [r for p in paths for r in io.read(p).rows]
-    keep, why = screen(rows)
+    keep, why = screen(rows, ctx["wins"][0])
     keep.sort(key=rank)
     day = lambda ts: ts[:10] if ts else "?"
     print("%d candidates, %d left after screening. Screened out: %s." % (
@@ -368,7 +374,7 @@ def assemble(ctx, work, facts):
     out.sort(key=lambda w: 0 if w["_fixed"] else 1)
     for w in out:
         w.pop("_fixed")
-    return {"wins": out, "datelines": {"Key wins": "%s." % pio.reporting_period(ctx)}, "chat": chat}
+    return {"wins": out, "datelines": {"Key wins": "%s." % pio.wins_period(ctx)}, "chat": chat}
 
 
 if __name__ == "__main__":

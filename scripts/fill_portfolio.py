@@ -119,12 +119,11 @@ def change(mo, dp):
     return chg(round(mo[-1], dp) - round(mo[0], dp), dp)
 
 
-def heatmap(d, months, to_date):
+def heatmap(d, months):
     dp, t = d["dp"], d["bands"]
     head = ['<th class="rank"></th>', '<th class="lv">Site</th>', '<th class="ct sz">Size <span class="u">%s</span></th>' % d["unit"]]
     head += ['<th class="ct">%s</th>' % c for c in d["counts"]]
-    head += ['<th class="mo">%s%s</th>' % (m, "<em>to date</em>" if to_date and i == len(months) - 1 else "")
-             for i, m in enumerate(months)]
+    head += ['<th class="mo">%s</th>' % m for m in months]
     head += ['<th class="cg">Chg</th>']
     body = []
     for r in d["rows"]:
@@ -166,10 +165,10 @@ def companies(d):
             named.append('<span class="vs more">+%d more site%s</span>' % (more, "" if more == 1 else "s"))
         line = '<span class="sep"> &middot; </span>'.join(named)
         res, op = r["resolved"], r["open"]
-        rows.append('      <tr><td class="rank">%s</td><td class="assignee"><span class="who">%s<span class="nm"><span class="co-name">%s</span>'
+        rows.append('      <tr><td class="rank">%s%s</td><td class="assignee"><span class="who">%s<span class="nm"><span class="co-name">%s</span>'
                     '<span class="vsites">%s</span></span></span></td><td class="num">%d</td><td class="num">%s</td>'
                     '<td>%s</td><td class="num %s">%d</td></tr>'
-                    % (TROPHY if r["rank"] == 1 else r["rank"], tile, co, line, len(r["sites"]), f"{res:,}",
+                    % (TROPHY if r["rank"] == 1 else r["rank"], move(r.get("move")), tile, co, line, len(r["sites"]), f"{res:,}",
                        scorecell(res / (res + op) * 100 if res + op else 0), "open-zero" if op == 0 else "open-hot", op))
     t = d["total"]
     res, op = t["resolved"], t["open"]
@@ -265,7 +264,7 @@ def fill_slots(s, D):
     s = sub_one(s, r"<title>[^<]*</title>", "<title>%s</title>" % esc(m["title"]), "title")
     s = sub_one(s, r"<h1>[^<]*</h1>", "<h1>%s</h1>" % esc(m["h1"]), "h1")
     s = sub_one(s, r'<p class="prepared">.*?</p>', '<p class="prepared">%s</p>' % m["prepared"], "prepared by")
-    for label, key in (("Reporting period", "period"), ("Sites", "sites"), ("Author", "author"), ("Issued", "issued")):
+    for label, key in (("Month", "month"), ("Sites", "sites"), ("Author", "author"), ("Issued", "issued")):
         s = sub_one(s, r"<dt>%s</dt><dd>[^<]*</dd>" % label, "<dt>%s</dt><dd>%s</dd>" % (label, esc(str(m[key]))), label)
     logo = ('<div class="clientlogo"><img src="%s" alt="%s"></div>' % (m["logo"], esc(m["client"]))
             if m.get("logo") else '<div class="clientlogo"></div>')
@@ -311,11 +310,11 @@ def main():
     s = open(tmp, encoding="utf-8").read()
     os.unlink(tmp)
 
-    months, to_date = D["months"]["quarter"], D["months"]["to_date"]
+    months = D["months"]["quarter"]
     base = os.path.dirname(os.path.abspath(a.data))       # photo paths are relative to the bundle
     render = {"boards": lambda: boards(D["boards"]),
-              "eh-table": lambda: heatmap(D["equipment_health"], months, to_date),
-              "cf-table": lambda: heatmap(D["comfort"], months, to_date),
+              "eh-table": lambda: heatmap(D["equipment_health"], months),
+              "cf-table": lambda: heatmap(D["comfort"], months),
               "companies": lambda: companies(D["companies"]),
               "wins": lambda: wins(D["wins"], base, a.photos_out),
               "ratings": lambda: ratings(D["ratings"]),

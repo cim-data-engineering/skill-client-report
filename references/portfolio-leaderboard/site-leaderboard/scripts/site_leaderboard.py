@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""The building performance leaderboard: a board for each ranking handed on, each
-with its leader, the chasing pack and the biggest climber. No calls of its own: it
-draws the rankings in `shared`, so it builds after the sections that hand them on. See
+"""The leaderboard month's performance leaderboard: a board for each ranking handed
+on, each with its leader, the chasing pack and the biggest climber, every move
+against last month's board. No calls of its own: it draws the rankings in `shared`,
+so it builds after the sections that hand them on. See
 references/portfolio-leaderboard/site-leaderboard/site-leaderboard.md.
 """
 import os
@@ -27,7 +28,8 @@ def board(ctx, size, unit, ranking, caption):
     now, start, dp = ranking["now"], ranking["start"], ranking["dp"]
     sites = [s for s in ctx["sites"] if now.get(s["site_id"]) is not None]
     ranked = pio.rank(sites, lambda s: now[s["site_id"]])
-    before = {s["site_id"]: k for k, s in pio.rank(sites, lambda s: start.get(s["site_id"]))}
+    # last month's board: every site with a figure on the window it ranked, on the board now or not
+    before = {s["site_id"]: k for k, s in pio.rank(ctx["sites"], lambda s: start.get(s["site_id"]))}
     moves = {s["site_id"]: (before[s["site_id"]] - k if s["site_id"] in before else "new") for k, s in ranked}
     fmt = (lambda v: "%.*f" % (dp, v)) if dp else (lambda v: "{:,}".format(int(round(v))))
     rows = []
@@ -54,12 +56,14 @@ def build(ctx, work, shared):
         return {"drop": [NAME]}
     size, unit, _ = pio.sizes(ctx, shared["facts"])
     qm = ctx["quarter_months"]
-    captions = {"months": "%s &middot; moves since %s" % (io.month_label(ctx, qm[-1]), io.month(qm[0])),
-                "quarters": "This quarter &middot; moves since last quarter"}
+    since = "moves since %s" % io.month(qm[-2])
+    captions = {"month": "%s &middot; %s" % (io.month(qm[-1]), since),
+                "quarter": "%s &middot; %s" % (pio.span(qm[0], qm[-1]), since)}
     boards = [board(ctx, size, unit, r, captions[r["window"]]) for r in rankings]
     boards = [b for b in boards if b["rows"]]
     if not boards:
         return {"drop": [NAME]}
     n = len(ctx["sites"])
     return {"boards": {"boards": boards,
-                       "note": "Top %d of %d sites on each board." % (SHOWN, n) if n > SHOWN else None}}
+                       "note": "Top %d of %d sites on each board." % (SHOWN, n) if n > SHOWN else None},
+            "statements": {"Site rankings": "%s performance leaderboard" % pio.month_name(ctx)}}

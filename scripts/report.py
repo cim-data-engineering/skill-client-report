@@ -9,10 +9,11 @@ PEAK calls and picks and writes the key wins.
     python3 scripts/report.py bundle <dir>
     python3 scripts/report.py fill   <dir> [--out <file.html>]
 
-plan    Fixes the quarter from today in site time and prints every call the chosen
+plan    Fixes the report's windows from today in site time and prints every call the
         sections need, each with the file under <dir>/peak/ its response is saved as.
-        --site plans the single-site report; --sites plans the portfolio report over
-        the active sites in those search_sites pages, with every section.
+        --site plans the single-site report, its quarter and the chosen sections;
+        --sites plans the portfolio leaderboard for the last complete month over the
+        active sites in those search_sites pages, with every section.
 next    Checks every printed call was saved, then prints the follow-up calls the
         responses call for (paging, a single-level site's zones, run hours history,
         key win evidence once wins.json exists), or says there are none.
@@ -67,10 +68,12 @@ IMPACT_ORDER = ["equipment-health-score", "thermal-comfort", "automated-checks",
 # names another, and each builds after every section whose figures it takes.
 #   site_facts / facts  the site's, or each site's, platform row, seeded before any section builds
 #   thermal_zones       zone points on the levels that scored (zones_configured: every configured point)
-#   rankings            [{label, anchor, window: "months" | "quarters", now, start, dp}], one board each
+#   rankings            [{label, anchor, window: "month" | "quarter", now, start, dp}], one board each:
+#                       now on the leaderboard month or the quarter ending on it, start on the window
+#                       last month's leaderboard ranked
 #   weighted            set when a section draws a size-weighted portfolio row
-#   partial             names of the volume figures shown that run short over a month to date; in the
-#                       single-site report, present once any section shows the month to date
+#   partial             names of the volume figures shown that run short over a month to date, present
+#                       once any section shows the month to date; single-site only
 # A figure the plan needs, before anything is fetched, a module names in HANDS_ON: plan.json
 # lists them as handed_on.
 
@@ -142,6 +145,10 @@ PORTFOLIO_SAVE = ("Save each response under %s/peak/ as the file named: an offlo
 READ_RULE = ("Read these where they come back and never save them: they carry what people wrote on the "
              "tickets, and the files hold none of that. One that comes back offloaded as a file prints "
              "screened and compact with: python3 references/single-site/actions-and-wins/scripts/key_wins.py digest <that file>")
+
+
+CLOSING = ("The %s leaderboard is built on %s, the day the month closed: a site west of the first may still be "
+           "in it, and its scores may not have settled. Build it again from the 2nd before it is sent.")
 
 
 PORTFOLIO_READ_RULE = ("Read these where they come back and never save them. They carry each candidate's title, "
@@ -221,9 +228,8 @@ def plan_portfolio(a):
     today = io.d(a.today) if a.today else datetime.now(ZoneInfo(sites[0]["timezone"])).date()
     root = os.path.abspath(a.dir)
     os.makedirs(os.path.join(root, "peak"), exist_ok=True)
-    ctx = dict(io.windows(today), mode="portfolio", sites=sites, client=a.client.strip(), client_logo=logo,
+    ctx = dict(pio.windows(today), mode="portfolio", sites=sites, client=a.client.strip(), client_logo=logo,
                author=a.author, sections=list(PORTFOLIO_ORDER), dir=root, brand=brand())
-    ctx["prev_quarter"] = pio.prev_quarter(ctx)
     with open(os.path.join(root, "plan.json"), "w") as fh:
         json.dump(ctx, fh, indent=1)
     calls = [c for s in active(ctx) for c in module(s, "portfolio").calls(ctx)]
@@ -231,9 +237,11 @@ def plan_portfolio(a):
         json.dump(calls, fh, indent=1)
     save = [c for c in calls if not c.get("read")]
     read = [c for c in calls if c.get("read")]
-    print("%s portfolio: %d sites, reporting period %s, issued %s%s." % (
-        ctx["client"], len(sites), pio.reporting_period(ctx, True), io.day_short(ctx["today"]),
-        io.and_to_date(ctx, "; both windows close on ")))
+    print("%s portfolio: %d sites, the %s leaderboard. Scores and actions resolved %s, key wins %s, issued %s."
+          % (ctx["client"], len(sites), pio.month_name(ctx), pio.reporting_period(ctx, True),
+             pio.wins_period(ctx, True), io.day_short(ctx["today"])))
+    if pio.closing(ctx):
+        print("Say in chat now: " + CLOSING % (pio.month_name(ctx), io.day_long(ctx["today"])))
     print("Sections: every one with data. Each site's dates are its own local calendar.")
     print("\n%d calls to save. Make them in parallel batches of about twenty, each exactly as printed: the tool, "
           "then its arguments. %s Then run: python3 scripts/report.py next %s\n"
@@ -343,16 +351,19 @@ def cmd_bundle(a):
 
 
 def bundle_portfolio(a, work):
+    import portfolio_io as pio
     ctx = work.ctx
     shared = {"facts": module("overview", "portfolio").facts(ctx, work)}       # each site's platform row
     data = {}
     for s in PORTFOLIO_ORDER:
         part = module(s, "portfolio").build(ctx, work, shared)
-        for n in part.get("notes", {}).values():         # notes run in page order; a closing one ends the band
-            n["order"] = len(PORTFOLIO_PAGE) if n.pop("closes", False) else PORTFOLIO_PAGE.index(s)
+        for n in part.get("notes", {}).values():         # notes run in page order
+            n["order"] = PORTFOLIO_PAGE.index(s)
         merge(data, part)
     data["sections"] = ",".join(s for s in PORTFOLIO_ORDER if s != "overview" and s not in data.get("drop", []))
-    data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]], "to_date": bool(ctx["to_date"])}
+    data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]]}
+    if pio.closing(ctx):
+        data.setdefault("chat", []).append(CLOSING % (pio.month_name(ctx), io.day_long(ctx["today"])))
     with open(os.path.join(work.root, "data.json"), "w") as fh:
         json.dump(data, fh, indent=1, ensure_ascii=False)
     print("Wrote %s/data.json." % a.dir)
@@ -431,8 +442,7 @@ def fill_portfolio(a, work):
     with open(final, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=1, ensure_ascii=False)
     name = re.sub(r"[^a-z0-9]+", "-", ctx["client"].lower()).strip("-") or "portfolio"
-    last = io.d(io.whole(ctx, ctx["quarter_months"])[-1])     # the quarter's last complete month names the file
-    out = a.out or os.path.join(work.root, "%s-portfolio-q%d-%d.html" % (name, (last.month - 1) // 3 + 1, last.year))
+    out = a.out or os.path.join(work.root, "%s-portfolio-%s.html" % (name, ctx["month"][:7]))   # the leaderboard month
     tiles = os.path.join(work.root, "tiles")
     r = subprocess.run([sys.executable, os.path.join(HERE, "fill_portfolio.py"), final, "--out", out,
                         "--photos-out", tiles], capture_output=True, text=True)

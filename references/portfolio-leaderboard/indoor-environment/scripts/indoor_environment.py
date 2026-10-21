@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Thermal comfort by site: the ranked heatmap and its portfolio row, with the sites'
-scores handed on as a ranking and the zone points as the thermal zones figure. See
+leaderboard month scores handed on as a ranking and the zone points as the thermal
+zones figure. See
 references/portfolio-leaderboard/indoor-environment/indoor-environment.md.
 """
 import os
@@ -60,8 +61,8 @@ def build(ctx, work, shared):
 
     sids = [s["site_id"] for s in scored]
     shared["thermal_zones"] = sum(zones(sid) for sid in sids)
-    now = {sid: months(sid)[-1] for sid in sids}
-    start = {sid: months(sid)[0] for sid in sids}
+    now = {sid: months(sid)[-1] for sid in sids}           # the leaderboard month
+    start = {sid: months(sid)[-2] for sid in sids}         # the month last month's board ranked
     ranked = pio.rank(scored, lambda s: now[s["site_id"]])
     tail = sorted((s for s in scored if now[s["site_id"]] is None), key=pio.name_key)
     order = ranked + [(len(ranked) + k, s) for k, s in enumerate(tail, 1)]
@@ -83,13 +84,13 @@ def build(ctx, work, shared):
                           "months": portfolio}}
     if any(v is not None for v in portfolio):
         shared["weighted"] = True
-    shared.setdefault("rankings", []).append({"label": "Thermal comfort", "anchor": ANCHOR, "window": "months",
+    shared.setdefault("rankings", []).append({"label": "Thermal comfort", "anchor": ANCHOR, "window": "month",
                                               "now": now, "start": start, "dp": 1})
 
     chat = []
     if missing:
-        chat.append("No thermal comfort score this quarter for %s: left out of the thermal comfort table and "
-                    "ranking." % io.listing(missing))
+        chat.append("No thermal comfort score from %s to %s for %s: left out of the thermal comfort table and "
+                    "ranking." % (io.month(qm[0]), io.month(qm[-1]), io.listing(missing)))
     return {
         "comfort": heat,
         "datelines": {"Indoor environment health snapshot":

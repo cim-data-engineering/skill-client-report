@@ -8,11 +8,11 @@ Nothing on the page. In chat, say what the script prints: any site with no build
 
 ## Masthead
 
-- Eyebrow: Quarterly building performance review
-- Title: {Client} portfolio. The HTML title is "{Client} Portfolio Quarterly Building Performance Review"
+- Eyebrow: Monthly performance leaderboard
+- Title: {Client} portfolio. The HTML title is "{Client} {Leaderboard month} Performance Leaderboard": "Centuria September 2026 Performance Leaderboard"
 - Prepared by: {Company name} - {Company service name} · Powered by PEAK. The company name is `name` in `BRAND.md`, CIM by default; the service name is `service-name`, Data Driven Operations by default. Powered by PEAK stays in every brand
-- Metadata row: Reporting period, Sites, Author, Issued
-  - **Reporting period**: the quarter's first day to its last, or to the issue date where the report carries a month to date, with a spaced hyphen: "1 Jul - 21 Oct 2026"
+- Metadata row: Month, Sites, Author, Issued
+  - **Month**: the leaderboard month: "September 2026"
   - **Sites**: the number of sites in the report
   - **Author**: the full name of the logged-in PEAK MCP user, from `who_am_i`
   - **Issued**: the issue date
@@ -41,7 +41,6 @@ The analytics overview's stat cards, as a scorecard strip with no section header
 ## Notes band items
 
 - **Portfolio rows.** "Scores are weighted by building size; counts are summed." Shown when any section draws a weighted portfolio row
-- **The reporting window.** Shown when the report carries a month to date: the month, how many of its days it holds, that the partial figures it takes include those days, and that scores are unaffected
 
 ## Data
 
@@ -59,4 +58,4 @@ All in the main batch, the site facts 100 sites a call and each count 10, since 
 
 **Hands on:** the site facts, each site's building size, currency, state and country, before any section builds.
 
-**Takes:** the thermal zones figure, whether any section drew a weighted portfolio row, and the names of the figures shown that run partial over the month to date.
+**Takes:** the thermal zones figure, and whether any section drew a weighted portfolio row.

@@ -1,6 +1,6 @@
 # Indoor environment
 
-Owns the thermal comfort by site table and its portfolio row, and hands on the sites' scores as a ranking and the zone points as the thermal zones figure. Scaffold part: `indoor-environment`. Script: `scripts/indoor_environment.py`, which builds every row, cell and link below.
+Owns the thermal comfort by site table and its portfolio row, and hands on the sites' leaderboard month scores as a ranking and the zone points as the thermal zones figure. Scaffold part: `indoor-environment`. Script: `scripts/indoor_environment.py`, which builds every row, cell and link below.
 
 ## What you write
 
@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: any site with no comfo
 
 Eyebrow: Indoor environment health snapshot  
 Statement: Thermal comfort by site  
-Date line: "{period}. Share of zone readings inside the ASHRAE comfort band during working hours." The period runs from the quarter's first day to its last, or to the issue date where the report carries a month to date, with a spaced hyphen.
+Date line: "{period}. Share of zone readings inside the ASHRAE comfort band during working hours." The period runs from the quarter's first day to its last, with a spaced hyphen.
 
 ## Thermal comfort score benchmark
 
@@ -23,22 +23,22 @@ Date line: "{period}. Share of zone readings inside the ASHRAE comfort band duri
 
 ## Ranked heatmap
 
-One row per site with a comfort score in the quarter, ranked by its score for the period's last month, then a portfolio row.
+One row per site with a comfort score in the quarter, ranked by its score for the leaderboard month, then a portfolio row.
 
 | Column | Content |
 | --- | --- |
-| Rank | Position by the last month's score; the trophy replaces 1 |
+| Rank | Position by the leaderboard month's score; the trophy replaces 1 |
 | Site | The site name with its state abbreviation in muted brackets |
 | Size | Building size, in the portfolio's unit, named in the header |
 | Levels | Levels that returned a comfort score in the quarter |
 | Zones | Zone temperature points on those levels |
-| Month columns | The site's thermal comfort score for each month of the quarter, then the month to date headed "to date" |
+| Month columns | The site's thermal comfort score for each month of the quarter |
 | Chg | Last month column minus the first, 1dp, signed with a glyph |
 
 **Ranking:**
 
 - Best first on the unrounded score. Equal scores split alphabetically by site name, ignoring case. No shared places and no notes explaining ties
-- A site with scores in the quarter but none in its last month ranks after every site that has one, alphabetically
+- A site with scores in the quarter but none in the leaderboard month ranks after every site that has one, alphabetically
 
 **Portfolio row:**
 
@@ -62,7 +62,7 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 
 **Hands on:**
 
-- **A ranking** labelled Thermal comfort, under the anchor `cf-by-site`, over months: each site's score for the period's first and last month, to 1dp
+- **A ranking** labelled Thermal comfort, under the anchor `cf-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp
 - **Thermal zones**: the Zones total, and every zone temperature point configured across the sites for a quarter in which no site scored
 
 ## Notes band items

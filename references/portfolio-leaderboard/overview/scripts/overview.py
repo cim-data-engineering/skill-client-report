@@ -5,8 +5,8 @@ the notes band frame. See references/portfolio-leaderboard/overview/overview.md.
 Imported by scripts/report.py through the same three hooks every section has:
 calls() before the fetch, more() for any follow-up round, build() to turn the saved
 responses into the bundle. facts() hands the site facts to every section before any
-of them builds. It takes the thermal zones figure, the weighted flag and the partial
-figures from `shared`, so it builds after the sections that hand them on.
+of them builds. It takes the thermal zones figure and the weighted flag from `shared`,
+so it builds after the sections that hand them on.
 """
 import base64
 import io as bytes_io
@@ -89,17 +89,14 @@ def build(ctx, work, shared):
     if shared.get("weighted"):
         notes["Portfolio rows"] = {"html": "<strong>Portfolio rows.</strong> Scores are weighted by building size; "
                                            "counts are summed."}
-    window = reporting_window(ctx, shared.get("partial") or [])
-    if window:
-        notes["The reporting window"] = {"closes": True, "html": "<strong>The reporting window.</strong> " + window}
     return {
         "masthead": {
             "client": ctx["client"],
-            "title": "%s Portfolio Quarterly Building Performance Review" % ctx["client"],
+            "title": "%s %s Performance Leaderboard" % (ctx["client"], pio.month_name(ctx)),
             "h1": "%s portfolio" % ctx["client"],
             "prepared": "Prepared by <strong>%s - %s</strong> · Powered by PEAK" % (brand.get("name", "CIM"),
                                                                                  brand.get("service", "Data Driven Operations")),
-            "period": pio.reporting_period(ctx, short=True),
+            "month": pio.month_name(ctx),
             "sites": len(ctx["sites"]),
             "author": ctx["author"],
             "issued": io.day_short(ctx["today"]),
@@ -118,14 +115,3 @@ def build(ctx, work, shared):
         "notes": notes,
         "chat": chat,
     }
-
-
-def reporting_window(ctx, partial):
-    m = ctx["to_date"]
-    if not m:
-        return ""
-    full = (io.add_months(io.d(m), 1) - io.d(m)).days
-    text = "%s %d covers %d of %d days, to the issue date. " % (io.month(m), io.d(m).year, io.days_in(ctx, m), full)
-    if partial:
-        return text + "%s include those days; scores are unaffected." % io.listing(partial)
-    return text + "Scores are unaffected."
