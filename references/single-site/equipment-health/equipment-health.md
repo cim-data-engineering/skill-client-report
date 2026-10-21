@@ -96,7 +96,7 @@ Under it, a chart note carrying the labor cost avoided notes item word for word,
 - Display values on points. Chart 1 display 1dp x.x% and Chart 2 compact number formatting
 - Add chart titles
 - Chart 1's score is the same `site` series as the snapshot site row, so the months they share must agree
-- Each value sits over its own month; a month with no score leaves a gap in the line
+- Each value sits over its own month; a month with no score leaves a gap in the line, and a month with no checks a gap in Chart 2
 
 **Links:**
 

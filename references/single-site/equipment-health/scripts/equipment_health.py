@@ -200,17 +200,20 @@ def build(ctx, work, shared):
         "(regional rate) and a %g-hour working day." % (window, code, per_hr, io.WORKING_DAY))
 
     # Chart 2: checks and labour cost by month
-    a, b = [checks_m[m] for m in kt], [cost_m[m] for m in kt]
+    # a month with no checks scored, an outage or before go-live, is a gap, not a zero
+    a = [checks_m[m] or None for m in kt]
+    b = [cost_m[m] if checks_m[m] else None for m in kt]
     money = "dollars" if sym == "$" else ("pounds" if sym == "£" else "euros")
-    trend_checks = {"a": a, "b": b, "labels_a": [io.compact(v) for v in a],
-                    "labels_b": ["%s%.1fk" % (sym, v / 1000) for v in b],
+    alt = lambda v, f: "no data" if v is None else f % v
+    trend_checks = {"a": a, "b": b, "labels_a": [io.compact(v) if v else "" for v in a],
+                    "labels_b": ["%s%.1fk" % (sym, v / 1000) if v is not None else "" for v in b],
                     "months": [io.mon(m) for m in kt], "to_date": kt[-1] == ctx["to_date"],
                     "note_after": "Automated health checks",
                     "note": method("each month's days" + (" (%s to date)" % io.month(ctx["to_date"])
                                                               if ctx["to_date"] else "")),
                     "alt": "Grouped bar chart, %s. Automated checks: %s and %s million. Labour cost avoided: %s and %s thousand %s."
-                           % (io.span(kt[0], kt[-1], sep=" to "), ", ".join("%.2f" % (v / 1e6) for v in a[:-1]), "%.2f" % (a[-1] / 1e6),
-                              ", ".join("%.1f" % (v / 1e3) for v in b[:-1]), "%.1f" % (b[-1] / 1e3), money)
+                           % (io.span(kt[0], kt[-1], sep=" to "), ", ".join(alt(v and v / 1e6, "%.2f") for v in a[:-1]), alt(a[-1] and a[-1] / 1e6, "%.2f"),
+                              ", ".join(alt(v if v is None else v / 1e3, "%.1f") for v in b[:-1]), alt(b[-1] if b[-1] is None else b[-1] / 1e3, "%.1f"), money)
                            + io.to_date_note(ctx, kt)}
 
     chat = []

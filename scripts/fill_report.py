@@ -266,10 +266,11 @@ def grouped_bar(d, months, to_date=False):
     lb = d.get("labels_b") or [d.get("fmt_b", "%s") % v for v in b]
     # Two units (checks against dollars) take a scale each; one unit (actions raised
     # against resolved) shares one, or a 17 draws as tall as a 69.
+    top = lambda vs: max([v or 0 for v in vs] + [1])     # a month with no data (None) draws no bar
     if d.get("scale") == "shared":
-        amax = bmax = max(max(a), max(b), 1) * 1.06
+        amax = bmax = max(top(a), top(b)) * 1.06
     else:
-        amax, bmax = max(max(a), 1) * 1.06, max(max(b), 1) * 1.06
+        amax, bmax = top(a) * 1.06, top(b) * 1.06
     H = 140.0
     out = []
     C = xs(len(months))
@@ -278,12 +279,16 @@ def grouped_bar(d, months, to_date=False):
     for k in range(len(months)):
         for x0, val, mx, cls in ((C[k] - w - 3, a[k], amax, "bar-primary"),
                                  (C[k] + 3, b[k], bmax, "bar-benchmark")):
+            if val is None:
+                continue
             t = BASELINE - (val / mx) * H
             x1 = x0 + w
             out.append('      <path class="%s" d="M%.1f,%d V%.1f Q%.1f,%.1f %.1f,%.1f H%.1f Q%.1f,%.1f %.1f,%.1f V%d Z"/>'
                        % (cls, x0, BASELINE, t, x0, t - 4, x0 + 4, t - 4, x1 - 4, x1, t - 4, x1, t, BASELINE))
     out.append('      <line class="baseline" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (LEFT, BASELINE, RIGHT, BASELINE))
     for k in range(len(months)):
+        if a[k] is None or b[k] is None:
+            continue
         ta = BASELINE - (a[k] / amax) * H
         tb = BASELINE - (b[k] / bmax) * H
         xa, xb = C[k] - w / 2 - 3, C[k] + w / 2 + 3
