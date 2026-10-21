@@ -36,7 +36,7 @@ One row per assignee company with actions resolved in the quarter or open now, t
 
 - Rank by resolved, most first, with ties alphabetical by company name. Every company with work shows, however many there are; the table breaks between rows across pages, its header repeating
 - An action counts once for each company holding it: one assignee from each of two companies puts it in both rows
-- Non-human assignees, such as agents, hold no row. An action held only by agents, or by nobody, is unassigned
+- Every assignee counts under their company, whoever they are: contractors, CIM, the client's own managing agents and AI agents alike. An action held by nobody, or by assignees with no company in PEAK, is unassigned
 - Unassigned actions count in the total row but have no row of their own; the script says how many in chat
 
 **Company sites line:** under the company name, the company's sites in `label`, by open actions most first. Up to two are named, each with "N open" in `text-heading` at 600 where non-zero, then "+N more sites".
@@ -67,7 +67,7 @@ All in the main batch:
 | Who resolved each action | `tickets.tickets` (`type:"escalated"`, `ticket_archived:false`, every `site_ids`) resolved over the quarter, `limit:1000` |
 | Who holds each open action | the same with `status_ids:[1,3,7]` and no date bound |
 
-- Both ticket pulls select only `ticket_id`, `site_id`, `status_id`, and `assignees` with `id`, `firstname`, `lastname`, `entity.name` and `entity.logo_url`: who holds each action, never what anyone wrote. The names only tell an agent from a person
+- Both ticket pulls select only `ticket_id`, `site_id`, `status_id`, and `assignees` with `id`, `entity.name` and `entity.logo_url`: which company holds each action, never what anyone wrote
 - `report.py next` pages each pull from its first page's total, 1000 rows a page
 - Every figure on the board and in the total row is a `count_tickets` count. The ticket rows only say which company holds each action
 - Rows with status Not Doing are dropped from the pulls

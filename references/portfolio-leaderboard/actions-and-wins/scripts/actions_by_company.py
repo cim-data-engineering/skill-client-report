@@ -7,7 +7,6 @@ references/portfolio-leaderboard/actions-and-wins/actions-by-company.md.
 """
 import base64
 import os
-import re
 import sys
 import urllib.request
 from collections import defaultdict
@@ -21,11 +20,9 @@ NAME = "actions-by-company"
 STAT4 = ["open", "in_progress", "closed", "on_hold"]           # every status but Not Doing
 OPEN = ["open", "in_progress", "on_hold"]
 COUNT_CHUNK, PAGE = 20, 1000
-AGENT = re.compile(r"^\s*agent\b", re.I)
-# The rows say only who holds each action: ids, the assignee's name to leave agents out,
-# and the company with its logo link. Never what anyone wrote.
-FIELDS = ["ticket_id", "site_id", "status_id", "assignees.id", "assignees.firstname", "assignees.lastname",
-          "assignees.entity.name", "assignees.entity.logo_url"]
+# The rows say only who holds each action: ids, and each assignee's company with its logo
+# link. Never what anyone wrote.
+FIELDS = ["ticket_id", "site_id", "status_id", "assignees.id", "assignees.entity.name", "assignees.entity.logo_url"]
 
 
 def esc(ids):
@@ -83,12 +80,12 @@ def counts(work, name):
 
 
 def holders(r):
-    """The companies holding an action: each human assignee's company, once."""
+    """The companies holding an action: each assignee's company, once. Every assignee counts,
+    agents and the client's own managing agents included."""
     out = []
     for a in r.get("assignees") or []:
-        person = " ".join(x for x in ((a.get("firstname") or "").strip(), (a.get("lastname") or "").strip()) if x)
         co = ((a.get("entity") or {}).get("name") or "").strip()
-        if co and not AGENT.match(person) and co not in out:
+        if co and co not in out:
             out.append(co)
     return out
 
