@@ -186,7 +186,7 @@ def tile(company, logo, cls="logo"):
     return '<span class="%s none" title="%s">%s</span>' % (cls, co, esc(initials(company)))
 
 
-AGE_CLASSES = ("a60", "a0")    # open 60 days or more, under 60
+AGE_CLASSES = ("a60", "a30", "a0")    # open 60 days or more, 30 to 60, under 30
 
 
 def open_actions(d):
@@ -233,7 +233,7 @@ def backlog_chart(d):
     """A bar a month end on one scale, split by age open as the age bars below it are, oldest at the
     base, the total on top, and the issue month to date in its tinted column, counted as at the issue
     date. The section's age key above it serves both."""
-    months, vals, stacks = d["months"], d["values"], d.get("stacks") or [[0, v] for v in d["values"]]
+    months, vals, stacks = d["months"], d["values"], d.get("stacks") or [[0, 0, v] for v in d["values"]]
     n = len(months)
     step = (RIGHT - LEFT - 40) / max(n - 1, 1)
     C = [LEFT + 20 + step * i for i in range(n)]
