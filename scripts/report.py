@@ -106,7 +106,7 @@ def active(ctx):
 
 def show(calls, start):
     for i, c in enumerate(calls, start):
-        print("%3d. %s -> %s" % (i, c["tool"], c["file"]))
+        print("%3d. %s %s" % (i, c["tool"], "(read, never saved)" if c.get("read") else "-> " + c["file"]))
         print("     " + json.dumps(c["args"], separators=(", ", ": ")))
 
 
@@ -133,7 +133,7 @@ PORTFOLIO_READ_RULE = ("Read these where they come back and never save them. The
                        "says has_more is read on with the same call at the next start_index. One that comes back "
                        "offloaded as a file prints screened and ranked, each candidate with its site, with: python3 "
                        "references/portfolio-leaderboard/actions-and-wins/scripts/key_wins.py digest %s <that file> "
-                       "[...]")
+                       "[...]. One read inline is screened by eye, by the patterns in key-wins.md under Data.")
 
 
 # ── plan ────────────────────────────────────────────────────────────────────
@@ -250,10 +250,13 @@ def cmd_next(a):
     new = [c for s in active(work.ctx) for c in module(s, mode).more(work.ctx, work)]
     if not new:
         folder = "portfolio-leaderboard" if mode == "portfolio" else "single-site"
-        print("No more calls. Next: python3 scripts/report.py bundle %s" % a.dir
-              if not os.path.isfile(os.path.join(work.root, "wins.json"))
-              else "No more calls. Next, if any win could carry photos: python3 "
-                   "references/%s/actions-and-wins/scripts/key_wins.py photos %s; then fill." % (folder, a.dir))
+        if not os.path.isfile(os.path.join(work.root, "wins.json")):
+            print("No more calls. Next: python3 scripts/report.py bundle %s" % a.dir)
+        elif os.path.isdir(os.path.join(work.root, "kw", "photos")):
+            print("No more calls. Next: python3 scripts/report.py fill %s" % a.dir)
+        else:
+            print("No more calls. Next, if any win could carry photos: python3 "
+                  "references/%s/actions-and-wins/scripts/key_wins.py photos %s; then fill." % (folder, a.dir))
         return
     have = {c["file"] for c in calls}
     calls += [c for c in new if c["file"] not in have]

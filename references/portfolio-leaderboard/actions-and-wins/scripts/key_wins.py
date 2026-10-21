@@ -44,7 +44,7 @@ SAVING = re.compile(r"\*\*(.+?)\*\*")   # a saving the win's tickets reference, 
 LIGHT = ["ticket_id", "site_id", "summary", "priority_id", "savings", "created_at", "resolved_at", "status_id",
          {"path": "comments", "args": {"limit": 8, "user_only": True}, "sub_fields": ["created_at", "author_full_name"]}]
 # The second pass, on the shortlist only: every word, to choose and write the wins from.
-FULL = ["ticket_id", "site_id", "summary", "description", "solution", "savings", "created_at", "resolved_at",
+FULL = ["ticket_id", "site_id", "summary", "priority_id", "description", "solution", "savings", "created_at", "resolved_at",
         "status_id", "equipment_ids", "assignees.id", "assignees.entity.name",
         {"path": "comments", "args": {"limit": 8, "user_only": True},
          "sub_fields": ["text", "created_at", "author_full_name"]}]

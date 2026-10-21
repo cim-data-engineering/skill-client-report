@@ -8,7 +8,7 @@ The choosing and the words. Everything else is the script's: the candidates, the
 
 A portfolio can hold more candidates than anyone can read, so you read them in two passes, and save neither.
 
-1. **Shortlist.** Read the candidate pulls the plan lists to read, where they come back: the quarter's closures with comments and the open actions with comments, twenty sites a pull. Each row carries the ticket's title, site, priority, saving and who commented, nothing more. A pull whose pagination says `has_more` is read on with the same call at the next `start_index`. One that comes back offloaded as a file prints screened and ranked with `key_wins.py digest report <that file> [...]`, the best 60 first; `--top 0` prints them all. From the titles, the sites and the ranking, pick up to 25 tickets worth reading in full, by **Selection** and **Ranking** below, and write their full ticket ids to `report/shortlist.json`: `["00000000-0000-4000-8000-000000000001", ...]`
+1. **Shortlist.** Read the candidate pulls the plan lists to read, where they come back: the quarter's closures with comments and the open actions with comments, twenty sites a pull. Each row carries the ticket's title, site, priority, saving and who commented, nothing more. A pull whose pagination says `has_more` is read on with the same call at the next `start_index`. One that comes back offloaded as a file prints screened and ranked with `key_wins.py digest report <that file> [...]`, the best 60 first; `--top 0` prints them all. One read inline is screened by eye, by the patterns under **Data**. From the titles, the sites and the ranking, pick up to 25 tickets worth reading in full, by **Selection** and **Ranking** below, and write their full ticket ids to `report/shortlist.json`: `["00000000-0000-4000-8000-000000000001", ...]`
 2. **Read in full.** `report.py next` prints one pull of the shortlist with its descriptions, solutions and comments. Read it where it comes back and never save it; offloaded, it prints with `key_wins.py digest report <that file> --top 0`, an agent's comments marked as such. Choose by **Selection**, and write `report/wins.json`, best first by **Ranking**:
 
 ```json
@@ -17,7 +17,7 @@ A portfolio can hold more candidates than anyone can read, so you read them in t
 ```
 
    `tickets` are full ticket ids, every ticket the win stands on, all at one site. `state` is `fixed` or `in_flight`. Where the tickets reference a saving, the body states it, per **Display**
-3. `report.py next` prints the impact and photo calls for those tickets, and once they are saved, the level call; make them, then run `key_wins.py photos report`
+3. `report.py next` prints the impact and photo calls for those tickets. Once they are saved, run `key_wins.py photos report` straight away, since the photo links lapse twenty minutes after the call, then `report.py next` again for the level call
 4. Look at the one numbered contact sheet per win, choose by **Photos** below, and add the picks to each win: `"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]`. A win with nothing worth showing gets none
 5. After `report.py fill`, look at every tile in `report/tiles/`: a crop can cut off the very detail that earned the photo its place. Adjust `focus` and `zoom` and fill again
 
