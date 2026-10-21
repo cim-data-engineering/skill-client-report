@@ -87,8 +87,8 @@ The portfolio report never asks which sections to include. Every section is plan
 | Site leaderboard for the leaderboard month | `site-leaderboard/` | at least one of its three boards has data |
 | Team leaderboard for the leaderboard month | `team-leaderboard/` | at least one of its two boards has data |
 | Open P1-2 actions | `actions-and-wins/`, `open-actions.md` | any priority 1 or 2 action is open now |
-| Equipment health by site | `equipment-health/` | any site returned an equipment health score in the quarter |
-| Thermal comfort by site | `indoor-environment/` | any site returned a thermal comfort score in the quarter |
+| Equipment health by site | `equipment-health/` | any site scored off 100 rules or more returned an equipment health score in the quarter |
+| Thermal comfort by site | `indoor-environment/` | any site scored off 100 zones or more returned a thermal comfort score in the quarter |
 | Key wins | `actions-and-wins/`, `key-wins.md` | at least one win qualifies |
 | Sustainability ratings by site | `sustainability-ratings/` | any site holds a current rating; never mentioned in chat |
 
