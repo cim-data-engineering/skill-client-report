@@ -320,7 +320,7 @@ def photos(root):
         raise SystemExit("no photo downloaded (%s). The links lapse twenty minutes after the call: make the "
                          "kw/attachments.json call again, save it, and re-run photos." % failed[0][1])
     unsign(work)
-    sheets = contact_sheets(root, plan, {p: d for p, d, e in got if d})
+    sheets = contact_sheets(root, plan, io.drop_repeats(plan, {p: d for p, d, e in got if d}))
     print("Downloaded %d of %d images. One sheet per win, each tile numbered with its pick:" % (len(got) - len(failed), len(got)))
     for k, s in sheets:
         print("  win %d (%s): %s" % (k, wins[k - 1].get("heading", "")[:60], s))

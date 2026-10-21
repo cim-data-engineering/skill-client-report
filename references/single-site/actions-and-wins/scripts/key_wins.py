@@ -299,7 +299,7 @@ def photos(root):
         raise SystemExit("No photo downloaded (%s). The links lapse twenty minutes after the call. %s Where they "
                          "cannot be fetched from where you are running, the wins go out without photos: say so in "
                          "chat, run %s, then fill." % (failed[0][1], again, nxt))
-    sheets = contact_sheets(root, plan, {p: d for p, d, e in got if d})
+    sheets = contact_sheets(root, plan, io.drop_repeats(plan, {p: d for p, d, e in got if d}))
     print("Downloaded %d of %d images. One sheet per win, each tile numbered with its pick:" % (len(got) - len(failed), len(got)))
     for k, s in sheets:
         print("  win %d (%s): %s" % (k, wins[k - 1].get("heading", "")[:60], s))

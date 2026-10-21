@@ -79,6 +79,21 @@ class Work:
         return read(self.path(name))
 
 
+def drop_repeats(plan, files):
+    """{pick: path} for each win's downloaded photos, less any whose bytes repeat an earlier one in the same
+    win, deleted: one image uploaded to two tickets is one photo. plan is {win: [picks]}."""
+    import hashlib
+    for picks in plan.values():
+        seen = set()
+        for p in [p for p in picks if p in files]:
+            with open(files[p], "rb") as fh:
+                digest = hashlib.sha1(fh.read()).hexdigest()
+            if digest in seen:
+                os.remove(files.pop(p))
+            seen.add(digest)
+    return files
+
+
 def call(file, tool, **args):
     """A call for the model to make: the PEAK tool, its arguments, and the file its
     response is saved as, under peak/."""
