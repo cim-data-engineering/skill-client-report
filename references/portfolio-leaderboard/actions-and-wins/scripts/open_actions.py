@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-"""Open P1-2 actions: the portfolio's open P1-2 backlog at each of the last eleven month ends and
-now, each split by how long its actions had been open, then the sites and the people holding the
-most priority 1 and 2 actions open now, most first, each count split the same way, and each name
-opening its PEAK ticket report. Not a leaderboard: no moves and no award. The lists and the backlog
-as at the issue date come from the one pull of open actions, the month ends from it and one pull of
-the actions closed since the first of them. See references/portfolio-leaderboard/actions-and-wins/open-actions.md.
+"""Open P1-2 actions: the portfolio's open P1-2 backlog at each month end over the past year, then
+the sites and the people holding the most priority 1 and 2 actions open now, most first, each split
+by how long the actions have been open, and each name opening its PEAK ticket report. Not a
+leaderboard: no moves and no award. See references/portfolio-leaderboard/actions-and-wins/open-actions.md.
 """
 import os
 import sys
@@ -18,13 +16,12 @@ import portfolio_io as pio  # noqa: E402
 NAME = "open-actions"
 PRIORITIES = [1, 2]
 PAGE = 1000
-SHOWN = 10                             # a list each side, so the backlog chart and both lists hold one page
+SHOWN = 10                             # a list, so the backlog chart and both lists hold one page
 DAY_MS = 86400000
 AGES = (60, 30)                        # days: 60 or more, 30 to 60, under 30, the buckets PEAK shows
 UNNAMED, NOBODY = "Unnamed assignee", "No assignee"
 COUNT_CHUNK = 20
 BACKLOG_MONTHS = 12                    # the issue month and the eleven month ends before it
-CLOSED = 6
 # The rows say only who holds each action, when it was raised and how long it has been open: ids, its
 # dates and age, and each assignee's company with its logo link. PEAK refuses the whole pull when any
 # assignee has no name recorded, so names come from a count by assignee. Never what anyone wrote.
@@ -50,11 +47,11 @@ def month_ends(ctx):
 
 def closed_pulls(ctx):
     """The P1-2 actions closed since the first month end: with the actions open now, every action open
-    at any month end, at the priority it holds now. Not doing is left out, as everywhere else."""
+    at any month end. Not doing is left out, as everywhere else."""
     since = month_ends(ctx)[0][1].isoformat()
     return pio.split(ctx, "op/closed.json", len(ctx["sites"]), lambda f, ids: io.gql(
         f, "tickets.tickets", {"type": "escalated", "site_ids": ids, "ticket_archived": False, "limit": PAGE,
-                               "status_ids": [CLOSED], "priority_ids": PRIORITIES,
+                               "status_ids": [6], "priority_ids": PRIORITIES,
                                "resolved_at_local_start": since + "T00:00:00"}, CLOSED_FIELDS))
 
 
@@ -70,13 +67,13 @@ def more(ctx, work):
 
 def backlog(ctx, work, open_rows):
     """The open P1-2 backlog at each month end, then as at the issue date under the issue month, each
-    split by age open on the day: [60 days or more, 30 to 60, under 30]. A month end holds
-    every action raised before the first of the next month and not closed by then."""
+    split by age open on the day: [60 days or more, 30 to 60, under 30]. A month end holds every
+    action raised before the first of the next month and not closed by then."""
     tz = {s["site_id"]: s.get("timezone") for s in ctx["sites"]}
     day = lambda r, k: io.d(io.local_day(r[k], tz.get(r["site_id"]) or "UTC"))
     rows = [(day(r, "created_at"), None) for r in open_rows if r.get("created_at")]
     rows += [(day(r, "created_at"), day(r, "resolved_at")) for r in pio.rows(work, "op/closed.json", PAGE)
-             if r.get("created_at") and r.get("resolved_at") and r["site_id"] in tz]
+             if r.get("created_at") and r.get("resolved_at")]
     today = io.d(ctx["today"])
     ends = [end for _, end in month_ends(ctx)] + [today + timedelta(days=1)]
     months = [io.mon(m.isoformat()) for m, _ in month_ends(ctx)] + [io.mon(date(today.year, today.month, 1).isoformat())]
