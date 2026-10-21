@@ -107,7 +107,7 @@ table.rk td.lg{padding-right:8px}
 .opgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px;break-inside:avoid}
 /* The open P1-2 backlog over the lists: a stacked bar a month end, split by age open in the age bars' shades */
 .chartblock.backlog{margin:8px 0 28px;break-inside:avoid}
-.stk.a60{fill:var(--on-error-container)}
+.stk.a60{fill:#FADBDC;fill:color-mix(in srgb,var(--error) 22%,var(--surface))}
 .stk.a30{fill:#74829A;fill:color-mix(in srgb,var(--text-muted) 90%,var(--surface))}
 .stk.a0{fill:#AFB7C5;fill:color-mix(in srgb,var(--text-muted) 55%,var(--surface))}
 .oplist{min-width:0}
@@ -122,7 +122,7 @@ table.op .ol .rg{margin-left:4px;font-size:.75rem}
 table.op .ol .none{color:var(--text-muted)}
 table.op .agebar{display:flex;width:100%;height:6px}
 table.op .agebar span{flex:none;height:100%;margin-right:2px;border-radius:2px}
-.a60{background:var(--on-error-container)}
+.a60{background:#FADBDC;background:color-mix(in srgb,var(--error) 22%,var(--surface))}
 .a30{background:#74829A;background:color-mix(in srgb,var(--text-muted) 90%,var(--surface))}
 .a0{background:#AFB7C5;background:color-mix(in srgb,var(--text-muted) 55%,var(--surface))}
 .agekey i{border:0}
@@ -347,6 +347,74 @@ td.nb.none{color:var(--text-muted)}
   <div class="bandkey agekey"><span><i class="a60"></i>&ge;60d</span><span><i class="a30"></i>30-60d</span><span><i class="a0"></i>&lt;30d</span></div>
   <!-- The backlog chart and the two lists: drawn by scripts/fill_portfolio.py from the bundle's open_actions. -->
 <!-- fill: open -->
+  <div data-sample="open" class="chartblock backlog">
+    <h3 class="charttitle">Backlog at month end</h3>
+    <div class="chart">
+      <svg viewBox="0 0 682 150" role="img" aria-label="Stacked bar chart of open priority 1 and 2 actions at each month end by age open, Oct 25 to Sep 26: Oct 25 21, Nov 25 24, Dec 25 22, Jan 26 19, Feb 26 20, Mar 26 17, Apr 26 18, May 26 15, Jun 26 14, Jul 26 13, Aug 26 15, Sep 26 12.">
+      <rect class="stk a60" x="41.1" y="84.9" width="29.7" height="26.1"/>
+      <rect class="stk a30" x="41.1" y="72.9" width="29.7" height="11.0"/>
+      <rect class="stk a0" x="41.1" y="48.8" width="29.7" height="23.1"/>
+      <text class="val" x="56.0" y="42.8" text-anchor="middle">21</text>
+      <rect class="stk a60" x="95.2" y="81.9" width="29.7" height="29.1"/>
+      <rect class="stk a30" x="95.2" y="66.9" width="29.7" height="14.0"/>
+      <rect class="stk a0" x="95.2" y="39.8" width="29.7" height="26.1"/>
+      <text class="val" x="110.0" y="33.8" text-anchor="middle">24</text>
+      <rect class="stk a60" x="149.2" y="78.9" width="29.7" height="32.1"/>
+      <rect class="stk a30" x="149.2" y="69.9" width="29.7" height="8.0"/>
+      <rect class="stk a0" x="149.2" y="45.8" width="29.7" height="23.1"/>
+      <text class="val" x="164.0" y="39.8" text-anchor="middle">22</text>
+      <rect class="stk a60" x="203.2" y="84.9" width="29.7" height="26.1"/>
+      <rect class="stk a30" x="203.2" y="75.9" width="29.7" height="8.0"/>
+      <rect class="stk a0" x="203.2" y="54.8" width="29.7" height="20.1"/>
+      <text class="val" x="218.0" y="48.8" text-anchor="middle">19</text>
+      <rect class="stk a60" x="257.1" y="87.9" width="29.7" height="23.1"/>
+      <rect class="stk a30" x="257.1" y="75.9" width="29.7" height="11.0"/>
+      <rect class="stk a0" x="257.1" y="51.8" width="29.7" height="23.1"/>
+      <text class="val" x="272.0" y="45.8" text-anchor="middle">20</text>
+      <rect class="stk a60" x="311.1" y="87.9" width="29.7" height="23.1"/>
+      <rect class="stk a30" x="311.1" y="81.9" width="29.7" height="5.0"/>
+      <rect class="stk a0" x="311.1" y="60.8" width="29.7" height="20.1"/>
+      <text class="val" x="326.0" y="54.8" text-anchor="middle">17</text>
+      <rect class="stk a60" x="365.1" y="90.9" width="29.7" height="20.1"/>
+      <rect class="stk a30" x="365.1" y="81.9" width="29.7" height="8.0"/>
+      <rect class="stk a0" x="365.1" y="57.8" width="29.7" height="23.1"/>
+      <text class="val" x="380.0" y="51.8" text-anchor="middle">18</text>
+      <rect class="stk a60" x="419.1" y="93.9" width="29.7" height="17.1"/>
+      <rect class="stk a30" x="419.1" y="87.9" width="29.7" height="5.0"/>
+      <rect class="stk a0" x="419.1" y="66.9" width="29.7" height="20.1"/>
+      <text class="val" x="434.0" y="60.9" text-anchor="middle">15</text>
+      <rect class="stk a60" x="473.1" y="93.9" width="29.7" height="17.1"/>
+      <rect class="stk a30" x="473.1" y="84.9" width="29.7" height="8.0"/>
+      <rect class="stk a0" x="473.1" y="69.9" width="29.7" height="14.0"/>
+      <text class="val" x="488.0" y="63.9" text-anchor="middle">14</text>
+      <rect class="stk a60" x="527.1" y="97.0" width="29.7" height="14.0"/>
+      <rect class="stk a30" x="527.1" y="90.9" width="29.7" height="5.0"/>
+      <rect class="stk a0" x="527.1" y="72.9" width="29.7" height="17.1"/>
+      <text class="val" x="542.0" y="66.9" text-anchor="middle">13</text>
+      <rect class="stk a60" x="581.1" y="97.0" width="29.7" height="14.0"/>
+      <rect class="stk a30" x="581.1" y="87.9" width="29.7" height="8.0"/>
+      <rect class="stk a0" x="581.1" y="66.9" width="29.7" height="20.1"/>
+      <text class="val" x="596.0" y="60.9" text-anchor="middle">15</text>
+      <rect class="stk a60" x="635.1" y="100.0" width="29.7" height="11.0"/>
+      <rect class="stk a30" x="635.1" y="93.9" width="29.7" height="5.0"/>
+      <rect class="stk a0" x="635.1" y="75.9" width="29.7" height="17.1"/>
+      <text class="val" x="650.0" y="69.9" text-anchor="middle">12</text>
+      <line class="baseline" x1="36" y1="112" x2="670" y2="112"/>
+      <text class="axis" x="56.0" y="128" text-anchor="middle">Oct 25</text>
+      <text class="axis" x="110.0" y="128" text-anchor="middle">Nov 25</text>
+      <text class="axis" x="164.0" y="128" text-anchor="middle">Dec 25</text>
+      <text class="axis" x="218.0" y="128" text-anchor="middle">Jan 26</text>
+      <text class="axis" x="272.0" y="128" text-anchor="middle">Feb 26</text>
+      <text class="axis" x="326.0" y="128" text-anchor="middle">Mar 26</text>
+      <text class="axis" x="380.0" y="128" text-anchor="middle">Apr 26</text>
+      <text class="axis" x="434.0" y="128" text-anchor="middle">May 26</text>
+      <text class="axis" x="488.0" y="128" text-anchor="middle">Jun 26</text>
+      <text class="axis" x="542.0" y="128" text-anchor="middle">Jul 26</text>
+      <text class="axis" x="596.0" y="128" text-anchor="middle">Aug 26</text>
+      <text class="axis" x="650.0" y="128" text-anchor="middle">Sep 26</text>
+      </svg>
+    </div>
+  </div>
   <div data-sample="open" class="opgrid">
     <div class="oplist">
       <div class="rkhead"><h3 class="rkt">Sites</h3><span>Open P1-2</span></div>
