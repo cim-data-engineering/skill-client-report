@@ -16,11 +16,6 @@ NAME = "equipment-health"
 BANDS = [(99.0, "Excellent"), (97.0, "Good"), (90.0, "Average")]
 # Labour model: annual minutes saved per scored rule, by priority id.
 ANNUAL_MINS = {1: 365 * 0.5, 2: 52 * 1.0, 3: 12 * 1.0, 4: 4 * 1.0, 5: 4 * 1.0}
-FULL = 0.9      # a go-live month whose checks ran at this share of the next month's pace ran from its 1st
-LOW = 0.5       # a month scored off under half the rules of the months either side is an outage
-STEP = 1.5      # a rule count that moves by this factor from one month to the next is a coverage change
-MONEY = {"GBP": "pounds", "EUR": "euros", "CHF": "francs", "SEK": "kronor", "BRL": "reais", "CNY": "yuan",
-         "IDR": "rupiah"}
 
 
 def calls(ctx):
@@ -40,18 +35,13 @@ def calls(ctx):
     ]
 
 
-def live_call(ctx, start):
-    """The headline score over the quarter's months the site was monitored in full."""
-    return io.call("eh/site-all-live.json", "search_equipment_health_scores", site_ids=[ctx["site"]["site_id"]],
-                   aggregate_entities=["site"], aggregate_period="all", local_start_date=start,
-                   local_end_date=ctx["quarter"][1])
-
-
 def more(ctx, work):
-    # A site that went live inside the quarter takes its headline score over the months after it
+    # A site that went live inside the quarter takes its headline score over the months it kept
     on = onboarding(ctx, site_months(work))
     if on and on["start"] > ctx["quarter"][0] and not work.has("eh/site-all-live.json"):
-        return [live_call(ctx, on["start"])]
+        return [io.call("eh/site-all-live.json", "search_equipment_health_scores", site_ids=[ctx["site"]["site_id"]],
+                        aggregate_entities=["site"], aggregate_period="all", local_start_date=on["start"],
+                        local_end_date=ctx["quarter"][1])]
     return []
 
 
@@ -67,11 +57,9 @@ def site_months(work):
 
 
 def onboarding(ctx, site_m):
-    """A site whose scores start inside the trend window, after its first month, went live then.
-    Returns that month, the day it went live as far as the month's checks tell (its checks per
-    rule against the next scored month's pace per rule and day), and the first month the windows
-    keep: the go-live month only when it ran from the 1st or nothing follows it. None for a site
-    scored from the window's first month."""
+    """For scores that start after the trend window's first month: the month they start, the day
+    its checks per rule date it to against the next month's pace, and the first month the windows
+    keep, which skips the go-live month unless it ran from the 1st or is the last."""
     tm = ctx["trend_months"]
     have = [m for m in tm if m[:7] in site_m]
     if not have or have[0] == tm[0]:
@@ -79,11 +67,10 @@ def onboarding(ctx, site_m):
     first, day = have[0], None
     if len(have) > 1:
         pace = lambda r: (r.get("total_executions") or 0) / max(r.get("task_count") or 0, 1)
-        rate = pace(site_m[have[1][:7]]) / io.days_in(ctx, have[1])
-        n = io.days_in(ctx, first)
+        rate, n = pace(site_m[have[1][:7]]) / io.days_in(ctx, have[1]), io.days_in(ctx, first)
         if rate:
             ran = min(n, max(1, int(round(pace(site_m[first[:7]]) / rate))))
-            day = 1 if ran >= FULL * n else n - ran + 1
+            day = 1 if ran >= 0.9 * n else n - ran + 1          # nine tenths of the pace is a whole month
     i = tm.index(first)
     return {"month": first, "day": io.d(first).replace(day=day).isoformat() if day else None,
             "start": first if day == 1 or i + 1 == len(tm) else tm[i + 1]}
@@ -99,12 +86,10 @@ def months_text(ctx, months):
 
 
 def build(ctx, work, shared):
-    site_m = site_months(work)
-    if not site_m:
-        return {"drop": [NAME], "chat": ["Equipment health left out: PEAK scored no rules at the site in the window."]}
     shared.setdefault("partial", []).extend(["automated checks", "labour cost avoided"])
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
-    # A site that went live inside the window shows the months it was monitored in full
+    # a site that went live inside the windows shows only the months it was monitored in full
+    site_m = site_months(work)
     on = onboarding(ctx, site_m)
     start = on["start"] if on else tm[0]
     kq, kt = [m for m in qm if m >= start], [m for m in tm if m >= start]
@@ -113,7 +98,6 @@ def build(ctx, work, shared):
         shared.setdefault("live_since", []).append({"month": on["month"], "day": on["day"]})
     names = {r["type_id"]: r["type"] for r in work.get("eh/types.json").rows}
     month_of = lambda r: (r.get("date") or "")[:7]
-    facts = shared.get("site_facts") or {}
 
     # snapshot heatmap
     tm_rows = work.get("eh/type-month.json")
@@ -145,7 +129,7 @@ def build(ctx, work, shared):
         chg = lambda r: (r["months"][-1] - r["months"][0]) if None not in (r["months"][0], r["months"][-1]) else -1e9
         rows.sort(key=lambda r: (-chg(r), -(r["months"][-1] or 0), r["name"]))   # ties: the higher score leads
     else:
-        rows.sort(key=lambda r: (r["months"][0], r["name"]))      # no change to sort by: the lowest leads
+        rows.sort(key=lambda r: (r["months"][0], r["name"]))      # one month: the lowest leads
     site_q = [io.pct(site_m[m[:7]]["score"], 1) if m[:7] in site_m else None for m in kq]
     heat = {"label": "Equipment type", "dp": 1, "bands": [99, 97, 90], "counts": ["Equip", "Rules"],
             "months": [io.mon(m) for m in kq], "to_date": kq[-1] == ctx["to_date"],
@@ -153,17 +137,9 @@ def build(ctx, work, shared):
             "site": {"counts": [sum(r["counts"][0] for r in rows), sum(r["counts"][1] for r in rows)],
                      "months": site_q}}
 
-    # the headline score: the quarter's rollup, or for a site that went live in it, the rollup over
-    # the months after
-    chat = []
-    site_all = work.get("eh/site-all.json").first()
-    if kq != qm:
-        if work.has("eh/site-all-live.json"):
-            site_all = work.get("eh/site-all-live.json").first()
-        else:
-            chat.append("The equipment health headline still includes %s, monitored only in part. Run python3 "
-                        "scripts/report.py next %s, make the call it prints, then bundle again."
-                        % (io.month(on["month"]), ctx.get("dir", "<dir>")))
+    # operational impact rows
+    live = kq != qm and work.has("eh/site-all-live.json")
+    site_all = work.get("eh/site-all-live.json" if live else "eh/site-all.json").first()
     score = io.pct(site_all["score"], 1)
     got = [(m, v) for m, v in zip(kq, site_q) if v is not None]
     if len(got) > 1:
@@ -171,10 +147,8 @@ def build(ctx, work, shared):
     else:
         delta, sub = None, "Scored over %s." % io.month_label(ctx, kq[0])   # a movement needs two months
 
-    # checks and labour cost by month, each month priced over its own days. A go-live month is out
-    # of the windows, so the model prices only days the site was monitored
-    code, per_hr, sym = io.currency(facts)
-    hours_day = io.working_day(ctx["site"])          # the site row from search_sites carries the country
+    # checks and labour cost by month, each priced over its own days; the rows add up the quarter's
+    code, per_hr, sym = io.currency(shared.get("site_facts") or {})
     by_month = defaultdict(list)
     for r in work.get("eh/priority-month.json").rows:
         by_month[month_of(r)].append(r)
@@ -188,7 +162,6 @@ def build(ctx, work, shared):
         cost_m[m] = int(round(mins_m[m] / 60 * per_hr))
         rules_m[m] = sum(r.get("task_count") or 0 for r in rs)
 
-    # operational impact rows: the checks and the labour cost are the chart's own months added up
     checks = sum(checks_m[m] for m in kq)
     rules = sum(r.get("task_count") or 0 for r in work.get("eh/priority-all.json").rows)
     mins, cost, days = sum(mins_m[m] for m in kq), sum(cost_m[m] for m in kq), sum(io.days_in(ctx, m) for m in kq)
@@ -204,11 +177,11 @@ def build(ctx, work, shared):
         {"chip": "Modelled", "chip_class": "neu", "fig": "%s%s" % (sym, "{:,}".format(cost)),
          "cap": "labour cost avoided",
          "sub": "%.1f hours and %.1f working days of inspection time, valued at %s %d/hr."
-                % (mins / 60, mins / 60 / hours_day, code, per_hr),
+                % (mins / 60, mins / 60 / io.WORKING_DAY, code, per_hr),
          "row": "labour-cost-avoided"},
     ]
 
-    # Chart 1: six months of the site score, each over its own month; a trend needs three points
+    # Chart 1: six months of the site score; a trend needs three points
     values = [io.pct(site_m[m[:7]]["score"], 1) if m[:7] in site_m else None for m in kt]
     pts = [(m, v) for m, v in zip(kt, values) if v is not None]
     trend_eh = None
@@ -223,12 +196,11 @@ def build(ctx, work, shared):
     method = lambda window: (
         "<strong>Labour cost avoided.</strong> Assumes each rule replaces one manual check: P1 daily at "
         "30 seconds; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Prorated over %s at %s %d/hr "
-        "(regional rate) and %s %g-hour working day."
-        % (window, code, per_hr, "an" if re.match(r"(8|11|18)(\.|$)", "%g" % hours_day) else "a", hours_day))
+        "(regional rate) and a %g-hour working day." % (window, code, per_hr, io.WORKING_DAY))
 
     # Chart 2: checks and labour cost by month
     a, b = [checks_m[m] for m in kt], [cost_m[m] for m in kt]
-    money = MONEY.get(code, "dollars")
+    money = "dollars" if sym == "$" else ("pounds" if sym == "£" else "euros")
     trend_checks = {"a": a, "b": b, "labels_a": [io.compact(v) for v in a],
                     "labels_b": ["%s%.1fk" % (sym, v / 1000) for v in b],
                     "months": [io.mon(m) for m in kt], "to_date": kt[-1] == ctx["to_date"],
@@ -240,37 +212,28 @@ def build(ctx, work, shared):
                               ", ".join("%.1f" % (v / 1e3) for v in b[:-1]), "%.1f" % (b[-1] / 1e3), money)
                            + io.to_date_note(ctx, kt)}
 
-    # What to say: when the site went live, and its rule count month by month. A month scored off a
-    # fraction of the rules of the months either side (or of the one month beside it, at either end),
-    # or off none, is a data outage wearing a score; a count that steps and stays is a coverage change.
+    chat = []
     if on:
-        chat.append("Equipment health went live %s, so its figures start with %s%s." % (
-            "in %s %d" % (io.month(on["month"]), io.d(on["month"]).year) if not on["day"] else
-            "on %s" % io.day_long(on["day"]) if on["day"][8:] == "01" else
-            "on about %s, going by %s's checks" % (io.day_long(on["day"]), io.month(on["month"])),
-            io.month_label(ctx, start),
-            ", the first month it covered in full" if start != on["month"] else ""))
-    if trend_eh is None:
-        chat.append("Equipment health has %d month%s of scores, too few for a trend, so its score chart is left "
-                    "out." % (len(pts), "" if len(pts) == 1 else "s"))
+        chat.append("Equipment health went live %s, so its figures start with %s." % (
+            "on about %s" % io.day_long(on["day"]) if on["day"] else "in %s" % io.month(on["month"]),
+            io.month_label(ctx, start)) + ("" if trend_eh else " Too few months for its trend chart."))
+
+    # A month scored off under half the rules of each month beside it, or off none, is a data outage
+    # wearing a score. A count that rises or falls by half again and holds is a coverage change.
     seq = [(m, rules_m[m]) for m in kt]
     rules_text = lambda n: "{:,} rule{}".format(n, "" if n == 1 else "s") if n else "none"
-    out, low = [], set()
-    for i, (m, n) in enumerate(seq):
-        nb = [seq[j] for j in (i - 1, i + 1) if 0 <= j < len(seq)]
-        if nb and (n == 0 or all(n < LOW * x for _, x in nb)):
-            low.add(i)
-            out.append("%s scored %s, against %s" % (io.month_label(ctx, m), rules_text(n), io.listing(
-                "{:,} in {}".format(x, io.month_label(ctx, k)) for k, x in nb)))
+    low = [i for i, (m, n) in enumerate(seq)
+           if len(seq) > 1 and (n == 0 or all(n < x / 2 for _, x in seq[max(i - 1, 0):i] + seq[i + 1:i + 2]))]
+    out = ["%s scored %s" % (io.month_label(ctx, seq[i][0]), rules_text(seq[i][1])) for i in low]
     steps = ["%s scored %s against %s in %s" % (io.month_label(ctx, seq[i][0]), rules_text(seq[i][1]),
                                                 "{:,}".format(seq[i - 1][1]), io.month_label(ctx, seq[i - 1][0]))
-             for i in range(1, len(seq)) if not {i, i - 1} & low
-             and max(seq[i][1], seq[i - 1][1]) >= STEP * min(seq[i][1], seq[i - 1][1])]
+             for i in range(1, len(seq)) if i not in low and i - 1 not in low
+             and max(seq[i][1], seq[i - 1][1]) >= 1.5 * min(seq[i][1], seq[i - 1][1])]
     if out:
-        chat.append("Equipment health data was out for part of the window: %s." % "; ".join(out))
+        chat.append("Equipment health data was out for part of the window: %s, against the months either side."
+                    % io.listing(out))
     if steps:
-        chat.append("Equipment health coverage changed, which is not an outage: %s. Scores either side of a "
-                    "change cover different rules." % "; ".join(steps))
+        chat.append("Equipment health coverage changed, not an outage: %s." % "; ".join(steps))
 
     links = {"equipment_health": link}
     if trend_eh:

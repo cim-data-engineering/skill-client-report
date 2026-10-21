@@ -13,13 +13,11 @@ Nothing on the page. In chat, say what the script prints: any site with no data 
 - Prepared by: {Company name} - {Company service name} · Powered by PEAK. The company name is `name` in `BRAND.md`, CIM by default; the service name is `service-name`, Data Driven Operations by default. Powered by PEAK stays in every brand
 - Metadata row: Month, Sites, Author, Issued
   - **Month**: the leaderboard month: "September 2026"
-  - **Sites**: the sites with data somewhere in the report: an equipment health or comfort score in the quarter, an action resolved in the quarter, an open P1-2 action, a row in the sustainability ratings table, or a key win. Each section marks the sites it shows, and the fill adds a site that shows only through a win. A site with none is left out of the count and named in chat; its equipment, sensors and rules still count in the scorecards. Where no section shows a site, every site counts
+  - **Sites**: the sites with data somewhere in the report: a score, an action resolved, an open P1-2 action, a rating or a key win. A site with none is left out of the count and named in chat; its equipment, sensors and rules still count in the scorecards
   - **Author**: the full name of the logged-in PEAK MCP user, from `who_am_i`
   - **Issued**: the issue date, the earliest local date across the sites, so the leaderboard month has closed at every one
 - The AI disclaimer, verbatim, below the metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
-- **Client logo**: a slot right of the title block. It holds only a logo file the user supplied, passed as `--client-logo`: a raster logo trimmed of its transparent margins, an SVG as it is, each in its own colours. A logo dark enough to vanish on the navy masthead sits on a light tile. With none supplied the slot is empty and shows nothing. Never search PEAK for a logo and never ask for one
-  - `report.py plan` refuses a file inside this skill or inside a brand overlay, any folder holding a `BRAND.md`: those are sample and partner logos, never a client's. A brand overlay's logos go to the masthead, never this slot
-  - The fill reads the file each time it runs, so the bundle holds no logo, and a logo added to or dropped from the plan shows on the next fill
+- **Client logo**: a slot right of the title block. It holds only the logo file the user supplied, passed as `--client-logo` and read at fill: a raster logo trimmed of its transparent margins, an SVG as it is, each in its own colours, a dark one on a light tile. `report.py plan` refuses a file inside this skill or a brand overlay (a folder holding a `BRAND.md`). With none supplied the slot is empty and shows nothing. Never search PEAK for a logo and never ask for one
 - Never print a PEAK site id in the text. Links carry it in the URL
 
 ## Scorecard strip
@@ -38,7 +36,7 @@ The analytics overview's stat cards, as a scorecard strip with no section header
 
 - PEAK stores every site's building size in square metres, US sites included
 - A site in the United States reads in square feet: the stored figure × 10.7639, rounded to the nearest 100 ft². A size is converted, never relabelled
-- The portfolio takes the unit most of its floor area reads in, so a mostly US portfolio shows ft² and any other m². Every size shows in that unit, and the script names in chat any site shown in a unit other than its own
+- The portfolio takes the unit most of its floor area reads in, and the script names in chat any site shown in a unit other than its own
 - A site with no building size counts in no size total, and in no sustainability ratings portfolio row, the one row weighted by size. The script names it in chat
 
 ## Data
@@ -57,4 +55,4 @@ All in the main batch, the site facts 100 sites a call and each count 10, since 
 
 **Hands on:** the site facts, each site's building size, currency, state, country, building photo link and default comfort band, before any section builds.
 
-**Takes:** the thermal zones figure, and the sites with data, which is why it builds after every other section.
+**Takes:** the thermal zones figure, and the sites with data.

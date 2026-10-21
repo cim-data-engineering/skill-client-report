@@ -43,12 +43,12 @@ Above the table, a legend: ↑ "Up from the rating before" in green, ↓ "Down f
 
 - The inline score bar, running from the rating type's minimum score to its maximum, so ratings on different scales still read as a share of the way up
 - The value at the precision its type uses: 1dp for a type rated in fractions, such as half stars on a scale of ten points or fewer; whole numbers otherwise
-- A fixed-width suffix: `*` when the rating has expired, then an arrow against the site's previous rating of the same type, ↑ up or ↓ down, nothing when it held, there is no previous rating, or the rating has expired. An expired rating says how the site stood, not where it is going
+- A fixed-width suffix: `*` when the rating has expired, then an arrow against the site's previous rating of the same type, ↑ up or ↓ down, nothing when it held, there is no previous rating, or the rating has expired
 - A dash when the site has no rating for the measure
 
-**Portfolio row:** per measure, the building-size-weighted mean of the current ratings, on the same bar and at the same precision. It is the report's one portfolio row weighted by size; the others are plain averages.
+**Portfolio row:** per measure, the building-size-weighted mean of the current ratings, on the same bar and at the same precision.
 
-- It shows only when every current rating in the column shares one rating type, and two or more sites with a building size hold one. Ratings on different scales cannot be averaged, and one site's rating is not the portfolio's, so otherwise the cell is a dash
+- It shows only when every current rating in the column shares one rating type, and two or more sites with a building size hold one. Otherwise the cell is a dash
 - Expired ratings count in no portfolio cell, and a site with no building size counts in no weighting
 - Its arrow compares the same sites' previous ratings of the same type, weighted the same way, over the sites that have both
 

@@ -24,7 +24,7 @@ Section link, labelled "See live equipment health dashboard", over the quarter. 
 
 ## Labor cost avoided model
 
-Each month: rules scored that month (by priority) x annual mins saved per rule x (the month's days / 365) x labor cost per minute, the month to date over its days so far. The headline is those monthly figures added up over the reporting period, so it always equals the bars Chart 2 draws for the same months. Labor rates and the working day come from the site's currency and country (`peak_io.currency`, `peak_io.working_day`): AUD 150/hr, USD 100/hr, GBP 75/hr, EUR 100/hr and so on; a 7.6-hour day unless the country keeps another (8 in the US, 7.5 in the UK, 7.8 in Ireland). The note names both.
+Each month: rules scored that month (by priority) x annual mins saved per rule x (the month's days / 365) x labor cost per minute, the month to date over its days so far. The headline is those monthly figures added up over the reporting period, so it always equals the bars Chart 2 draws for the same months. The labor rate follows the site's currency (`peak_io.currency`), and hours convert to days at a 7.5-hour working day.
 
 | Priority | Annual checks | Mins per check | Annual mins saved per rule | Labor cost per hour ($US) | Annual cost saved per rule ($US) |
 | -------- | ------------- | -------------- | -------------------------- | ------------------------- | -------------------------------- |

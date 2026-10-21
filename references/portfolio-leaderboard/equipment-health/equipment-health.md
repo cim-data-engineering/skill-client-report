@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: any site with no score
 
 Eyebrow: Equipment health snapshot  
 Statement: Equipment health by site  
-Date line: "{period}. Share of automated checks that found no fault. Equip and Rules count the equipment and rules scored; the portfolio row averages the sites." The period runs from the quarter's first day to its last, with a spaced hyphen: "1 July - 30 September 2026". Where the sites scored differ between the quarter's first and last months, it adds which its Chg compares: "Its Chg compares the 6 sites scored in both July and September."
+Date line: "{period}. Share of automated checks that found no fault. Equip and Rules count the equipment and rules scored; the portfolio row averages the sites." The period runs from the quarter's first day to its last, with a spaced hyphen: "1 July - 30 September 2026". Where the sites scored differ between the quarter's first and last months, it adds "Its Chg compares the {N} sites scored in both {first month} and {last month}."
 
 ## Equipment score benchmark
 
@@ -42,9 +42,9 @@ One row per site with a score in the quarter, ranked by its score for the leader
 
 **Portfolio row:**
 
-- Each month's score is the plain average of the sites scored that month, unweighted, so a site with no building size counts like any other
+- Each month's score is the plain average of the sites scored that month
 - Size, Equip and Rules are summed over the rows shown
-- Chg compares only the sites scored in both the quarter's first and last months: their average at the end less their average at the start, so a site going live or dropping out is not read as a move. With no site scored at both ends it is a dash
+- Chg is the last month less the first over only the sites scored in both, so a site going live or dropping out is not read as a move; a dash where no site was
 
 **Display:**
 
@@ -62,10 +62,7 @@ One row per site with a score in the quarter, ranked by its score for the leader
   `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 - The section carries the anchor `eh-by-site`
 
-**Hands on:**
-
-- **A ranking** labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%"
-- **Sites with data**: each site with a score in the quarter
+**Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%"; and the sites with data, each site with a score in the quarter.
 
 ## Data
 

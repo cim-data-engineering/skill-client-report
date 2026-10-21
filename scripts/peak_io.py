@@ -247,14 +247,7 @@ def currency(facts):
     return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", 100, "$"))
 
 
-# the working day the labour model counts in, by country; 7.6 hours elsewhere (the Australian standard)
-WORKING_DAY = {"united states": 8, "usa": 8, "us": 8, "united states of america": 8, "canada": 8,
-               "new zealand": 8, "united kingdom": 7.5, "ireland": 7.8, "singapore": 8.8}
-
-
-def working_day(facts):
-    """Hours in the working day the labour model counts, for the site's country."""
-    return WORKING_DAY.get((facts.get("country") or "").strip().lower(), 7.6)
+WORKING_DAY = 7.5          # hours in the working day the labour model counts, every region
 
 
 # ── building size ───────────────────────────────────────────────────────────
