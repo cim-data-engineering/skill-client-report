@@ -55,7 +55,7 @@ Above the table, a legend: ↑ "Up from the rating before" in green, ↓ "Down f
 **Display:**
 
 - Up is `on-success-container`, down `on-error-container`, per the rating table component in DESIGN.md
-- Under the table, the source line: "Source: sustainability ratings recorded in PEAK. The portfolio row is weighted by building size over the sites with a current rating, and shows where two or more sites hold one of a single type."
+- Under the table, the source line: "Source: sustainability ratings recorded in PEAK. The portfolio row is weighted by building size."
 
 **Links:**
 

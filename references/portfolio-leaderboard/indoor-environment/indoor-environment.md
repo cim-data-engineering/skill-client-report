@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: any site with no comfo
 
 Eyebrow: Indoor environment health snapshot  
 Statement: Thermal comfort by site  
-Date line: "{period}. Share of zone readings inside the site's comfort band in PEAK during working hours." The period runs from the quarter's first day to its last, with a spaced hyphen. Where the sites scored differ between the quarter's first and last months, it adds "Its Chg compares the {N} sites scored in both {first month} and {last month}."
+Date line: "{period}. Share of zone readings inside the site's comfort band during working hours." The period runs from the quarter's first day to its last, with a spaced hyphen. Where the sites scored differ between the quarter's first and last months, it adds "Its Chg compares the {N} sites scored in both {first month} and {last month}."
 
 ## Thermal comfort score benchmark
 

@@ -98,7 +98,7 @@ def build(ctx, work, shared):
     if missing:
         chat.append("No thermal comfort score from %s to %s for %s: left out of the thermal comfort table and "
                     "ranking." % (io.month(qm[0]), io.month(qm[-1]), io.listing(missing)))
-    note = ("%s. Share of zone readings inside the site's comfort band in PEAK during working hours."
+    note = ("%s. Share of zone readings inside the site's comfort band during working hours."
             % pio.reporting_period(ctx))
     if left and len(sids) - len(left) > 0:
         note += " Its Chg compares the %s scored in both %s and %s." % (

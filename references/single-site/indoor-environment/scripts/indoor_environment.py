@@ -261,7 +261,7 @@ def build(ctx, work, shared):
 
     links = {"comfort": link}
     datelines = {"Indoor environment health snapshot":
-                 "%s. Share of zone readings inside the comfort band set for the site in PEAK during working "
+                 "%s. Share of zone readings inside the comfort band set for the site during working "
                  "hours, by %s, %s." % (months_text(ctx, kq, " and "), "zone" if single else "level",
                                         "lowest first" if one else "in building order")}
     if trend:

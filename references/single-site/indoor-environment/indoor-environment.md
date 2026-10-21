@@ -29,7 +29,7 @@ Section link, labelled "See live indoor environment dashboard", over the quarter
 ## Indoor environment health snapshot
 
 Thermal comfort by level, or by zone for a single-level site  
-Date: the quarter. Share of zone readings inside the comfort band set for the site in PEAK during working hours, by level, in building order
+Date: the quarter. Share of zone readings inside the comfort band set for the site during working hours, by level, in building order
 
 Heatmap table on the same `heatmap` component as the equipment health snapshot. One row per site level, a score column for each month of the reporting period, the month to date last and headed "to date" where the report carries one, cell value the thermal comfort score to 1dp, closing with a signed change column.
 
