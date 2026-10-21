@@ -17,7 +17,6 @@ ANCHOR = "cf-by-site"
 BANDS = [92, 85, 75]
 CHUNK, PAGE = 100, 80
 ZONE_CHUNK = 10              # the zone count returns a row per level and refuses a response over 40,000 characters
-MIN_ZONES = 100              # a site scored off fewer zone points is too thin a sample to rank
 
 
 def paged(ctx):
@@ -58,10 +57,8 @@ def build(ctx, work, shared):
     months = lambda sid: [scores[sid].get(m[:7]) for m in qm]
     scored = [s for s in ctx["sites"] if any(v is not None for v in months(s["site_id"]))]
     missing = [s["site_name"].strip() for s in ctx["sites"] if s not in scored]
-    few = [s for s in scored if zones(s["site_id"]) < MIN_ZONES]
-    scored = [s for s in scored if s not in few]
     if not scored:
-        return {"drop": [NAME], "chat": few_chat(few, zones)}
+        return {"drop": [NAME]}
 
     sids = [s["site_id"] for s in scored]
     pio.shown(shared, sids)
@@ -101,7 +98,6 @@ def build(ctx, work, shared):
     if missing:
         chat.append("No thermal comfort score from %s to %s for %s: left out of the thermal comfort table and "
                     "ranking." % (io.month(qm[0]), io.month(qm[-1]), io.listing(missing)))
-    chat += few_chat(few, zones)
     note = ("%s. Share of zone readings inside the site's comfort band during working hours."
             % pio.reporting_period(ctx))
     if left and len(sids) - len(left) > 0:
@@ -112,15 +108,6 @@ def build(ctx, work, shared):
         "datelines": {"Indoor environment health snapshot": note},
         "chat": chat,
     }
-
-
-def few_chat(few, zones):
-    """The chat line naming the sites scored off fewer than MIN_ZONES zone points, each with its count."""
-    if not few:
-        return []
-    named = ["%s (%s)" % (s["site_name"].strip(), "{:,}".format(zones(s["site_id"]))) for s in sorted(few, key=pio.name_key)]
-    return ["Fewer than %d zones scored in the quarter at %s: left out of the thermal comfort table and ranking."
-            % (MIN_ZONES, io.listing(named))]
 
 
 def band_text(fact, unit=None):

@@ -13,7 +13,6 @@ import io as bytes_io
 import os
 import re
 import sys
-from collections import Counter
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
@@ -23,12 +22,6 @@ NAME = "overview"
 CHUNK = 100
 COUNT_CHUNK = 10              # an unfiltered equipment count across many more sites runs past the gateway's timeout
 LOGO_PX = 288                                     # the slot is 72px tall: four times that keeps it sharp in print
-CLIENT_PAGE = 200
-
-
-def client_calls():
-    """Every client's name, paged: a site lists its clients by id only."""
-    return [io.call("overview/clients-1.json", "search_clients", client_name="%", limit=CLIENT_PAGE)]
 
 
 def calls(ctx):
@@ -37,9 +30,7 @@ def calls(ctx):
                       lambda f, ids: io.gql(f, "platform.sites", {"site_ids": ids, "limit": CHUNK},
                                             ["site_id", "site_name", "building_size", "monetary_currency", "state",
                                              "country", "photo_url", "thermal_comfort_min_temp",
-                                             "thermal_comfort_max_temp", "thermal_comfort_margin", "clients",
-                                             "client_mappings"]))
-            + client_calls()
+                                             "thermal_comfort_max_temp", "thermal_comfort_margin"]))
             + count("overview/rules.json", "search_rules", task_state="running", limit=1)
             + count("overview/sensors.json", "search_favourites", limit=1)
             + count("overview/equipment.json", "search_equipment", limit=1)
@@ -47,36 +38,13 @@ def calls(ctx):
 
 
 def more(ctx, work):
-    return pio.pages_due(work, client_calls(), CLIENT_PAGE)
+    return []
 
 
 def facts(ctx, work):
-    """{site_id: platform.sites row}: building size, currency, state, country, the building's photo link, its
-    default comfort band and its primary client's name as `client`."""
-    rows = {r["site_id"]: r for r in pio.rows(work, "overview/sites.json")}
-    names = {c["client_id"]: (c.get("client_name") or "").strip()
-             for c in pio.rows(work, "overview/clients.json", CLIENT_PAGE) if c.get("client_id")}
-    spread = Counter(c for r in rows.values() for c in r.get("clients") or [])
-    reach = Counter(u for r in rows.values() for u in {u for us in (r.get("client_mappings") or {}).values() for u in us})
-    # an account mapped across most of a portfolio, such as an AI agent's, is the platform's, not any site's people
-    wide = {u for u, n in reach.items() if len(rows) > 3 and n > len(rows) / 2}
-    for r in rows.values():
-        r["client"] = primary_client(r, names, spread, {u: (0 if u in wide else 1 / n) for u, n in reach.items()})
-    return rows
-
-
-def primary_client(row, names, spread, weight):
-    """The name of the client a site belongs to, of the several PEAK lists against it: the one whose people are
-    most the site's own. Each of a client's users mapped to the site counts once, shared across every report site
-    that user is mapped to, so a site's own team outweighs a consultant mapped across the portfolio, and an account
-    mapped across most of it counts nothing. Ties go to the client on the fewest of the report's sites, then by
-    name. None where PEAK names no client."""
-    users = row.get("client_mappings") or {}
-    held = [c for c in row.get("clients") or [] if names.get(c)]
-    if not held:
-        return None
-    own = lambda c: sum(weight[u] for u in set(users.get(str(c)) or []))
-    return names[min(held, key=lambda c: (-own(c), spread[c], names[c].lower()))]
+    """{site_id: platform.sites row}: building size, currency, state, country, the building's photo link and
+    its default comfort band."""
+    return {r["site_id"]: r for r in pio.rows(work, "overview/sites.json")}
 
 
 def logo(path):

@@ -18,7 +18,6 @@ BANDS = [99, 97, 90]
 # Each call scans every rule's month rows for its sites, and PEAK refuses a call over 200,000 rows:
 # about 10,000 a site over a quarter, three times that at the largest. Six sites a call keeps inside it.
 CHUNK = 6
-MIN_RULES = 100              # a site scored off fewer rules in the quarter is too thin a sample to rank
 
 
 def calls(ctx):
@@ -55,10 +54,8 @@ def build(ctx, work, shared):
     months = lambda sid: [scores[sid].get(m[:7]) for m in qm]
     scored = [s for s in ctx["sites"] if any(v is not None for v in months(s["site_id"]))]
     missing = [s["site_name"].strip() for s in ctx["sites"] if s not in scored]
-    few = [s for s in scored if rules[s["site_id"]] < MIN_RULES]
-    scored = [s for s in scored if s not in few]
     if not scored:
-        return {"drop": [NAME], "chat": few_chat(few, rules)}
+        return {"drop": [NAME]}
 
     pio.shown(shared, [s["site_id"] for s in scored])
     now = {s["site_id"]: months(s["site_id"])[-1] for s in scored}         # the leaderboard month
@@ -89,7 +86,6 @@ def build(ctx, work, shared):
     if missing:
         chat.append("No equipment health score from %s to %s for %s: left out of the equipment health table and "
                     "ranking." % (io.month(qm[0]), io.month(qm[-1]), io.listing(missing)))
-    chat += few_chat(few, rules)
     # A month that scored off under half of a site's busiest month is an outage, or rules still going live:
     # either way its score covers part of the plant, and it moves the site's change, its place on the board
     # and the portfolio row.
@@ -111,12 +107,3 @@ def build(ctx, work, shared):
         "datelines": {"Equipment health snapshot": note},
         "chat": chat,
     }
-
-
-def few_chat(few, rules):
-    """The chat line naming the sites scored off fewer than MIN_RULES rules, each with its count."""
-    if not few:
-        return []
-    named = ["%s (%s)" % (s["site_name"].strip(), "{:,}".format(rules[s["site_id"]])) for s in sorted(few, key=pio.name_key)]
-    return ["Fewer than %d scored rules in the quarter at %s: left out of the equipment health table and ranking."
-            % (MIN_RULES, io.listing(named))]

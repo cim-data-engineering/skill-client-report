@@ -4,7 +4,7 @@ Owns the equipment health by site table and its portfolio row, and hands on the 
 
 ## What you write
 
-Nothing on the page. In chat, say what the script prints: any site with no score in the quarter, or scored off fewer than 100 rules in it, which is left out of the table and the ranking, and any site whose scored rules in a month fell below half of its busiest month. That month covers part of the plant, from an outage or rules still going live, so it moves the site's change, its place on the board and the portfolio row without the plant having changed.
+Nothing on the page. In chat, say what the script prints: any site with no score in the quarter, which is left out of the table and the ranking, and any site whose scored rules in a month fell below half of its busiest month. That month covers part of the plant, from an outage or rules still going live, so it moves the site's change, its place on the board and the portfolio row without the plant having changed.
 
 ## Section header
 
@@ -23,7 +23,7 @@ Date line: "{period}. Share of automated checks that found no fault." The period
 
 ## Ranked heatmap
 
-One row per site with a score in the quarter and at least 100 scored rules in it, the Rules column, ranked by its score for the leaderboard month, then a portfolio row. A site scored off fewer is too thin a sample to rank against whole buildings, so it is left out of the table, the portfolio row and the ranking.
+One row per site with a score in the quarter, ranked by its score for the leaderboard month, then a portfolio row.
 
 | Column | Content |
 | --- | --- |
@@ -62,7 +62,7 @@ One row per site with a score in the quarter and at least 100 scored rules in it
   `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 - The section carries the anchor `eh-by-site`
 
-**Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%"; and the sites with data, each site in the table.
+**Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%"; and the sites with data, each site with a score in the quarter.
 
 ## Data
 

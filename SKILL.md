@@ -87,8 +87,8 @@ The portfolio report never asks which sections to include. Every section is plan
 | Site leaderboard for the leaderboard month | `site-leaderboard/` | at least one of its three boards has data |
 | Team leaderboard for the leaderboard month | `team-leaderboard/` | at least one of its two boards has data |
 | Open P1-2 actions | `actions-and-wins/`, `open-actions.md` | any priority 1 or 2 action is open now |
-| Equipment health by site | `equipment-health/` | any site scored off 100 rules or more returned an equipment health score in the quarter |
-| Thermal comfort by site | `indoor-environment/` | any site scored off 100 zones or more returned a thermal comfort score in the quarter |
+| Equipment health by site | `equipment-health/` | any site returned an equipment health score in the quarter |
+| Thermal comfort by site | `indoor-environment/` | any site returned a thermal comfort score in the quarter |
 | Key wins | `actions-and-wins/`, `key-wins.md` | at least one win qualifies |
 | Sustainability ratings by site | `sustainability-ratings/` | any site holds a current rating; never mentioned in chat |
 
@@ -114,7 +114,7 @@ Each section's reference owns its section: what it shows, its rules, its calls, 
 
 | Figure | Handed on by | Taken by |
 | --- | --- | --- |
-| Site facts: building size, currency, state, country, building photo link, default comfort band, primary client | the overview, before any section builds | every section |
+| Site facts: building size, currency, state, country, building photo link, default comfort band | the overview, before any section builds | every section |
 | A ranking: a label, an anchor or each site's PEAK report, a window (the leaderboard month or the quarter ending on it), the unit of its figure, each site's figure now and on the window last month's board ranked | equipment health, indoor environment and actions resolved, in that order | the site leaderboard, one board each, its site names linking to the anchor or each to its own PEAK report |
 | A team ranking: a ranking over the companies or people holding the work, with its unit, each one's name, company, logo and PEAK report, its leader's meta line, and for people the leader's shoutout: first name, email and busiest site | actions resolved, companies then assignees | the team leaderboard, one board each |
 | Thermal zones: zone points on the levels that scored, and every configured point | indoor environment | the scorecards, so the card always equals the comfort table's Zones total |

@@ -44,16 +44,14 @@ All in the main batch, the site facts 100 sites a call and each count 10, since 
 
 | Need | Call |
 | --- | --- |
-| Building size, currency, state, country, building photo link, default comfort band, clients | `platform.sites` with `site_ids`, the band as `thermal_comfort_min_temp`, `thermal_comfort_max_temp` and `thermal_comfort_margin`, in the site's own unit, the clients as `clients` and `client_mappings` |
-| Client names | `search_clients(client_name:"%", limit:200)`, paged by `report.py next` |
+| Building size, currency, state, country, building photo link, default comfort band | `platform.sites` with `site_ids`, the band as `thermal_comfort_min_temp`, `thermal_comfort_max_temp` and `thermal_comfort_margin`, in the site's own unit |
 | Rules running | `search_rules(task_state:"running", limit:1)` with `site_ids`, its `pagination.total` |
 | Sensors | `search_favourites(limit:1)` with `site_ids`, its `pagination.total` |
 | Equipment | `search_equipment(limit:1)` with `site_ids` twice, plain and filtered to the system types 21, 37, 69, 70, 87, 105 and 114, the second total subtracted from the first |
 
 - The totals of a split call add across its chunks
 - The client name comes from `--client`, the author from `who_am_i` passed as `--author`, and the company and service names from `BRAND.md`
-- **Primary client**: PEAK lists several clients against a site, its owner, managing agents, consultants and platform groupings among them. The primary one is the client whose people are most the site's own: each of its users mapped to the site in `client_mappings` counts once, shared across every report site that user is mapped to, so a site's own team outweighs a consultant mapped across the portfolio. An account mapped across more than half the report's sites, such as an AI agent's, is the platform's and counts nothing, in a report of more than three sites. Ties go to the client on the fewest of the report's sites, then by name
 
-**Hands on:** the site facts, each site's building size, currency, state, country, building photo link, default comfort band and primary client, before any section builds.
+**Hands on:** the site facts, each site's building size, currency, state, country, building photo link and default comfort band, before any section builds.
 
 **Takes:** the thermal zones figure, and the sites with data.

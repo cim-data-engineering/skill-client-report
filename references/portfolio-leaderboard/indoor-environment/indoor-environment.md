@@ -4,7 +4,7 @@ Owns the thermal comfort by site table and its portfolio row, and hands on the s
 
 ## What you write
 
-Nothing on the page. In chat, say what the script prints: any site with no comfort score in the quarter, or scored off fewer than 100 zones, which is left out of the table and the ranking.
+Nothing on the page. In chat, say what the script prints: any site with no comfort score in the quarter, which is left out of the table and the ranking.
 
 ## Section header
 
@@ -23,7 +23,7 @@ Date line: "{period}. Share of zone readings inside the site's comfort band duri
 
 ## Ranked heatmap
 
-One row per site with a comfort score in the quarter and at least 100 zones, the Zones column, ranked by its score for the leaderboard month, then a portfolio row. A site scored off fewer is too thin a sample to rank against whole buildings, so it is left out of the table, the portfolio row, the thermal zones figure and the ranking.
+One row per site with a comfort score in the quarter, ranked by its score for the leaderboard month, then a portfolio row.
 
 | Column | Content |
 | --- | --- |
@@ -67,7 +67,7 @@ One row per site with a comfort score in the quarter and at least 100 zones, the
 
 - **A ranking** labelled Thermal comfort, under the anchor `cf-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%"
 - **Thermal zones**: the Zones total, and every zone temperature point configured across the sites for a quarter in which no site scored
-- **Sites with data**: each site in the table
+- **Sites with data**: each site with a comfort score in the quarter
 
 ## Data
 
