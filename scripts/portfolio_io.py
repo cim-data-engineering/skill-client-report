@@ -329,14 +329,15 @@ def mean(values):
     return sum(have) / len(have) if have else None
 
 
-def portfolio_months(scores, months):
+def portfolio_months(scores, months, dp=1):
     """A portfolio row: the average of the sites scored each month, and its change over the sites
     scored at both ends only, so a site going live or dropping out is not read as a move. scores is
     {site_id: {month: value}}. Returns (values by month, change or None, [sites the change leaves out])."""
     row = [mean({sid: v.get(m) for sid, v in scores.items()}) for m in months]
     both = {sid: v for sid, v in scores.items() if v.get(months[0]) is not None and v.get(months[-1]) is not None}
-    change = (mean({sid: v[months[-1]] for sid, v in both.items()})
-              - mean({sid: v[months[0]] for sid, v in both.items()})) if both else None
+    # rounded as the rows print, so a portfolio of one site reads that site's change exactly
+    change = (round(mean({sid: v[months[-1]] for sid, v in both.items()}), dp)
+              - round(mean({sid: v[months[0]] for sid, v in both.items()}), dp)) if both else None
     left = [sid for sid, v in scores.items() if sid not in both and any(x is not None for x in v.values())]
     return row, change, left
 

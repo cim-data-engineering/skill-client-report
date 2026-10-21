@@ -108,8 +108,7 @@ def build(ctx, work, shared):
     shown = shared.get("shown_sites") or set()
     unsized = [s["site_name"].strip() for s in ctx["sites"] if not size[s["site_id"]]]
     if unsized:
-        chat.append("No building size in PEAK for %s: left out of the portfolio size and of the sustainability "
-                    "ratings' portfolio row, the one row weighted by size." % io.listing(unsized))
+        chat.append("No building size in PEAK for %s: left out of the portfolio size." % io.listing(unsized))
     if moved:
         chat.append("Building sizes for %s show in %s, the unit most of the portfolio's floor area reads in, "
                     "converted from the square metres PEAK stores." % (io.listing(moved), unit))
