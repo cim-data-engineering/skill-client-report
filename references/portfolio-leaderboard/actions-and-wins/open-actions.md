@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: that the section is le
 
 Eyebrow: the issue month, "October 2026"  
 Statement: Open P1-2 actions  
-Date line: "Priority 1 and 2 actions open as at {issue date} by age open."  
+Date line: "Priority 1 and 2 actions open as at {issue date} by age open.", then where a list is cut at 10, "Top 10 of 14 sites.", "Top 10 of 24 assignees." or "Top 10 of 14 sites and 24 assignees.", then the other sites with data in the report that hold none: "The other site holds none." or "The other {N} sites hold none." A site with no data anywhere in the report is not counted.  
 Legend under it: "≥60d", "30-60d", "<30d", one swatch each.
 
 ## Definitions
@@ -27,21 +27,21 @@ Two lists side by side, Sites then Assignees, each under a board head with "Open
 | --- | --- |
 | Rank | Position by open P1-2 actions, most first |
 | Logo | Assignees only: the person's company logo, grey; empty for no company |
-| Name | The site name with its state in brackets, or the person's name with their company after it, each a link with a chevron; under it a bar on the list's own scale, the most open filling it, split by age open with the oldest first |
+| Name | The site name with its region label in brackets, per [How sections fit together](../../../SKILL.md#how-sections-fit-together), or the person's name with their company after it, each a link with a chevron; under it a bar on the list's own scale, the most open filling it, split by age open with the oldest first |
 | Count | Open P1-2 actions |
 
 **Rows and ranking:**
 
 - Most first, ties alphabetical by name; the top 10 on each list
 - Sites: every site with an open P1-2 action
-- Assignees: everyone holding one, CIM, the client's managing agents and AI agents included. An action counts once for each person holding it. Actions held by nobody are one row, "No assignee", with no link
+- Assignees: everyone holding one, CIM, the client's managing agents and AI agents included. An action counts once for each person holding it. Actions held by nobody are one row, "No assignee", with no link. An account PEAK holds no name for shows as "Unnamed assignee"
 
-**Links:** PEAK's ticket report on its last 90 days to today, priority 1 and 2 only. One `site_ids` per site.
+**Links:** PEAK's ticket report, priority 1 and 2 only, from `{{raised}}`, the day the oldest action the name counts was raised, to `{{issue_date}}`, the issue date, so every action it counts is in it however long it has been open. Each action's raised day is counted back from the issue date by its age, a day early. One `site_ids` per site.
 
 - Each site opens its report grouped by assignee:
-  `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&relative_date=last_90_days&include_today=true&grouping=assignee&priority_ids=1&priority_ids=2`
+  `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{raised}}T00:00:00.000&end_date={{issue_date}}T23:59:59.999&grouping=assignee&priority_ids=1&priority_ids=2`
 - Each person opens the report at their sites, grouped by site and narrowed to them:
-  `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&relative_date=last_90_days&include_today=true&grouping=site&priority_ids=1&priority_ids=2&assignee_ids={{assignee_id}}`
+  `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{raised}}T00:00:00.000&end_date={{issue_date}}T23:59:59.999&grouping=site&priority_ids=1&priority_ids=2&assignee_ids={{assignee_id}}`
 - The section carries the anchor `open-actions`
 
 **Renders when:** any priority 1 or 2 action is open now.
@@ -53,8 +53,13 @@ All in the main batch:
 | Need | Call |
 | --- | --- |
 | Each open P1-2 action, its age and who holds it | `tickets.tickets` (`type:"escalated"`, `ticket_archived:false`, every `site_ids`, `status_ids:[1,3,7]`, `priority_ids:[1,2]`), `limit:1000` |
+| Each assignee's name | `count_tickets(ticket_types:["escalated"], aggregate_entities:["assignee"], statuses:["open","in_progress","on_hold"], priorities:[1,2])`, 20 sites a call: `assignee_name` by `assignee_id` |
 
-- The ticket pull selects only `ticket_id`, `site_id`, `status_id`, `age`, and `assignees` with `id`, `firstname`, `lastname`, `entity.name` and `entity.logo_url`: how long each action has been open and who holds it, never what anyone wrote
+- The ticket pull selects only `ticket_id`, `site_id`, `status_id`, `age`, and `assignees` with `id`, `entity.name` and `entity.logo_url`: how long each action has been open and who holds it, never what anyone wrote. It selects no name: PEAK refuses the whole pull when one assignee has none, so names come from the count by assignee
 - `report.py next` pages the pull from its first page's total, 1000 rows a page
 - Every count and every age split comes from the one pull, so each bar always adds up to its count
 - Each shown company's logo is fetched once from the link on its assignees and embedded; a company without one gets its initials
+
+**Hands on:** the sites with data: each site holding an open P1-2 action.
+
+**Takes:** the sites with data the sections built before it mark, for the date line's count of sites holding none.

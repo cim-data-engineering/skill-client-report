@@ -35,7 +35,7 @@ Above the table, a legend: ↑ "Up from the rating before" in green, ↓ "Down f
 
 | Column | Content |
 | --- | --- |
-| Site | The site name with its state abbreviation in muted brackets, linked to that site's ratings dashboard |
+| Site | The site name with its region label in muted brackets, per [How sections fit together](../../../SKILL.md#how-sections-fit-together), linked to that site's ratings dashboard |
 | Size | Building size, in the portfolio's unit, named in the header |
 | One per measure | Each measure that holds a current rating at any site, headed with the measure's name. Energy, indoor environment and water lead in that order; any other measure follows alphabetically |
 
@@ -43,19 +43,19 @@ Above the table, a legend: ↑ "Up from the rating before" in green, ↓ "Down f
 
 - The inline score bar, running from the rating type's minimum score to its maximum, so ratings on different scales still read as a share of the way up
 - The value at the precision its type uses: 1dp for a type rated in fractions, such as half stars on a scale of ten points or fewer; whole numbers otherwise
-- A fixed-width suffix: `*` when the rating has expired, then an arrow against the site's previous rating of the same type, ↑ up or ↓ down, nothing when it held or there is no previous rating
+- A fixed-width suffix: `*` when the rating has expired, then an arrow against the site's previous rating of the same type, ↑ up or ↓ down, nothing when it held, there is no previous rating, or the rating has expired. An expired rating says how the site stood, not where it is going
 - A dash when the site has no rating for the measure
 
-**Portfolio row:** per measure, the building-size-weighted mean of the current ratings, on the same bar and at the same precision.
+**Portfolio row:** per measure, the building-size-weighted mean of the current ratings, on the same bar and at the same precision. It is the report's one portfolio row weighted by size; the others are plain averages.
 
-- It shows only when every current rating in the column shares one rating type. Ratings on different scales cannot be averaged, so otherwise the cell is a dash
+- It shows only when every current rating in the column shares one rating type, and two or more sites with a building size hold one. Ratings on different scales cannot be averaged, and one site's rating is not the portfolio's, so otherwise the cell is a dash
 - Expired ratings count in no portfolio cell, and a site with no building size counts in no weighting
 - Its arrow compares the same sites' previous ratings of the same type, weighted the same way, over the sites that have both
 
 **Display:**
 
 - Up is `on-success-container`, down `on-error-container`, per the rating table component in DESIGN.md
-- Under the table, the source line: "Source: sustainability ratings recorded in PEAK. The portfolio row is weighted by building size."
+- Under the table, the source line: "Source: sustainability ratings recorded in PEAK. The portfolio row is weighted by building size over the sites with a current rating, and shows where two or more sites hold one."
 
 **Links:**
 
@@ -68,3 +68,5 @@ One call in the main batch: `platform.sustainability_ratings` with every `site_i
 
 - PEAK's rating period end is exclusive. Only the order of ratings depends on it here
 - The current test, the latest rating per site and measure, the previous rating of the same type, the precision and the portfolio row are all worked out from those rows
+
+**Hands on:** the sites with data: each site with a row in the table.

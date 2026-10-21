@@ -8,16 +8,16 @@ The choosing and the words. Everything else is the script's: the candidates, the
 
 A portfolio can hold more candidates than anyone can read, so you read them in two passes, and save neither.
 
-1. **Shortlist.** Read the candidate pulls the plan lists to read, where they come back: the closures with comments over the 90 days to the issue date and the open actions with comments, twenty sites a pull. Each row carries the ticket's title, site, priority, saving and who commented, nothing more. A pull whose pagination says `has_more` is read on with the same call at the next `start_index`. One that comes back offloaded as a file prints screened and ranked with `key_wins.py digest report <that file> [...]`: the best 60, a third of them work in flight where there is that much; `--top 0` prints them all. One read inline is screened by eye, by the patterns under **Data**. From the titles, the sites and the ranking, pick up to 25 tickets worth reading in full, by **Selection** and **Ranking** below, and write their full ticket ids to `report/shortlist.json`: `["00000000-0000-4000-8000-000000000001", ...]`
-2. **Read in full.** `report.py next` prints one pull of the shortlist with its descriptions, solutions and comments. Read it where it comes back and never save it; offloaded, it prints with `key_wins.py digest report <that file> --top 0`, an agent's comments marked as such. Choose by **Selection**, and write `report/wins.json`, best first by **Ranking**:
+1. **Shortlist.** Read the candidate pulls the plan lists to read, where they come back: the closures with comments over the 90 days to the issue date and the open actions with comments, twenty sites a pull. Each row carries the ticket's title, site, priority, saving and who commented, nothing more. A pull whose pagination says `has_more` is read on with the same call at the next `start_index`. One that comes back offloaded as a file prints screened and ranked with `key_wins.py digest report <that file> [...]`, dates in each site's own time and savings in its currency: the best 60, a third of them work in flight where there is that much; `--top 0` prints them all. One read inline is screened by eye, by the patterns under **Data**. From the titles, the sites and the ranking, pick up to 25 tickets worth reading in full, by **Selection** and **Ranking** below, and write their full ticket ids to `report/shortlist.json`: `["00000000-0000-4000-8000-000000000001", ...]`
+2. **Read in full.** `report.py next` prints one pull of the shortlist with its descriptions, solutions and comments. Read it where it comes back and never save it; offloaded, it prints with `key_wins.py digest report <that file> --top 0`, comments by an agent or a CIM system account marked "(system)". Choose by **Selection**, and write `report/wins.json`, best first by **Ranking**:
 
 ```json
 [{"tickets": ["00000000-0000-4000-8000-000000000001"], "state": "fixed", "heading": "...", "body": "..."},
  {"tickets": ["00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003"], "state": "in_flight", "heading": "...", "body": "..."}]
 ```
 
-   `tickets` are full ticket ids, every ticket the win stands on, all at one site. `state` is `fixed` or `in_flight`. Where the tickets reference a saving, the body states it, per **Display**
-3. `report.py next` prints the impact and photo calls for those tickets. Once they are saved, run `key_wins.py photos report` straight away, since the photo links lapse twenty minutes after the call, then `report.py next` again for the level call
+   `tickets` are full ticket ids, every ticket the win stands on, all at one site. `state` is `fixed` or `in_flight`. Write `heading` and `body` as plain text: the fill escapes both, so `&` and `<` print as typed, and `**` is the only markup it reads. Where the tickets reference a saving, the body states it, per **Display**
+3. `report.py next` prints the impact and photo calls for those tickets. Once they are saved, run `key_wins.py photos report` straight away, since the photo links lapse twenty minutes after the call, then `report.py next` again: it prints the level call, or says there is none, whether or not any win carried a photo
 4. Look at the one numbered contact sheet per win, choose by **Photos** below, and add the picks to each win: `"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]`. A win with nothing worth showing gets none
 5. After `report.py fill`, look at every tile in `report/tiles/`: a crop can cut off the very detail that earned the photo its place. Adjust `focus` and `zoom` and fill again
 
@@ -26,7 +26,7 @@ This is the section an owner reads to see the portfolio is in good hands: proble
 ## Section header
 
 Eyebrow: Key wins  
-Statement: What was found and acted on in the last 90 days  
+Statement: Key wins past 90 days  
 Date line: the 90 days to the issue date alone, "24 July - 21 October 2026."
 
 ## Selection
@@ -61,7 +61,7 @@ No en or em dash anywhere in a heading or body: the portfolio page carries none,
 
 ## Display
 
-- Each card carries its site above the impact tag, as an eyebrow: the site name with its state in muted brackets. The script sets it from the win's tickets
+- Each card carries its site above the impact tag, as an eyebrow: the site name with its region label in muted brackets, per [How sections fit together](../../../SKILL.md#how-sections-fit-together). The script sets it from the win's tickets
 - Heading names the outcome, or the finding where the work is still live, plus the equipment type and name
 - Under the heading, the level the equipment serves, so the reader can place the win in the building. It is the win's `level`, PEAK's level name as it stands, and a list where the equipment spans levels. Left off where PEAK holds no real level for the equipment
 - Tag the win with its impact, above the heading: one of `energy`, `comfort`, `reliability`, `water`, `safety`, `other`. It renders as a small uppercase word with a coloured dot, and the word is what states the impact; the dot only speeds up scanning down the page
@@ -70,9 +70,10 @@ No en or em dash anywhere in a heading or body: the portfolio page carries none,
 - Where the tickets carry no impact at all, or carry `other`, the tag is `Other`. The script names each such ticket in chat, so the impact can be set in PEAK and the report re-run
 - Say where it stands. A win in flight is written as in flight: what was found, who has it, what happens next
 - Two to three sentences: what was wrong, what was changed, why it matters
-- Where any of the win's tickets reference a saving, in the savings field, the description, the solution or a comment, state it, and wrap the figure in `**` to set it bold: "…closed by 24 June, with an estimated saving of **$6,800**." Give it in the site's currency, rounded sensibly and summed across the win's tickets, with a period only where the ticket gives one. On a win in flight it is the expected saving. Where the savings field holds a figure the text leaves out, `report.py fill` says so in chat
+- Where any of the win's tickets reference a saving, in the savings field, the description, the solution or a comment, state it, and wrap the figure in `**` to set it bold: "…closed by 24 June, with an estimated saving of **$6,800**." Give it in the site's currency, rounded sensibly and summed across the win's tickets. On a win in flight it is the expected saving. Where the savings field holds a figure the text leaves out, `report.py fill` says so in chat
+- State every saving the same way across the report. PEAK's savings field carries no period, so write "an estimated saving of **$10,400** a year" only where the ticket says the figure is annual, and "an estimated saving of **$3,800**" otherwise. Never a qualifier one win carries and the others do not, such as "on this unit"
 - Lead with the building outcome: comfort, reliability, energy, tenant experience
-- Link each action ticket as evidence, with its title as the link name, not the id. Where several tickets form one win, link them all. A ticket title is quoted as PEAK holds it, an en or em dash set as a hyphen
+- Link each action ticket as evidence, with its title as the link name, not the id. Where several tickets form one win, link them all. A ticket title is quoted as PEAK holds it, tags such as "BEEP" included, an en or em dash set as a hyphen. Where two of a win's tickets share a title, the script adds each one's date raised: "SCHWP - Inspect Pump Not Operating (raised 3 Sep 2026)"
 
 ## Photos
 
@@ -82,6 +83,7 @@ Engineers often attach photos to an action ticket as they work it, screenshots a
 - Each photo adds something the others do not. Two shots of the same thing waste a tile
 - A photo stands for the fix only where the comments say that part was repaired. A tidier view of the same part is more often the fault from another angle
 - It has to read at about 5 cm across. Prefer the tighter view of the same evidence, or crop in on the part that matters
+- Prefer photos taken on site, and a screen cropped or annotated to the value that matters, over a whole trend screen: a full screen shrunk to card size cannot be read, and a near-empty chart shows nothing
 - Leave out anything irrelevant or inappropriate for a client report: cartoons and mascots, memes, email signature logos, a person's face, anything that is not this site's plant or its data
 - Up to four, in the order the story runs: the unit or the fault, the finding, the fix
 - No captions. The win's text explains its photos
@@ -104,14 +106,17 @@ Engineers often attach photos to an action ticket as they work it, screenshots a
 | In flight | In the main batch, read and not saved: the same, `status_ids:[1,3,7]`, no date bound |
 | The shortlist in full | Once `shortlist.json` exists: one `tickets.tickets` on its tickets, read and not saved, with `description`, `solution`, `equipment_ids`, `assignees` and the comments' text |
 | Impact, link, title, site | Once `wins.json` exists: one `search_action_tickets` on the wins' tickets, reading `impacts`, `savings`, `ticket_link`, `title`, `site_id` and `equipment_ids` |
-| Photos | In the same batch: one `tickets.tickets` on the wins' tickets selecting `site_id` and `attachments.attachment_id`, `file_name`, `mime_type`, `preview.link.url` and `link.url` |
+| Photos | In the same batch: one `tickets.tickets` on the wins' tickets selecting `site_id` and `attachments.attachment_id`, `file_name`, `mime_type`, `preview.link.url` and `link.url`. The links are signed, so the photos step strips them from the saved file once it has run |
 | Level | Once the impact rows are saved: one `platform.equipment` on their `equipment_ids`, selecting `zone.level.level_name` and `zone.level.system` |
 
 - The candidate pulls are the only responses the report reads without saving. Every saved response holds counts, scores, ids and type, level or company names: what people wrote on a ticket never goes into a file
 - `has_comments:true` drops each closure nobody wrote on, and holding to the 90 days cuts it again. The first pass carries no text but the title, so a large portfolio's candidates stay small enough to come back whole; only the shortlist carries what people wrote
 - The digest ranks finished repairs before open work, then by how many people commented, then priority, then a recorded saving, and keeps a third of the list it prints for work in flight. The ranking orders your reading; it never decides a win
-- The digest screens out patterns that need no reading: a closure created and resolved the same moment; three or more at one site sharing a resolved second, a bulk cleanup; a ticket whose only commenter is an agent; open work no person has commented on in the 90 days. Comments come newest first, so the eight each candidate carries hold its latest. Two more are left to you, since only the comments show them: closures summarised as still in fault, and alerts closed by stopping or tuning a rule
+- The digest screens out patterns that need no reading: a closure created and resolved within the same second; three or more at one site closed within two minutes of each other, a bulk close-out; a ticket whose only commenters are agents or CIM's system accounts (CIM Support, the CIM API logins), which are not people; open work no person has commented on in the 90 days. Comments come newest first, so the eight each candidate carries hold its latest. Two more are left to you, since only the comments show them: closures summarised as still in fault, and alerts closed by stopping or tuning a rule
 - `impacts` comes back as a list, sometimes `[]`, which is the `Other` case in **Display**. A level with `system:true` is PEAK's placeholder, not a place, so that equipment gets no level line
-- `key_wins.py photos` keeps the image attachments, one copy per file name and sixteen per win, downloads the originals in parallel and tiles them into `report/kw/sheet-w<n>.jpg`. The links are signed and lapse twenty minutes after the call: if the photos step reports them lapsed, make the photo call again and re-run it. Where they cannot be fetched, the wins go out without photos; say so in chat
+- The digest prints each date in the site's own time, each saving with the site's currency symbol, and a priority outside 1 to 5 as "P-"
+- `key_wins.py photos` keeps the image attachments, one copy of each by its attachment id (never by file name, which screenshots share) and sixteen per win, downloads the originals in parallel and tiles them into `report/kw/sheet-w<n>.jpg`. It then rewrites `kw/attachments.json` without the signed links, keeping each attachment's id, name and type, so no security token stays on disk. The links lapse twenty minutes after the call: if the photos step reports them lapsed, make the photo call again and re-run it. A re-run after the links are stripped needs the photo call made again too. Where they cannot be fetched, the wins go out without photos; say so in chat
 - The fill turns each photo upright, crops it to its tile around `focus` (fractions across and down the frame) and `zoom` (that many times tighter), shrinks and re-encodes it, which also drops the original's EXIF block, GPS position included. A photo reaches the report only through the script
-- The savings currency is the win's site's, from the site facts it takes
+- The savings currency is the win's site's, from the site facts it takes, with a symbol for every currency PEAK records: $, £, €, S$, CHF, SEK, R$, ¥ and Rp
+
+**Hands on:** at fill, the sites with data: each win's site.

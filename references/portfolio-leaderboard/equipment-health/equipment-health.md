@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: any site with no score
 
 Eyebrow: Equipment health snapshot  
 Statement: Equipment health by site  
-Date line: "{period}. Share of rule executions returning no fault." The period runs from the quarter's first day to its last, with a spaced hyphen: "1 July - 30 September 2026".
+Date line: "{period}. Share of automated checks that found no fault. Equip and Rules count the equipment and rules scored; the portfolio row averages the sites." The period runs from the quarter's first day to its last, with a spaced hyphen: "1 July - 30 September 2026". Where the sites scored differ between the quarter's first and last months, it adds which its Chg compares: "Its Chg compares the 6 sites scored in both July and September."
 
 ## Equipment score benchmark
 
@@ -28,7 +28,7 @@ One row per site with a score in the quarter, ranked by its score for the leader
 | Column | Content |
 | --- | --- |
 | Rank | Position by the leaderboard month's score; the trophy replaces 1 |
-| Site | The site name with its state abbreviation in muted brackets, "88 Example St (NSW)" |
+| Site | The site name with its region label in muted brackets, "88 Example St (NSW)", per [How sections fit together](../../../SKILL.md#how-sections-fit-together) |
 | Size | Building size, in the portfolio's unit, named in the header |
 | Equip | Equipment with a scored rule in the quarter |
 | Rules | Scored rules in the quarter |
@@ -37,14 +37,14 @@ One row per site with a score in the quarter, ranked by its score for the leader
 
 **Ranking:**
 
-- Best first on the unrounded score. Equal scores split alphabetically by site name, ignoring case. No shared places and no notes explaining ties
+- Best first on the score rounded to 2 decimal places, one more than the table prints. Equal scores split alphabetically by site name, ignoring case, so no two sites share a place, and no note explains a tie
 - A site with scores in the quarter but none in the leaderboard month ranks after every site that has one, alphabetically
 
 **Portfolio row:**
 
-- Each month's score is weighted by building size over the sites with a score that month. A site with no building size is left out of the weighting
+- Each month's score is the plain average of the sites scored that month, unweighted, so a site with no building size counts like any other
 - Size, Equip and Rules are summed over the rows shown
-- Chg is the portfolio row's own last month less its first
+- Chg compares only the sites scored in both the quarter's first and last months: their average at the end less their average at the start, so a site going live or dropping out is not read as a move. With no site scored at both ends it is a dash
 
 **Display:**
 
@@ -54,7 +54,7 @@ One row per site with a score in the quarter, ranked by its score for the leader
 - Equip, Rules and Size as plain numerals, never colored and never barred
 - Equip and Rules leave out the system types
 - Every site, not a sample. The table breaks between rows across pages, its header repeating
-- Site names wrap within a fixed row height rather than truncating
+- Site names wrap to three lines at most rather than truncating
 
 **Links:**
 
@@ -62,7 +62,10 @@ One row per site with a score in the quarter, ranked by its score for the leader
   `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 - The section carries the anchor `eh-by-site`
 
-**Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%".
+**Hands on:**
+
+- **A ranking** labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%"
+- **Sites with data**: each site with a score in the quarter
 
 ## Data
 
@@ -77,5 +80,5 @@ All in the main batch: `search_equipment_health_scores` over the quarter with ev
 - Six sites a call. Every grouping scans each rule's month rows for its sites, about 10,000 a site over a quarter and three times that at the largest, and PEAK refuses a call that would scan more than 200,000
 - `metadata_type` groups within each site already, so it carries `site_id` and takes no `site` beside it
 - `local_end_date` is exclusive and every bound a month boundary: the quarter runs to the first of the issue month
-- Distinct counts come from an `all` call, never by summing months. Scores never sum: the site cell is PEAK's site rollup, and the portfolio row is the size-weighted mean of those
+- Distinct counts come from an `all` call, never by summing months. Scores never sum: the site cell is PEAK's site rollup, and the portfolio row is the plain average of those
 - A site's scored rules in a month below half of its busiest month is what the script names in chat

@@ -15,9 +15,12 @@ from datetime import date
 HERE = os.path.dirname(os.path.abspath(__file__))
 def xs(n):
     """Month column centres. Six months are the DESIGN.md positions; a window
-    trimmed for a newly onboarded site spreads evenly over the same plot width."""
+    trimmed for a newly onboarded site spreads evenly over the same plot width,
+    and a single month sits in the middle of it."""
     if n == 6:
         return [80, 190, 300, 410, 520, 630]
+    if n == 1:
+        return [355]
     step = (630 - 80) / (n - 1) if n > 1 else 0
     return [round(80 + step * i) for i in range(n)]
 BASELINE, LEFT, RIGHT = 196, 36, 670
