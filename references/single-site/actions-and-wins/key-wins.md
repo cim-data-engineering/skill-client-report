@@ -28,7 +28,7 @@ Date: the quarter
 
 **Voice:**
 
-[Writing the narrative](../../SKILL.md#writing-the-narrative) governs every sentence in the report. It matters most here, and wins add two rules of their own:
+[Writing the narrative](../../../SKILL.md#writing-the-narrative) governs every sentence in the report. It matters most here, and wins add two rules of their own:
 
 - Write as the engineer on the job: what was wrong, what has been done and by whom, where it stands. Then stop
 - Say what was done, not what it demonstrates. "Replaced the belts and had it running the next morning" beats "restored reliability to the unit"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """The parts every report carries: masthead, analytics overview, and the operational
-impact and notes frames. See references/overview/overview.md.
+impact and notes frames. See references/single-site/overview/overview.md.
 
 Imported by scripts/report.py, which hands each section module the same three
 hooks: calls() before the fetch, more() for any follow-up round, build() to turn
@@ -10,7 +10,7 @@ thermal zones figure off the indoor environment site row when that section is in
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
 NAME = "overview"

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Key wins: everything about the section but the choosing and the writing.
 
-    python3 references/actions-and-wins/scripts/key_wins.py digest <response file> [...]
-    python3 references/actions-and-wins/scripts/key_wins.py photos <dir>
+    python3 references/single-site/actions-and-wins/scripts/key_wins.py digest <response file> [...]
+    python3 references/single-site/actions-and-wins/scripts/key_wins.py photos <dir>
 
 The two candidate pulls, closures with comments and open actions with comments, are
 read where they come back and never saved: what people wrote stays out of the
@@ -11,7 +11,7 @@ compact, reading the file where the gateway put it. Once <dir>/wins.json names
 the chosen tickets, scripts/report.py next prints the impact and photo calls, and
 then the level call; `photos` downloads each win's ticket images and tiles them
 into one numbered contact sheet per win; assemble() turns wins.json into the
-bundle's wins at fill time. See references/actions-and-wins/key-wins.md.
+bundle's wins at fill time. See references/single-site/actions-and-wins/key-wins.md.
 """
 import json
 import os
@@ -21,7 +21,7 @@ import urllib.request
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
 NAME = "key-wins"

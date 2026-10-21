@@ -23,7 +23,7 @@ def xs(n):
 BASELINE, LEFT, RIGHT = 196, 36, 670
 TODATE_TOP = 30           # the month to date's tinted column runs from here to the baseline
 # Win impact tags. The key is the PEAK `impacts` value, which is also the class
-# the dot colour hangs off; the label is what prints. See references/actions-and-wins/key-wins.md
+# the dot colour hangs off; the label is what prints. See references/single-site/actions-and-wins/key-wins.md
 # for how a win's impact is chosen from its action tickets.
 IMPACTS = {"energy": "Energy", "comfort": "Comfort", "reliability": "Reliability",
            "water": "Water", "safety": "Safety", "other": "Other"}
@@ -565,7 +565,7 @@ def main():
         for wn, w in enumerate(D["wins"], 1):
             photos = w.get("photos") or []
             if len(photos) > MAX_PHOTOS:
-                sys.exit("fill: %d photos on %r — %d at most (references/actions-and-wins/key-wins.md)"
+                sys.exit("fill: %d photos on %r — %d at most (references/single-site/actions-and-wins/key-wins.md)"
                          % (len(photos), w["heading"], MAX_PHOTOS))
             # One photo sits beside the text; two to four run in a row under the heading.
             side = len(photos) == 1

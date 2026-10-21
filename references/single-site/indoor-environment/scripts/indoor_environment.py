@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Indoor environment: the thermal comfort impact row, comfort by level and the
-six-month comfort trend. See references/indoor-environment/indoor-environment.md.
+six-month comfort trend. See references/single-site/indoor-environment/indoor-environment.md.
 """
 import os
 import re
 import sys
 from collections import defaultdict
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
 NAME = "indoor-environment"

@@ -17,7 +17,7 @@ Work in one directory, `report/` below.
 2. **Plan**: `python3 scripts/report.py plan report --site report/site.json --author "<who_am_i user_name>" --sections <names>`. It fixes the quarter from today in site time and prints every call the sections need, each with the file under `report/peak/` its response is saved as.
 3. **Fetch**: make every printed call in one parallel batch, exactly as printed. Save each response the plan lists to save as its file: an offloaded one by copying the file you were handed, an inline one by writing it to its file exactly as returned, one file per response. Those responses hold counts, scores, ids and type, level or company names only. The plan lists the key win candidate pulls apart: read those where they come back and never save them, since they carry what people wrote on the tickets. Then `python3 scripts/report.py next report`, and make whatever it prints the same way until it says there are no more calls.
 4. **Bundle**: `python3 scripts/report.py bundle report` writes every figure into `report/data.json`, and prints anything to say in chat at hand-over, then the next step.
-5. **Write**: with Actions and key wins in, choose the wins from the two candidate pulls by `references/actions-and-wins/key-wins.md` and [Writing the narrative](#writing-the-narrative), and write `report/wins.json`; `next` then prints the impact and photo calls for them, and once those are saved, the level call. Make those, run `python3 references/actions-and-wins/scripts/key_wins.py photos report`, look at the one numbered contact sheet it makes per win, and add your picks to `wins.json`. Every other reference is what its script already did; read it only to answer a question it raises.
+5. **Write**: with Actions and key wins in, choose the wins from the two candidate pulls by `references/single-site/actions-and-wins/key-wins.md` and [Writing the narrative](#writing-the-narrative), and write `report/wins.json`; `next` then prints the impact and photo calls for them, and once those are saved, the level call. Make those, run `python3 references/single-site/actions-and-wins/scripts/key_wins.py photos report`, look at the one numbered contact sheet it makes per win, and add your picks to `wins.json`. Every other reference is what its script already did; read it only to answer a question it raises.
 6. **Fill and check**: `python3 scripts/report.py fill report` fills the report, saves every photo tile as it prints, and runs the check. Look at the tiles. Then say in chat whatever it lists, name the sections left out, and hand over the file.
 
 ## Section selection
@@ -26,14 +26,14 @@ Ask before fetching anything. The masthead and [Analytics overview](#analytics-o
 
 Ask with one `AskUserQuestion` call and one multi-select question, header "Sections": "Which sections should the report cover from last quarter?" Four options is the tool's limit, and four is the whole list. Describe each by what it adds:
 
-| Choice                | `--sections` name    | Folder under `references/` | Adds                                                                                                                                       |
+| Choice                | `--sections` name    | Folder under `references/single-site/` | Adds                                                                                                                                       |
 | --------------------- | -------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Equipment health      | `equipment-health`   | `equipment-health/`        | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends            |
 | Indoor environment    | `indoor-environment` | `indoor-environment/`      | the thermal comfort row, comfort by level, the six month comfort trend                                                                     |
 | Actions and key wins  | `actions-and-wins`   | `actions-and-wins/`        | the faults resolved row with verified recovery, six months of raised vs resolved, who closed the work, and the key wins: repairs made plus live work the owner should see |
 | Equipment run hours   | `run-hours`          | `run-hours/`               | when each unit of plant ran across the latest full Monday-to-Sunday week, against the site's working hours                                |
 
-Each folder holds the section's reference and a `scripts/` folder with its arithmetic. Actions and key wins is one choice with two references, `alerts-resolved.md` and `key-wins.md`, because the two answer the same question from either end and share their pulls. `references/overview/` is the part every report carries.
+Each folder holds the section's reference and a `scripts/` folder with its arithmetic. Actions and key wins is one choice with two references, `alerts-resolved.md` and `key-wins.md`, because the two answer the same question from either end and share their pulls. `references/single-site/overview/` is the part every report carries.
 
 **Rules:**
 
@@ -46,7 +46,7 @@ Each folder holds the section's reference and a `scripts/` folder with its arith
 
 ### Automatic sections
 
-| Section | `--sections` name | Folder under `references/` | Adds |
+| Section | `--sections` name | Folder under `references/single-site/` | Adds |
 | --- | --- | --- | --- |
 | Sustainability ratings | `sustainability-ratings` | `sustainability-ratings/` | a card per NABERS energy, indoor environment and water rating, current or expired, and each one's rating history |
 

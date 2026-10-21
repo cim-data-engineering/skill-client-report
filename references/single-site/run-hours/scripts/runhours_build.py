@@ -250,7 +250,7 @@ def held_running(point, reading):
 
 
 def decide(unit, points):
-    """Which sensor draws the row, following the decision table in references/run-hours/run-hours.md."""
+    """Which sensor draws the row, following the decision table in references/single-site/run-hours/run-hours.md."""
     got = {p["role"]: (p, points.get(str(p["fav_id"]))) for p in unit["pull"]}
     sp, sr = got.get("status", (None, None))
     ap, ar = got.get("analog", (None, None))
@@ -577,7 +577,7 @@ def note_lines(window, plan, units, notes, resets, max_pass):
     if plan.get("unknown_units"):
         lines.append(f"{units_text(plan['unknown_units'])} at the site are of a type the run-hours reference "
                      "does not cover yet, not drawn: PEAK has added a type. List the site's equipment "
-                     "types to name it, and add it to references/run-hours/run-hours-signals.md.")
+                     "types to name it, and add it to references/single-site/run-hours/run-hours-signals.md.")
     later = [u for u in plan["units"] if u["pull"] and u["pass"] > max_pass]
     if later:
         types = Counter(u["type_name"] for u in later)

@@ -3,7 +3,7 @@
 months of raised vs resolved, and who closed the work. Every number printed is a
 count from count_tickets or a pagination.total; rows only add what a count
 cannot, the median and company names and logos. See
-references/actions-and-wins/alerts-resolved.md.
+references/single-site/actions-and-wins/alerts-resolved.md.
 """
 import base64
 import os
@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from statistics import median
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
 NAME = "alerts-resolved"

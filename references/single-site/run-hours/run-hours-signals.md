@@ -2,7 +2,7 @@
 
 Which point stands for a unit running. The recipe reads every point on the site's in-scope equipment and sorts it by name with the rules below, at run time — so this is a guide, not a list to keep complete. A point PEAK added last week is read the same way as one added years ago, and nothing here names a metadata id.
 
-`references/run-hours/scripts/runhours_plan.py` parses these tables on every run: edit a table and the next run follows it, with no second copy in code. `references/run-hours/run-hours.md` does not need this file at run time — open it to change a rule.
+`references/single-site/run-hours/scripts/runhours_plan.py` parses these tables on every run: edit a table and the next run follows it, with no second copy in code. `references/single-site/run-hours/run-hours.md` does not need this file at run time — open it to change a rule.
 
 ## Equipment types
 
@@ -55,7 +55,7 @@ In-scope types, in the order the view draws them and the first pass fetches them
 | Field units | Extract | KF | Kitchen Fans | KEF, KSAF | | | |
 | Field units | Extract | EAF | Exhaust Air Fans | EAF, EF | | | |
 
-- **Page** follows what the type serves: the whole building or a large area is central plant, one space or tenancy is a field unit. A type that could go either way — a heat pump feeding a plant loop — is placed by what it usually serves; move its row if a portfolio differs.
+- **Page** follows what the type serves: the whole building or a large area is central plant, one space or tenancy is a field unit. A type that could go either way — a heat pump feeding a plant loop — is placed by what it usually serves; move its row if a client's buildings differ.
 - **Name word** is a word in an equipment name that means this type, anywhere in the name and glued to its number or not — `B2 FCU 210-1`, `KEF11-1`, `Common - SHWP - 2`. It is read only to group a unit with the type its name says, and only between the types **Regrouped by name** allows.
 - **Compressor is the unit** is `yes` where the compressor running is the unit running, so a compressor status counts as a status. Elsewhere it is a last resort: a PAC's compressor cycles while its fan runs on.
 - **Heating is the unit** is `yes` where heating is what the unit is for, so the heating words that **Never a run signal** sets aside on a fan — a burner, an immersion heater, a heating status — are this unit's own: a boiler with only `Burner Status` is drawn from it.
@@ -65,7 +65,7 @@ A type in neither this table nor **Never charted** is unclassified: its units ar
 
 ## Regrouped by name
 
-A unit whose name says one type while PEAK says another is drawn under its name's type only where that pair is here — the mix-ups that recur across portfolios. A name that also names PEAK's own type keeps it. Every other disagreement is left as PEAK has it: the first word of a name is as often a building or plantroom code (`CH AHU-12`, `EC Boiler-01` for an energy centre) or a heating circuit (`CT Heating Pump 2`, constant temperature) as a type, and a pump named for what it serves (`AHU-CHWP-10`) is still a pump.
+A unit whose name says one type while PEAK says another is drawn under its name's type only where that pair is here — the mix-ups that recur across clients. A name that also names PEAK's own type keeps it. Every other disagreement is left as PEAK has it: the first word of a name is as often a building or plantroom code (`CH AHU-12`, `EC Boiler-01` for an energy centre) or a heating circuit (`CT Heating Pump 2`, constant temperature) as a type, and a pump named for what it serves (`AHU-CHWP-10`) is still a pump.
 
 | Code | Takes units PEAK types as | Seen as |
 | --- | --- | --- |

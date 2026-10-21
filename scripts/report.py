@@ -41,13 +41,13 @@ OPTIONS = {"equipment-health": ("Equipment health", ["equipment-health"]),
            "actions-and-wins": ("Actions and key wins", ["alerts-resolved", "key-wins"]),
            "run-hours": ("Equipment run hours", ["run-hours"])}
 # report section -> (folder under references/, module in its scripts/)
-MODULES = {"overview": ("overview", "overview"),
-           "equipment-health": ("equipment-health", "equipment_health"),
-           "indoor-environment": ("indoor-environment", "indoor_environment"),
-           "alerts-resolved": ("actions-and-wins", "alerts_resolved"),
-           "key-wins": ("actions-and-wins", "key_wins"),
-           "run-hours": ("run-hours", "run_hours"),
-           "sustainability-ratings": ("sustainability-ratings", "sustainability_ratings")}
+MODULES = {"overview": ("single-site/overview", "overview"),
+           "equipment-health": ("single-site/equipment-health", "equipment_health"),
+           "indoor-environment": ("single-site/indoor-environment", "indoor_environment"),
+           "alerts-resolved": ("single-site/actions-and-wins", "alerts_resolved"),
+           "key-wins": ("single-site/actions-and-wins", "key_wins"),
+           "run-hours": ("single-site/run-hours", "run_hours"),
+           "sustainability-ratings": ("single-site/sustainability-ratings", "sustainability_ratings")}
 ORDER = ["sustainability-ratings", "equipment-health", "indoor-environment", "alerts-resolved", "key-wins",
          "run-hours"]
 # Sections the prompt never offers. Every report fetches them, and each drops itself
@@ -82,7 +82,7 @@ def save_rule(root):
 
 READ_RULE = ("Read these where they come back and never save them: they carry what people wrote on the "
              "tickets, and the files hold none of that. One that comes back offloaded as a file prints "
-             "screened and compact with: python3 references/actions-and-wins/scripts/key_wins.py digest <that file>")
+             "screened and compact with: python3 references/single-site/actions-and-wins/scripts/key_wins.py digest <that file>")
 
 
 # ── plan ────────────────────────────────────────────────────────────────────
@@ -152,7 +152,7 @@ def cmd_next(a):
         print("No more calls. Next: python3 scripts/report.py bundle %s" % a.dir
               if not os.path.isfile(os.path.join(work.root, "wins.json"))
               else "No more calls. Next, if any win could carry photos: python3 "
-                   "references/actions-and-wins/scripts/key_wins.py photos %s; then fill." % a.dir)
+                   "references/single-site/actions-and-wins/scripts/key_wins.py photos %s; then fill." % a.dir)
         return
     have = {c["file"] for c in calls}
     calls += [c for c in new if c["file"] not in have]
@@ -197,7 +197,7 @@ def cmd_bundle(a):
         print("Say in chat at hand-over: " + c)
     if "key-wins" in ctx["sections"] and "key-wins" not in data.get("drop", []):
         print("Next: choose the key wins from the two candidate pulls and write %s/wins.json, both by "
-              "references/actions-and-wins/key-wins.md. Then run: python3 scripts/report.py next %s" % (a.dir, a.dir))
+              "references/single-site/actions-and-wins/key-wins.md. Then run: python3 scripts/report.py next %s" % (a.dir, a.dir))
     else:
         print("Next: python3 scripts/report.py fill %s" % a.dir)
 

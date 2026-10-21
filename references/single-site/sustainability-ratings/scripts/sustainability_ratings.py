@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Sustainability ratings: a card per NABERS measure and each one's rating history.
-See references/sustainability-ratings/sustainability-ratings.md.
+See references/single-site/sustainability-ratings/sustainability-ratings.md.
 
 Not one of the section choices. report.py adds it to every report, and build()
 drops it when PEAK holds no current rating for the site.
@@ -9,7 +9,7 @@ import os
 import re
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
 NAME = "sustainability-ratings"

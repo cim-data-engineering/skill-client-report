@@ -6,7 +6,7 @@ runhours_plan.py fixes the week and picks every unit's points, and
 runhours_build.py turns the history into the aggregate. This module drives them through the
 report's hooks and draws the aggregate as static SVG in the report's design, since
 the report carries no script. Where the site's data is missing from that week, it
-moves to the latest full week before the data stopped. See references/run-hours/run-hours.md.
+moves to the latest full week before the data stopped. See references/single-site/run-hours/run-hours.md.
 """
 import json
 import os
@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from html import escape
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "scripts"))
+sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
 NAME = "run-hours"

@@ -184,7 +184,7 @@ def cmd_check(args):
     kw = text.find('<p class="eyebrow">Key wins</p>')
     if kw != -1 and not re.search(r'class="win[ "]', text[kw:text.find("</section>", kw)]):
         errors.append("Key wins section carries no wins — delete the section rather "
-                      "than shipping the heading (references/actions-and-wins/key-wins.md)")
+                      "than shipping the heading (references/single-site/actions-and-wins/key-wins.md)")
 
     # A win photo has to travel inside the file. An attachment link is signed and
     # short-lived, so a photo left as a link breaks soon after the report is sent.
@@ -194,7 +194,7 @@ def cmd_check(args):
             errors.append("placeholder photo tile still in the report — fill the wins from the bundle")
         elif not src.startswith("data:"):
             errors.append("win photo linked rather than embedded: %.60s… — download it and pass "
-                          "the file to fill_report.py (references/actions-and-wins/key-wins.md)" % src)
+                          "the file to fill_report.py (references/single-site/actions-and-wins/key-wins.md)" % src)
 
     # The run hours sample chart is a placeholder; the script draws the real one.
     if 'data-sample="run-hours"' in text:

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Equipment health: three operational impact rows, the snapshot heatmap and
 both monthly charts, from the section's saved calls. See
-references/equipment-health/equipment-health.md for what each figure means;
+references/single-site/equipment-health/equipment-health.md for what each figure means;
 this module is that reference's arithmetic.
 """
 import os
@@ -9,7 +9,7 @@ import re
 import sys
 from collections import defaultdict
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts"))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
 NAME = "equipment-health"

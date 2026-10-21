@@ -1,6 +1,6 @@
 # Overview
 
-The parts every report carries: the masthead, the analytics overview, and the operational impact and notes frames. Script: `scripts/overview.py`. The rules it follows are in SKILL.md, [What always renders](../../SKILL.md#what-always-renders), [Operational impact](../../SKILL.md#operational-impact) and [Notes band](../../SKILL.md#notes-band).
+The parts every report carries: the masthead, the analytics overview, and the operational impact and notes frames. Script: `scripts/overview.py`. The rules it follows are in SKILL.md, [What always renders](../../../SKILL.md#what-always-renders), [Operational impact](../../../SKILL.md#operational-impact) and [Notes band](../../../SKILL.md#notes-band).
 
 ## What you write
 

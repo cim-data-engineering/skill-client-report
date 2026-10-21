@@ -13,7 +13,7 @@ window  Reads the saved search_sites result (timezone and working hours), fixes
         <workdir>/window.json and prints the discovery and census calls to make.
         --hours assesses against the user's hours instead of the site's.
 plan    Sorts every discovered point with the rules in
-        references/run-hours/run-hours-signals.md, picks each unit's
+        references/single-site/run-hours/run-hours-signals.md, picks each unit's
         candidate points, orders the units for the view, splits them into a
         first pass of up to --cap units and the rest, writes
         <workdir>/plan.json and prints the history calls to make.
@@ -123,7 +123,7 @@ def plural(n, word):
 
 
 class Rules:
-    """The tables of references/run-hours/run-hours-signals.md, ready to classify with."""
+    """The tables of references/single-site/run-hours/run-hours-signals.md, ready to classify with."""
 
     NEEDED = ("Equipment types", "Regrouped by name", "Never charted", "Roles",
               "Never a run signal", "Which point wins", "Runs around the clock")
