@@ -230,9 +230,8 @@ BL_VIEW, BL_BASE, BL_H = 150, 112, 78
 
 
 def backlog_chart(d):
-    """A bar a month end on one scale, split by age open as the age bars below it are, oldest at the
-    base, the total on top; the last bar is the issue month, counted as at the issue date. The section's
-    age key above it serves both."""
+    """A bar a month end on one scale, split by age open as the list bars are, oldest at the base, the
+    total on top; the last bar is the issue month, counted as at the issue date."""
     months, vals, stacks = d["months"], d["values"], d["stacks"]
     n = len(months)
     step = (RIGHT - LEFT - 40) / max(n - 1, 1)
