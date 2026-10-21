@@ -17,7 +17,8 @@ import portfolio_io as pio  # noqa: E402
 NAME = "sustainability-ratings"
 PAGE = 200
 FIRST = ["energy", "indoor environment", "water"]   # column order; any other measure follows alphabetically
-UNMEASURED = "Other"                                # the column for a rating type that names no measure
+UNMEASURED = "Other"                                # PEAK's catch-all measure, and the column for a type naming none
+IMPLIED = {"indoor": "Indoor environment"}          # measures PEAK has no option for, read from a type's name
 
 
 def pulls(ctx):
@@ -36,6 +37,15 @@ def more(ctx, work):
     return pio.pages_due(work, pulls(ctx), PAGE, nested=True)
 
 
+def measures(t):
+    """The measures a rating type rates. PEAK offers only energy, water, waste and Other, so a type rating
+    Other, or naming no measure, takes the measure its name implies, if any."""
+    names = [m["name"].strip() for m in t.get("sustainability_rating_measures") or [] if m.get("name")]
+    title = (t.get("name") or "").lower()
+    implied = next((v for k, v in IMPLIED.items() if k in title), UNMEASURED)
+    return list(dict.fromkeys(implied if n.lower() == UNMEASURED.lower() else n for n in names or [UNMEASURED]))
+
+
 def column_key(name):
     n = name.strip().lower()
     return (FIRST.index(n), "") if n in FIRST else (len(FIRST), n)
@@ -51,8 +61,7 @@ def build(ctx, work, shared):
             continue
         tid = r["sustainability_rating_type_id"]
         types[tid] = t
-        measures = [m["name"].strip() for m in t.get("sustainability_rating_measures") or [] if m.get("name")]
-        for m in measures or [UNMEASURED]:
+        for m in measures(t):
             by[r["site_id"]][m].append(r)
 
     # A type's precision: halves on a scale of ten points or fewer, or any fractional score, print to 1dp.

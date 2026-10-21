@@ -14,7 +14,7 @@ The section, its headings, its notes and every fixed line say "sustainability ra
 
 ## Scope
 
-- **Every rating type** PEAK records for the sites, grouped by the measure each type rates: PEAK's `sustainability_rating_measures`, such as energy, water and waste. A type that names no measure sits under Other, with any type whose measure PEAK names Other
+- **Every rating type** PEAK records for the sites, grouped by the measure each type rates: PEAK's `sustainability_rating_measures`, such as energy, water and waste. PEAK has no indoor environment measure, so a type that rates Other or names no measure sits under Indoor environment when its name says indoor, and under Other otherwise
 - **One type per cell**: per site and measure, the latest rating by rating period end decides the rating type shown, and its history keeps to that type. Two types are never mixed in one cell or one comparison
 - **Current**: a rating is current when it has not expired by the issue date
 - **Renders when**: at least one site holds a current rating for some measure
@@ -37,7 +37,7 @@ Above the table, a legend: ↑ "Up from the rating before" in green, ↓ "Down f
 | --- | --- |
 | Site | The site name with its state abbreviation in muted brackets, linked to that site's ratings dashboard |
 | Size | Building size, in the portfolio's unit, named in the header |
-| One per measure | Each measure that holds a current rating at any site, headed with PEAK's measure name. Energy, indoor environment and water lead in that order; any other measure follows alphabetically |
+| One per measure | Each measure that holds a current rating at any site, headed with the measure's name. Energy, indoor environment and water lead in that order; any other measure follows alphabetically |
 
 **Rating cell:**
 
