@@ -10,25 +10,22 @@ Nothing on the page. In chat, say what the script prints: that the section is le
 
 Eyebrow: the issue month, "October 2026"  
 Statement: Open P1-2 actions  
-Date line: the backlog's headline, then "By site and assignee, by age open.", then where a list is cut, "Top 10 of {N} sites and {N} assignees." naming the lists cut. The headline is "{N} priority 1 and 2 actions open as at {issue date}", then the move since the last month end, "up 4 since 30 September", "down 3 since..." or "unchanged since...", then one of:
-- " and down from {peak} at the end of {month}" where the backlog is below its highest month end in the window and that month end is not the last one
-- ", the most at any month end in the past year" where it is at or above every month end
-
-Legend under it: "≥60d", "30-60d", "<30d", one swatch each. It keys the chart and both lists' age bars.
+Date line: "Priority 1 and 2 open actions (new, in progress and on hold).", then where a list is cut, "Top 10 of {N} sites and {N} assignees." naming the lists cut. Nothing else: the chart shows the trend and the lists show where the work sits, so no sentence restates either.  
+Legend under it: "Open 60+ days" and "Under 60 days", one swatch each. It keys the chart and both lists' bars.
 
 ## Definitions
 
 - **Open P1-2**: an action with priority 1 or 2 and status open, in progress or on hold, as at the issue date, whenever it was raised
-- **Age open**: the days since the action was raised, as PEAK gives it on the pull: 60 or more, 30 to 60, or under 30
+- **Age open**: the days since the action was raised, as PEAK gives it on the pull: 60 or more, or under 60. One split, in two tones the reader needs no legend study for: red for the old work, grey for the rest. Three shades were tried and read as noise
 - **Actions, not alerts**: every count is of action tickets, one per action, never the alerts behind them
 
 ## Backlog chart
 
-Under the legend, chart title "Backlog at month end": a stacked bar for each of the eleven month ends before the issue month, then the issue month to date, twelve in all, on one scale. Each bar splits by age open on the day, in the age bars' own shades, 60 days or more at the base, with its total on top. A year shows a whole cycle of the backlog, where six months can start after its peak and read a fall as flat.
+Under the legend, chart title "Backlog at month end": a stacked bar for each of the eleven month ends before the issue month, then the issue month to date, twelve in all, on one scale. Each bar splits by age open on the day, in the lists' two tones, 60 days or more at the base, with its total on top. A year shows a whole cycle of the backlog, where six months can start after its peak and read a fall as flat.
 
 - **Month end**: every action open as the month closed, on the definition above: raised before the first of the next month, and not closed before it. Its age is counted to the month's last day
 - **The issue month** is the backlog as at the issue date, the count the lists add up to. It sits in the month to date's tinted column with "to date" under its label, per `DESIGN.md`. It is a reading at a date, not a part month: it holds every action open then, so it compares with the month ends as it stands
-- Under it, a chart note: "Each month end counts the actions raised by then and not yet closed, at the priority each holds now." PEAK keeps no priority or status history, so a month end is rebuilt from today's records: an action raised as P3 and later raised to P1 counts at P1 in every month it was open
+- No chart note. PEAK keeps no priority or status history, so a month end is rebuilt from today's records: an action raised as P3 and later raised to P1 counts at P1 in every month it was open. That stays here rather than on the page
 - The chart is shorter than the monthly charts (viewBox 682 by 150), so it and both lists of ten hold one A4 page
 - It comes before the lists so the trend is read first, and is left out with fewer than two bars
 

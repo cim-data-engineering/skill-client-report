@@ -20,7 +20,7 @@ PRIORITIES = [1, 2]
 PAGE = 1000
 SHOWN = 10                             # a list each side, so the backlog chart and both lists hold one page
 DAY_MS = 86400000
-AGES = (60, 30)                        # days: 60 or more, 30 to 60, under 30
+OLD = 60                               # days: open this long or more is old work, the one split shown
 UNNAMED, NOBODY = "Unnamed assignee", "No assignee"
 COUNT_CHUNK = 20
 BACKLOG_MONTHS = 12                    # the issue month to date and the eleven month ends before it
@@ -70,7 +70,7 @@ def more(ctx, work):
 
 def backlog(ctx, work, open_rows):
     """The open P1-2 backlog at each month end, then as at the issue date under the issue month to
-    date, each split by age open on the day: [60 days or more, 30 to 60, under 30]. A month end holds
+    date, each split by age open on the day: [60 days or more, under 60]. A month end holds
     every action raised before the first of the next month and not closed by then."""
     tz = {s["site_id"]: s.get("timezone") for s in ctx["sites"]}
     day = lambda r, k: io.d(io.local_day(r[k], tz.get(r["site_id"]) or "UTC"))
@@ -82,7 +82,7 @@ def backlog(ctx, work, open_rows):
     months = [io.mon(m.isoformat()) for m, _ in month_ends(ctx)] + [io.mon(date(today.year, today.month, 1).isoformat())]
     stacks = []
     for end in ends:
-        ages = [0, 0, 0]
+        ages = [0, 0]
         for raised_on, closed_on in rows:
             if raised_on < end and (closed_on is None or closed_on >= end):
                 ages[bucket(((end - timedelta(days=1)) - raised_on).days * DAY_MS)] += 1
@@ -90,28 +90,8 @@ def backlog(ctx, work, open_rows):
     values = [sum(a) for a in stacks]
     told = ", ".join("%s %d" % (m, v) for m, v in zip(months, values))
     return {"months": months, "values": values, "stacks": stacks, "to_date": True,
-            "note": "Each month end counts the actions raised by then and not yet closed, at the priority "
-                    "each holds now.",
-            "alt": "Stacked bar chart of open priority 1 and 2 actions at each month end by age open, %s to %s "
+            "alt": "Stacked bar chart of open priority 1 and 2 actions at each month end, open 60 days or more under the rest, %s to %s "
                    "to date: %s." % (months[0], months[-1], told)}
-
-
-def headline(ctx, b):
-    """The date line's lead: how many are open now, the move since the last month end, and the
-    window's peak where the backlog has come down from it."""
-    now, last, ends = b["values"][-1], b["values"][-2], b["values"][:-1]
-    move = ("unchanged since %s" if now == last else "%s %d since %%s" % ("up" if now > last else "down", abs(now - last)))
-    last_end = io.last_day(month_ends(ctx)[-1][1].isoformat())
-    said = io.day_long(last_end.isoformat())
-    if last_end.year == io.d(ctx["today"]).year:
-        said = said[:-5]
-    out = "%d priority 1 and 2 actions open as at %s, %s" % (now, io.day_long(ctx["today"]), move % said)
-    peak = max(range(len(ends)), key=lambda k: (ends[k], k))
-    if now >= max(ends):
-        out += ", the most at any month end in the past year"
-    elif peak < len(ends) - 1 and ends[peak] > now:
-        out += " and down from %d at the end of %s" % (ends[peak], io.month(month_ends(ctx)[peak][0].isoformat()))
-    return out + "."
 
 
 def link(ctx, since, site_ids, grouping, assignee_ids=()):
@@ -133,9 +113,8 @@ def raised(ctx, age_ms):
 
 
 def bucket(age_ms):
-    """0 for open 60 days or more, 1 for 30 to 60 days, 2 for under 30."""
-    days = (age_ms or 0) / DAY_MS
-    return 0 if days >= AGES[0] else 1 if days >= AGES[1] else 2
+    """0 for open 60 days or more, 1 for under 60."""
+    return 0 if (age_ms or 0) / DAY_MS >= OLD else 1
 
 
 def most_first(counts, name):
@@ -159,7 +138,7 @@ def build(ctx, work, shared):
                                          "P1-2 actions section is left out."]}
 
     # open actions by age at each site and with each person, the actions no one holds as one more
-    site_ages, person_ages = defaultdict(lambda: [0, 0, 0]), defaultdict(lambda: [0, 0, 0])
+    site_ages, person_ages = defaultdict(lambda: [0, 0]), defaultdict(lambda: [0, 0])
     sites, who, oldest = defaultdict(set), {}, {}
     for act in actions:
         b = age[act["ticket"]]
@@ -197,7 +176,7 @@ def build(ctx, work, shared):
         person_rows.append(row)
 
     trend = backlog(ctx, work, raw)
-    note = headline(ctx, trend) + " By site and assignee, by age open."
+    note = "Priority 1 and 2 open actions (new, in progress and on hold)."
     over = [what for n, what in ((len(listed), "%d sites" % len(listed)), (len(set(people) - {NOBODY}), "%d assignees" % len(set(people) - {NOBODY})))
             if n > SHOWN]
     if over:
