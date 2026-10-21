@@ -115,6 +115,7 @@ SYSTEM_ACCOUNTS = {
     "4ddcfd76-f5f0-46f3-863a-2bf90ce22469": "CIM Support",
     "e28a4b09-a670-4954-823b-72e411e7cc2d": "CIM Engineering API",
     "d266f1a8-4822-4235-b174-aebce72328e8": "Engineering Read-Only CIM API User",
+    "f8445200-d180-47b0-9cb2-79374e373b33": "Agent Hannah",
     "7ba072a9-ada6-4f2b-82d3-b86cbc71558c": "Agent Hannah Escalations",
     "ceb1f491-e901-4369-8708-2a38bbc4e9ea": "Agent Hana v1.0",
 }

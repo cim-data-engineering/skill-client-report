@@ -1,16 +1,22 @@
 # Actions resolved
 
-Owns the actions resolved counts and ticket pulls, and hands them on as rankings: each site's actions resolved, and each company's and each person's. It has no part on the page. Script: `scripts/actions_resolved.py`, which builds every ranking below.
+Owns the actions resolved ticket pulls, and hands them on as rankings: each site's actions resolved, and each company's and each person's. It has no part on the page. Script: `scripts/actions_resolved.py`, which builds every ranking below.
 
 ## What you write
 
-Nothing on the page. In chat, say what the script prints: any company shown with its initials for want of a logo, and any account PEAK holds no name or company for, by its user id, for ops to name in PEAK.
+Nothing on the page. In chat, say what the script prints: how many of the quarter's actions it left out and why, any company shown with its initials for want of a logo, and any account PEAK holds no name or company for, by its user id, for ops to name in PEAK.
 
 ## Definitions
 
-- **Resolved**: an action resolved in the quarter, in any status but Not Doing
+- **Resolved**: an action resolved in the quarter, in any status but Not Doing, that counts
+- **Counts**: every resolved action, created and closed in one step included, but two kinds closed out with no comment from a person on the action at any point, only agents' or none, which no ranking counts, this month or on last month's board:
+  1. **Recovered with no comment**: created and closed in one step, every linked alert already recovered at that moment. PEAK stamps an action created closed as resolved the instant it was created
+  2. **Closed in fault with no comment**: a person closed it while every linked alert was in fault, and every one is still in fault today
+- **Who closed it**: the change among the action's latest three stamped nearest its resolved_at, within 5 seconds; an action created closed has its creation alone. An agent's close always counts, Agent Hannah's above all, credited to the assignees like any other. Where no close shows in those three, the rules apply
+- **A person**: anyone `peak_io.system_account` does not name, as for who ranks below. CIM's system accounts and agents never comment or close as a person, nor does PEAK's own system user, which carries no id
+- **An alert's state at the close**: its fault status now, where it has not changed since the close. An alert that changed after the close is in neither state, so the action counts, as does an action with no linked alert
 - **Actions, not alerts**: every count is of action tickets, one per action, never the alerts behind them
-- **Who resolved it**: the action's assignees. An action counts once for each company holding it and once for each person. The site ranking counts every action, whoever resolved it
+- **Who resolved it**: the action's assignees. An action counts once for each company holding it and once for each person. The site ranking counts every action that counts, whoever resolved it
 - **Who ranks**: people, CIM's included, and contractors' shared logins, such as a dispatch desk. CIM's system accounts never rank, and CIM's company figure leaves them out: `peak_io.system_account` decides, by the user ids in `peak_io.SYSTEM_ACCOUNTS` (CIM Support, the CIM API logins and the AI agents) and any name starting "Agent", since the rows carry no email. An account PEAK holds no name and no company for is left off both team rankings; one with a company but no name ranks as "Unnamed assignee"
 
 ## Hands on
@@ -34,16 +40,14 @@ All in the main batch but the leader pull:
 
 | Need | Call |
 | --- | --- |
-| Resolved in the quarter, per site | `count_tickets(ticket_types:["escalated"], aggregate_entities:["site"], statuses:["open","in_progress","closed","on_hold"])` resolved over the quarter, 20 sites a call |
-| Resolved a month earlier, per site | the same, resolved over the quarter a month earlier |
-| Each person's name | the same counts with `aggregate_entities:["assignee"]`, over the quarter and over the quarter a month earlier: `assignee_name` by `assignee_id` |
-| Who resolved each action | `tickets.tickets` (`type:"escalated"`, `ticket_archived:false`, every `site_ids`) resolved over the quarter, `limit:1000` |
-| Who resolved each action a month earlier | the same, resolved over the quarter a month earlier |
+| Each person's name | `count_tickets(ticket_types:["escalated"], aggregate_entities:["assignee"], statuses:["open","in_progress","closed","on_hold"])` resolved over the quarter and over the quarter a month earlier, 20 sites a call: `assignee_name` by `assignee_id` |
+| Each action resolved, who holds it and whether it counts | `tickets.tickets` (`type:"escalated"`, `ticket_archived:false`, every `site_ids`) resolved over the quarter, `limit:1000` |
+| The same a month earlier | the same, resolved over the quarter a month earlier |
 | The Assignees leader's first name and email | once the pulls are whole, `report.py next` prints one `tickets.tickets` on one ticket of the leader's whose assignees all have names, selecting `ticket_id` and `assignees` with `id`, `firstname` and `email`: `ar/leader.json` |
 
-- The ticket pulls select only `ticket_id`, `site_id`, `status_id`, and `assignees` with `id`, `entity.name` and `entity.logo_url`: who holds each action and their company, never what anyone wrote. No names or emails: PEAK refuses the whole pull when one assignee has none, so names come from the counts by assignee
-- `report.py next` pages each pull from its first page's total, 1000 rows a page
-- Every site figure is a `count_tickets` count. The ticket rows only say who holds each action
+- The ticket pulls select `ticket_id`, `site_id`, `status_id`, `created_at`, `resolved_at`, and `assignees` with `id`, `entity.name` and `entity.logo_url`: who holds each action and their company. To tell whether it counts, they add `comments(user_only:true)` and the latest three of `change_history(sort_order:"DESC")`, each with `author_id` and `author_full_name`, the close by `ts`, and each linked alert's `fault_status` and `last_fault_transitioned_at` under `ticket_links.ticket`. Never what anyone wrote. No assignee names or emails: PEAK refuses the whole pull when one assignee has none, so names come from the counts by assignee
+- `report.py next` pages each pull from its first page's total, 1000 rows a page, about 1 MB
+- Every figure counts the action rows that count. A count from `count_tickets` cannot tell a comment's author or an alert's state at the close, so no figure is one, and a board's figure can sit below the PEAK report its name opens: the script says so in chat whenever it left an action out
 - Rows with status Not Doing are dropped from the pulls
 - Each company's logo is fetched once from the link on its assignees and embedded; a company without one gets its initials
 - Each window is read in each site's own time zone
