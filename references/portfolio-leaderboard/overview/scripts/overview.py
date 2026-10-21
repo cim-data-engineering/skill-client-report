@@ -28,7 +28,7 @@ def calls(ctx):
     return (pio.split(ctx, "overview/sites.json", CHUNK,
                       lambda f, ids: io.gql(f, "platform.sites", {"site_ids": ids, "limit": CHUNK},
                                             ["site_id", "site_name", "building_size", "monetary_currency", "state",
-                                             "country"]))
+                                             "country", "photo_url"]))
             + count("overview/rules.json", "search_rules", task_state="running", limit=1)
             + count("overview/sensors.json", "search_favourites", limit=1)
             + count("overview/equipment.json", "search_equipment", limit=1)
@@ -40,7 +40,7 @@ def more(ctx, work):
 
 
 def facts(ctx, work):
-    """{site_id: platform.sites row}: building size, currency, state and country."""
+    """{site_id: platform.sites row}: building size, currency, state, country and the building's photo link."""
     return {r["site_id"]: r for r in pio.rows(work, "overview/sites.json")}
 
 

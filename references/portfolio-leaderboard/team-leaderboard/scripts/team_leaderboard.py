@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""The leaderboard month's team leaderboard: a board for each team ranking handed on,
+ranking the companies or the people holding the work, each with its leader, the
+chasing pack and the biggest climber, every move against last month's board. No calls
+of its own: it draws the team rankings in `shared`, so it builds after the sections
+that hand them on. See references/portfolio-leaderboard/team-leaderboard/team-leaderboard.md.
+"""
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
+import portfolio_io as pio  # noqa: E402
+
+NAME = "team-leaderboard"
+SHOWN = 10
+
+
+def calls(ctx):
+    return []
+
+
+def more(ctx, work):
+    return []
+
+
+def board(ctx, ranking):
+    """The board for one team ranking, and how many it ranks."""
+    names, now = ranking["names"], ranking["now"]
+    ranked, moves = pio.standings(list(names), now, ranking["start"], names.get)
+    rows = []
+    for k, key in ranked[:SHOWN]:
+        r = {"rank": k, "name": names[key], "value": "{:,}".format(int(now[key])), "move": moves[key] or None}
+        if k == 1:
+            r["meta"] = ranking["meta"].get(key) or []
+        if "tiles" in ranking:
+            r["tile"] = ranking["tiles"].get(key) or {}
+        rows.append(r)
+    c = pio.climber(ranked[:SHOWN], moves)
+    if c and "tiles" in ranking:
+        c["tile"] = ranking["tiles"].get(c["key"]) or {}
+    return {"title": ranking["label"], "anchor": ranking["anchor"], "window": pio.board_window(ctx, ranking["window"]),
+            "unit": ranking.get("unit"), "rows": rows, "noun": ranking["noun"], "climber": dict(c, name=names[c["key"]]) if c else None,
+            "link": ranking.get("link")}, len(ranked)
+
+
+def build(ctx, work, shared):
+    built = [(b, n) for b, n in (board(ctx, r) for r in shared.get("team_rankings") or []) if b["rows"]]
+    if not built:
+        return {"drop": [NAME]}
+    over = ["%d %s" % (n, b["noun"]) for b, n in built if n > SHOWN]
+    return {"team_boards": [b for b, _ in built],
+            "leadheads": {"Team leaderboard": pio.board_head(
+                ctx, "by actions resolved", "Top %d of %s." % (SHOWN, " and ".join(over)) if over else None)}}

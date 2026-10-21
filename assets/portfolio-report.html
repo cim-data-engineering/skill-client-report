@@ -37,7 +37,9 @@ table.lbt.vend td.rank .mv{display:block;margin-top:3px}
 .vsites{font-size:.75rem;font-weight:400;line-height:1.35;color:var(--text-muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .vsites b{font-weight:600;color:var(--text-heading);white-space:nowrap}
 .vsites .sep{color:var(--text-muted)}
-td.assignee .nm .co-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+td.assignee .nm .co-name,td.assignee .nm .pn{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+/* Assignee table: the person's company leads their sites line, a step above the sites */
+.vsites .vco{font-weight:500;color:var(--text-body)}
 
 /* Scorecard strip: the analytics overview stats straight under the masthead, with no section header */
 section.overview.strip{padding:22px 56px 22px}
@@ -45,33 +47,53 @@ section.overview.strip{padding:22px 56px 22px}
 .strip .stat .k{margin-bottom:6px}
 .strip .stat .n{font-size:1.75rem}
 
-/* Leaderboard: one leader, the chasing pack set quietly, the biggest climber. Up to three boards side by side;
-   fewer take the width they leave */
+/* Leaderboard: each board is a small ranked table in the report's own parts. The board head is a table header;
+   the leader is the first row set large, under the building's photo, with its figure and unit as a scorecard
+   shows them; the biggest climber is the second row; the chasing pack is the table body. Every tier shares one
+   rank column, so all the names start on one line, and each board is a subgrid row of the section, so every
+   tier sits level across the boards whatever the names. The site and team leaderboards share every rule */
 section.lead{padding:28px 56px 24px}
-.lhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-bottom:20px}
-.lhead .lnote{margin:0;text-align:right}
-.rkgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}
-.rkgrid.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rkgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(5,auto);column-gap:28px}
+.rkgrid.n2{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px}
 .rkgrid.n1{grid-template-columns:minmax(0,1fr)}
-.rkcol{display:flex;flex-direction:column}
-.rkcol .charttitle{margin-bottom:2px}
-.rkcap{margin:0 0 10px;font-size:.8125rem;color:var(--text-muted)}
-.rkcol .llab{display:flex;align-items:center;gap:6px;margin:0 0 6px;font-size:.6875rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--secondary)}
-.rkcol .llab svg{display:block;width:14px;height:14px;color:var(--secondary)}
-.rkcol .lrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.rkcol{display:grid;grid-row:span 5;grid-template-rows:subgrid;min-width:0}
+/* the board head: a table header over the strong rule */
+.rkhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding-bottom:8px;border-bottom:2px solid var(--secondary);font-size:.75rem;color:var(--text-muted);white-space:nowrap}
+.rkhead .rkt{margin:0;font-family:var(--display);font-size:1.0625rem;font-weight:600;line-height:1.35;color:var(--text-heading)}
+/* the leader's building, cropped to a wide band, framed as the key wins' photos are; a plain panel without one */
+.lphoto{margin-top:12px;aspect-ratio:2/1;box-sizing:border-box;overflow:hidden;border:1px solid var(--outline);border-radius:6px;background:var(--surface-dim)}
+.lphoto img{display:block;width:100%;height:100%;object-fit:cover}
+.lphoto.none{display:flex;align-items:center;justify-content:center;color:var(--outline-strong)}
+/* the leader: the trophy and its move in the rank column, the name across the board, then the meta line and the
+   figure with its unit */
+.leader{display:grid;grid-template-columns:24px 1fr auto;grid-template-rows:auto auto;row-gap:6px;align-content:start;padding:12px 0;border-bottom:1px solid var(--outline)}
+.leader.co{grid-template-columns:24px 50px 1fr auto}
+.leader .rkmark{grid-row:1 / span 2;padding-top:3px;color:var(--secondary)}
+.leader .rkmark svg{display:block;width:16px;height:16px}
+.leader .rkmark .mv{display:block;margin-top:5px}
+.leader .who{grid-column:2;grid-row:1 / span 2;align-self:center;max-width:none}
+.leader .lname{grid-column:-3 / -1;font-family:var(--display);font-size:1.125rem;font-weight:600;line-height:1.25;color:var(--text-heading)}
+.leader .lmeta{grid-column:-3;align-self:end;padding-bottom:3px;font-size:.75rem;color:var(--text-muted)}
+.leader .lval{grid-column:-2;align-self:end;justify-self:end;padding-left:8px;font-family:var(--display);font-size:2rem;font-weight:700;line-height:1;letter-spacing:-.02em;color:var(--text-heading);font-variant-numeric:tabular-nums;white-space:nowrap}
+.leader .lval span{margin-left:3px;font-family:var(--sans);font-size:.9375rem;font-weight:500;letter-spacing:0;color:var(--text-muted)}
 .rkcol a .chev{color:var(--primary)}
-/* the leader: the one figure on the board set large */
-.leader{display:flex;flex-direction:column;height:106px;box-sizing:border-box;padding:12px 0 10px;border-top:2px solid var(--secondary);border-bottom:1px solid var(--outline-strong)}
-.leader .lname{min-width:0;font-family:var(--display);font-size:1.125rem;font-weight:600;line-height:1.25;color:var(--text-heading)}
-.leader .lval{flex:none;font-family:var(--display);font-size:2rem;font-weight:700;line-height:1;letter-spacing:-.02em;color:var(--text-heading);font-variant-numeric:tabular-nums}
-.leader .lmeta{margin-top:auto;font-size:.75rem;color:var(--text-muted)}
-/* the chasing pack: small, regular weight, body colour, so the hierarchy sits with the leader */
-table.rk{width:100%;table-layout:fixed;margin-bottom:12px}
-table.rk col.c-rank{width:22px}
-table.rk col.c-mv{width:30px}
+/* the biggest climber: the second row, its icon in the rank column and its climb in the movement green */
+.climb{display:grid;grid-template-columns:24px 1fr auto;row-gap:2px;align-content:start;padding:10px 0;border-bottom:1px solid var(--outline)}
+.climb .rkmark{grid-row:1 / span 2;padding-top:1px;color:var(--text-muted)}
+.climb .rkmark svg{display:block;width:14px;height:14px}
+.climb .clab{grid-column:2 / -1;margin:0;font-size:.75rem;font-weight:500;color:var(--text-muted)}
+.climb .cwho{grid-column:2;margin:0;font-family:var(--display);font-size:.9375rem;font-weight:600;line-height:1.3;color:var(--text-heading)}
+.climb .cwho a{color:var(--text-heading)}
+.climb.co{grid-template-columns:24px 50px 1fr auto}
+.climb.co .cwho{grid-column:3}
+.climb .clogo{grid-column:2;grid-row:2;align-self:center}
+.climb .cup{grid-column:-2;align-self:center;padding-left:8px;font-size:.75rem;font-weight:600;color:var(--on-success-container);white-space:nowrap;font-variant-numeric:tabular-nums}
+/* the chasing pack: the table body, set a step smaller */
+table.rk{width:100%;table-layout:fixed;align-self:start}
+table.rk col.c-rank{width:24px}
+table.rk col.c-mv{width:32px}
 table.rk col.c-pv{width:40px}
-table.rk td{height:38px;padding:0 6px 0 0;font-size:.8125rem;line-height:1.25;white-space:normal;vertical-align:middle;color:var(--text-body)}
-table.rk tbody tr:last-child td{border-bottom:0}
+table.rk td{height:30px;padding:0 6px 0 0;font-size:.75rem;line-height:1.2;white-space:normal;vertical-align:middle;color:var(--text-body)}
 table.rk td.rank{color:var(--text-muted);font-variant-numeric:tabular-nums}
 table.rk td.lv a{color:var(--text-body);font-weight:400}
 table.rk td.mvc{text-align:right}
@@ -80,21 +102,20 @@ table.rk td.pv{padding-right:0;text-align:right;font-variant-numeric:tabular-num
 .mv.up{color:var(--on-success-container)}
 .mv.down{color:var(--on-error-container)}
 .mv.new{color:var(--text-muted);font-weight:500}
-/* the biggest climber: the second award on each board. Tied climbers share its line, and where any board names
-   two, every board's climber takes two lines, so the rules above them stay level */
-.climb{margin-top:auto;padding-top:12px;border-top:2px solid var(--secondary)}
-.climb .lrow{align-items:center;margin-bottom:6px}
-.climb .llab{margin:0;flex:none;white-space:nowrap}
-.climb .cwho{min-height:1.25em;font-family:var(--display);font-size:1rem;font-weight:600;line-height:1.25;color:var(--text-heading)}
-.climb .cwho a{color:var(--text-heading)}
-.rkgrid.tall .climb .cwho{height:2.5em}
-.climb .delta{flex:none;white-space:nowrap}
-/* names never take more than two lines, so every row keeps its height however long a site name is */
+/* team boards: a company logo beside the climber and each name in the pack, wide enough for a wordmark, in a soft
+   neutral grey that darkens a pale mark and lifts an off-white ground to white, so the colour sits with the leader's
+   tile */
+.tlogo{flex:none;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:30px;height:18px;font-family:var(--display);font-size:.5625rem;font-weight:600;color:var(--text-muted);vertical-align:middle}
+.tlogo img{display:block;width:100%;height:100%;object-fit:contain}
+.tlogo.none{border-radius:3px;background:var(--surface-dim)}
+table.rk col.c-logo{width:50px}
+table.rk td.lg{padding-right:8px}
+.rkcol .tlogo img{filter:grayscale(1) brightness(.8) contrast(2) opacity(.75)}
+/* names never take more than two lines, so every row keeps its height however long a name is */
 table.rk td.lv a,.leader .lname,.climb .cwho,table.hm.wide td.lv a,table.nbt td.lv a{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-@media screen and (max-width:760px){.rkgrid,.rkgrid.n2{grid-template-columns:1fr;gap:32px}}
-/* the leaderboard never splits across pages, whatever paper or margins the browser prints with */
+@media screen and (max-width:760px){.rkgrid,.rkgrid.n2{grid-template-columns:1fr;row-gap:0}.rkcol{margin-bottom:32px}}
+/* a leaderboard never splits across pages, whatever paper or margins the browser prints with */
 section.lead,.rkcol{break-inside:avoid}
-.lhead{break-after:avoid}
 
 /* Ranked heatmaps: the heatmap with a leading rank column, the trophy at 1 */
 table.hm.wide th.rank{width:30px}
@@ -127,9 +148,9 @@ td.nb.none{color:var(--text-muted)}
 .win .wsite .rg{color:var(--text-muted);letter-spacing:.04em}
 
 @media print{
-  /* Page one holds the masthead, the scorecard strip and the whole leaderboard. Block spacing tightens, never
-     the type, and about 110px stays spare on A4, so a browser that adds its own print margins or prints on
-     Letter still holds all three */
+  /* Page one holds the masthead, the scorecard strip and the whole site leaderboard, and page two the team
+     leaderboard. Block spacing tightens, never the type, and about 110px stays spare on page one on A4, so a
+     browser that adds its own print margins or prints on Letter still holds all three boards */
   .mast{padding:22px 56px}
   .mast .logo{margin-bottom:10px}
   .mastmeta{margin-top:12px;padding-top:10px}
@@ -138,12 +159,6 @@ td.nb.none{color:var(--text-muted)}
   .strip .stat{padding:10px 14px}
   .strip .stat .k{margin-bottom:4px}
   section.lead{padding:18px 56px 0;border-bottom:0;break-inside:avoid;break-after:page}
-  .lhead{margin-bottom:14px;break-after:avoid}
-  .rkcap{margin-bottom:8px}
-  .leader{height:100px;padding:10px 0 8px}
-  table.rk{margin-bottom:10px}
-  .climb{padding-top:10px}
-  .climb .lrow{margin-bottom:4px}
   .rkgrid{break-inside:avoid}
   /* the boards stay side by side in print */
   .rkgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -193,81 +208,102 @@ td.nb.none{color:var(--text-muted)}
 
 <!-- part: site-leaderboard -->
 <section class="lead">
-  <div class="sechead lhead">
-    <div>
-      <p class="eyebrow">Site rankings</p>
-      <h2>August 2026 performance leaderboard</h2>
-    </div>
-    <p class="h2note lnote">Top 10 of 14 sites on each board.</p>
+  <div class="sechead">
+    <p class="eyebrow">August 2026</p>
+    <h2>Site leaderboard</h2>
+    <p class="h2note">Each board ranks the sites on one measure, with moves since July. Top 10 of 14 sites on each board.</p>
   </div>
   <!-- Boards: drawn by scripts/fill_portfolio.py from the bundle's boards. -->
 <!-- fill: boards -->
   <div data-sample="boards" class="rkgrid">
     <div class="rkcol">
-      <h3 class="charttitle">Equipment health leaders</h3>
-      <p class="rkcap">August &middot; moves since July</p>
-      <div class="leader">
-        <p class="llab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span>Leader</span></p>
-        <div class="lrow"><a href="#eh-by-site" target="_self" class="lname"><span class="sn">Riverside Plaza</span>&nbsp;<span class="chev">&rsaquo;</span></a><span class="lval">99.4</span></div>
-        <div class="lrow lmeta"><span>VIC &middot; 14,200 m²</span><span class="mv up">&uarr;1</span></div>
-      </div>
+      <div class="rkhead"><h3 class="rkt">Equipment health</h3><span>Aug</span></div>
+      <div class="lphoto none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5l8-3v19"/><path d="M12 21V9l8 3v9"/><path d="M2 21h20"/><path d="M8 7v.01M8 11v.01M8 15v.01M16 14v.01M16 17v.01"/></svg></div>
+      <div class="leader"><span class="rkmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span class="mv up">&uarr;1</span></span><a href="#eh-by-site" target="_self" class="lname"><span class="sn">Riverside Plaza</span>&nbsp;<span class="chev">&rsaquo;</span></a><span class="lmeta">VIC &middot; 14,200 m²</span><span class="lval">99.4<span>%</span></span></div>
+      <div class="climb"><span class="rkmark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><p class="clab">Biggest climber</p><p class="cwho">-</p></div>
       <table class="rk">
         <colgroup><col class="c-rank"><col><col class="c-mv"><col class="c-pv"></colgroup>
         <tbody>
-        <tr><td class="rank">2</td><td class="lv"><a href="#eh-by-site" target="_self"><span class="sn">12 Harbour Lane</span>&nbsp;<span class="chev">&rsaquo;</span></a></td><td class="mvc"><span class="mv down">&darr;1</span></td><td class="pv">98.7</td></tr>
-        <tr><td class="rank">3</td><td class="lv"><a href="#eh-by-site" target="_self"><span class="sn">40 Market Street</span>&nbsp;<span class="chev">&rsaquo;</span></a></td><td class="mvc"></td><td class="pv">96.2</td></tr>
-        <tr><td class="rank">4</td><td class="lv"><a href="#eh-by-site" target="_self"><span class="sn">Parkview Centre</span>&nbsp;<span class="chev">&rsaquo;</span></a></td><td class="mvc"></td><td class="pv">91.5</td></tr>
+        <tr><td class="rank">2</td><td class="lv"><a href="#eh-by-site" target="_self">12 Harbour Lane</a></td><td class="mvc"><span class="mv down">&darr;1</span></td><td class="pv">98.7</td></tr>
+        <tr><td class="rank">3</td><td class="lv"><a href="#eh-by-site" target="_self">40 Market Street</a></td><td class="mvc"></td><td class="pv">96.2</td></tr>
+        <tr><td class="rank">4</td><td class="lv"><a href="#eh-by-site" target="_self">Parkview Centre</a></td><td class="mvc"></td><td class="pv">91.5</td></tr>
         </tbody>
       </table>
-      <div class="climb">
-        <div class="lrow"><p class="llab"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Biggest climber</span></p><span class="delta pos">&uarr; 1 place</span></div>
-        <div class="cwho"><a href="#eh-by-site" target="_self" class="cname"><span class="sn">Riverside Plaza</span>&nbsp;<span class="chev">&rsaquo;</span></a></div>
-      </div>
     </div>
     <div class="rkcol">
-      <h3 class="charttitle">Thermal comfort leaders</h3>
-      <p class="rkcap">August &middot; moves since July</p>
-      <div class="leader">
-        <p class="llab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span>Leader</span></p>
-        <div class="lrow"><a href="#cf-by-site" target="_self" class="lname"><span class="sn">40 Market Street</span>&nbsp;<span class="chev">&rsaquo;</span></a><span class="lval">95.1</span></div>
-        <div class="lrow lmeta"><span>QLD &middot; 9,800 m²</span><span class="mv up">&uarr;2</span></div>
-      </div>
+      <div class="rkhead"><h3 class="rkt">Thermal comfort</h3><span>Aug</span></div>
+      <div class="lphoto none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5l8-3v19"/><path d="M12 21V9l8 3v9"/><path d="M2 21h20"/><path d="M8 7v.01M8 11v.01M8 15v.01M16 14v.01M16 17v.01"/></svg></div>
+      <div class="leader"><span class="rkmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span class="mv up">&uarr;1</span></span><a href="#cf-by-site" target="_self" class="lname"><span class="sn">40 Market Street</span>&nbsp;<span class="chev">&rsaquo;</span></a><span class="lmeta">QLD &middot; 9,800 m²</span><span class="lval">95.1<span>%</span></span></div>
+      <div class="climb"><span class="rkmark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><p class="clab">Biggest climber</p><p class="cwho"><a href="#cf-by-site" target="_self">12 Harbour Lane</a></p><span class="cup">&uarr;1 to 2nd</span></div>
       <table class="rk">
         <colgroup><col class="c-rank"><col><col class="c-mv"><col class="c-pv"></colgroup>
         <tbody>
-        <tr><td class="rank">2</td><td class="lv"><a href="#cf-by-site" target="_self"><span class="sn">12 Harbour Lane</span>&nbsp;<span class="chev">&rsaquo;</span></a></td><td class="mvc"></td><td class="pv">93.8</td></tr>
-        <tr><td class="rank">3</td><td class="lv"><a href="#cf-by-site" target="_self"><span class="sn">Riverside Plaza</span>&nbsp;<span class="chev">&rsaquo;</span></a></td><td class="mvc"><span class="mv down">&darr;2</span></td><td class="pv">88.6</td></tr>
-        <tr><td class="rank">4</td><td class="lv"><a href="#cf-by-site" target="_self"><span class="sn">Parkview Centre</span>&nbsp;<span class="chev">&rsaquo;</span></a></td><td class="mvc"><span class="mv new">New</span></td><td class="pv">84.0</td></tr>
+        <tr><td class="rank">2</td><td class="lv"><a href="#cf-by-site" target="_self">12 Harbour Lane</a></td><td class="mvc"><span class="mv up">&uarr;1</span></td><td class="pv">93.8</td></tr>
+        <tr><td class="rank">3</td><td class="lv"><a href="#cf-by-site" target="_self">Riverside Plaza</a></td><td class="mvc"><span class="mv down">&darr;2</span></td><td class="pv">88.6</td></tr>
+        <tr><td class="rank">4</td><td class="lv"><a href="#cf-by-site" target="_self">Parkview Centre</a></td><td class="mvc"><span class="mv new">New</span></td><td class="pv">84.0</td></tr>
         </tbody>
       </table>
-      <div class="climb">
-        <div class="lrow"><p class="llab"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Biggest climber</span></p><span class="delta pos">&uarr; 2 places</span></div>
-        <div class="cwho"><a href="#cf-by-site" target="_self" class="cname"><span class="sn">40 Market Street</span>&nbsp;<span class="chev">&rsaquo;</span></a></div>
-      </div>
     </div>
     <div class="rkcol">
-      <h3 class="charttitle">Actions resolved leaders</h3>
-      <p class="rkcap">June - August &middot; moves since July</p>
-      <div class="leader">
-        <p class="llab"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span>Leader</span></p>
-        <div class="lrow"><a href="#actions-by-company" target="_self" class="lname"><span class="sn">12 Harbour Lane</span>&nbsp;<span class="chev">&rsaquo;</span></a><span class="lval">18</span></div>
-        <div class="lrow lmeta"><span>NSW &middot; 18,400 m²</span></div>
-      </div>
+      <div class="rkhead"><h3 class="rkt">Actions resolved</h3><span>Jun - Aug</span></div>
+      <div class="lphoto none"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 21V5l8-3v19"/><path d="M12 21V9l8 3v9"/><path d="M2 21h20"/><path d="M8 7v.01M8 11v.01M8 15v.01M16 14v.01M16 17v.01"/></svg></div>
+      <div class="leader"><span class="rkmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span><a href="#actions-by-company" target="_self" class="lname"><span class="sn">12 Harbour Lane</span>&nbsp;<span class="chev">&rsaquo;</span></a><span class="lmeta">NSW &middot; 18,400 m²</span><span class="lval">18<span>actions</span></span></div>
+      <div class="climb"><span class="rkmark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><p class="clab">Biggest climber</p><p class="cwho"><a href="#actions-by-company" target="_self">Parkview Centre</a></p><span class="cup">&uarr;1 to 2nd</span></div>
       <table class="rk">
         <colgroup><col class="c-rank"><col><col class="c-mv"><col class="c-pv"></colgroup>
         <tbody>
-        <tr><td class="rank">2</td><td class="lv"><a href="#actions-by-company" target="_self"><span class="sn">Parkview Centre</span>&nbsp;<span class="chev">&rsaquo;</span></a></td><td class="mvc"><span class="mv up">&uarr;1</span></td><td class="pv">11</td></tr>
-        <tr><td class="rank">3</td><td class="lv"><a href="#actions-by-company" target="_self"><span class="sn">Riverside Plaza</span>&nbsp;<span class="chev">&rsaquo;</span></a></td><td class="mvc"><span class="mv down">&darr;1</span></td><td class="pv">7</td></tr>
-        <tr><td class="rank">4</td><td class="lv"><a href="#actions-by-company" target="_self"><span class="sn">40 Market Street</span>&nbsp;<span class="chev">&rsaquo;</span></a></td><td class="mvc"></td><td class="pv">3</td></tr>
+        <tr><td class="rank">2</td><td class="lv"><a href="#actions-by-company" target="_self">Parkview Centre</a></td><td class="mvc"><span class="mv up">&uarr;1</span></td><td class="pv">11</td></tr>
+        <tr><td class="rank">3</td><td class="lv"><a href="#actions-by-company" target="_self">Riverside Plaza</a></td><td class="mvc"><span class="mv down">&darr;1</span></td><td class="pv">7</td></tr>
+        <tr><td class="rank">4</td><td class="lv"><a href="#actions-by-company" target="_self">40 Market Street</a></td><td class="mvc"></td><td class="pv">3</td></tr>
         </tbody>
       </table>
-      <div class="climb">
-        <div class="lrow"><p class="llab"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Biggest climber</span></p><span class="delta pos">&uarr; 1 place</span></div>
-        <div class="cwho"><a href="#actions-by-company" target="_self" class="cname"><span class="sn">Parkview Centre</span>&nbsp;<span class="chev">&rsaquo;</span></a></div>
-      </div>
     </div>
   </div>
 <!-- /fill: boards -->
+</section>
+
+<!-- part: team-leaderboard -->
+<section class="lead">
+  <div class="sechead">
+    <p class="eyebrow">August 2026</p>
+    <h2>Team leaderboard</h2>
+    <p class="h2note">Each board ranks by actions resolved, with moves since July. Top 10 of 14 assignees.</p>
+  </div>
+  <!-- Boards: drawn by scripts/fill_portfolio.py from the bundle's team_boards. -->
+<!-- fill: team-boards -->
+  <div data-sample="team-boards" class="rkgrid n2">
+    <div class="rkcol">
+      <div class="rkhead"><h3 class="rkt">Companies</h3><span>Jun - Aug</span></div>
+      <div class="leader co"><span class="rkmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span class="mv up">&uarr;1</span></span><span class="who"><span class="logo none" title="Kestrel Air Services">KA</span></span><a href="#actions-by-company" target="_self" class="lname"><span class="sn">Kestrel Air Services</span>&nbsp;<span class="chev">&rsaquo;</span></a><span class="lmeta">2 sites</span><span class="lval">16<span>actions</span></span></div>
+      <div class="climb"><span class="rkmark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><p class="clab">Biggest climber</p><p class="cwho">-</p></div>
+      <table class="rk">
+        <colgroup><col class="c-rank"><col class="c-logo"><col><col class="c-mv"><col class="c-pv"></colgroup>
+        <tbody>
+        <tr><td class="rank">2</td><td class="lg"><span class="tlogo none" title="Linwood Controls">LC</span></td><td class="lv"><a href="#actions-by-company" target="_self">Linwood Controls</a></td><td class="mvc"><span class="mv down">&darr;1</span></td><td class="pv">12</td></tr>
+        <tr><td class="rank">3</td><td class="lg"><span class="tlogo none" title="Orbit Building Services">OB</span></td><td class="lv"><a href="#actions-by-company" target="_self">Orbit Building Services</a></td><td class="mvc"><span class="mv new">New</span></td><td class="pv">5</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="rkcol">
+      <div class="rkhead"><h3 class="rkt">Assignees</h3><span>Jun - Aug</span></div>
+      <div class="leader co"><span class="rkmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span class="mv up">&uarr;1</span></span><span class="who"><span class="logo none" title="Kestrel Air Services">KA</span></span><a href="#actions-by-assignee" target="_self" class="lname"><span class="sn">Mara Okafor</span>&nbsp;<span class="chev">&rsaquo;</span></a><span class="lmeta">Kestrel Air Services &middot; 2 sites</span><span class="lval">11<span>actions</span></span></div>
+      <div class="climb"><span class="rkmark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><p class="clab">Biggest climber</p><p class="cwho"><a href="#actions-by-assignee" target="_self">Imogen Reyes</a></p><span class="cup">&uarr;1 to 4th</span></div>
+      <table class="rk">
+        <colgroup><col class="c-rank"><col class="c-logo"><col><col class="c-mv"><col class="c-pv"></colgroup>
+        <tbody>
+        <tr><td class="rank">2</td><td class="lg"><span class="tlogo none" title="Linwood Controls">LC</span></td><td class="lv"><a href="#actions-by-assignee" target="_self">Theo Lindqvist</a></td><td class="mvc"><span class="mv down">&darr;1</span></td><td class="pv">9</td></tr>
+        <tr><td class="rank">3</td><td class="lg"><span class="tlogo none" title="Orbit Building Services">OB</span></td><td class="lv"><a href="#actions-by-assignee" target="_self">Dev Saluja</a></td><td class="mvc"><span class="mv new">New</span></td><td class="pv">5</td></tr>
+        <tr><td class="rank">4</td><td class="lg"><span class="tlogo none" title="Kestrel Air Services">KA</span></td><td class="lv"><a href="#actions-by-assignee" target="_self">Imogen Reyes</a></td><td class="mvc"><span class="mv up">&uarr;1</span></td><td class="pv">5</td></tr>
+        <tr><td class="rank">5</td><td class="lg"><span class="tlogo none" title="Linwood Controls">LC</span></td><td class="lv"><a href="#actions-by-assignee" target="_self">Callum Fraser</a></td><td class="mvc"><span class="mv down">&darr;2</span></td><td class="pv">3</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="seclinks">
+    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9102&amp;site_ids=9103&amp;site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity">See actions by company &rsaquo;</a>
+    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9102&amp;site_ids=9103&amp;site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=assignee">See actions by assignee &rsaquo;</a>
+  </div>
+<!-- /fill: team-boards -->
 </section>
 
 <!-- part: equipment-health -->
@@ -331,13 +367,43 @@ td.nb.none{color:var(--text-muted)}
       <tr><th></th><th>Company</th><th class="num">Sites</th><th class="num">Resolved</th><th>Completion rate</th><th class="num">Open now</th></tr>
     </thead>
     <tbody>
-      <tr><td class="rank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span class="mv up">&uarr;1</span></td><td class="assignee"><span class="who"><span class="logo none" title="Kestrel Air Services">KA</span><span class="nm"><span class="co-name">Kestrel Air Services</span><span class="vsites"><span class="vs">12 Harbour Lane <b>4 open</b></span><span class="sep"> &middot; </span><span class="vs">Parkview Centre</span></span></span></span></td><td class="num">2</td><td class="num">16</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:80.0%"></span></span><span class="sval">80.0%</span></span></td><td class="num open-hot">4</td></tr>
-      <tr><td class="rank">2<span class="mv down">&darr;1</span></td><td class="assignee"><span class="who"><span class="logo none" title="Linwood Controls">LC</span><span class="nm"><span class="co-name">Linwood Controls</span><span class="vsites"><span class="vs">Parkview Centre <b>3 open</b></span><span class="sep"> &middot; </span><span class="vs">Riverside Plaza <b>1 open</b></span><span class="sep"> &middot; </span><span class="vs more">+1 more site</span></span></span></span></td><td class="num">3</td><td class="num">12</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:75.0%"></span></span><span class="sval">75.0%</span></span></td><td class="num open-hot">4</td></tr>
-      <tr><td class="rank">3<span class="mv new">New</span></td><td class="assignee"><span class="who"><span class="logo none" title="Orbit Building Services">OB</span><span class="nm"><span class="co-name">Orbit Building Services</span><span class="vsites"><span class="vs">40 Market Street <b>2 open</b></span></span></span></span></td><td class="num">1</td><td class="num">5</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:71.4%"></span></span><span class="sval">71.4%</span></span></td><td class="num open-hot">2</td></tr>
+      <tr><td class="rank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span class="mv up">&uarr;1</span></td><td class="assignee"><span class="who"><span class="logo none" title="Kestrel Air Services">KA</span><span class="nm"><span class="co-name"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=site&amp;assignee_ids=00000000-0000-4000-8000-0000000000a1&amp;assignee_ids=00000000-0000-4000-8000-0000000000a2">Kestrel Air Services&nbsp;&rsaquo;</a></span><span class="vsites"><span class="vs">12 Harbour Lane <b>4 open</b></span><span class="sep"> &middot; </span><span class="vs">Parkview Centre</span></span></span></span></td><td class="num">2</td><td class="num">16</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:80.0%"></span></span><span class="sval">80.0%</span></span></td><td class="num open-hot">4</td></tr>
+      <tr><td class="rank">2<span class="mv down">&darr;1</span></td><td class="assignee"><span class="who"><span class="logo none" title="Linwood Controls">LC</span><span class="nm"><span class="co-name"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9104&amp;site_ids=9102&amp;site_ids=9103&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=site&amp;assignee_ids=00000000-0000-4000-8000-0000000000b1&amp;assignee_ids=00000000-0000-4000-8000-0000000000b2">Linwood Controls&nbsp;&rsaquo;</a></span><span class="vsites"><span class="vs">Parkview Centre <b>3 open</b></span><span class="sep"> &middot; </span><span class="vs">Riverside Plaza <b>1 open</b></span><span class="sep"> &middot; </span><span class="vs more">+1 more site</span></span></span></span></td><td class="num">3</td><td class="num">12</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:75.0%"></span></span><span class="sval">75.0%</span></span></td><td class="num open-hot">4</td></tr>
+      <tr><td class="rank">3<span class="mv new">New</span></td><td class="assignee"><span class="who"><span class="logo none" title="Orbit Building Services">OB</span><span class="nm"><span class="co-name"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9103&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=site&amp;assignee_ids=00000000-0000-4000-8000-0000000000c1">Orbit Building Services&nbsp;&rsaquo;</a></span><span class="vsites"><span class="vs">40 Market Street <b>2 open</b></span></span></span></span></td><td class="num">1</td><td class="num">5</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:71.4%"></span></span><span class="sval">71.4%</span></span></td><td class="num open-hot">2</td></tr>
       <tr class="total"><td></td><td>Total</td><td class="num"></td><td class="num">39</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:76.5%"></span></span><span class="sval">76.5%</span></span></td><td class="num">12</td></tr>
     </tbody>
   </table>
+  <div class="seclinks">
+    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9102&amp;site_ids=9103&amp;site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity">See actions by company &rsaquo;</a>
+  </div>
 <!-- /fill: companies -->
+</section>
+
+<!-- part: actions-by-assignee -->
+<section id="actions-by-assignee">
+  <div class="sechead">
+    <p class="eyebrow">Assignee leaderboard</p>
+    <h2>Actions resolved by assignee</h2>
+    <p class="h2note">Actions resolved 1 June - 31 August 2026, ranked by resolved, with moves since July. Completion rate is resolved &divide; (resolved + open now), with open now as at 15 September 2026. Under each name, the assignee's company, then their sites by open actions, most first.</p>
+  </div>
+<!-- fill: assignees -->
+  <table data-sample="assignees" class="lbt vend">
+    <thead>
+      <tr><th></th><th>Assignee</th><th class="num">Sites</th><th class="num">Resolved</th><th>Completion rate</th><th class="num">Open now</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="rank"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span class="mv up">&uarr;1</span></td><td class="assignee"><span class="who"><span class="logo none" title="Kestrel Air Services">KA</span><span class="nm"><span class="pn"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity&amp;assignee_ids=00000000-0000-4000-8000-0000000000a1">Mara Okafor&nbsp;&rsaquo;</a></span><span class="vsites"><span class="vco">Kestrel Air Services</span><span class="sep"> &middot; </span><span class="vs">12 Harbour Lane <b>3 open</b></span><span class="sep"> &middot; </span><span class="vs">Parkview Centre</span></span></span></span></td><td class="num">2</td><td class="num">11</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:78.6%"></span></span><span class="sval">78.6%</span></span></td><td class="num open-hot">3</td></tr>
+      <tr><td class="rank">2<span class="mv down">&darr;1</span></td><td class="assignee"><span class="who"><span class="logo none" title="Linwood Controls">LC</span><span class="nm"><span class="pn"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9104&amp;site_ids=9102&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity&amp;assignee_ids=00000000-0000-4000-8000-0000000000b1">Theo Lindqvist&nbsp;&rsaquo;</a></span><span class="vsites"><span class="vco">Linwood Controls</span><span class="sep"> &middot; </span><span class="vs">Parkview Centre <b>3 open</b></span><span class="sep"> &middot; </span><span class="vs">Riverside Plaza <b>1 open</b></span></span></span></span></td><td class="num">2</td><td class="num">9</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:69.2%"></span></span><span class="sval">69.2%</span></span></td><td class="num open-hot">4</td></tr>
+      <tr><td class="rank">3<span class="mv new">New</span></td><td class="assignee"><span class="who"><span class="logo none" title="Orbit Building Services">OB</span><span class="nm"><span class="pn"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9103&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity&amp;assignee_ids=00000000-0000-4000-8000-0000000000c1">Dev Saluja&nbsp;&rsaquo;</a></span><span class="vsites"><span class="vco">Orbit Building Services</span><span class="sep"> &middot; </span><span class="vs">40 Market Street <b>2 open</b></span></span></span></span></td><td class="num">1</td><td class="num">5</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:71.4%"></span></span><span class="sval">71.4%</span></span></td><td class="num open-hot">2</td></tr>
+      <tr><td class="rank">4</td><td class="assignee"><span class="who"><span class="logo none" title="Kestrel Air Services">KA</span><span class="nm"><span class="pn"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity&amp;assignee_ids=00000000-0000-4000-8000-0000000000a2">Imogen Reyes&nbsp;&rsaquo;</a></span><span class="vsites"><span class="vco">Kestrel Air Services</span><span class="sep"> &middot; </span><span class="vs">12 Harbour Lane <b>1 open</b></span></span></span></span></td><td class="num">1</td><td class="num">5</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:83.3%"></span></span><span class="sval">83.3%</span></span></td><td class="num open-hot">1</td></tr>
+      <tr><td class="rank">5<span class="mv down">&darr;2</span></td><td class="assignee"><span class="who"><span class="logo none" title="Linwood Controls">LC</span><span class="nm"><span class="pn"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9103&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity&amp;assignee_ids=00000000-0000-4000-8000-0000000000b2">Callum Fraser&nbsp;&rsaquo;</a></span><span class="vsites"><span class="vco">Linwood Controls</span><span class="sep"> &middot; </span><span class="vs">40 Market Street</span></span></span></span></td><td class="num">1</td><td class="num">3</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:100.0%"></span></span><span class="sval">100.0%</span></span></td><td class="num open-zero">0</td></tr>
+      <tr class="total"><td></td><td>Total</td><td class="num"></td><td class="num">39</td><td><span class="scorecell"><span class="track"><span class="fill" style="width:76.5%"></span></span><span class="sval">76.5%</span></span></td><td class="num">12</td></tr>
+    </tbody>
+  </table>
+  <div class="seclinks">
+    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9102&amp;site_ids=9103&amp;site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=assignee">See actions by assignee &rsaquo;</a>
+  </div>
+<!-- /fill: assignees -->
 </section>
 
 <!-- part: key-wins -->

@@ -145,6 +145,21 @@ def host(ctx):
     return "https://ace.cimenviro.com"
 
 
+def site_count(n):
+    """'1 site', '4 sites'."""
+    return "%d site%s" % (n, "" if n == 1 else "s")
+
+
+def tickets_link(ctx, site_ids, grouping, assignee_ids=()):
+    """PEAK's ticket report over the quarter at these sites, grouped by "site", "user_entity" (the
+    assignee's company) or "assignee", and narrowed to these assignees where any are given."""
+    params = (["site_ids=%s" % i for i in site_ids]
+              + ["start_date=%sT00:00:00.000" % ctx["quarter"][0], "end_date=%sT00:00:00.000" % ctx["through"],
+                 "grouping=%s" % grouping]
+              + ["assignee_ids=%s" % a for a in assignee_ids])
+    return "%s/reports/tickets?%s" % (host(ctx), "&".join(params))
+
+
 def unit_of(site):
     return "ft²" if (site.get("country") or "").strip().lower() in FEET else "m²"
 
@@ -194,6 +209,44 @@ def rank(sites, value):
     have = [s for s in sites if value(s) is not None]
     have.sort(key=lambda s: (-value(s), name_key(s)))
     return [(k, s) for k, s in enumerate(have, 1)]
+
+
+def standings(keys, now, then, name):
+    """A leaderboard board: ([(rank, key)] best first on the unrounded figures `now`, {key: move}).
+    Last month's board ranks every key with a figure in `then`, on the board now or not, and a
+    move is the place there less the place now, "new" with no figure there. Ties split
+    alphabetically by name(key), ignoring case; keys with no figure are left out."""
+    def order(v):
+        have = [k for k in keys if v.get(k) is not None]
+        return sorted(have, key=lambda k: (-v[k], name(k).strip().lower(), str(k)))
+    ranked = list(enumerate(order(now), 1))
+    before = {k: i for i, k in enumerate(order(then), 1)}
+    return ranked, {k: before[k] - i if k in before else "new" for i, k in ranked}
+
+
+def climber(ranked, moves):
+    """The one biggest climber among `ranked`, the places a board shows, never its leader: {key,
+    places, rank}, the highest placed of any tied on the climb, or None when no one below the
+    leader climbed."""
+    climbs = [(moves[k], -rank, k) for rank, k in ranked if rank > 1 and moves[k] != "new" and moves[k] > 0]
+    if not climbs:
+        return None
+    places, rank, key = max(climbs)
+    return {"key": key, "places": places, "rank": -rank}
+
+
+def board_window(ctx, window):
+    """The months a board ranks, short as a table header carries them: 'Sep', or over the quarter 'Jul - Sep'."""
+    qm = ctx["quarter_months"]
+    short = lambda m: io.MONTHS[io.d(m).month - 1][:3]
+    return short(qm[-1]) if window == "month" else "%s - %s" % (short(qm[0]), short(qm[-1]))
+
+
+def board_head(ctx, ranks, more=None):
+    """A leaderboard's header: the leaderboard month for its eyebrow, and its date line saying what each
+    board ranks, "the sites on one measure", against last month's board, then `more`."""
+    line = "Each board ranks %s, with moves since %s." % (ranks, io.month(ctx["quarter_months"][-2]))
+    return {"date": month_name(ctx), "note": " ".join(x for x in (line, more) if x)}
 
 
 def weighted(values, size):

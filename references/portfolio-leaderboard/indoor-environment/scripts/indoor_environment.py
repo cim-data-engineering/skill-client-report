@@ -85,7 +85,7 @@ def build(ctx, work, shared):
     if any(v is not None for v in portfolio):
         shared["weighted"] = True
     shared.setdefault("rankings", []).append({"label": "Thermal comfort", "anchor": ANCHOR, "window": "month",
-                                              "now": now, "start": start, "dp": 1})
+                                              "now": now, "start": start, "dp": 1, "unit": "%"})
 
     chat = []
     if missing:

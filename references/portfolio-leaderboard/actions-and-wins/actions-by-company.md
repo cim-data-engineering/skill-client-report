@@ -1,6 +1,6 @@
 # Actions resolved by company
 
-Owns the actions resolved by company table and its total row, each company moving against last month's table, and hands on each site's actions resolved as a ranking. Scaffold part: `actions-by-company`. Script: `scripts/actions_by_company.py`, which builds every row, figure and note below.
+Owns the actions resolved by company table and its total row, each company moving against last month's table, and the pulls that say who holds each action. Hands on each site's actions resolved as a ranking, each company's as a team ranking, and who holds each action with the company logos. Scaffold part: `actions-by-company`. Script: `scripts/actions_by_company.py`, which builds every row, figure and note below.
 
 ## What you write
 
@@ -47,13 +47,22 @@ One row per assignee company with actions resolved in the quarter or open now, t
 
 **Logos:** each company's logo from PEAK, embedded once, in the square tile; a company without one gets its initials.
 
-**Links:** the section carries the anchor `actions-by-company`. No dashboard link.
+**Links:** the name and section links open PEAK's ticket report over the quarter, with one `site_ids` per site and one `assignee_ids` per assignee named.
+
+- Each company name links to the report at the company's sites, narrowed to the company's assignees on an action resolved in the quarter or open now, grouped by site, with a chevron:
+  `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=site&assignee_ids={{assignee_id}}`
+- The section link, "See actions by company ›", opens the report at every site, grouped by company:
+  `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=user_entity`
+- The section carries the anchor `actions-by-company`
 
 **Renders when:** any action was resolved in the quarter or is open now.
 
 **Hands on:**
 
-- **A ranking** labelled Actions resolved, under the anchor `actions-by-company`, by quarter: each site's actions resolved over the quarter, and over the quarter a month earlier, as whole numbers. A site that resolved none in a window has no figure on it, so it is off the board now, or New on it where it resolved none a month earlier. Handed on only when any action was resolved in the quarter
+- **A ranking** labelled Actions resolved, under the anchor `actions-by-company`, by quarter: each site's actions resolved over the quarter, and over the quarter a month earlier, as whole numbers in the unit "actions". A site that resolved none in a window has no figure on it, so it is off the board now, or New on it where it resolved none a month earlier. Handed on only when any action was resolved in the quarter
+- **A team ranking** labelled Companies, of companies, under the anchor `actions-by-company`, by quarter, in the unit "actions": each company's actions resolved over the quarter and over the quarter a month earlier, the same figures that rank the company table now and last month, with its name, its logo, and for whichever leads, its sites as the meta line: "4 sites". It carries the section link, its words and its URL. Handed on only when any company resolved an action in the quarter
+- **Who holds each action**: each action resolved in the quarter, resolved in the quarter a month earlier and open now, Not Doing left out, with its site and each assignee holding it: their PEAK user id, name and company. With them, the total row's two figures: the actions resolved in the quarter and open now, each counted once
+- **Company logos**: each company's logo, embedded once
 
 ## Notes band items
 
@@ -72,8 +81,8 @@ All in the main batch:
 | Who resolved each action a month earlier | the same, resolved over the quarter a month earlier |
 | Who holds each open action | the same with `status_ids:[1,3,7]` and no date bound |
 
-- The ticket pulls select only `ticket_id`, `site_id`, `status_id`, and `assignees` with `id`, `entity.name` and `entity.logo_url`: which company holds each action, never what anyone wrote
+- The ticket pulls select only `ticket_id`, `site_id`, `status_id`, and `assignees` with `id`, `firstname`, `lastname`, `entity.name` and `entity.logo_url`: who holds each action and their company, never what anyone wrote
 - `report.py next` pages each pull from its first page's total, 1000 rows a page
-- Every figure in the ranking and the total row is a `count_tickets` count. The ticket rows only say which company holds each action
+- Every figure in the site ranking and the total row is a `count_tickets` count. The ticket rows only say who holds each action
 - Rows with status Not Doing are dropped from the pulls
 - Each window is read in each site's own time zone

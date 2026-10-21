@@ -9,7 +9,7 @@ Nothing on the page. In chat, say what the script prints: any site with no build
 ## Masthead
 
 - Eyebrow: Monthly performance leaderboard
-- Title: {Client} portfolio. The HTML title is "{Client} {Leaderboard month} Performance Leaderboard": "Centuria September 2026 Performance Leaderboard"
+- Title: {Client} portfolio. The HTML title is "{Client} {Leaderboard month} Performance Leaderboard": "Northwind Estates September 2026 Performance Leaderboard"
 - Prepared by: {Company name} - {Company service name} · Powered by PEAK. The company name is `name` in `BRAND.md`, CIM by default; the service name is `service-name`, Data Driven Operations by default. Powered by PEAK stays in every brand
 - Metadata row: Month, Sites, Author, Issued
   - **Month**: the leaderboard month: "September 2026"
@@ -48,7 +48,7 @@ All in the main batch, the site facts 100 sites a call and each count 10, since 
 
 | Need | Call |
 | --- | --- |
-| Building size, currency, state, country | `platform.sites` with `site_ids` |
+| Building size, currency, state, country, building photo link | `platform.sites` with `site_ids` |
 | Rules running | `search_rules(task_state:"running", limit:1)` with `site_ids`, its `pagination.total` |
 | Sensors | `search_favourites(limit:1)` with `site_ids`, its `pagination.total` |
 | Equipment | `search_equipment(limit:1)` with `site_ids` twice, plain and filtered to the system types 21, 37, 69, 70, 87, 105 and 114, the second total subtracted from the first |
@@ -56,6 +56,6 @@ All in the main batch, the site facts 100 sites a call and each count 10, since 
 - The totals of a split call add across its chunks
 - The client name comes from `--client`, the author from `who_am_i` passed as `--author`, and the company and service names from `BRAND.md`
 
-**Hands on:** the site facts, each site's building size, currency, state and country, before any section builds.
+**Hands on:** the site facts, each site's building size, currency, state, country and building photo link, before any section builds.
 
 **Takes:** the thermal zones figure, and whether any section drew a weighted portfolio row.

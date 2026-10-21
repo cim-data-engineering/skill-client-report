@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Actions resolved by company: the company table and its total row, each company
-moving against last month's table, with each site's actions resolved over the quarter
-and over the quarter a month earlier handed on as a ranking. Every count in the
-ranking and the total row is a count_tickets figure; the ticket rows only say which
-company holds each action. See
-references/portfolio-leaderboard/actions-and-wins/actions-by-company.md.
+moving against last month's table. Hands on each site's actions resolved over the
+quarter and over the quarter a month earlier as a ranking, each company's as a team
+ranking, who holds each action and the company logos. Every count in the site ranking
+and the total row is a count_tickets figure; the ticket rows only say who holds each
+action. See references/portfolio-leaderboard/actions-and-wins/actions-by-company.md.
 """
 import base64
 import os
@@ -22,9 +22,10 @@ ANCHOR = "actions-by-company"
 STAT4 = ["open", "in_progress", "closed", "on_hold"]           # every status but Not Doing
 OPEN = ["open", "in_progress", "on_hold"]
 COUNT_CHUNK, PAGE = 20, 1000
-# The rows say only who holds each action: ids, and each assignee's company with its logo
-# link. Never what anyone wrote.
-FIELDS = ["ticket_id", "site_id", "status_id", "assignees.id", "assignees.entity.name", "assignees.entity.logo_url"]
+# The rows say only who holds each action: ids, each assignee's name, and their company with
+# its logo link. Never what anyone wrote.
+FIELDS = ["ticket_id", "site_id", "status_id", "assignees.id", "assignees.firstname", "assignees.lastname",
+          "assignees.entity.name", "assignees.entity.logo_url"]
 
 
 def esc(ids):
@@ -82,20 +83,33 @@ def counts(work, name):
     return out
 
 
-def holders(r):
-    """The companies holding an action: each assignee's company, once. Every assignee counts,
-    agents and the client's own managing agents included."""
+def held(rows):
+    """Who holds each action, Not Doing left out: [{ticket, site, assignees: [{id, name, company}]}]."""
     out = []
-    for a in r.get("assignees") or []:
-        co = ((a.get("entity") or {}).get("name") or "").strip()
-        if co and co not in out:
-            out.append(co)
+    for r in rows:
+        if r.get("status_id") == 8:
+            continue
+        people = []
+        for a in r.get("assignees") or []:
+            name = " ".join(x for x in ((a.get("firstname") or "").strip(), (a.get("lastname") or "").strip()) if x)
+            people.append({"id": a.get("id"), "name": name, "company": ((a.get("entity") or {}).get("name") or "").strip()})
+        out.append({"ticket": r["ticket_id"], "site": r["site_id"], "assignees": people})
     return out
 
 
-def companies_by_resolved(held):
+def companies_of(action):
+    """The companies holding an action: each assignee's company, once. Every assignee counts,
+    agents and the client's own managing agents included."""
+    out = []
+    for a in action["assignees"]:
+        if a["company"] and a["company"] not in out:
+            out.append(a["company"])
+    return out
+
+
+def companies_by_resolved(held_by):
     """{company: ticket ids} -> the companies, most resolved first, ties alphabetical."""
-    return sorted(held, key=lambda c: (-len(held[c]), c.lower()))
+    return sorted(held_by, key=lambda c: (-len(held_by[c]), c.lower()))
 
 
 def build(ctx, work, shared):
@@ -107,44 +121,48 @@ def build(ctx, work, shared):
         # a site that resolved nothing is not on the board, this month or last
         shared.setdefault("rankings", []).append({"label": "Actions resolved", "anchor": ANCHOR, "window": "quarter",
                                                   "now": {s: resolved[s] or None for s in sids},
-                                                  "start": {s: prev[s] or None for s in sids}, "dp": 0})
+                                                  "start": {s: prev[s] or None for s in sids}, "dp": 0,
+                                                  "unit": "actions"})
     if not total_res and not total_open:
         return {"drop": [NAME]}
 
     names = {s["site_id"]: s["site_name"].strip() for s in ctx["sites"]}
-    co_res, co_open, logo_url = defaultdict(set), defaultdict(set), {}
+    actions = {"resolved": held(pio.rows(work, "ar/resolved-rows.json", PAGE)),
+               "prev": held(pio.rows(work, "ar/resolved-prev-rows.json", PAGE)),
+               "open": held(pio.rows(work, "ar/open-rows.json", PAGE))}
+    co_res, co_open, co_prev, co_people = defaultdict(set), defaultdict(set), defaultdict(set), defaultdict(set)
     site_res, site_open = defaultdict(lambda: defaultdict(int)), defaultdict(lambda: defaultdict(int))
     loose = {"resolved": 0, "open": 0}
-    for key, rows in (("resolved", pio.rows(work, "ar/resolved-rows.json", PAGE)),
-                      ("open", pio.rows(work, "ar/open-rows.json", PAGE))):
-        for r in rows:
-            if r.get("status_id") == 8:
-                continue
-            cos = holders(r)
-            if not cos:
+    for key, by_co, by_site in (("resolved", co_res, site_res), ("open", co_open, site_open), ("prev", co_prev, None)):
+        for act in actions[key]:
+            cos = companies_of(act)
+            if not cos and key in loose:
                 loose[key] += 1
             for co in cos:
-                (co_res if key == "resolved" else co_open)[co].add(r["ticket_id"])
-                (site_res if key == "resolved" else site_open)[co][r["site_id"]] += 1
-            for a in r.get("assignees") or []:
+                by_co[co].add(act["ticket"])
+                if by_site is not None:
+                    by_site[co][act["site"]] += 1
+            if key != "prev":
+                for a in act["assignees"]:
+                    if a["id"] and a["company"]:
+                        co_people[a["company"]].add(a["id"])
+    logo_url = {}
+    for f in ("ar/resolved-rows.json", "ar/open-rows.json"):
+        for r in pio.rows(work, f, PAGE):
+            for a in (r.get("assignees") or []) if r.get("status_id") != 8 else []:
                 ent = a.get("entity") or {}
                 if ent.get("name") and ent.get("logo_url"):
                     logo_url.setdefault(ent["name"].strip(), ent["logo_url"])
 
     # Last month's ranking: each company's actions resolved over the quarter a month earlier
-    co_prev = defaultdict(set)
-    for r in pio.rows(work, "ar/resolved-prev-rows.json", PAGE):
-        if r.get("status_id") != 8:
-            for co in holders(r):
-                co_prev[co].add(r["ticket_id"])
     before = {c: k for k, c in enumerate(companies_by_resolved(co_prev), 1)}
 
     companies = companies_by_resolved({c: co_res[c] for c in set(co_res) | set(co_open)})
     logos = fetch_logos({c: logo_url[c] for c in companies if c in logo_url})
-    rows = []
+    rows, where = [], {}
     for k, c in enumerate(companies, 1):
-        where = set(site_res[c]) | set(site_open[c])
-        sites = sorted(where, key=lambda s: (-site_open[c][s], -site_res[c][s], names.get(s, "").lower()))
+        where[c] = set(site_res[c]) | set(site_open[c])
+        sites = sorted(where[c], key=lambda s: (-site_open[c][s], -site_res[c][s], names.get(s, "").lower()))
         if not co_res[c]:
             move = None                       # a company that resolved nothing holds no place to move from or to
         elif c in before:
@@ -152,23 +170,36 @@ def build(ctx, work, shared):
         else:
             move = "new"
         rows.append({"rank": k, "move": move, "company": c, "logo": logos.get(c),
+                     "link": pio.tickets_link(ctx, sites, "site", sorted(co_people[c])),
                      "sites": [{"name": names.get(s, str(s)), "open": site_open[c][s]} for s in sites],
                      "resolved": len(co_res[c]), "open": len(co_open[c])})
+
+    link = {"text": "See actions by company", "url": pio.tickets_link(ctx, sids, "user_entity")}
+    shared["holders"] = dict(actions, total={"resolved": total_res, "open": total_open})
+    shared["logos"] = logos
+    if any(co_res.values()):
+        every = set(companies) | set(co_prev)
+        shared.setdefault("team_rankings", []).append(
+            {"label": "Companies", "anchor": ANCHOR, "window": "quarter", "noun": "companies", "unit": "actions", "link": link,
+             "names": {c: c for c in every}, "now": {c: len(co_res[c]) or None for c in every},
+             "start": {c: len(co_prev[c]) or None for c in every},
+             "meta": {c: [pio.site_count(len(where[c]))] for c in companies},
+             "tiles": {c: {"company": c, "logo": logos.get(c)} for c in companies}})
 
     chat = []
     if loose["resolved"] or loose["open"]:
         n = lambda k: "%d action%s" % (k, "" if k == 1 else "s")
         span = "from %s to %s" % (io.month(ctx["quarter_months"][0]), io.month(ctx["quarter_months"][-1]))
-        held = [w % n(loose[k]) for k, w in (("resolved", "%s resolved " + span), ("open", "%s open now")) if loose[k]]
+        parts = [w % n(loose[k]) for k, w in (("resolved", "%s resolved " + span), ("open", "%s open now")) if loose[k]]
         one = loose["resolved"] + loose["open"] == 1
         chat.append("%s %s no assignee with a company, so %s in the total row and in no company's row."
-                    % (io.listing(held), "has" if one else "have", "it counts" if one else "they count"))
+                    % (io.listing(parts), "has" if one else "have", "it counts" if one else "they count"))
     unlogged = [c for c in companies if not logos.get(c)]
     if unlogged:
         chat.append("Company table initials stand in for %s, with no logo in PEAK or none that could be fetched."
                     % io.listing(unlogged))
     return {
-        "companies": {"rows": rows, "total": {"resolved": total_res, "open": total_open}},
+        "companies": {"rows": rows, "total": {"resolved": total_res, "open": total_open}, "link": link},
         "datelines": {"Vendor leaderboard":
                       "Actions resolved %s, ranked by resolved, with moves since %s. Completion rate is resolved "
                       "&divide; (resolved + open now), with open now as at %s. Each company's sites are listed by open "

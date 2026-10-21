@@ -42,9 +42,11 @@ PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS + ["run-hou
 PORTFOLIO = {"ref": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "portfolio-report.html"),
              "always": ["shell", "masthead", "scorecards", "notes", "close"],
              "section_parts": {"site-leaderboard": ["site-leaderboard"],
+                               "team-leaderboard": ["team-leaderboard"],
                                "equipment-health": ["equipment-health"],
                                "indoor-environment": ["indoor-environment"],
                                "actions-by-company": ["actions-by-company"],
+                               "actions-by-assignee": ["actions-by-assignee"],
                                "key-wins": ["key-wins"],
                                "sustainability-ratings": ["sustainability-ratings"]},
              "part_if": {}}
@@ -282,11 +284,12 @@ def check_portfolio(args):
     for m in sorted(set(re.findall(r'data-sample="([a-z-]+)"', text))):
         errors.append("sample %s still in the report: fill it from the bundle" % m)
     found = set()
-    # Company names are left out: a sample company can share its name with a real one, and the
-    # sample table's data-sample marker already catches an unfilled company table.
+    # Company and assignee names are left out: a sample company or person can share a name with a
+    # real one, and the sample tables' and team boards' data-sample markers already catch them unfilled.
+    names = re.sub(r"<!-- fill: team-boards -->.*?<!-- /fill: team-boards -->", "", src, flags=re.S)
     for pat in (r'<span class="sn">([^<]+)</span>', r'<h3>([^<]+)</h3>',
                 r'<title>([^<]+)</title>', r'<h1>([^<]+)</h1>', r'<div class="win[^"]*"[^>]*>.*?<p>(.+?)</p>'):
-        found |= {m.group(1) for m in re.finditer(pat, src, re.S)}
+        found |= {m.group(1) for m in re.finditer(pat, names, re.S)}
     found |= {h for h in re.findall(r'href="([^"]+)"', src) if "cimenviro.com" in h}
     hits = sorted(x for x in found if len(x.strip()) >= 5 and x in text)
     for h in hits[:20]:
@@ -309,8 +312,13 @@ def check_portfolio(args):
         widths = {len(re.findall(r'<td class="c[ "]', r)) for r in re.findall(r"<tr[^>]*>.*?</tr>", t, re.S)} - {0}
         if widths - {cols}:
             errors.append("ranked heatmap has %d month columns but rows with %s" % (cols, sorted(widths)))
-    present = re.findall(r'<p class="eyebrow">([^<]+)</p>', text)
-    print("sections present: %s" % ", ".join(present))
+    # each section by its eyebrow, or a leaderboard, whose eyebrow is its month, by its title
+    lead = re.compile(r'<section class="lead">\s*<div class="sechead">\s*<p class="eyebrow">[^<]*</p>\s*<h2>([^<]+)</h2>')
+    leads = {m.start(): m.group(1) for m in lead.finditer(text)}
+    heads = [(m.start(), m.group(1)) for m in re.finditer(r'<p class="eyebrow">([^<]+)</p>', text)
+             if not any(0 < m.start() - k < 120 for k in leads)]
+    heads += sorted(leads.items())
+    print("sections present: %s" % ", ".join(h for _, h in sorted(heads)))
     for w in warnings:
         print("warn:  %s" % w)
     for e in errors:
