@@ -23,7 +23,8 @@ import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from fill_report import IMPACTS, MAX_PHOTOS, band, chg, href, initials, photo_row  # noqa: E402
+from fill_report import (BASELINE, IMPACTS, LEFT, MAX_PHOTOS, RIGHT, band, chg, href, initials,  # noqa: E402
+                         photo_row, to_date_marks, xs)
 
 TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
           'stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place">'
@@ -217,7 +218,40 @@ def open_actions(d):
                           if logos else "", name, bar, r["count"]))
         out += ['        </tbody>', '      </table>', '    </div>']
     out.append('  </div>')
+    if d.get("backlog") and sum(v is not None for v in d["backlog"]["values"]) > 1:
+        out.append(backlog_chart(d["backlog"]))
     return "\n".join(out) + "\n"
+
+
+def backlog_chart(d):
+    """The open P1-2 backlog under the lists: a bar a month end on one scale, each value on its bar,
+    and the issue month to date in its tinted column, counted as at the issue date. A month end with
+    no counts draws no bar."""
+    months, vals = d["months"], d["values"]
+    top = max([v or 0 for v in vals] + [1]) * 1.06
+    H, C = 140.0, xs(len(months))
+    w = min(44, ((C[1] - C[0]) if len(C) > 1 else 110) * 0.4)
+    out = []
+    for x, v in zip(C, vals):
+        if v is None:
+            continue
+        t, x0, x1 = BASELINE - (v / top) * H, x - w / 2, x + w / 2
+        if v:
+            out.append('      <path class="bar-primary" d="M%.1f,%d V%.1f Q%.1f,%.1f %.1f,%.1f H%.1f Q%.1f,%.1f %.1f,%.1f V%d Z"/>'
+                       % (x0, BASELINE, t, x0, t - 4, x0 + 4, t - 4, x1 - 4, x1, t - 4, x1, t, BASELINE))
+        out.append('      <text class="val" x="%d" y="%.1f" text-anchor="middle">%d</text>' % (x, t - 8 - (4 if v else 0), v))
+    out.append('      <line class="baseline" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (LEFT, BASELINE, RIGHT, BASELINE))
+    out += ['      <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m) for x, m in zip(C, months)]
+    tint, sub = to_date_marks(months, d.get("to_date"))
+    return "\n".join(['  <div class="chartblock backlog">',
+                      '    <h3 class="charttitle">Open P1-2 backlog at month end</h3>',
+                      '    <div class="chart">',
+                      '      <svg viewBox="0 0 682 236" role="img" aria-label="%s">' % esc(d["alt"]),
+                      "\n".join(tint + out + sub),
+                      '      </svg>',
+                      '    </div>',
+                      '    <p class="chartnote">%s</p>' % esc(d["note"]) if d.get("note") else "",
+                      '  </div>'])
 
 
 # ── wins ────────────────────────────────────────────────────────────────────

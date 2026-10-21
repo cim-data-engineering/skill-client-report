@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Open P1-2 actions: the sites and the people holding the most priority 1 and 2 actions open
 now, most first, each count split by how long the actions have been open, and each name
-opening its PEAK ticket report. Not a leaderboard: no moves and no award. Every figure comes
-from the one ticket pull. See references/portfolio-leaderboard/actions-and-wins/open-actions.md.
+opening its PEAK ticket report, then the portfolio's open P1-2 backlog at each of the last five
+month ends and now. Not a leaderboard: no moves and no award. The lists and the backlog now come
+from the one ticket pull, each month end from two counts. See
+references/portfolio-leaderboard/actions-and-wins/open-actions.md.
 """
 import os
 import sys
 from collections import defaultdict
+from datetime import date
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
@@ -20,6 +23,8 @@ DAY_MS = 86400000
 AGES = (60, 30)                        # days: 60 or more, 30 to 60, under 30
 UNNAMED, NOBODY = "Unnamed assignee", "No assignee"
 COUNT_CHUNK = 20
+BACKLOG_MONTHS = 6                     # the issue month to date and the five month ends before it
+OPEN = ["open", "in_progress", "on_hold"]
 # The rows say only who holds each action and how long it has been open: ids, its age, and each
 # assignee's company with its logo link. PEAK refuses the whole pull when any assignee has no name
 # recorded, so names come from a count by assignee. Never what anyone wrote.
@@ -33,10 +38,57 @@ def pulls(ctx):
                                "status_ids": [1, 3, 7], "priority_ids": PRIORITIES}, FIELDS))
 
 
+def month_ends(ctx):
+    """[(first of the month, first of the next)] for the five complete months before the issue
+    month, oldest first: each backlog bar counts what was open as its month closed."""
+    t = io.d(ctx["today"])
+    first = date(t.year, t.month, 1)
+    return [(io.add_months(first, k), io.add_months(first, k + 1)) for k in range(1 - BACKLOG_MONTHS, 0)]
+
+
+def backlog_calls(ctx):
+    """Two counts a month end, `end` the first of the next month: actions raised before it and still
+    open now, and actions raised before it and closed on or after it. Together they are every action
+    open as the month closed, at the priority it holds now."""
+    out = []
+    for m, end in month_ends(ctx):
+        tag, bound = m.strftime("%Y-%m"), end.isoformat()
+        out += pio.split(ctx, "op/backlog-%s-open.json" % tag, COUNT_CHUNK, lambda f, ids: io.call(
+            f, "count_tickets", site_ids=ids, ticket_types=["escalated"], statuses=OPEN, priorities=PRIORITIES,
+            local_created_end=bound))
+        out += pio.split(ctx, "op/backlog-%s-closed.json" % tag, COUNT_CHUNK, lambda f, ids: io.call(
+            f, "count_tickets", site_ids=ids, ticket_types=["escalated"], statuses=OPEN + ["closed"],
+            priorities=PRIORITIES, local_created_end=bound, local_resolved_start=bound))
+    return out
+
+
 def calls(ctx):
     return pulls(ctx) + pio.split(ctx, "op/assignees.json", COUNT_CHUNK, lambda f, ids: io.call(
         f, "count_tickets", site_ids=ids, ticket_types=["escalated"], aggregate_entities=["assignee"],
-        statuses=["open", "in_progress", "on_hold"], priorities=PRIORITIES))
+        statuses=OPEN, priorities=PRIORITIES)) + backlog_calls(ctx)
+
+
+def backlog(ctx, work, now):
+    """The open P1-2 backlog at each month end, then `now`, the count open as at the issue date, under
+    the issue month to date. None for a month end whose counts were not saved."""
+    def summed(name):
+        files = pio.chunk_files(work, name)
+        return sum(r.get("ticket_count") or 0 for f in files for r in work.get(f).rows) if files else None
+    values, months = [], []
+    for m, _ in month_ends(ctx):
+        tag = m.strftime("%Y-%m")
+        a, b = summed("op/backlog-%s-open.json" % tag), summed("op/backlog-%s-closed.json" % tag)
+        values.append(None if a is None or b is None else a + b)
+        months.append(io.mon(m.isoformat()))
+    t = io.d(ctx["today"])
+    months.append(io.mon(date(t.year, t.month, 1).isoformat()))
+    values.append(now)
+    told = ", ".join("%s %s" % (m, "no data" if v is None else v) for m, v in zip(months, values))
+    return {"months": months, "values": values, "to_date": True,
+            "note": "Each month end counts the actions raised by then and not yet closed, at the priority "
+                    "each holds now. %s counts those open as at %s." % (months[-1], io.day_long(ctx["today"])),
+            "alt": "Bar chart of open priority 1 and 2 actions at each month end, %s to date: %s."
+                   % (months[0], told)}
 
 
 def more(ctx, work):
@@ -132,5 +184,6 @@ def build(ctx, work, shared):
         note += " Top %d of %s." % (SHOWN, " and ".join(over))
     month = "%s %d" % (io.month(ctx["today"]), io.d(ctx["today"]).year)
     return {"open_actions": {"panels": [{"title": "Sites", "rows": site_rows},
-                                        {"title": "Assignees", "rows": person_rows}]},
+                                        {"title": "Assignees", "rows": person_rows}],
+                             "backlog": backlog(ctx, work, len(actions))},
             "dated_heads": {"Open P1-2 actions": {"date": month, "note": note}}}
