@@ -18,7 +18,7 @@ Every figure, row, series, link, date line and methodology note comes from the s
 
 Resolve the name before anything else, and before the section question.
 
-- Call `search_sites(keyword:"<name>")` and `search_clients(client_name:"%<name>%")` together, and, for a name with punctuation or more than one word, `search_clients` again with the punctuation removed and `%` between its words. A site matches only at a match score of 0.9 or more; a weaker hit is never used on its own, only offered as an option. A client matches when its name is the name given, ignoring case and punctuation
+- Call `search_sites(keyword:"<name>")` and `search_clients(client_name:"%<name>%")` together, and, for a name with punctuation or more than one word, `search_clients` again with the punctuation removed and `%` before, between and after its words. A site matches only at a match score of 0.9 or more; a weaker hit is never used on its own, only offered as an option. A client matches when its name is the name given, ignoring case and punctuation
 - **A site matches and no client does**: the single-site report
 - **A client matches and no site does**: the portfolio report over the client's active sites, from `search_sites(client_ids:[<id>], limit:80)`, paged. A client with one active site gets the single-site report for that site instead, and `report.py plan` prints its commands
 - **A client with no active site** is never built: say so, and offer the clients with similar names that hold sites, as below
