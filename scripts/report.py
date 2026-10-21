@@ -117,16 +117,23 @@ def save_rule(root):
             "only." % root)
 
 
+PORTFOLIO_SAVE = ("Save each response under %s/peak/ as the file named: an offloaded one by copying the file you "
+                  "were handed (cp), an inline one by writing it to its file exactly as returned, one file per "
+                  "response. Every response to save holds counts, scores, ids, and the names and titles PEAK "
+                  "keeps on its records: never what anyone wrote on a ticket.")
+
+
 READ_RULE = ("Read these where they come back and never save them: they carry what people wrote on the "
              "tickets, and the files hold none of that. One that comes back offloaded as a file prints "
              "screened and compact with: python3 references/single-site/actions-and-wins/scripts/key_wins.py digest <that file>")
 
 
-PORTFOLIO_READ_RULE = ("Read these where they come back and never save them: they carry what people wrote on "
-                       "the tickets, and the files hold none of that. A pull whose pagination says has_more is read "
-                       "on with the same call at the next start_index. One that comes back offloaded as a file prints "
-                       "screened and compact, each candidate with its site, with: python3 "
-                       "references/portfolio-leaderboard/actions-and-wins/scripts/key_wins.py digest <dir> <that file>")
+PORTFOLIO_READ_RULE = ("Read these where they come back and never save them. They carry each candidate's title, "
+                       "site, priority, saving and who commented, enough to shortlist from. A pull whose pagination "
+                       "says has_more is read on with the same call at the next start_index. One that comes back "
+                       "offloaded as a file prints screened and ranked, each candidate with its site, with: python3 "
+                       "references/portfolio-leaderboard/actions-and-wins/scripts/key_wins.py digest %s <that file> "
+                       "[...]")
 
 
 # ── plan ────────────────────────────────────────────────────────────────────
@@ -207,15 +214,16 @@ def plan_portfolio(a):
         json.dump(calls, fh, indent=1)
     save = [c for c in calls if not c.get("read")]
     read = [c for c in calls if c.get("read")]
-    print("%s portfolio: %d sites, quarter %s, issued %s%s." % (
+    print("%s portfolio: %d sites, reporting period %s, issued %s%s." % (
         ctx["client"], len(sites), pio.reporting_period(ctx, True), io.day_short(ctx["today"]),
         io.and_to_date(ctx, "; both windows close on ")))
     print("Sections: every one with data. Each site's dates are its own local calendar.")
-    print("\n%d calls. Make them all in one parallel batch, each exactly as printed: the tool, then its "
-          "arguments. %s Then run: python3 scripts/report.py next %s\n" % (len(calls), save_rule(a.dir), a.dir))
+    print("\n%d calls to save. Make them in parallel batches of about twenty, each exactly as printed: the tool, "
+          "then its arguments. %s Then run: python3 scripts/report.py next %s\n"
+          % (len(save), PORTFOLIO_SAVE % a.dir, a.dir))
     show(save, 1)
     if read:
-        print("\nIn the same batch, %d to read: the key win candidates. %s\n" % (len(read), PORTFOLIO_READ_RULE))
+        print("\nAlongside them, %d to read: the key win candidates. %s\n" % (len(read), PORTFOLIO_READ_RULE % a.dir))
         show(read, len(save) + 1)
 
 
@@ -236,7 +244,8 @@ def cmd_next(a):
         calls = json.load(fh)
     missing = [c["file"] for c in calls if not c.get("read") and not work.has(c["file"])]
     if missing:
-        sys.exit("Not saved yet: %s. %s" % (", ".join(missing), save_rule(a.dir)))
+        sys.exit("Not saved yet: %s. %s" % (", ".join(missing), PORTFOLIO_SAVE % a.dir if mode_of(work.ctx) == "portfolio"
+                                                                 else save_rule(a.dir)))
     mode = mode_of(work.ctx)
     new = [c for s in active(work.ctx) for c in module(s, mode).more(work.ctx, work)]
     if not new:
@@ -250,9 +259,18 @@ def cmd_next(a):
     calls += [c for c in new if c["file"] not in have]
     with open(os.path.join(work.root, "calls.json"), "w") as fh:
         json.dump(calls, fh, indent=1)
-    print("%d more calls, in one parallel batch, each exactly as printed. %s Then run next again.\n"
-          % (len(new), save_rule(a.dir)))
-    show(new, 1)
+    read = [c for c in new if c.get("read")]
+    new = [c for c in new if not c.get("read")]
+    if new:
+        print("%d more calls, in one parallel batch, each exactly as printed. %s Then run next again.\n"
+              % (len(new), PORTFOLIO_SAVE % a.dir if mode == "portfolio" else save_rule(a.dir)))
+        show(new, 1)
+    if read:
+        print("%s%d to read, never saved: the shortlist in full. Read it where it comes back; one that comes back "
+              "offloaded prints compact with: python3 references/portfolio-leaderboard/actions-and-wins/scripts/"
+              "key_wins.py digest %s <that file> --top 0. Choose the wins from it and write %s/wins.json, then run "
+              "next again.\n" % ("\n" if new else "", len(read), a.dir, a.dir))
+        show(read, len(new) + 1)
 
 
 # ── bundle ──────────────────────────────────────────────────────────────────
@@ -310,7 +328,7 @@ def bundle_portfolio(a, work):
     for c in data.get("chat", []):
         print("Say in chat at hand-over: " + c)
     if "key-wins" not in data.get("drop", []):
-        print("Next: choose the key wins from the candidate pulls and write %s/wins.json, both by "
+        print("Next: shortlist the key win candidates and write %s/shortlist.json, by "
               "references/portfolio-leaderboard/actions-and-wins/key-wins.md. Then run: python3 scripts/report.py "
               "next %s" % (a.dir, a.dir))
     else:

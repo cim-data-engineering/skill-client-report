@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Helpers the portfolio report's section scripts share: calls split across the
-sites a tool takes at once, their saved chunks and pages read back as one, the
-site label, the ranking and the building-size weighting every portfolio row uses,
-and dates printed with a spaced hyphen, since the portfolio page carries no en or
-em dash.
+sites a tool takes at once, their saved chunks and pages read back as one, each
+site's state and building size, the ranking and the building-size weighting every
+portfolio row uses, and dates printed with a spaced hyphen, since the portfolio
+page carries no en or em dash.
 
 Imported by the scripts under references/portfolio-leaderboard/ only.
 """
@@ -103,20 +103,6 @@ def total(work, name):
 def state(site):
     s = (site.get("state") or "").strip()
     return STATES.get(s.lower(), s)
-
-
-def label(site, link=None):
-    """'88 Example St (NSW)', the state muted, as a link when given one."""
-    st = state(site)
-    inner = '<span class="sn">%s</span>%s' % (esc(site["site_name"].strip()),
-                                              ' <span class="rg">(%s)</span>' % esc(st) if st else "")
-    if link:
-        return '<a href="%s">%s&nbsp;&rsaquo;</a>' % (link, inner)
-    return inner
-
-
-def esc(s):
-    return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 def host(ctx):

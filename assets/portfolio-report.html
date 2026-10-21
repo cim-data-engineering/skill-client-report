@@ -106,10 +106,12 @@ table.hm.wide th.mo,table.hm.wide td.c{padding-right:8px}
 table.nbt th.lv{width:29%}
 table.nbt th.ct{width:10%}
 table.nbt th.mo{text-align:left;padding-left:14px}
+table.nbt{table-layout:fixed}
 td.nb{padding:6px 4px 6px 14px}
 td.nb.none{color:var(--text-muted)}
-.nbs{gap:8px}
-.nbs .track{width:56px}
+/* the bar gives way first, so the value and its marks always sit in their own column however many measures there are */
+.nbs{gap:6px}
+.nbs .track{flex:1 1 56px;width:auto;min-width:16px;max-width:56px}
 .nbs .sval{width:26px;text-align:right}
 .nbsfx{flex:none;display:inline-flex;align-items:center;width:22px;gap:1px}
 .nbx{width:8px;font-weight:600;color:var(--text-muted)}

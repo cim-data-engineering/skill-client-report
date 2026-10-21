@@ -68,14 +68,15 @@ None. The date line defines the score, and the Zones total matches the scorecard
 
 ## Data
 
-All in the main batch, every call with `metric:"temperature"` and split at 100 sites:
+All in the main batch, every call with `metric:"temperature"`:
 
 | Call | Window | Feeds |
 | --- | --- | --- |
-| `search_indoor_environment`, `site` × `month`, `limit:80` | quarter | the month cells, the board and its movement |
-| `search_indoor_environment`, `level` × `all`, `limit:80` | quarter | Levels: each site's levels that returned a score |
-| `count_indoor_environment_zones`, `aggregate_entity:"level"` | current configuration | Zones, joined to the scored levels on `level_id` |
+| `search_indoor_environment`, `site` × `month`, `limit:80`, 100 sites a call | quarter | the month cells, the board and its movement |
+| `search_indoor_environment`, `level` × `all`, `limit:80`, 100 sites a call | quarter | Levels: each site's levels that returned a score |
+| `count_indoor_environment_zones`, `aggregate_entity:"level"`, 10 sites a call | current configuration | Zones, joined to the scored levels on `level_id` |
 
 - Both `search_indoor_environment` calls page at 80 rows: `report.py next` asks for each further page from the first page's total
+- The zone count returns every level in one response, which PEAK refuses past 40,000 characters, so it takes ten sites a call
 - Zones counts `included_point_count`, points configured for comfort scoring. A level that returned no score counts in neither column. Never count zone objects from `search_zones`, `platform.levels` or `platform.zones`: they are not zone temperature points
 - With no comfort score at any site the section drops, and the scorecards' thermal zones figure is every configured point across the sites, off the same zone count

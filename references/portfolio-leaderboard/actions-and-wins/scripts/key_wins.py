@@ -2,17 +2,20 @@
 """Key wins across the portfolio: everything about the section but the choosing and
 the writing.
 
-    python3 references/portfolio-leaderboard/actions-and-wins/scripts/key_wins.py digest <dir> <response file> [...]
+    python3 references/portfolio-leaderboard/actions-and-wins/scripts/key_wins.py digest <dir> <response file> [...] [--top N]
     python3 references/portfolio-leaderboard/actions-and-wins/scripts/key_wins.py photos <dir>
 
-The candidate pulls, closures with comments and open actions with comments across
-every site, are read where they come back and never saved: what people wrote stays
-out of the files. When one comes back offloaded as a file, `digest` prints it screened
-and compact, each candidate with its site. Once <dir>/wins.json names the chosen
-tickets, scripts/report.py next prints the impact and photo calls, and then the level
-call; `photos` downloads each win's ticket images and tiles them into one numbered
-contact sheet per win; assemble() turns wins.json into the bundle's wins at fill time.
-See references/portfolio-leaderboard/actions-and-wins/key-wins.md.
+A portfolio can hold more candidates than anyone can read, so they are read in two
+passes, and neither pass is saved. The candidate pulls, closures with comments and
+open actions with comments across every site, carry each ticket's title, site,
+priority, saving and who commented, but nothing anyone wrote. `digest` screens a pull
+that came back as a file and ranks what is left. Once <dir>/shortlist.json names the
+tickets worth reading in full, scripts/report.py next prints one pull of their
+descriptions, solutions and comments. Once <dir>/wins.json names the chosen tickets,
+next prints the impact and photo calls, and then the level call; `photos` downloads
+each win's ticket images and tiles them into one numbered contact sheet per win;
+assemble() turns wins.json into the bundle's wins at fill time. See
+references/portfolio-leaderboard/actions-and-wins/key-wins.md.
 """
 import json
 import os
@@ -28,18 +31,23 @@ import portfolio_io as pio  # noqa: E402
 
 NAME = "key-wins"
 MAX_WINS = 10
+MAX_SHORTLIST = 25     # tickets read in full: enough to find ten wins, few enough to read
+TOP = 60               # candidates the digest prints, best first
 SEVERITY = ["safety", "reliability", "comfort", "energy", "water", "other"]
 AGENT = re.compile(r"^\s*agent\b", re.I)
 IMAGE = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp"}
 PER_WIN = 16           # images tiled per win; a ticket can carry dozens of uploads
 COMMENT_CHARS = 420
-CHUNK = 10             # sites per candidate pull: each row carries its comments inline
+CHUNK = 20             # sites per candidate pull
 SAVING = re.compile(r"\*\*(.+?)\*\*")   # a saving the win's tickets reference, set bold
-FIELDS = ["ticket_id", "site_id", "summary", "description", "solution", "savings", "comment_count", "created_at",
-          "resolved_at", "equipment_ids",
-          "assignees.id", "assignees.entity.name",
-          {"path": "comments", "args": {"limit": 8, "user_only": True},
-           "sub_fields": ["text", "created_at", "author_full_name"]}]
+# The first pass: enough to screen and rank, nothing anyone wrote but the title.
+LIGHT = ["ticket_id", "site_id", "summary", "priority_id", "savings", "created_at", "resolved_at", "status_id",
+         {"path": "comments", "args": {"limit": 8, "user_only": True}, "sub_fields": ["created_at", "author_full_name"]}]
+# The second pass, on the shortlist only: every word, to choose and write the wins from.
+FULL = ["ticket_id", "site_id", "summary", "description", "solution", "savings", "created_at", "resolved_at",
+        "status_id", "equipment_ids", "assignees.id", "assignees.entity.name",
+        {"path": "comments", "args": {"limit": 8, "user_only": True},
+         "sub_fields": ["text", "created_at", "author_full_name"]}]
 
 
 def esc(ids):
@@ -50,10 +58,10 @@ def calls(ctx):
     q0, q1 = ctx["quarter"]
     closed = pio.split(ctx, "kw/closed.json", CHUNK, lambda f, ids: dict(io.gql(
         f, "tickets.tickets", dict(esc(ids), status_id=6, has_comments=True, resolved_at_local_start=q0 + "T00:00:00",
-                                   resolved_at_local_end=q1 + "T00:00:00", limit=1000), FIELDS), read=True))
+                                   resolved_at_local_end=q1 + "T00:00:00", limit=1000), LIGHT), read=True))
     flight = pio.split(ctx, "kw/in-flight.json", CHUNK, lambda f, ids: dict(io.gql(
         f, "tickets.tickets", dict(esc(ids), status_ids=[1, 3, 7], has_comments=True, limit=1000),
-        [x for x in FIELDS if x != "resolved_at"]), read=True))
+        [x for x in LIGHT if x != "resolved_at"]), read=True))
     return closed + flight
 
 
@@ -79,26 +87,46 @@ def screen(rows):
     return keep, why
 
 
-def digest(root, paths):
-    """A candidate pull that came back as a file, screened and printed compact, each
-    candidate with its site."""
+def rank(r):
+    """Best first: finished before open, then the most people engaged, the highest priority,
+    and a recorded saving."""
+    return (0 if r.get("resolved_at") else 1, -len({c.get("author_full_name") for c in human(r)}), -len(human(r)),
+            r.get("priority_id") or 9, -(r.get("savings") or 0))
+
+
+def digest(root, paths, top=TOP):
+    """Candidate pulls, screened and ranked, one line each with the site. With the light
+    first-pass rows this is the list to shortlist from; with the full second-pass rows each
+    line carries the description, solution and comments to choose and write from."""
     sites = {s["site_id"]: s for s in io.Work(root).ctx["sites"]}
     rows = [r for p in paths for r in io.read(p).rows]
     keep, why = screen(rows)
+    keep.sort(key=rank)
     day = lambda ts: ts[:10] if ts else "?"
     print("%d candidates, %d left after screening. Screened out: %s." % (
         len(rows), len(keep), "; ".join("%d %s" % (n, w) for w, n in why.items()) or "nothing"))
-    for r in sorted(keep, key=lambda r: -len(human(r))):
+    if top and len(keep) > top:
+        print("The %d best by the ranking below; %d more not shown (--top 0 prints all). Ranked: finished before "
+              "open, then most people commenting, priority, a recorded saving." % (top, len(keep) - top))
+        keep = keep[:top]
+    for r in keep:
         site = sites.get(r.get("site_id")) or {"site_name": "site %s" % r.get("site_id")}
         state = ("closed %s" % day(r.get("resolved_at"))) if r.get("resolved_at") else "open"
         saved = (" · savings %s" % "{:,}".format(round(r["savings"]))) if round(r.get("savings") or 0) else ""
-        print("\n[%s] %s · %s, raised %s%s · %s" % (r["ticket_id"], site["site_name"].strip(), state,
-                                                   day(r.get("created_at")), saved, (r.get("summary") or "").strip()))
+        people = len({c.get("author_full_name") for c in human(r)})
+        print("\n[%s] %s · %s · P%s · %d comment%s by %d %s%s · %s" % (
+            r["ticket_id"], site["site_name"].strip(), state, r.get("priority_id") or "?", len(human(r)),
+            "" if len(human(r)) == 1 else "s", people, "person" if people == 1 else "people", saved,
+            (r.get("summary") or "").strip()))
         for k in ("description", "solution"):
             if clip(r.get(k)):
                 print("  %s: %s" % (k, clip(r.get(k))))
-        for c in sorted(human(r), key=lambda c: c.get("created_at") or ""):
-            print("  - %s, %s: %s" % (day(c.get("created_at")), c.get("author_full_name") or "?", clip(c.get("text"))))
+        # the full pass prints every comment with words in it, an agent's marked as such
+        for c in sorted(r.get("comments") or [], key=lambda c: c.get("created_at") or ""):
+            if clip(c.get("text")):
+                who = c.get("author_full_name") or "?"
+                print("  - %s, %s%s: %s" % (day(c.get("created_at")), who, " (agent)" if AGENT.match(who) else "",
+                                            clip(c.get("text"))))
 
 
 def clip(text):
@@ -131,8 +159,28 @@ def tickets(wins):
     return list(dict.fromkeys(t for w in wins for t in w["tickets"]))
 
 
+def load_shortlist(work):
+    path = os.path.join(work.root, "shortlist.json")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as fh:
+        ids = json.load(fh)
+    bad = [t for t in ids if not UUID.match(t)]
+    if bad or len(ids) > MAX_SHORTLIST:
+        raise SystemExit("shortlist.json: up to %d full ticket ids, as the candidate pulls print them%s"
+                         % (MAX_SHORTLIST, ": not %s" % ", ".join(bad) if bad else ""))
+    return ids
+
+
 def more(ctx, work):
     wins = load_wins(work)
+    if wins is None:
+        ids = load_shortlist(work)
+        if not ids:
+            return []
+        # The second pass: the shortlist in full, read where it comes back and never saved.
+        return [dict(io.gql("kw/full.json", "tickets.tickets",
+                            dict(esc(pio.ids(ctx)), ticket_ids=ids, limit=MAX_SHORTLIST), FULL), read=True)]
     if not wins:
         return []
     ids = tickets(wins)
@@ -311,8 +359,14 @@ def assemble(ctx, work):
 
 if __name__ == "__main__":
     if len(sys.argv) >= 4 and sys.argv[1] == "digest":
-        digest(sys.argv[2], sys.argv[3:])
+        args = sys.argv[3:]
+        top = TOP
+        if "--top" in args:
+            i = args.index("--top")
+            top = int(args[i + 1])
+            args = args[:i] + args[i + 2:]
+        digest(sys.argv[2], args, top)
     elif len(sys.argv) == 3 and sys.argv[1] == "photos":
         photos(sys.argv[2])
     else:
-        sys.exit("usage: key_wins.py digest <dir> <response file> [...] | key_wins.py photos <dir>")
+        sys.exit("usage: key_wins.py digest <dir> <response file> [...] [--top N] | key_wins.py photos <dir>")

@@ -4,7 +4,7 @@ Owns the equipment health by site table, its portfolio row, and the figures the 
 
 ## What you write
 
-Nothing on the page. In chat, say what the script prints: any site with no score in the quarter, which is left out of the table and the board, and any site whose scored rules in a month fell far below its other months. That month is an outage, not a score.
+Nothing on the page. In chat, say what the script prints: any site with no score in the quarter, which is left out of the table and the board, and any site whose scored rules in a month fell below half of its busiest month. That month covers part of the plant, from an outage or rules still going live, so it moves the site's change and the portfolio row without the plant having changed.
 
 ## Section header
 
@@ -72,14 +72,14 @@ One row per site with a score in the quarter, ranked by its score for the period
 
 All in the main batch: `search_equipment_health_scores` over the quarter with every `site_ids`, split across calls:
 
-| `aggregate_entities` | `aggregate_period` | Sites a call | Feeds |
-| --- | --- | --- | --- |
-| `site` | `month` | 100 | the month cells, the board and its movement, and each month's scored rules for the outage check |
-| `metadata_type` | `all` | 100 | Rules: `task_count` summed per site over every type but the system types |
-| `equipment` | `all` | 10 | Equip: distinct `equipment_id` per site, the system types left out |
+| `aggregate_entities` | `aggregate_period` | Feeds |
+| --- | --- | --- |
+| `site` | `month` | the month cells, the board and its movement, and each month's scored rules for the outage check |
+| `metadata_type` | `all` | Rules: `task_count` summed per site over every type but the system types |
+| `equipment` | `all` | Equip: distinct `equipment_id` per site, the system types left out |
 
+- Six sites a call. Every grouping scans each rule's month rows for its sites, about 10,000 a site over a quarter and three times that at the largest, and PEAK refuses a call that would scan more than 200,000
 - `metadata_type` groups within each site already, so it carries `site_id` and takes no `site` beside it
-- The equipment rows run long, so their calls take ten sites each to stay under the gateway's size limit
 - `local_end_date` is exclusive and every bound a month boundary, the month to date included, so the month to date holds whatever exists so far
 - Distinct counts come from an `all` call, never by summing months. Scores never sum: the site cell is PEAK's site rollup, and the portfolio row is the size-weighted mean of those
-- A site's scored rules in a month below half of its usual month is the outage the script names in chat
+- A site's scored rules in a month below half of its busiest month is what the script names in chat

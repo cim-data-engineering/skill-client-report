@@ -14,6 +14,7 @@ import portfolio_io as pio  # noqa: E402
 NAME = "indoor-environment"
 BANDS = [92, 85, 75]
 CHUNK, PAGE = 100, 80
+ZONE_CHUNK = 10              # the zone count returns a row per level and refuses a response over 40,000 characters
 
 
 def paged(ctx):
@@ -25,7 +26,7 @@ def paged(ctx):
 
 
 def calls(ctx):
-    return paged(ctx) + pio.split(ctx, "ie/zones-by-level.json", CHUNK, lambda f, ids: io.call(
+    return paged(ctx) + pio.split(ctx, "ie/zones-by-level.json", ZONE_CHUNK, lambda f, ids: io.call(
         f, "count_indoor_environment_zones", metric="temperature", site_ids=ids, aggregate_entity="level"))
 
 

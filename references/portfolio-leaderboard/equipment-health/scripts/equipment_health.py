@@ -15,7 +15,9 @@ import portfolio_io as pio  # noqa: E402
 NAME = "equipment-health"
 SYSTEM_TYPES = {21, 37, 69, 70, 87, 105, 114}     # the platform checking itself, not plant
 BANDS = [99, 97, 90]
-CHUNK, EQUIPMENT_CHUNK = 100, 10                 # equipment rows run long, so their calls take fewer sites
+# Each call scans every rule's month rows for its sites, and PEAK refuses a call over 200,000 rows:
+# about 10,000 a site over a quarter, three times that at the largest. Six sites a call keeps inside it.
+CHUNK = 6
 
 
 def calls(ctx):
@@ -25,7 +27,7 @@ def calls(ctx):
         local_start_date=q0, local_end_date=q1))
     return (eh("eh/site-month.json", CHUNK, ["site"], "month")
             + eh("eh/type-all.json", CHUNK, ["metadata_type"], "all")
-            + eh("eh/equipment-all.json", EQUIPMENT_CHUNK, ["equipment"], "all"))
+            + eh("eh/equipment-all.json", CHUNK, ["equipment"], "all"))
 
 
 def more(ctx, work):
@@ -84,17 +86,17 @@ def build(ctx, work, shared):
     if missing:
         chat.append("No equipment health score this quarter for %s: left out of the equipment health table and "
                     "board." % io.listing(missing))
-    # A month that scored off a fraction of a site's usual rules is a data outage wearing a score.
+    # A month that scored off under half of a site's busiest month is an outage, or rules still going live:
+    # either way its score covers part of the plant, and it moves the site's change and the portfolio row.
     for s in scored:
         n = [rules_by_month[s["site_id"]].get(m[:7], 0) for m in qm]
-        live = sorted(x for x in n if x)
-        usual = live[len(live) // 2] if live else 0
-        low = ["%s scored %s" % (io.month_label(ctx, m), "{:,} rule{}".format(x, "" if x == 1 else "s"))
-               for m, x in zip(qm, n) if x and x < usual / 2]
+        most = max(n)
+        low = ["%s %s" % (io.month_label(ctx, m), "{:,}".format(x)) for m, x in zip(qm, n) if x and x < most / 2]
         if low:
-            chat.append("Equipment health data was out for part of the quarter at %s: %s, against about %s scored "
-                        "rules in its other months. That is an outage, not a score." % (
-                            s["site_name"].strip(), io.listing(low), "{:,}".format(usual)))
+            chat.append("Equipment health at %s scored off far fewer rules in some months: %s, against %s in its "
+                        "busiest. Those months cover part of the plant, from an outage or rules still going live, so "
+                        "its change is not the plant's alone." % (s["site_name"].strip(), io.listing(low),
+                                                                   "{:,}".format(most)))
     return {
         "equipment_health": heat,
         "datelines": {"Equipment health snapshot": "%s. Share of rule executions returning no fault."

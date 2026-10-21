@@ -47,7 +47,7 @@ Numbered in report order, each owned by the section it explains. A note carries 
 
 ## Data
 
-All in the main batch, each split at 100 sites a call:
+All in the main batch, the site facts 100 sites a call and each count 10, since an unfiltered count across many more sites runs past the gateway's timeout:
 
 | Need | Call |
 | --- | --- |

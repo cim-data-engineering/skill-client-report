@@ -34,12 +34,8 @@ TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="c
 CLIMB = ('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
          'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>'
          '<polyline points="16 7 22 7 22 13"/></svg>')
-DASHES = re.compile("[–—]|&ndash;|&mdash;")
+DASHES = re.compile("[\u2013\u2014]|&ndash;|&mdash;")
 REGION = re.compile(r"[ \t]*<!-- fill: ([a-z-]+) -->\n(.*?)[ \t]*<!-- /fill: \1 -->\n?", re.S)
-# Each fill region, the section that owns it, and its renderer.
-REGIONS = {"boards": "site-leaderboard", "eh-table": "equipment-health", "cf-table": "indoor-environment",
-           "companies": "actions-by-company", "wins": "key-wins", "ratings": "sustainability-ratings",
-           "notes": None}
 
 
 def esc(s):

@@ -95,7 +95,7 @@ def build(ctx, work, shared):
     host = pio.host(ctx)
     link = lambda ids: "%s/dashboard/ratings?%s&ratings_type_id_or_filter=all_ratings" % (
         host, "&".join("site_ids=%s" % i for i in ids))
-    rows = []
+    rows, shown = [], []
     for s in pio.by_size(ctx, size):
         sid = s["site_id"]
         cells = []
@@ -107,6 +107,7 @@ def build(ctx, work, shared):
             cells.append(cell(cur["score"], cur["sustainability_rating_type_id"], not live(cur),
                               prev["score"] if prev else None))
         if any(cells):
+            shown.append(sid)
             rows.append({"name": s["site_name"].strip(), "state": pio.state(s), "link": link([sid]),
                          "size": pio.num(size[sid]), "cells": cells})
 
@@ -136,8 +137,7 @@ def build(ctx, work, shared):
         portfolio.append(c)
     if any(portfolio):
         shared["weighted"] = True
-    shown = [s for s in ctx["sites"] if any(r["name"] == s["site_name"].strip() for r in rows)]
-    sized = [size[s["site_id"]] for s in shown if size[s["site_id"]]]
+    sized = [size[sid] for sid in shown if size[sid]]
     return {
         "ratings": {"unit": unit, "columns": columns, "rows": rows,
                     "portfolio": {"size": pio.num(sum(sized)) if sized else "-", "cells": portfolio}},

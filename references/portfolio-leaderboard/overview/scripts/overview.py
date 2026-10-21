@@ -21,11 +21,12 @@ import portfolio_io as pio  # noqa: E402
 NAME = "overview"
 SYSTEM_TYPES = [21, 37, 69, 70, 87, 105, 114]     # the platform checking itself, not plant
 CHUNK = 100
+COUNT_CHUNK = 10              # an unfiltered equipment count across many more sites runs past the gateway's timeout
 LOGO_PX = 288                                     # the slot is 72px tall: four times that keeps it sharp in print
 
 
 def calls(ctx):
-    count = lambda name, tool, **kw: pio.split(ctx, name, CHUNK, lambda f, ids: io.call(f, tool, site_ids=ids, **kw))
+    count = lambda name, tool, **kw: pio.split(ctx, name, COUNT_CHUNK, lambda f, ids: io.call(f, tool, site_ids=ids, **kw))
     return (pio.split(ctx, "overview/sites.json", CHUNK,
                       lambda f, ids: io.gql(f, "platform.sites", {"site_ids": ids, "limit": CHUNK},
                                             ["site_id", "site_name", "building_size", "monetary_currency", "state",
