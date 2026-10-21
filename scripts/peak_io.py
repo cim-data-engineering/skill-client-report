@@ -243,8 +243,8 @@ WORKING_DAY = 7.5          # hours in the working day the labour model counts, e
 
 
 # ── building size ───────────────────────────────────────────────────────────
-# PEAK stores every site's building size in square metres, US sites included (the schema says so, and
-# published dealership sizes match the stored figures read as m²). US sites show square feet, converted.
+# PEAK stores every site's building size in square metres, US sites included. US sites show square feet,
+# converted.
 FEET = ("united states", "usa", "us", "united states of america")
 SQFT_PER_SQM = 10.7639
 

@@ -99,7 +99,7 @@ Each folder holds the section's reference and a `scripts/` folder with its arith
 Each section's reference owns its section: what it shows, its rules, its calls, its notes band items, its anchor and what it says in chat. It names what it hands on and what it takes by the figure, never by the section at the other end, and cites this file and `DESIGN.md` but no other reference. Where each section sits, which figures feed which section and the build order live here, and the registry at the top of `scripts/report.py` carries the same in code.
 
 - **Build order**: a section builds after every section whose figures it takes. The registry fixes the order
-- **System types**: equipment types 21, 37, 69, 70, 87, 105 and 114, the platform checking itself rather than building plant. Every equipment and rule count leaves them out
+- **System types**: equipment types 21, 37, 69, 70, 87, 105 and 114, the platform checking itself rather than building plant. Every equipment count leaves them out; Rules running counts every running rule
 - **Region label**: in the portfolio report, the bracket after a site's name holds its state, or its country where the portfolio spans countries; nothing where every site shares one, or where the name already ends in brackets
 
 **Single-site page:** the masthead, the analytics overview, operational impact, sustainability ratings, the equipment health and indoor environment snapshots, their monthly trends, equipment run hours, monthly alerts and the actions leaderboard, key wins, then the notes band. A section that is out leaves no gap.

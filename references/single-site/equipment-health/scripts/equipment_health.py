@@ -93,6 +93,7 @@ def build(ctx, work, shared):
     on = onboarding(ctx, site_m)
     start = on["start"] if on else tm[0]
     kq, kt = [m for m in qm if m >= start], [m for m in tm if m >= start]
+    shared.setdefault("trend_start", []).append(start)
     shared.setdefault("period_start", []).append(kq[0])
     if on:
         shared.setdefault("live_since", []).append({"month": on["month"], "day": on["day"]})

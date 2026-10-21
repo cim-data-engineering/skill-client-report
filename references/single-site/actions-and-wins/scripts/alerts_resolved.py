@@ -20,10 +20,7 @@ import peak_io as io  # noqa: E402
 NAME = "alerts-resolved"
 STAT4 = ["open", "in_progress", "closed", "on_hold"]           # every status but Not Doing
 BANDS = [(99.0, "Excellent"), (95.0, "Good"), (90.0, "Average")]
-# The chart counts actions. The scaffold's eyebrow still reads "alerts" until assets/reference-report.html
-# takes EYEBROW, so the date line goes under both and fills whichever the scaffold carries.
 EYEBROW = "Monthly actions raised vs resolved"
-OLD_EYEBROW = "Monthly alerts raised vs resolved"
 BULK = 10                  # closures in one sitting, each within GAP of the one before, is a bulk close-out
 GAP = 600                  # seconds
 
@@ -203,11 +200,16 @@ def build(ctx, work, shared):
     site = ctx["site"]
     host = re.match(r"https?://[^/]+", site.get("site_link") or "")
     host = host.group(0) if host else "https://ace.cimenviro.com"
+    # the chart starts where the site's monitoring does, as the other trends do
+    first = max(tm[0], min(shared.get("trend_start") or [tm[0]]))
+    keep = [i for i, m in enumerate(tm) if m >= first]
+    window = "the last six complete months" if len(keep) == len(tm) else "the complete months monitored"
+    tm, raised, resolved = [tm[i] for i in keep], [raised[i] for i in keep], [resolved[i] for i in keep]
     tw = io.whole(ctx, tm)
     span6 = io.span(tw[0], tw[-1])
-    chart_line = ("%s, the last six complete months%s. Raised counts actions created in the month, resolved counts "
+    chart_line = ("%s, %s%s. Raised counts actions created in the month, resolved counts "
                   "actions closed in it. Actions marked Not Doing are excluded from both series."
-                  % (span6, io.and_to_date(ctx)))
+                  % (span6, window, io.and_to_date(ctx)))
     chat = []
     if bulk:
         chat.append("Resolved counts include bulk close-outs, %d or more actions closed minutes apart: %s."
@@ -218,6 +220,7 @@ def build(ctx, work, shared):
     return {
         "impact": impact,
         "alerts": {"a": raised, "b": resolved, "scale": "shared",
+                   "months": [io.mon(m) for m in tm], "to_date": tm[-1] == ctx["to_date"],
                    "alt": "Grouped bar chart of actions raised and resolved each month, %s. Raised %s and %d. "
                           "Resolved %s and %d." % (io.span(tm[0], tm[-1], sep=" to "), ", ".join(map(str, raised[:-1])), raised[-1],
                                                    ", ".join(map(str, resolved[:-1])), resolved[-1])
@@ -227,7 +230,6 @@ def build(ctx, work, shared):
                                  "&grouping=assignee" % (host, site["site_id"], t0, ctx["through"])},
         "datelines": {
             EYEBROW: chart_line,
-            OLD_EYEBROW: chart_line,
             "Actions leaderboard":
                 "Actions resolved %s%s, ranked by resolved. Completion rate is resolved ÷ (resolved + currently "
                 "open); open now as at %s." % (span6, io.and_to_date(ctx, " and "), io.day_long(ctx["today"]))},
