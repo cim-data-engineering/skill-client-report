@@ -166,18 +166,21 @@ td.nb.none{color:var(--text-muted)}
 
 @media print{
   /* Page one holds the masthead, the scorecard strip and the whole site leaderboard, and page two the team
-     leaderboard. Block spacing tightens, never the type, and about 110px stays spare on page one on A4, so a
-     browser that adds its own print margins or prints on Letter still holds all three boards */
-  .mast{padding:22px 56px}
+     leaderboard. Block spacing tightens, never the type, and about 60px stays spare on page one on A4 with a two-line
+     title, a two-line leader and ten rows, so a browser that adds its own print margins still holds all three boards */
+  .mast{padding:16px 56px}
   .mast .logo{margin-bottom:10px}
   .mastmeta{margin-top:12px;padding-top:10px}
   .mastnote{margin-top:6px}
-  section.overview.strip{padding:14px 56px}
+  section.overview.strip{padding:10px 56px}
   .strip .stat{padding:10px 14px}
   .strip .stat .k{margin-bottom:4px}
   section.lead{padding:48px 56px 0;border-bottom:0;break-inside:avoid;break-after:page}
   /* only page one's leaderboard tightens to fit under the masthead; page two's opens like every other page */
-  section.lead.sites{padding-top:18px}
+  section.lead.sites{padding-top:12px}
+  .lead.sites .sechead{margin-bottom:14px}
+  .lead.sites .lphoto{aspect-ratio:5/2}
+  .lead.sites table.rk td{height:27px}
   /* a long ranked table runs on to the next page under its repeated header rather than leaving a gap */
   table.hm.wide,table.nbt{break-inside:auto}
   .rkgrid{break-inside:avoid}
