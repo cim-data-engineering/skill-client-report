@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: any site with no score
 
 Eyebrow: Equipment health snapshot  
 Statement: Equipment health by site  
-Date line: "{period}. Share of automated checks that found no fault. Equip and Rules count the equipment and rules scored." The period runs from the quarter's first day to its last, with a spaced hyphen: "1 July - 30 September 2026". Where the sites scored differ between the quarter's first and last months, it adds "Its Chg compares the {N} sites scored in both {first month} and {last month}."
+Date line: "{period}. Share of automated checks that found no fault." The period runs from the quarter's first day to its last, with a spaced hyphen: "1 July - 30 September 2026". Where the sites scored differ between the quarter's first and last months, it adds "Its Chg compares the {N} sites scored in both {first month} and {last month}."
 
 ## Equipment score benchmark
 

@@ -98,8 +98,7 @@ def build(ctx, work, shared):
                         "busiest. Those months cover part of the plant, from an outage or rules still going live, so "
                         "its change and its place on the board are not the plant's alone."
                         % (s["site_name"].strip(), io.listing(low), "{:,}".format(most)))
-    note = ("%s. Share of automated checks that found no fault. Equip and Rules count the equipment and rules "
-            "scored." % pio.reporting_period(ctx))
+    note = "%s. Share of automated checks that found no fault." % pio.reporting_period(ctx)
     if left and len(sids) - len(left) > 0:
         note += " Its Chg compares the %s scored in both %s and %s." % (
             pio.site_count(len(sids) - len(left)), io.month(qm[0]), io.month(qm[-1]))
