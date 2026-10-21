@@ -167,7 +167,6 @@ td.nb.none{color:var(--text-muted)}
   .rkgrid.n2{grid-template-columns:repeat(2,minmax(0,1fr))}
   /* where the browser adds its own margins, the sheet narrows to the printable width instead of running off the page */
   .sheet{width:auto;max-width:100%}
-  .notes ol{break-inside:avoid}
 }
 </style>
 </head>
@@ -301,10 +300,6 @@ td.nb.none{color:var(--text-muted)}
       </table>
     </div>
   </div>
-  <div class="seclinks">
-    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9102&amp;site_ids=9103&amp;site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity">See actions by company &rsaquo;</a>
-    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9102&amp;site_ids=9103&amp;site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=assignee">See actions by assignee &rsaquo;</a>
-  </div>
 <!-- /fill: team-boards -->
 </section>
 
@@ -316,7 +311,7 @@ td.nb.none{color:var(--text-muted)}
     <p class="h2note">Priority 1 and 2 actions open as at 15 September 2026 by age open.</p>
   </div>
   <div class="bandkey agekey"><span><i class="a60"></i>&ge;60d</span><span><i class="a30"></i>30-60d</span><span><i class="a0"></i>&lt;30d</span></div>
-  <!-- The two lists and their links: drawn by scripts/fill_portfolio.py from the bundle's open_actions. -->
+  <!-- The two lists: drawn by scripts/fill_portfolio.py from the bundle's open_actions. -->
 <!-- fill: open -->
   <div data-sample="open" class="opgrid">
     <div class="oplist">
@@ -344,10 +339,6 @@ td.nb.none{color:var(--text-muted)}
         </tbody>
       </table>
     </div>
-  </div>
-  <div class="seclinks">
-    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9102&amp;site_ids=9103&amp;site_ids=9104&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=site&amp;priority_ids=1&amp;priority_ids=2">See open P1-2 actions by site &rsaquo;</a>
-    <a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;site_ids=9102&amp;site_ids=9103&amp;site_ids=9104&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=assignee&amp;priority_ids=1&amp;priority_ids=2">See open P1-2 actions by assignee &rsaquo;</a>
   </div>
 <!-- /fill: open -->
 </section>
@@ -455,24 +446,6 @@ td.nb.none{color:var(--text-muted)}
   </table>
 <!-- /fill: ratings -->
   <p class="chartsource">Source: sustainability ratings recorded in PEAK. The portfolio row is weighted by building size.</p>
-  <div class="seclinks">
-    <a href="https://ace.cimenviro.com/dashboard/ratings?site_ids=9101&amp;site_ids=9102&amp;site_ids=9103&amp;site_ids=9104&amp;ratings_type_id_or_filter=all_ratings">See sustainability ratings &rsaquo;</a>
-  </div>
-</section>
-
-<!-- part: notes -->
-<section class="notes">
-  <div class="sechead">
-    <p class="eyebrow">Notes on method</p>
-    <h2>How these numbers are calculated</h2>
-  </div>
-<!-- fill: notes -->
-  <ol data-sample="notes">
-    <li><strong>Portfolio rows.</strong> Scores are weighted by building size; counts are summed.</li>
-    <li><strong>Scored equipment.</strong> Equip and Rules count equipment and rules that scored in the period, so they can sit below the monitored totals in the scorecards.</li>
-    <li><strong>Sustainability ratings.</strong> The portfolio row counts current ratings only, and its arrow compares the same sites' previous ratings.</li>
-  </ol>
-<!-- /fill: notes -->
 </section>
 
 <!-- part: close -->

@@ -40,7 +40,7 @@ PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS + ["run-hou
 # The portfolio report's scaffold and its part maps. Every section is in unless it
 # dropped itself, and no part depends on another section.
 PORTFOLIO = {"ref": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "portfolio-report.html"),
-             "always": ["shell", "masthead", "scorecards", "notes", "close"],
+             "always": ["shell", "masthead", "scorecards", "close"],
              "section_parts": {"site-leaderboard": ["site-leaderboard"],
                                "team-leaderboard": ["team-leaderboard"],
                                "equipment-health": ["equipment-health"],

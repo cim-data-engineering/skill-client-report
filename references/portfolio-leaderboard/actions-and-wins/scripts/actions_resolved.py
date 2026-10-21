@@ -98,8 +98,7 @@ def build(ctx, work, shared):
         "start": {c: len(co_then.get(c, ())) or None for c in every},
         "meta": {c: [pio.site_count(len(co_sites[c]))] for c in co_now},
         "tiles": {c: {"company": c, "logo": logos.get(c)} for c in co_now},
-        "links": {c: pio.tickets_link(ctx, sorted(co_sites[c]), "site", sorted(co_people[c])) for c in co_now},
-        "link": {"text": "See actions by company", "url": pio.tickets_link(ctx, sids, "user_entity")}})
+        "links": {c: pio.tickets_link(ctx, sorted(co_sites[c]), "site", sorted(co_people[c])) for c in co_now}})
 
     # people: each assignee's actions resolved and their sites
     p_now, p_sites = tally(now, lambda a: a["id"])
@@ -112,8 +111,7 @@ def build(ctx, work, shared):
         "start": {p: len(p_then.get(p, ())) or None for p in every},
         "meta": {p: [x for x in (who[p]["company"], pio.site_count(len(p_sites[p]))) if x] for p in p_now},
         "tiles": {p: {"company": who[p]["company"], "logo": logos.get(who[p]["company"])} for p in p_now},
-        "links": {p: pio.tickets_link(ctx, sorted(p_sites[p]), "user_entity", [p]) for p in p_now},
-        "link": {"text": "See actions by assignee", "url": pio.tickets_link(ctx, sids, "assignee")}})
+        "links": {p: pio.tickets_link(ctx, sorted(p_sites[p]), "user_entity", [p]) for p in p_now}})
 
     unlogged = sorted(c for c in co_now if not logos.get(c))
     chat = ["Initials stand in for the logos of %s, with none in PEAK or none that could be fetched."

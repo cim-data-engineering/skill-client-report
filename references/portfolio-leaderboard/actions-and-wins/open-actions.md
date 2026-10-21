@@ -42,14 +42,9 @@ Two lists side by side, Sites then Assignees, each under a board head with "Open
   `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&relative_date=last_90_days&include_today=true&grouping=assignee&priority_ids=1&priority_ids=2`
 - Each person opens the report at their sites, grouped by site and narrowed to them:
   `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&relative_date=last_90_days&include_today=true&grouping=site&priority_ids=1&priority_ids=2&assignee_ids={{assignee_id}}`
-- The section links, "See open P1-2 actions by site ›" and "See open P1-2 actions by assignee ›", open the report at every site grouped by site or by assignee
 - The section carries the anchor `open-actions`
 
 **Renders when:** any priority 1 or 2 action is open now.
-
-## Notes band items
-
-None.
 
 ## Data
 

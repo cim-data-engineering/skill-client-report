@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""The parts every portfolio report carries: the masthead, the scorecard strip and
-the notes band frame. See references/portfolio-leaderboard/overview/overview.md.
+"""The parts every portfolio report carries: the masthead and the scorecard strip.
+See references/portfolio-leaderboard/overview/overview.md.
 
 Imported by scripts/report.py through the same three hooks every section has:
 calls() before the fetch, more() for any follow-up round, build() to turn the saved
 responses into the bundle. facts() hands the site facts to every section before any
-of them builds. It takes the thermal zones figure and the weighted flag from `shared`,
-so it builds after the sections that hand them on.
+of them builds. It takes the thermal zones figure from `shared`, so it builds after
+the section that hands it on.
 """
 import base64
 import io as bytes_io
@@ -85,10 +85,6 @@ def build(ctx, work, shared):
         chat.append("Building sizes for %s were converted to %s, the unit most of the portfolio's floor area is "
                     "recorded in." % (io.listing(moved), unit))
 
-    notes = {}
-    if shared.get("weighted"):
-        notes["Portfolio rows"] = {"html": "<strong>Portfolio rows.</strong> Scores are weighted by building size; "
-                                           "counts are summed."}
     return {
         "masthead": {
             "client": ctx["client"],
@@ -112,6 +108,5 @@ def build(ctx, work, shared):
                 "Thermal zones": "{:,}".format(zones),
             },
         },
-        "notes": notes,
         "chat": chat,
     }

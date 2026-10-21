@@ -78,8 +78,6 @@ def build(ctx, work, shared):
                           "counts": ["{:,}".format(sum(len(equip[sid]) for sid in sids)),
                                      "{:,}".format(sum(rules[sid] for sid in sids))],
                           "months": portfolio}}
-    if any(v is not None for v in portfolio):
-        shared["weighted"] = True
     shared.setdefault("rankings", []).append({"label": "Equipment health", "anchor": ANCHOR, "window": "month",
                                               "now": now, "start": start, "dp": 1, "unit": "%"})
 
@@ -103,8 +101,5 @@ def build(ctx, work, shared):
         "equipment_health": heat,
         "datelines": {"Equipment health snapshot": "%s. Share of rule executions returning no fault."
                                                    % pio.reporting_period(ctx)},
-        "notes": {"Scored equipment": {"html": "<strong>Scored equipment.</strong> Equip and Rules count equipment and "
-                                                "rules that scored in the period, so they can sit below the monitored "
-                                                "totals in the scorecards."}},
         "chat": chat,
     }

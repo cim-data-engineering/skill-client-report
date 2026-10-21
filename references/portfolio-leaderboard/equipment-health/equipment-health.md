@@ -64,10 +64,6 @@ One row per site with a score in the quarter, ranked by its score for the leader
 
 **Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%".
 
-## Notes band items
-
-- **Scored equipment.** Equip and Rules count equipment and rules that scored in the period, so they can sit below the monitored totals in the scorecards
-
 ## Data
 
 All in the main batch: `search_equipment_health_scores` over the quarter with every `site_ids`, split across calls:

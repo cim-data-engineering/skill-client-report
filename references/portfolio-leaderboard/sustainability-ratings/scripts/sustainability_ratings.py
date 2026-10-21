@@ -144,16 +144,10 @@ def build(ctx, work, shared):
         if before is not None and show(after, tid) != show(before, tid):
             c["move"] = "up" if after > before else "down"
         portfolio.append(c)
-    if any(portfolio):
-        shared["weighted"] = True
     sized = [size[sid] for sid in shown if size[sid]]
     return {
         "ratings": {"unit": unit, "columns": columns, "rows": rows,
                     "portfolio": {"size": pio.num(sum(sized)) if sized else "-", "cells": portfolio}},
-        "links": {"ratings": link(pio.ids(ctx))},
         "datelines": {"Sustainability ratings": "As at %s. Each site's latest rating for each measure."
                                                 % io.day_long(ctx["today"])},
-        "notes": {"Sustainability ratings": {"html": "<strong>Sustainability ratings.</strong> The portfolio row "
-                                                      "counts current ratings only, and its arrow compares the same "
-                                                      "sites' previous ratings."}},
     }

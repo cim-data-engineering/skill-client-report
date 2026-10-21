@@ -1,6 +1,6 @@
 # Overview
 
-The parts every portfolio report carries: the masthead, the scorecard strip and the notes band frame. Scaffold parts: `masthead`, `scorecards`, `notes`. Script: `scripts/overview.py`, which fills every slot below and hands on the site facts.
+The parts every portfolio report carries: the masthead and the scorecard strip. Scaffold parts: `masthead`, `scorecards`. Script: `scripts/overview.py`, which fills every slot below and hands on the site facts.
 
 ## What you write
 
@@ -38,10 +38,6 @@ The analytics overview's stat cards, as a scorecard strip with no section header
 - The portfolio takes the unit that holds most of its floor area. A site recorded in the other unit is converted into it, and the script says so in chat
 - A site with no building size counts in no size total and in no size-weighted portfolio row. The script names it in chat
 
-## Notes band items
-
-- **Portfolio rows.** "Scores are weighted by building size; counts are summed." Shown when any section draws a weighted portfolio row
-
 ## Data
 
 All in the main batch, the site facts 100 sites a call and each count 10, since an unfiltered count across many more sites runs past the gateway's timeout:
@@ -58,4 +54,4 @@ All in the main batch, the site facts 100 sites a call and each count 10, since 
 
 **Hands on:** the site facts, each site's building size, currency, state, country and building photo link, before any section builds.
 
-**Takes:** the thermal zones figure, and whether any section drew a weighted portfolio row.
+**Takes:** the thermal zones figure.

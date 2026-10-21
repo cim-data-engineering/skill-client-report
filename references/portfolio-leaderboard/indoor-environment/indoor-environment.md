@@ -65,10 +65,6 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 - **A ranking** labelled Thermal comfort, under the anchor `cf-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%"
 - **Thermal zones**: the Zones total, and every zone temperature point configured across the sites for a quarter in which no site scored
 
-## Notes band items
-
-None. The date line defines the score.
-
 ## Data
 
 All in the main batch, every call with `metric:"temperature"`:

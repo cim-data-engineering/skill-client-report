@@ -41,8 +41,7 @@ def board(ctx, ranking):
         c["tile"] = ranking["tiles"].get(c["key"]) or {}
     return {"title": ranking["label"], "anchor": ranking.get("anchor"), "window": pio.board_window(ctx, ranking["window"]),
             "unit": ranking.get("unit"), "rows": rows, "noun": ranking["noun"],
-            "climber": dict(c, name=names[c["key"]], link=links.get(c["key"])) if c else None,
-            "link": ranking.get("link")}, len(ranked)
+            "climber": dict(c, name=names[c["key"]], link=links.get(c["key"])) if c else None}, len(ranked)
 
 
 def build(ctx, work, shared):

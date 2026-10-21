@@ -49,10 +49,6 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 
 **Renders when:** at least one board does.
 
-## Notes band items
-
-None.
-
 ## Data
 
 No PEAK calls of its own. The script fetches each leader's photo once from its link, crops it to the band and embeds it as a JPEG. **Takes:**

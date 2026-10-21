@@ -78,7 +78,7 @@ Never offered in the prompt and never asked about. `report.py plan` adds it to e
 
 ### Portfolio sections
 
-The portfolio report never asks which sections to include. Every section is planned and fetched, and each renders when PEAK returns data for it and is left out otherwise. Report order runs down this table, after the masthead and scorecard strip, and the notes band closes it.
+The portfolio report never asks which sections to include. Every section is planned and fetched, and each renders when PEAK returns data for it and is left out otherwise. Report order runs down this table, after the masthead and scorecard strip.
 
 | Section | Folder under `references/portfolio-leaderboard/` | Renders when |
 | --- | --- | --- |
@@ -114,9 +114,8 @@ Each section's reference owns its section: what it shows, its rules, its calls, 
 | --- | --- | --- |
 | Site facts: building size, currency, state, country, building photo link | the overview, before any section builds | every section |
 | A ranking: a label, an anchor or each site's PEAK report, a window (the leaderboard month or the quarter ending on it), the unit of its figure, each site's figure now and on the window last month's board ranked | equipment health, indoor environment and actions resolved, in that order | the site leaderboard, one board each, its site names linking to the anchor or each to its own PEAK report |
-| A team ranking: a ranking over the companies or people holding the work, with its unit, each one's name, company, logo and PEAK report, its leader's meta line and a section link to PEAK | actions resolved, companies then assignees | the team leaderboard, one board each |
+| A team ranking: a ranking over the companies or people holding the work, with its unit, each one's name, company, logo and PEAK report, and its leader's meta line | actions resolved, companies then assignees | the team leaderboard, one board each |
 | Thermal zones: zone points on the levels that scored, and every configured point | indoor environment | the scorecards, so the card always equals the comfort table's Zones total |
-| A size-weighted portfolio row drawn | any section | the Portfolio rows note |
 
 ## Writing the narrative
 

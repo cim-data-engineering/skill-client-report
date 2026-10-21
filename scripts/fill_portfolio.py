@@ -115,20 +115,11 @@ def board(b):
     return "\n".join(out)
 
 
-def seclinks(links):
-    """The section links row, each link closing with a chevron; nothing without one."""
-    links = [l for l in links if l]
-    if not links:
-        return ""
-    return ('  <div class="seclinks">\n%s\n  </div>\n'
-            % "\n".join('    <a href="%s">%s &rsaquo;</a>' % (href(l["url"]), esc(l["text"])) for l in links))
-
-
 def boards(bs):
-    """The boards side by side, then the links their rankings carry, in board order."""
+    """The boards side by side."""
     n = len(bs)
     return ('  <div class="rkgrid%s">\n' % ("" if n == 3 else " n%d" % n)
-            + "\n".join(board(b) for b in bs) + "\n  </div>\n" + seclinks(b.get("link") for b in bs))
+            + "\n".join(board(b) for b in bs) + "\n  </div>\n")
 
 
 # ── ranked heatmaps ─────────────────────────────────────────────────────────
@@ -183,7 +174,7 @@ AGE_CLASSES = ("a60", "a30", "a0")    # open 60 days or more, 30 to 60, under 30
 
 def open_actions(d):
     """The open P1-2 lists side by side: each a ranked table under its head, the name over a bar on
-    the list's own scale split by age, oldest first, and the count at the end, then the section links."""
+    the list's own scale split by age, oldest first, and the count at the end."""
     out = ['  <div class="opgrid">']
     for p in d["panels"]:
         top = max(r["count"] for r in p["rows"])
@@ -210,7 +201,7 @@ def open_actions(d):
                           if logos else "", name, bar, r["count"]))
         out += ['        </tbody>', '      </table>', '    </div>']
     out.append('  </div>')
-    return "\n".join(out) + "\n" + seclinks(d.get("links") or [])
+    return "\n".join(out) + "\n"
 
 
 # ── wins ────────────────────────────────────────────────────────────────────
@@ -271,11 +262,6 @@ def ratings(d):
             % (head, "\n".join(body)))
 
 
-def notes(items):
-    return ("  <ol>\n" + "\n".join("    <li>%s</li>" % n["html"] for n in sorted(items.values(), key=lambda n: n["order"]))
-            + "\n  </ol>\n")
-
-
 # ── named slots ─────────────────────────────────────────────────────────────
 def sub_one(s, pattern, repl, what):
     s2, n = re.subn(pattern, lambda m: repl, s, count=1, flags=re.S)
@@ -327,11 +313,6 @@ def fill_slots(s, D):
         s = after_eyebrow(s, eyebrow, '<p class="h2note">', "</p>", text)
     for title, head in D.get("dated_heads", {}).items():
         s = dated_head(s, title, head)
-    for slot, url in D.get("links", {}).items():
-        if slot != "ratings":
-            sys.exit("fill: unknown link slot %r" % slot)
-        s = sub_one(s, r'<a href="[^"]*">See sustainability ratings', '<a href="%s">See sustainability ratings' % href(url),
-                    "ratings link")
     return s
 
 
@@ -362,8 +343,7 @@ def main():
               "cf-table": lambda: heatmap(D["comfort"], months),
               "open": lambda: open_actions(D["open_actions"]),
               "wins": lambda: wins(D["wins"], base, a.photos_out),
-              "ratings": lambda: ratings(D["ratings"]),
-              "notes": lambda: notes(D.get("notes", {}))}
+              "ratings": lambda: ratings(D["ratings"])}
 
     def region(m):
         name = m.group(1)
@@ -371,8 +351,6 @@ def main():
             sys.exit("fill: unknown fill region %r" % name)
         return render[name]()
     s = REGION.sub(region, s)
-    if not D.get("notes"):
-        s = re.sub(r'\n<section class="notes">.*?</section>\n', "\n", s, flags=re.S)
     s = fill_slots(s, D)
 
     hits = DASHES.findall(s)

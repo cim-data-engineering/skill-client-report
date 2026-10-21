@@ -45,16 +45,11 @@ One board per team ranking, in the order the rankings come. Each is a small rank
 **Links:**
 
 - Every name on a board links where its ranking says: to the section that explains its figure, or to its own PEAK report. The leader's has a chevron; the climber's and the pack's do not, so the pack stays quiet. Chromium keeps these as links in the printed PDF
-- Under the boards, the section links each ranking carries, in board order, each closing with a chevron: "See actions by company ›", "See actions by assignee ›"
 
 **Renders when:** at least one board does.
-
-## Notes band items
-
-None.
 
 ## Data
 
 No calls of its own. **Takes:**
 
-- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, and the section link it carries
+- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, and the meta line for whoever leads

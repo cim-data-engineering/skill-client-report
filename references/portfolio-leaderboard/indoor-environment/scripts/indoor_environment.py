@@ -82,8 +82,6 @@ def build(ctx, work, shared):
                           "counts": ["{:,}".format(sum(len(levels[sid]) for sid in sids)),
                                      "{:,}".format(shared["thermal_zones"])],
                           "months": portfolio}}
-    if any(v is not None for v in portfolio):
-        shared["weighted"] = True
     shared.setdefault("rankings", []).append({"label": "Thermal comfort", "anchor": ANCHOR, "window": "month",
                                               "now": now, "start": start, "dp": 1, "unit": "%"})
 

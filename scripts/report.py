@@ -71,19 +71,16 @@ IMPACT_ORDER = ["equipment-health-score", "thermal-comfort", "automated-checks",
 #   rankings            [{label, anchor | links, window: "month" | "quarter", now, start, dp, unit}], one board
 #                       each: now on the leaderboard month or the quarter ending on it, start on the window
 #                       last month's leaderboard ranked; each name jumps to the anchor, or opens its own link
-#   team_rankings       [{label, links, window, noun, unit, names, meta, tiles, now, start, link}], one board
+#   team_rankings       [{label, links, window, noun, unit, names, meta, tiles, now, start}], one board
 #                       each, as rankings but over the companies or people holding the work, keyed by company
-#                       or person; tiles each one's company and its logo, link the ranking's PEAK report,
-#                       {text, url}
-#   weighted            set when a section draws a size-weighted portfolio row
+#                       or person; tiles each one's company and its logo
 #   partial             names of the volume figures shown that run short over a month to date, present
 #                       once any section shows the month to date; single-site only
 # A figure the plan needs, before anything is fetched, a module names in HANDS_ON: plan.json
 # lists them as handed_on.
 
 # The portfolio report: every section, no prompt. Each drops itself when PEAK has nothing
-# for it. PORTFOLIO_PAGE is the page order, which numbers the notes band; PORTFOLIO_ORDER
-# the build order.
+# for it. PORTFOLIO_ORDER is the build order.
 PORTFOLIO_MODULES = {"overview": ("portfolio-leaderboard/overview", "overview"),
                      "site-leaderboard": ("portfolio-leaderboard/site-leaderboard", "site_leaderboard"),
                      "team-leaderboard": ("portfolio-leaderboard/team-leaderboard", "team_leaderboard"),
@@ -94,8 +91,6 @@ PORTFOLIO_MODULES = {"overview": ("portfolio-leaderboard/overview", "overview"),
                      "key-wins": ("portfolio-leaderboard/actions-and-wins", "key_wins"),
                      "sustainability-ratings": ("portfolio-leaderboard/sustainability-ratings",
                                                 "sustainability_ratings")}
-PORTFOLIO_PAGE = ["overview", "site-leaderboard", "team-leaderboard", "open-actions", "equipment-health",
-                  "indoor-environment", "key-wins", "sustainability-ratings"]
 PORTFOLIO_ORDER = ["equipment-health", "indoor-environment", "actions-resolved", "open-actions", "key-wins",
                    "sustainability-ratings", "site-leaderboard", "team-leaderboard", "overview"]
 MODES = {"single-site": {"options": OPTIONS, "modules": MODULES, "order": ORDER, "auto": AUTO},
@@ -362,10 +357,7 @@ def bundle_portfolio(a, work):
     shared = {"facts": module("overview", "portfolio").facts(ctx, work)}       # each site's platform row
     data = {}
     for s in PORTFOLIO_ORDER:
-        part = module(s, "portfolio").build(ctx, work, shared)
-        for n in part.get("notes", {}).values():         # notes run in page order
-            n["order"] = PORTFOLIO_PAGE.index(s)
-        merge(data, part)
+        merge(data, module(s, "portfolio").build(ctx, work, shared))
     data["sections"] = ",".join(s for s in PORTFOLIO_ORDER if s != "overview" and s not in data.get("drop", []))
     data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]]}
     if pio.closing(ctx):

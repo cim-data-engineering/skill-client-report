@@ -102,9 +102,6 @@ def build(ctx, work, shared):
 
     note = "Priority 1 and 2 actions open as at %s by age open." % io.day_long(ctx["today"])
     month = "%s %d" % (io.month(ctx["today"]), io.d(ctx["today"]).year)
-    sids = pio.ids(ctx)
     return {"open_actions": {"panels": [{"title": "Sites", "rows": site_rows},
-                                        {"title": "Assignees", "rows": person_rows}],
-                             "links": [{"text": "See open P1-2 actions by site", "url": link(ctx, sids, "site")},
-                                       {"text": "See open P1-2 actions by assignee", "url": link(ctx, sids, "assignee")}]},
+                                        {"title": "Assignees", "rows": person_rows}]},
             "dated_heads": {"Open P1-2 actions": {"date": month, "note": note}}}

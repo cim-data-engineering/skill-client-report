@@ -17,15 +17,14 @@ Nothing on the page. In chat, say what the script prints: any company shown with
 Each ranking runs over the quarter and moves against the quarter a month earlier, as whole numbers in the unit "actions". Anyone who resolved none in a window has no figure on it, so they are off the board now, or New on it where they resolved none a month earlier. Handed on only when any action was resolved in the quarter.
 
 - **A ranking** labelled Actions resolved: each site's actions resolved. Each site opens its PEAK ticket report over the quarter, grouped by assignee
-- **A team ranking** labelled Companies, of companies: each company's actions resolved, its name and logo, and for whichever leads its sites as the meta line, "4 sites". Each company opens its PEAK ticket report at its sites, narrowed to its assignees and grouped by site. Its section link, "See actions by company ›", opens the report at every site grouped by company
-- **A team ranking** labelled Assignees, of assignees: each person's actions resolved, their name, their company and its logo, and for whoever leads a meta line of their company and their sites, "Kestrel Air Services · 2 sites". Each person opens their PEAK ticket report at their sites, narrowed to them and grouped by company. Its section link, "See actions by assignee ›", opens the report at every site grouped by assignee
+- **A team ranking** labelled Companies, of companies: each company's actions resolved, its name and logo, and for whichever leads its sites as the meta line, "4 sites". Each company opens its PEAK ticket report at its sites, narrowed to its assignees and grouped by site
+- **A team ranking** labelled Assignees, of assignees: each person's actions resolved, their name, their company and its logo, and for whoever leads a meta line of their company and their sites, "Kestrel Air Services · 2 sites". Each person opens their PEAK ticket report at their sites, narrowed to them and grouped by company
 
 The reports are PEAK's ticket report over the quarter, one `site_ids` per site and one `assignee_ids` per assignee named:
 
 - Site: `https://ace.cimenviro.com/reports/tickets?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000&grouping=assignee`
 - Company: the same at the company's sites, with `&grouping=site&assignee_ids={{assignee_id}}` for each of its assignees on an action resolved in the quarter
 - Person: the same at their sites, with `&grouping=user_entity&assignee_ids={{assignee_id}}`
-- Section links: the same at every site, with `&grouping=user_entity` or `&grouping=assignee`
 
 ## Data
 

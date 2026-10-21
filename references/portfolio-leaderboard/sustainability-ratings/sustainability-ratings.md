@@ -10,7 +10,7 @@ Nothing, on the page or in chat. Neither the section's presence nor its absence 
 
 ## Naming
 
-The section, its headings, its notes and every fixed line say "sustainability ratings" and never name a rating scheme. PEAK can hold any scheme a client tracks, so the page names what is measured, not who rates it.
+The section, its headings and every fixed line say "sustainability ratings" and never name a rating scheme. PEAK can hold any scheme a client tracks, so the page names what is measured, not who rates it.
 
 ## Scope
 
@@ -60,12 +60,7 @@ Above the table, a legend: ↑ "Up from the rating before" in green, ↓ "Down f
 **Links:**
 
 - Each site name links to its ratings dashboard: `https://ace.cimenviro.com/dashboard/ratings?site_ids={{site_id}}&ratings_type_id_or_filter=all_ratings`
-- The section link, "See sustainability ratings ›", opens the same dashboard with every site: one `site_ids={{site_id}}` per site. Bundle slot `ratings`
 - The section carries the anchor `sustainability-ratings`
-
-## Notes band items
-
-- **Sustainability ratings.** The portfolio row counts current ratings only, and its arrow compares the same sites' previous ratings
 
 ## Data
 
