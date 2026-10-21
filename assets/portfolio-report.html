@@ -105,7 +105,7 @@ table.rk td.lg{padding-right:8px}
 
 /* Open P1-2 actions: two ranked lists, the name over a bar split by age open, oldest first, then the count */
 .opgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px;break-inside:avoid}
-/* The open P1-2 backlog over the lists: a stacked bar a month end, split by age open in the age bars' own shades */
+/* The open P1-2 backlog over the lists: a stacked bar a month end, split by age open in the age bars' shades */
 .chartblock.backlog{margin:8px 0 28px;break-inside:avoid}
 .stk.a60{fill:var(--on-error-container)}
 .stk.a30{fill:#74829A;fill:color-mix(in srgb,var(--text-muted) 90%,var(--surface))}
@@ -190,7 +190,7 @@ td.nb.none{color:var(--text-muted)}
      starts its own page and breaks between rows under its repeated header */
   #eh-by-site,#cf-by-site,#sustainability-ratings{break-inside:avoid}
   :is(#eh-by-site,#cf-by-site,#sustainability-ratings):has(tbody tr:nth-child(16)){break-before:page;break-inside:auto}
-  /* twenty rows a list, or sixteen sites a table, fit one page */
+  /* the backlog chart and ten rows a list, or sixteen sites a table, fit one page */
   table.op td{height:40px}
   table.hm.wide tbody td,table.nbt tbody td{height:44px}
   .rkgrid{break-inside:avoid}
@@ -345,7 +345,7 @@ td.nb.none{color:var(--text-muted)}
     <p class="h2note">Priority 1 and 2 open actions (new, in progress and on hold).</p>
   </div>
   <div class="bandkey agekey"><span><i class="a60"></i>&ge;60d</span><span><i class="a30"></i>30-60d</span><span><i class="a0"></i>&lt;30d</span></div>
-  <!-- The two lists: drawn by scripts/fill_portfolio.py from the bundle's open_actions. -->
+  <!-- The backlog chart and the two lists: drawn by scripts/fill_portfolio.py from the bundle's open_actions. -->
 <!-- fill: open -->
   <div data-sample="open" class="opgrid">
     <div class="oplist">
@@ -353,8 +353,8 @@ td.nb.none{color:var(--text-muted)}
       <table class="op">
         <colgroup><col class="c-rank"><col><col class="c-ct"></colgroup>
         <tbody>
-        <tr><td class="rank">1</td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9104&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=assignee&amp;priority_ids=1&amp;priority_ids=2"><span class="sn">Parkview Centre</span> <span class="rg">(NSW)</span>&nbsp;&rsaquo;</a></span><span class="agebar"><span class="a60" style="width:calc(40.00% - 2px)"></span><span class="a0" style="width:calc(40.00% - 2px)"></span></span></td><td class="ct">5</td></tr>
-        <tr><td class="rank">2</td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=assignee&amp;priority_ids=1&amp;priority_ids=2"><span class="sn">12 Harbour Lane</span> <span class="rg">(NSW)</span>&nbsp;&rsaquo;</a></span><span class="agebar"><span class="a0" style="width:calc(60.00% - 2px)"></span></span></td><td class="ct">4</td></tr>
+        <tr><td class="rank">1</td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9104&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=assignee&amp;priority_ids=1&amp;priority_ids=2"><span class="sn">Parkview Centre</span> <span class="rg">(NSW)</span>&nbsp;&rsaquo;</a></span><span class="agebar"><span class="a60" style="width:calc(40.00% - 2px)"></span><span class="a30" style="width:calc(20.00% - 2px)"></span><span class="a0" style="width:calc(40.00% - 2px)"></span></span></td><td class="ct">5</td></tr>
+        <tr><td class="rank">2</td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=assignee&amp;priority_ids=1&amp;priority_ids=2"><span class="sn">12 Harbour Lane</span> <span class="rg">(NSW)</span>&nbsp;&rsaquo;</a></span><span class="agebar"><span class="a30" style="width:calc(20.00% - 2px)"></span><span class="a0" style="width:calc(60.00% - 2px)"></span></span></td><td class="ct">4</td></tr>
         <tr><td class="rank">3</td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9103&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=assignee&amp;priority_ids=1&amp;priority_ids=2"><span class="sn">40 Market Street</span> <span class="rg">(QLD)</span>&nbsp;&rsaquo;</a></span><span class="agebar"><span class="a60" style="width:calc(20.00% - 2px)"></span><span class="a0" style="width:calc(20.00% - 2px)"></span></span></td><td class="ct">2</td></tr>
         <tr><td class="rank">4</td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9102&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=assignee&amp;priority_ids=1&amp;priority_ids=2"><span class="sn">Riverside Plaza</span> <span class="rg">(VIC)</span>&nbsp;&rsaquo;</a></span><span class="agebar"><span class="a60" style="width:calc(20.00% - 2px)"></span></span></td><td class="ct">1</td></tr>
         </tbody>
@@ -366,10 +366,10 @@ td.nb.none{color:var(--text-muted)}
         <colgroup><col class="c-rank"><col class="c-logo"><col><col class="c-ct"></colgroup>
         <tbody>
         <tr><td class="rank">1</td><td class="lg"><span class="tlogo none" title="Linwood Controls">LC</span></td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9104&amp;site_ids=9102&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=site&amp;priority_ids=1&amp;priority_ids=2&amp;assignee_ids=00000000-0000-4000-8000-0000000000b1">Theo Lindqvist&nbsp;&rsaquo;</a> <span class="rg">Linwood Controls</span></span><span class="agebar"><span class="a60" style="width:calc(50.00% - 2px)"></span><span class="a0" style="width:calc(50.00% - 2px)"></span></span></td><td class="ct">4</td></tr>
-        <tr><td class="rank">2</td><td class="lg"><span class="tlogo none" title="Kestrel Air Services">KA</span></td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=site&amp;priority_ids=1&amp;priority_ids=2&amp;assignee_ids=00000000-0000-4000-8000-0000000000a1">Mara Okafor&nbsp;&rsaquo;</a> <span class="rg">Kestrel Air Services</span></span><span class="agebar"><span class="a0" style="width:calc(50.00% - 2px)"></span></span></td><td class="ct">3</td></tr>
+        <tr><td class="rank">2</td><td class="lg"><span class="tlogo none" title="Kestrel Air Services">KA</span></td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=site&amp;priority_ids=1&amp;priority_ids=2&amp;assignee_ids=00000000-0000-4000-8000-0000000000a1">Mara Okafor&nbsp;&rsaquo;</a> <span class="rg">Kestrel Air Services</span></span><span class="agebar"><span class="a30" style="width:calc(25.00% - 2px)"></span><span class="a0" style="width:calc(50.00% - 2px)"></span></span></td><td class="ct">3</td></tr>
         <tr><td class="rank">3</td><td class="lg"><span class="tlogo none" title="Orbit Building Services">OB</span></td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9103&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=site&amp;priority_ids=1&amp;priority_ids=2&amp;assignee_ids=00000000-0000-4000-8000-0000000000c1">Dev Saluja&nbsp;&rsaquo;</a> <span class="rg">Orbit Building Services</span></span><span class="agebar"><span class="a60" style="width:calc(25.00% - 2px)"></span><span class="a0" style="width:calc(25.00% - 2px)"></span></span></td><td class="ct">2</td></tr>
         <tr><td class="rank">4</td><td class="lg"><span class="tlogo none"></span></td><td class="nm"><span class="ol"><span class="sn none">No assignee</span></span><span class="agebar"><span class="a60" style="width:calc(25.00% - 2px)"></span></span></td><td class="ct">1</td></tr>
-        <tr><td class="rank">5</td><td class="lg"><span class="tlogo none" title="Kestrel Air Services">KA</span></td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=site&amp;priority_ids=1&amp;priority_ids=2&amp;assignee_ids=00000000-0000-4000-8000-0000000000a2">Imogen Reyes&nbsp;&rsaquo;</a> <span class="rg">Kestrel Air Services</span></span><span class="agebar"></span></td><td class="ct">1</td></tr>
+        <tr><td class="rank">5</td><td class="lg"><span class="tlogo none" title="Kestrel Air Services">KA</span></td><td class="nm"><span class="ol"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;relative_date=last_90_days&amp;include_today=true&amp;grouping=site&amp;priority_ids=1&amp;priority_ids=2&amp;assignee_ids=00000000-0000-4000-8000-0000000000a2">Imogen Reyes&nbsp;&rsaquo;</a> <span class="rg">Kestrel Air Services</span></span><span class="agebar"><span class="a30" style="width:calc(25.00% - 2px)"></span></span></td><td class="ct">1</td></tr>
         </tbody>
       </table>
     </div>

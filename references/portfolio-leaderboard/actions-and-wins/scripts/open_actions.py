@@ -3,8 +3,8 @@
 now, each split by how long its actions had been open, then the sites and the people holding the
 most priority 1 and 2 actions open now, most first, each count split the same way, and each name
 opening its PEAK ticket report. Not a leaderboard: no moves and no award. The lists and the backlog
-now come from the one pull of open actions; the month ends add one pull of the actions closed since
-the first of them. See references/portfolio-leaderboard/actions-and-wins/open-actions.md.
+as at the issue date come from the one pull of open actions, the month ends from it and one pull of
+the actions closed since the first of them. See references/portfolio-leaderboard/actions-and-wins/open-actions.md.
 """
 import os
 import sys
@@ -23,7 +23,7 @@ DAY_MS = 86400000
 AGES = (60, 30)                        # days: 60 or more, 30 to 60, under 30, the buckets PEAK shows
 UNNAMED, NOBODY = "Unnamed assignee", "No assignee"
 COUNT_CHUNK = 20
-BACKLOG_MONTHS = 12                    # the issue month to date and the eleven month ends before it
+BACKLOG_MONTHS = 12                    # the issue month and the eleven month ends before it
 CLOSED = 6
 # The rows say only who holds each action, when it was raised and how long it has been open: ids, its
 # dates and age, and each assignee's company with its logo link. PEAK refuses the whole pull when any
@@ -31,7 +31,7 @@ CLOSED = 6
 FIELDS = ["ticket_id", "site_id", "status_id", "age", "created_at", "assignees.id", "assignees.entity.name",
           "assignees.entity.logo_url"]
 # The closed actions say only when each was raised and closed.
-CLOSED_FIELDS = ["ticket_id", "site_id", "status_id", "created_at", "resolved_at"]
+CLOSED_FIELDS = ["ticket_id", "site_id", "created_at", "resolved_at"]
 
 
 def pulls(ctx):
@@ -69,8 +69,8 @@ def more(ctx, work):
 
 
 def backlog(ctx, work, open_rows):
-    """The open P1-2 backlog at each month end, then as at the issue date under the issue month to
-    date, each split by age open on the day: [60 days or more, 30 to 60, under 30]. A month end holds
+    """The open P1-2 backlog at each month end, then as at the issue date under the issue month, each
+    split by age open on the day: [60 days or more, 30 to 60, under 30]. A month end holds
     every action raised before the first of the next month and not closed by then."""
     tz = {s["site_id"]: s.get("timezone") for s in ctx["sites"]}
     day = lambda r, k: io.d(io.local_day(r[k], tz.get(r["site_id"]) or "UTC"))
@@ -89,9 +89,9 @@ def backlog(ctx, work, open_rows):
         stacks.append(ages)
     values = [sum(a) for a in stacks]
     told = ", ".join("%s %d" % (m, v) for m, v in zip(months, values))
-    return {"months": months, "values": values, "stacks": stacks, "to_date": True,
-            "alt": "Stacked bar chart of open priority 1 and 2 actions at each month end by age open, %s to %s "
-                   "to date: %s." % (months[0], months[-1], told)}
+    return {"months": months, "values": values, "stacks": stacks,
+            "alt": "Stacked bar chart of open priority 1 and 2 actions at each month end by age open, %s to %s: %s."
+                   % (months[0], months[-1], told)}
 
 
 def link(ctx, since, site_ids, grouping, assignee_ids=()):

@@ -192,7 +192,7 @@ AGE_CLASSES = ("a60", "a30", "a0")    # open 60 days or more, 30 to 60, under 30
 def open_actions(d):
     """The open P1-2 backlog over the last year, then the lists side by side: each a ranked table under
     its head, the name over a bar on the list's own scale split by age, oldest first, and the count at
-    the end. The chart comes first, so the reader sees whether the backlog is falling before where it sits."""
+    the end."""
     out = []
     if d.get("backlog") and len(d["backlog"]["values"]) > 1:
         out.append(backlog_chart(d["backlog"]))
@@ -226,23 +226,20 @@ def open_actions(d):
 
 
 # The backlog chart is shorter than the monthly charts, so it and both lists hold one page.
-BL_VIEW, BL_BASE, BL_H, BL_TOP = 150, 112, 78, 8
+BL_VIEW, BL_BASE, BL_H = 150, 112, 78
 
 
 def backlog_chart(d):
     """A bar a month end on one scale, split by age open as the age bars below it are, oldest at the
-    base, the total on top, and the issue month to date in its tinted column, counted as at the issue
-    date. The section's age key above it serves both."""
-    months, vals, stacks = d["months"], d["values"], d.get("stacks") or [[0, 0, v] for v in d["values"]]
+    base, the total on top; the last bar is the issue month, counted as at the issue date. The section's
+    age key above it serves both."""
+    months, vals, stacks = d["months"], d["values"], d["stacks"]
     n = len(months)
     step = (RIGHT - LEFT - 40) / max(n - 1, 1)
     C = [LEFT + 20 + step * i for i in range(n)]
     w = min(44, step * (0.55 if n > 8 else 0.4))
     top = max(vals + [1]) * 1.08
     out = []
-    if d.get("to_date"):
-        out.append('      <rect class="todate" x="%.1f" y="%d" width="%.1f" height="%d" rx="3"/>'
-                   % (C[-1] - step / 2, BL_TOP, step, BL_BASE - BL_TOP))
     for x, v, parts in zip(C, vals, stacks):
         y = BL_BASE
         for cls, part in zip(AGE_CLASSES, parts):
@@ -255,16 +252,14 @@ def backlog_chart(d):
     out.append('      <line class="baseline" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (LEFT, BL_BASE, RIGHT, BL_BASE))
     out += ['      <text class="axis" x="%.1f" y="%d" text-anchor="middle">%s</text>' % (x, BL_BASE + 16, m)
             for x, m in zip(C, months)]
-    if d.get("to_date"):
-        out.append('      <text class="axis-sub" x="%.1f" y="%d" text-anchor="middle">to date</text>' % (C[-1], BL_BASE + 28))
     return "\n".join(['  <div class="chartblock backlog">',
                       '    <h3 class="charttitle">Backlog at month end</h3>',
                       '    <div class="chart">',
                       '      <svg viewBox="0 0 682 %d" role="img" aria-label="%s">' % (BL_VIEW, esc(d["alt"])),
                       "\n".join(out),
                       '      </svg>',
-                      '    </div>'] + (['    <p class="chartnote">%s</p>' % esc(d["note"])] if d.get("note") else [])
-                     + ['  </div>'])
+                      '    </div>',
+                      '  </div>'])
 
 
 # ── wins ────────────────────────────────────────────────────────────────────
