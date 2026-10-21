@@ -6,6 +6,7 @@ PEAK calls and picks and writes the key wins.
     python3 scripts/report.py plan   <dir> --sites <dir>/sites.json [...] --client "Name" --author "Full Name"
                                      [--client-logo <file>] [--site-ids ...]
     python3 scripts/report.py next   <dir>
+    python3 scripts/report.py verify <dir>
     python3 scripts/report.py bundle <dir>
     python3 scripts/report.py fill   <dir> [--out <file.html>]
 
@@ -14,9 +15,13 @@ plan    Fixes the report's windows from today in site time and prints every call
         --site plans the single-site report, its quarter and the chosen sections;
         --sites plans the portfolio leaderboard for the last complete month over the
         active sites in those search_sites pages, with every section.
-next    Checks every printed call was saved, then prints the follow-up calls the
-        responses call for (paging, a single-level site's zones, run hours history,
-        key win evidence once wins.json exists), or says there are none.
+next    Checks every printed call was saved and reads back as a PEAK response, then
+        prints the follow-up calls the responses call for (paging, a single-level
+        site's zones, run hours history, key win evidence once wins.json exists), or
+        says there are none.
+verify  Reads back every saved response: each must parse as a PEAK response, hold
+        the rows its pagination says it should, and name only the report's sites.
+        A response copied by hand that lost or mistyped rows shows up here.
 bundle  Builds every figure, row, series, link and note into <dir>/data.json, and
         prints anything to say in chat at hand-over, then the next step.
 fill    Merges <dir>/wins.json into the bundle, fills the report and runs the
@@ -92,8 +97,8 @@ PORTFOLIO_MODULES = {"overview": ("portfolio-leaderboard/overview", "overview"),
                      "key-wins": ("portfolio-leaderboard/actions-and-wins", "key_wins"),
                      "sustainability-ratings": ("portfolio-leaderboard/sustainability-ratings",
                                                 "sustainability_ratings")}
-PORTFOLIO_ORDER = ["equipment-health", "indoor-environment", "actions-resolved", "open-actions", "key-wins",
-                   "sustainability-ratings", "site-leaderboard", "team-leaderboard", "overview"]
+PORTFOLIO_ORDER = ["equipment-health", "indoor-environment", "actions-resolved", "sustainability-ratings",
+                   "open-actions", "key-wins", "site-leaderboard", "team-leaderboard", "overview"]
 MODES = {"single-site": {"options": OPTIONS, "modules": MODULES, "order": ORDER, "auto": AUTO},
          "portfolio": {"options": {}, "modules": PORTFOLIO_MODULES, "order": PORTFOLIO_ORDER,
                        "auto": PORTFOLIO_ORDER}}
@@ -146,7 +151,7 @@ PORTFOLIO_SAVE = ("Save each response under %s/peak/ as the file named: an offlo
 
 READ_RULE = ("Read these where they come back and never save them: they carry what people wrote on the "
              "tickets, and the files hold none of that. One that comes back offloaded as a file prints "
-             "screened and compact with: python3 references/single-site/actions-and-wins/scripts/key_wins.py digest <that file>")
+             "screened and compact with: python3 references/single-site/actions-and-wins/scripts/key_wins.py digest %s <that file>")
 
 
 CLOSING = ("The %s leaderboard is built on %s, the day the month closed: a site west of the first may still be "
@@ -180,8 +185,7 @@ def cmd_plan(a):
     if unknown:
         sys.exit("unknown section %s; choose from %s" % (", ".join(unknown), ", ".join(OPTIONS)))
     sections = [s for o in picked for s in (OPTIONS[o][1] if o in OPTIONS else [o])] + AUTO
-    from zoneinfo import ZoneInfo
-    today = io.d(a.today) if a.today else datetime.now(ZoneInfo(site["timezone"])).date()
+    today = io.d(a.today) if a.today else datetime.now(io.zone(site.get("timezone"))).date()
     root = os.path.abspath(a.dir)
     os.makedirs(os.path.join(root, "peak"), exist_ok=True)
     ctx = dict(io.windows(today), site=site, author=a.author, sections=[s for s in ORDER if s in sections],
@@ -193,6 +197,7 @@ def cmd_plan(a):
     calls = [c for s in active(ctx) for c in module(s).calls(ctx)]
     with open(os.path.join(root, "calls.json"), "w") as fh:
         json.dump(calls, fh, indent=1)
+    folders(root, calls)
     save = [c for c in calls if not c.get("read")]
     read = [c for c in calls if c.get("read")]
     print("%s: quarter %s, trends %s, issued %s%s." % (
@@ -200,34 +205,45 @@ def cmd_plan(a):
         io.span(ctx["trend_months"][0], ctx["trend_months"][-1], True), io.day_short(ctx["today"]),
         io.and_to_date(ctx, "; both windows close on ")))
     print("Sections: %s." % ", ".join(OPTIONS[o][0] if o in OPTIONS else o for o in picked))
-    print("\n%d calls. Make them all in one parallel batch, each exactly as printed: the tool, then its "
-          "arguments. %s Then run: python3 scripts/report.py next %s\n" % (len(calls), save_rule(a.dir), a.dir))
+    print("\n%s to save. Make them all in one parallel batch, each exactly as printed: the tool, then its "
+          "arguments. %s Then run: python3 scripts/report.py next %s\n" % (plural(len(save), "call"), save_rule(a.dir),
+                                                                           a.dir))
     show(save, 1)
     if read:
-        print("\nIn the same batch, %d to read: the key win candidates. %s\n" % (len(read), READ_RULE))
+        print("\nIn the same batch, %d to read: the key win candidates. %s\n" % (len(read), READ_RULE % a.dir))
         show(read, len(save) + 1)
 
 
 def plan_portfolio(a):
     import portfolio_io as pio
-    sites, seen = [], set()
+    sites, seen, saved = [], set(), set()
     for r in [r for f in a.sites for r in io.read(f).rows]:
         sid = r.get("site_id")
+        saved.add(sid)
         if sid in seen or r.get("is_active") is False or (a.site_ids and sid not in a.site_ids):
             continue
         seen.add(sid)
         sites.append({k: r.get(k) for k in ("site_id", "site_name", "state", "country", "city", "timezone",
                                              "site_link")})
+    unknown = [i for i in a.site_ids or [] if i not in saved]
+    if unknown:
+        print("Not in %s, so left out: --site-ids %s." % (", ".join(a.sites), " ".join(str(i) for i in unknown)))
     if not sites:
-        sys.exit("%s holds no active site%s" % (", ".join(a.sites), " among --site-ids" if a.site_ids else ""))
+        sys.exit("%s holds no active site%s. Say so in chat, and ask for the client or sites the report is for."
+                 % (", ".join(a.sites), " among --site-ids" if a.site_ids else ""))
     if len(sites) == 1:
-        sys.exit("%s holds one active site, %s: build the single-site report for it, planned with --site"
-                 % (", ".join(a.sites), sites[0]["site_name"].strip()))
+        sid = sites[0]["site_id"]
+        sys.exit("%s holds one active site, %s, so it gets the single-site report. Call search_sites(site_ids:[%d], "
+                 "include_working_hours:true), save it as %s/site.json, then: python3 scripts/report.py plan %s "
+                 "--site %s/site.json --site-id %d --author \"%s\" (with --sections as the section question settles)"
+                 % (", ".join(a.sites), sites[0]["site_name"].strip(), sid, a.dir, a.dir, a.dir, sid, a.author))
     logo = os.path.abspath(a.client_logo) if a.client_logo else None
     if logo and not os.path.isfile(logo):
         sys.exit("client logo not found: %s" % a.client_logo)
-    from zoneinfo import ZoneInfo
-    today = io.d(a.today) if a.today else datetime.now(ZoneInfo(sites[0]["timezone"])).date()
+    if logo and not client_logo_ok(logo):
+        sys.exit("%s is a logo shipped with a skill (a sample or a brand overlay's), not the client's. The client "
+                 "logo slot takes only a file the user supplied; plan again without --client-logo." % a.client_logo)
+    today = io.d(a.today) if a.today else pio.today(sites)
     root = os.path.abspath(a.dir)
     os.makedirs(os.path.join(root, "peak"), exist_ok=True)
     ctx = dict(pio.windows(today), mode="portfolio", sites=sites, client=a.client.strip(), client_logo=logo,
@@ -237,6 +253,7 @@ def plan_portfolio(a):
     calls = [c for s in active(ctx) for c in module(s, "portfolio").calls(ctx)]
     with open(os.path.join(root, "calls.json"), "w") as fh:
         json.dump(calls, fh, indent=1)
+    folders(root, calls)
     save = [c for c in calls if not c.get("read")]
     read = [c for c in calls if c.get("read")]
     print("%s portfolio: %d sites, the %s leaderboard. Scores and actions resolved %s, key wins %s, issued %s."
@@ -245,13 +262,39 @@ def plan_portfolio(a):
     if pio.closing(ctx):
         print("Say in chat now: " + CLOSING % (pio.month_name(ctx), io.day_long(ctx["today"])))
     print("Sections: every one with data. Each site's dates are its own local calendar.")
-    print("\n%d calls to save. Make them in parallel batches of about twenty, each exactly as printed: the tool, "
+    print("\n%s to save. Make them in parallel batches of about twenty, each exactly as printed: the tool, "
           "then its arguments. %s Then run: python3 scripts/report.py next %s\n"
-          % (len(save), PORTFOLIO_SAVE % a.dir, a.dir))
+          % (plural(len(save), "call"), PORTFOLIO_SAVE % a.dir, a.dir))
     show(save, 1)
     if read:
         print("\nAlongside them, %d to read: the key win candidates. %s\n" % (len(read), PORTFOLIO_READ_RULE % a.dir))
         show(read, len(save) + 1)
+
+
+def plural(n, noun):
+    """'1 call', '3 calls'."""
+    return "%d %s%s" % (n, noun, "" if n == 1 else "s")
+
+
+def folders(root, calls):
+    """Every folder under peak/ the calls save into, so a response can be copied straight to its file."""
+    for c in calls:
+        if not c.get("read"):
+            os.makedirs(os.path.dirname(os.path.join(root, "peak", c["file"])), exist_ok=True)
+
+
+def client_logo_ok(path):
+    """False for a logo that ships with a skill: anything inside this skill, or inside a brand overlay
+    (a folder holding a BRAND.md). Those are sample and partner logos, never a client's."""
+    path = os.path.realpath(path)
+    if path.startswith(os.path.realpath(ROOT) + os.sep):
+        return False
+    d = os.path.dirname(path)
+    while d and d != os.path.dirname(d):
+        if os.path.isfile(os.path.join(d, "BRAND.md")):
+            return False
+        d = os.path.dirname(d)
+    return True
 
 
 def brand():
@@ -273,13 +316,20 @@ def cmd_next(a):
     if missing:
         sys.exit("Not saved yet: %s. %s" % (", ".join(missing), PORTFOLIO_SAVE % a.dir if mode_of(work.ctx) == "portfolio"
                                                                  else save_rule(a.dir)))
+    problems = verify(work, calls)
+    if problems:
+        sys.exit("Saved, but not as PEAK returned it:\n  %s\nSave each again from the tool's output: copy an offloaded "
+                 "file with cp, write an inline one exactly as returned. Then run next again." % "\n  ".join(problems))
     mode = mode_of(work.ctx)
     new = [c for s in active(work.ctx) for c in module(s, mode).more(work.ctx, work)]
     if not new:
         folder = "portfolio-leaderboard" if mode == "portfolio" else "single-site"
-        if not os.path.isfile(os.path.join(work.root, "wins.json")):
+        if not os.path.isfile(os.path.join(work.root, "data.json")):
             print("No more calls. Next: python3 scripts/report.py bundle %s" % a.dir)
-        elif os.path.isdir(os.path.join(work.root, "kw", "photos")):
+        elif not os.path.isfile(os.path.join(work.root, "wins.json")):
+            print("No more calls. Next: python3 scripts/report.py bundle %s, unless it has run since the last "
+                  "calls were saved; then choose the key wins and write %s/wins.json." % (a.dir, a.dir))
+        elif os.path.isdir(os.path.join(work.root, "kw", "photos")) or no_wins(work.root):
             print("No more calls. Next: python3 scripts/report.py fill %s" % a.dir)
         else:
             print("No more calls. Next, if any win could carry photos: python3 "
@@ -292,8 +342,8 @@ def cmd_next(a):
     read = [c for c in new if c.get("read")]
     new = [c for c in new if not c.get("read")]
     if new:
-        print("%d more calls, in one parallel batch, each exactly as printed. %s Then run next again.\n"
-              % (len(new), PORTFOLIO_SAVE % a.dir if mode == "portfolio" else save_rule(a.dir)))
+        print("%s more, in one parallel batch, each exactly as printed. %s Then run next again.\n"
+              % (plural(len(new), "call"), PORTFOLIO_SAVE % a.dir if mode == "portfolio" else save_rule(a.dir)))
         show(new, 1)
     if read:
         print("%s%d to read, never saved: the shortlist in full. Read it where it comes back; one that comes back "
@@ -301,6 +351,62 @@ def cmd_next(a):
               "key_wins.py digest %s <that file> --top 0. Choose the wins from it and write %s/wins.json, then run "
               "next again.\n" % ("\n" if new else "", len(read), a.dir, a.dir))
         show(read, len(new) + 1)
+
+
+def no_wins(root):
+    """True when wins.json names no win: nothing to photograph, so the next step is fill."""
+    try:
+        with open(os.path.join(root, "wins.json"), encoding="utf-8") as fh:
+            return json.load(fh) == []
+    except (OSError, ValueError):
+        return False
+
+
+# ── verify ──────────────────────────────────────────────────────────────────
+def verify(work, calls):
+    """Problems with the saved responses: one that is not a PEAK response, an error saved as data, a
+    page holding fewer or more rows than its pagination says, or a row for a site outside the report.
+    A pull PEAK refused outright is the section's to handle, so only a malformed file stops here."""
+    ctx = work.ctx
+    sites = {s["site_id"] for s in ctx["sites"]} if mode_of(ctx) == "portfolio" else {ctx["site"]["site_id"]}
+    out = []
+    for c in calls:
+        if c.get("read") or not work.has(c["file"]):
+            continue
+        path = work.path(c["file"])
+        try:
+            with open(path, encoding="utf-8") as fh:
+                payload = json.load(fh)
+        except ValueError as e:
+            out.append("%s is not JSON (%s)" % (c["file"], e))
+            continue
+        try:
+            r = io.Response(payload)
+        except ValueError:
+            continue                          # PEAK's own refusal, saved as returned
+        args = c["args"].get("args", c["args"]) if isinstance(c["args"].get("args"), dict) else c["args"]
+        limit, start = args.get("limit"), args.get("start_index") or 0
+        if r.total is not None and limit and limit > 1:
+            want = max(0, min(limit, r.total - start))
+            if len(r.rows) != want:
+                out.append("%s holds %d rows where its pagination says %d" % (c["file"], len(r.rows), want))
+        bad = sorted({row.get("site_id") for row in r.rows if isinstance(row, dict)
+                      and isinstance(row.get("site_id"), int) and row["site_id"] not in sites})
+        if bad and "site_ids" in args:
+            out.append("%s holds rows for site ids %s, which are not in this report" % (c["file"], bad))
+    return out
+
+
+def cmd_verify(a):
+    work = io.Work(a.dir)
+    with open(os.path.join(work.root, "calls.json")) as fh:
+        calls = json.load(fh)
+    problems = verify(work, calls)
+    for p in problems:
+        print("ERROR: " + p)
+    if problems:
+        sys.exit("%d saved response(s) to make again." % len(problems))
+    print("ok: every saved response reads back as PEAK returned it.")
 
 
 # ── bundle ──────────────────────────────────────────────────────────────────
@@ -368,7 +474,12 @@ def bundle_portfolio(a, work):
     print("Wrote %s/data.json." % a.dir)
     for c in data.get("chat", []):
         print("Say in chat at hand-over: " + c)
-    if "key-wins" not in data.get("drop", []):
+    if os.path.isfile(os.path.join(work.root, "wins.json")):
+        print("Next: python3 scripts/report.py next %s, then fill once it has no more calls." % a.dir)
+    elif os.path.isfile(os.path.join(work.root, "shortlist.json")):
+        print("Next: python3 scripts/report.py next %s for the shortlist in full, then choose the wins from it and "
+              "write %s/wins.json." % (a.dir, a.dir))
+    elif "key-wins" not in data.get("drop", []):
         print("Next: shortlist the key win candidates and write %s/shortlist.json, by "
               "references/portfolio-leaderboard/actions-and-wins/key-wins.md. Then run: python3 scripts/report.py "
               "next %s" % (a.dir, a.dir))
@@ -435,12 +546,20 @@ def fill_portfolio(a, work):
         else:
             merge(data, kw.assemble(ctx, work, module("overview", "portfolio").facts(ctx, work)))
     data["sections"] = ",".join(sections)
+    # the client logo is read now, so a logo added to or taken out of the plan shows on the next fill
+    logo = ctx.get("client_logo")
+    m = data["masthead"]
+    if m.get("shown") is not None:          # a site that shows only through a win still counts
+        m["sites"] = len(set(m["shown"]) | {w.get("site_id") for w in data.get("wins") or []} - {None}) or m["sites"]
+    ov, use = module("overview", "portfolio"), bool(logo and client_logo_ok(logo))
+    data["masthead"]["logo"] = ov.logo(logo) if use else None
+    data["masthead"]["logo_tile"] = ov.dark(logo) if use else False
     chat = data.pop("chat", []) + chat
     data.pop("drop", None)
     final = os.path.join(work.root, "report-data.json")
     with open(final, "w", encoding="utf-8") as fh:
         json.dump(data, fh, indent=1, ensure_ascii=False)
-    name = re.sub(r"[^a-z0-9]+", "-", ctx["client"].lower()).strip("-") or "portfolio"
+    name = re.sub(r"[^a-z0-9]+", "-", ctx["client"].replace("'", "").replace("\u2019", "").lower()).strip("-") or "portfolio"
     out = a.out or os.path.join(work.root, "%s-portfolio-%s.html" % (name, ctx["month"][:7]))   # the leaderboard month
     tiles = os.path.join(work.root, "tiles")
     r = subprocess.run([sys.executable, os.path.join(HERE, "fill_portfolio.py"), final, "--out", out,
@@ -476,7 +595,7 @@ def main():
     p.add_argument("--today", help="issue date, YYYY-MM-DD in site time (default: today)")
     p.add_argument("--hours", help='run hours against these working hours, e.g. "Mon-Fri 08:00-18:00"')
     p.set_defaults(func=cmd_plan)
-    for name, func in (("next", cmd_next), ("bundle", cmd_bundle)):
+    for name, func in (("next", cmd_next), ("verify", cmd_verify), ("bundle", cmd_bundle)):
         q = sub.add_parser(name)
         q.add_argument("dir")
         q.set_defaults(func=func)

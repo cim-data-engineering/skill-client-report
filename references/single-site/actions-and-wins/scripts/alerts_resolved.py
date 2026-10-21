@@ -20,7 +20,10 @@ import peak_io as io  # noqa: E402
 NAME = "alerts-resolved"
 STAT4 = ["open", "in_progress", "closed", "on_hold"]           # every status but Not Doing
 BANDS = [(99.0, "Excellent"), (95.0, "Good"), (90.0, "Average")]
-AGENT = re.compile(r"^\s*agent\b", re.I)
+# The chart counts actions. The scaffold's eyebrow still reads "alerts" until assets/reference-report.html
+# takes EYEBROW, so the date line goes under both and fills whichever the scaffold carries.
+EYEBROW = "Monthly actions raised vs resolved"
+OLD_EYEBROW = "Monthly alerts raised vs resolved"
 BULK = 10                  # closures in one sitting, each within GAP of the one before, is a bulk close-out
 GAP = 600                  # seconds
 
@@ -111,9 +114,12 @@ def band(v):
 
 
 def local_day(ts, tz):
-    from zoneinfo import ZoneInfo
-    t = datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(ZoneInfo(tz))
+    t = datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(io.zone(tz))
     return t.date()
+
+
+def plural(n, word):
+    return "%d %s%s" % (n, word, "" if n == 1 else "s")
 
 
 def sittings(stamps):
@@ -131,7 +137,6 @@ def sittings(stamps):
 
 
 def build(ctx, work, shared):
-    shared.setdefault("partial", []).append("action counts")
     tm, (q0, q1), (t0, t1) = ctx["trend_months"], ctx["quarter"], ctx["trend"]
     tz = ctx["site"]["timezone"]
     count = lambda f: (work.get(f).first() or {}).get("ticket_count", 0)
@@ -142,10 +147,18 @@ def build(ctx, work, shared):
 
     open_now = work.get("ar/open-rows.json").total or 0
     if not faults or not sum(resolved):
-        return {"drop": ["alerts-resolved", "key-wins"],
-                "chat": ["Actions and key wins are left out: nothing was resolved in the window (%d alerts closed "
-                         "in the quarter, %d actions resolved in six months). %d actions are open now."
-                         % (faults, sum(resolved), open_now)]}
+        if not faults and not sum(resolved):
+            why = ("nothing was resolved, with no alert closed in the quarter and no action resolved in the six "
+                   "months. %s open now." % ("1 action is" if open_now == 1 else "%d actions are" % open_now))
+        elif not faults:
+            why = ("no alert on a running rule was closed in the quarter, so the faults resolved row has no "
+                   "recovery rate. The %s resolved over the six months and the %d open now are not shown."
+                   % (plural(sum(resolved), "action"), open_now))
+        else:
+            why = ("no action was resolved in the six months, so there is no one to rank. The %s closed in the "
+                   "quarter and the %s open now are not shown." % (plural(faults, "alert"), plural(open_now, "action")))
+        return {"drop": ["alerts-resolved", "key-wins"], "chat": ["Actions and key wins are left out: " + why]}
+    shared.setdefault("partial", []).append("action counts")      # only once the section stays
 
     res_rows = rows(work, "ar/resolved-rows.json")
     open_rows = rows(work, "ar/open-rows.json")
@@ -162,7 +175,7 @@ def build(ctx, work, shared):
     for f, key in (("ar/resolved-by-assignee.json", "resolved"), ("ar/open-by-assignee.json", "open")):
         for r in work.get(f).rows:
             aid, name = r.get("assignee_id"), " ".join((r.get("assignee_name") or "").split())
-            if not aid or AGENT.match(name):
+            if not aid or io.system_account(aid, None, name):     # CIM's own system accounts never rank
                 continue
             e = board.setdefault(aid, {"name": name, "company": company.get(aid, ""), "resolved": 0, "open": 0})
             e[key] += r.get("ticket_count") or 0
@@ -192,6 +205,9 @@ def build(ctx, work, shared):
     host = host.group(0) if host else "https://ace.cimenviro.com"
     tw = io.whole(ctx, tm)
     span6 = io.span(tw[0], tw[-1])
+    chart_line = ("%s, the last six complete months%s. Raised counts actions created in the month, resolved counts "
+                  "actions closed in it. Actions marked Not Doing are excluded from both series."
+                  % (span6, io.and_to_date(ctx)))
     chat = []
     if bulk:
         chat.append("Resolved counts include bulk close-outs, %d or more actions closed minutes apart: %s."
@@ -210,10 +226,8 @@ def build(ctx, work, shared):
         "links": {"leaderboard": "%s/reports/tickets?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
                                  "&grouping=assignee" % (host, site["site_id"], t0, ctx["through"])},
         "datelines": {
-            "Monthly alerts raised vs resolved":
-                "%s, the last six complete months%s. Raised counts actions created in the month, resolved "
-                "counts actions closed in it. Actions marked Not Doing are excluded from both series."
-                % (span6, io.and_to_date(ctx)),
+            EYEBROW: chart_line,
+            OLD_EYEBROW: chart_line,
             "Actions leaderboard":
                 "Actions resolved %s%s, ranked by resolved. Completion rate is resolved ÷ (resolved + currently "
                 "open); open now as at %s." % (span6, io.and_to_date(ctx, " and "), io.day_long(ctx["today"]))},

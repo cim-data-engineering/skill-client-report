@@ -97,8 +97,8 @@ def build(ctx, work, shared):
         lo, hi = scale(tid)
         c = {"value": show(score, tid), "pct": max(0.0, min(100.0, (score - lo) / (hi - lo) * 100 if hi > lo else 0)),
              "expired": expired}
-        if prev is not None and show(prev, tid) != show(score, tid):
-            c["move"] = "up" if score > prev else "down"
+        if prev is not None and not expired and show(prev, tid) != show(score, tid):
+            c["move"] = "up" if score > prev else "down"     # an expired rating says how it stood, not where it is going
         return c
 
     host = pio.host(ctx)
@@ -117,17 +117,18 @@ def build(ctx, work, shared):
                               prev["score"] if prev else None))
         if any(cells):
             shown.append(sid)
-            rows.append({"name": s["site_name"].strip(), "state": pio.state(s), "link": link([sid]),
+            rows.append({"name": s["site_name"].strip(), "state": pio.region(ctx, s), "link": link([sid]),
                          "size": pio.num(size[sid]), "cells": cells})
 
     # The portfolio row: current ratings only, weighted by building size, and only where one rating
-    # type fills the column, since scales differ between types. Its arrow compares the same sites'
-    # previous ratings, weighted the same way.
+    # type fills the column, since scales differ between types, and two or more sites hold one, since a
+    # single site's rating is not the portfolio's. Its arrow compares the same sites' previous ratings,
+    # weighted the same way.
     portfolio = []
     for m in columns:
         cur = {sid: latest[(sid, mm)] for (sid, mm) in latest if mm == m and live(latest[(sid, mm)][0])}
         kinds = {c["sustainability_rating_type_id"] for c, _ in cur.values()}
-        if len(kinds) != 1:
+        if len(kinds) != 1 or sum(1 for sid in cur if size.get(sid)) < 2:
             portfolio.append(None)
             continue
         tid = kinds.pop()
@@ -144,6 +145,7 @@ def build(ctx, work, shared):
         if before is not None and show(after, tid) != show(before, tid):
             c["move"] = "up" if after > before else "down"
         portfolio.append(c)
+    pio.shown(shared, shown)
     sized = [size[sid] for sid in shown if size[sid]]
     return {
         "ratings": {"unit": unit, "columns": columns, "rows": rows,

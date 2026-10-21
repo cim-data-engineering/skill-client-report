@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Helpers the portfolio report's section scripts share: the report's windows, calls
 split across the sites a tool takes at once, their saved chunks and pages read back
-as one, each site's state and building size, the ranking and the building-size
-weighting every portfolio row uses, and dates printed with a spaced hyphen, since
-the portfolio page carries no en or em dash.
+as one, each site's region label and building size, the ranking, the portfolio rows
+(a plain average of the sites, or for ratings one weighted by building size), and
+dates printed with a spaced hyphen, since the portfolio page carries no en or em dash.
 
 Imported by scripts/report.py and the scripts under references/portfolio-leaderboard/ only.
 """
@@ -37,14 +37,19 @@ STATES = {
     "newfoundland and labrador": "NL", "nova scotia": "NS", "ontario": "ON", "prince edward island": "PE",
     "quebec": "QC", "saskatchewan": "SK",
 }
-FEET = ("united states", "usa", "us")
-SQFT_PER_SQM = 10.7639
 WINS_DAYS = 90
 
 
 # ── windows ─────────────────────────────────────────────────────────────────
+def today(sites):
+    """The issue date: the earliest local date across the sites, so the leaderboard month has closed at
+    every one of them."""
+    from datetime import datetime
+    return min(datetime.now(io.zone(s.get("timezone"))).date() for s in sites)
+
+
 def windows(today):
-    """The report's windows from `today` (the first site's local date), every one but
+    """The report's windows from `today` (the earliest local date across the sites), every one but
     the key wins' on month boundaries, end exclusive:
         month       the leaderboard month, the last complete month
         quarter     the three complete months ending on it; quarter_months their firsts
@@ -140,12 +145,30 @@ def state(site):
     return STATES.get(s.lower(), s)
 
 
+def region(ctx, site):
+    """The label in brackets after a site's name: its state, or its country where the portfolio spans
+    countries; nothing where every site shares it, or where the name already ends in brackets."""
+    if site["site_name"].strip().endswith(")"):
+        return None
+    countries = {(s.get("country") or "").strip().lower() for s in ctx["sites"]} - {""}
+    if len(countries) > 1:
+        return (site.get("country") or "").strip() or None
+    if len({state(s) for s in ctx["sites"]}) == 1:
+        return None
+    return state(site) or None
+
+
 def host(ctx):
     for s in ctx["sites"]:
         m = re.match(r"https?://[^/]+", s.get("site_link") or "")
         if m:
             return m.group(0)
     return "https://ace.cimenviro.com"
+
+
+def shown(shared, site_ids):
+    """Mark sites as carrying data somewhere in the report: the masthead counts only these."""
+    shared.setdefault("shown_sites", set()).update(s for s in site_ids if s is not None)
 
 
 def site_count(n):
@@ -212,31 +235,21 @@ def logo_links(actions):
 
 
 def unit_of(site):
-    return "ft²" if (site.get("country") or "").strip().lower() in FEET else "m²"
+    return "ft²" if io.in_feet(site.get("country")) else "m²"
 
 
 def sizes(ctx, facts):
-    """({site_id: building size in the report's unit}, unit, [sites converted]). The unit
-    is the one that holds most of the floor area; a site recorded in the other is
-    converted into it."""
+    """({site_id: building size in the report's unit}, unit, [sites shown outside their own unit]). PEAK
+    stores every size in m². The report takes the unit most of its floor area reads in, ft² for US
+    sites, and converts from m² into it, rounded to the nearest 100 ft²."""
     raw = {s["site_id"]: (facts.get(s["site_id"]) or {}).get("building_size") for s in ctx["sites"]}
     by_unit = {}
     for s in ctx["sites"]:
         if raw[s["site_id"]]:
-            u = unit_of(s)
-            by_unit[u] = by_unit.get(u, 0) + raw[s["site_id"]] * (SQFT_PER_SQM if u == "m²" else 1)
+            by_unit[unit_of(s)] = by_unit.get(unit_of(s), 0) + raw[s["site_id"]]
     unit = max(by_unit, key=by_unit.get) if by_unit else unit_of(ctx["sites"][0])
-    out, moved = {}, []
-    for s in ctx["sites"]:
-        v = raw[s["site_id"]]
-        if not v:
-            out[s["site_id"]] = None
-            continue
-        u = unit_of(s)
-        if u != unit:
-            v = v * SQFT_PER_SQM if unit == "ft²" else v / SQFT_PER_SQM
-            moved.append(s["site_name"].strip())
-        out[s["site_id"]] = v
+    out = {s["site_id"]: io.area(raw[s["site_id"]] or None, unit == "ft²") for s in ctx["sites"]}
+    moved = [s["site_name"].strip() for s in ctx["sites"] if raw[s["site_id"]] and unit_of(s) != unit]
     return out, unit, moved
 
 
@@ -254,25 +267,35 @@ def num(v):
 
 
 # ── ranks and portfolio rows ────────────────────────────────────────────────
+RANK_DP = 2            # scores rank to two places, one more than the page prints
+
+
 def rank(sites, value):
-    """[(rank, site)] best first on the unrounded value, ties split alphabetically by site
-    name. Sites with no value are left out."""
+    """[(rank, site)] best first on the value to RANK_DP places, ties split alphabetically by site
+    name, so no two sites share a place. Sites with no value are left out."""
     have = [s for s in sites if value(s) is not None]
-    have.sort(key=lambda s: (-value(s), name_key(s)))
+    have.sort(key=lambda s: (-round(value(s), RANK_DP), name_key(s)))
     return [(k, s) for k, s in enumerate(have, 1)]
 
 
 def standings(keys, now, then, name):
-    """A leaderboard board: ([(rank, key)] best first on the unrounded figures `now`, {key: move}).
-    Last month's board ranks every key with a figure in `then`, on the board now or not, and a
+    """A leaderboard board: ([(rank, key)] best first on the figures `now` to RANK_DP places, {key:
+    move}). Last month's board ranks every key with a figure in `then`, on the board now or not, and a
     move is the place there less the place now, "new" with no figure there. Ties split
-    alphabetically by name(key), ignoring case; keys with no figure are left out."""
+    alphabetically by name(key), ignoring case, so no two share a place; keys with no figure are left
+    out."""
     def order(v):
         have = [k for k in keys if v.get(k) is not None]
-        return sorted(have, key=lambda k: (-v[k], name(k).strip().lower(), str(k)))
+        return sorted(have, key=lambda k: (-round(v[k], RANK_DP), name(k).strip().lower(), str(k)))
     ranked = list(enumerate(order(now), 1))
     before = {k: i for i, k in enumerate(order(then), 1)}
     return ranked, {k: before[k] - i if k in before else "new" for i, k in ranked}
+
+
+def climbers(ctx):
+    """Whether boards name a biggest climber: not in a portfolio of three sites or fewer, where a climb
+    is mostly two sites swapping places."""
+    return len(ctx["sites"]) > 3
 
 
 def climber(ranked, moves):
@@ -300,8 +323,27 @@ def board_head(ctx, ranks, more=None):
     return {"date": month_name(ctx), "note": " ".join(x for x in (line, more) if x)}
 
 
+def mean(values):
+    """The plain average of {site_id: value} over the sites with a value: a portfolio row's score."""
+    have = [v for v in values.values() if v is not None]
+    return sum(have) / len(have) if have else None
+
+
+def portfolio_months(scores, months):
+    """A portfolio row: the average of the sites scored each month, and its change over the sites
+    scored at both ends only, so a site going live or dropping out is not read as a move. scores is
+    {site_id: {month: value}}. Returns (values by month, change or None, [sites the change leaves out])."""
+    row = [mean({sid: v.get(m) for sid, v in scores.items()}) for m in months]
+    both = {sid: v for sid, v in scores.items() if v.get(months[0]) is not None and v.get(months[-1]) is not None}
+    change = (mean({sid: v[months[-1]] for sid, v in both.items()})
+              - mean({sid: v[months[0]] for sid, v in both.items()})) if both else None
+    left = [sid for sid, v in scores.items() if sid not in both and any(x is not None for x in v.values())]
+    return row, change, left
+
+
 def weighted(values, size):
-    """The building-size-weighted mean of {site_id: value} over the sites that have both."""
+    """The building-size-weighted mean of {site_id: value} over the sites that have both. Sustainability
+    ratings only; every other portfolio row is a plain average."""
     pairs = [(v, size.get(sid)) for sid, v in values.items() if v is not None and size.get(sid)]
     w = sum(s for _, s in pairs)
     return sum(v * s for v, s in pairs) / w if w else None

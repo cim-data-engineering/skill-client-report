@@ -57,6 +57,7 @@ def build(ctx, work, shared):
     if not scored:
         return {"drop": [NAME]}
 
+    pio.shown(shared, [s["site_id"] for s in scored])
     now = {s["site_id"]: months(s["site_id"])[-1] for s in scored}         # the leaderboard month
     start = {s["site_id"]: months(s["site_id"])[-2] for s in scored}       # the month last month's board ranked
     ranked = pio.rank(scored, lambda s: now[s["site_id"]])
@@ -66,18 +67,18 @@ def build(ctx, work, shared):
     host = pio.host(ctx)
     link = lambda sid: ("%s/dashboard/equipment-health?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
                         % (host, sid, ctx["quarter"][0], ctx["through"]))
-    rows = [{"rank": k, "name": s["site_name"].strip(), "state": pio.state(s), "link": link(s["site_id"]),
+    rows = [{"rank": k, "name": s["site_name"].strip(), "state": pio.region(ctx, s), "link": link(s["site_id"]),
              "size": pio.num(size[s["site_id"]]),
              "counts": ["{:,}".format(len(equip[s["site_id"]])), "{:,}".format(rules[s["site_id"]])],
              "months": months(s["site_id"])} for k, s in order]
     sids = [s["site_id"] for s in scored]
-    portfolio = [pio.weighted({sid: scores[sid].get(m[:7]) for sid in sids}, size) for m in qm]
+    portfolio, change, left = pio.portfolio_months({sid: scores[sid] for sid in sids}, [m[:7] for m in qm])
     shown_size = [size[sid] for sid in sids if size[sid]]
     heat = {"unit": unit, "dp": 1, "bands": BANDS, "counts": ["Equip", "Rules"], "rows": rows,
             "portfolio": {"size": pio.num(sum(shown_size)) if shown_size else "-",
                           "counts": ["{:,}".format(sum(len(equip[sid]) for sid in sids)),
                                      "{:,}".format(sum(rules[sid] for sid in sids))],
-                          "months": portfolio}}
+                          "months": portfolio, "change": change}}
     shared.setdefault("rankings", []).append({"label": "Equipment health", "anchor": ANCHOR, "window": "month",
                                               "now": now, "start": start, "dp": 1, "unit": "%"})
 
@@ -97,9 +98,13 @@ def build(ctx, work, shared):
                         "busiest. Those months cover part of the plant, from an outage or rules still going live, so "
                         "its change and its place on the board are not the plant's alone."
                         % (s["site_name"].strip(), io.listing(low), "{:,}".format(most)))
+    note = ("%s. Share of automated checks that found no fault. Equip and Rules count the equipment and rules "
+            "scored; the portfolio row averages the sites." % pio.reporting_period(ctx))
+    if left and len(sids) - len(left) > 0:
+        note += " Its Chg compares the %s scored in both %s and %s." % (
+            pio.site_count(len(sids) - len(left)), io.month(qm[0]), io.month(qm[-1]))
     return {
         "equipment_health": heat,
-        "datelines": {"Equipment health snapshot": "%s. Share of rule executions returning no fault."
-                                                   % pio.reporting_period(ctx)},
+        "datelines": {"Equipment health snapshot": note},
         "chat": chat,
     }

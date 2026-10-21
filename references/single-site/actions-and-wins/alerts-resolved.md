@@ -1,6 +1,6 @@
 # Alerts resolved and leaderboard
 
-Owns the operational impact faults resolved row, monthly alerts raised vs resolved, and the actions leaderboard. Scaffold parts: `monthly-alerts`, `actions-leaderboard`.
+Owns the operational impact faults resolved row, monthly actions raised vs resolved, and the actions leaderboard. Scaffold parts: `monthly-alerts`, `actions-leaderboard`.
 
 The two answer the same question from either end: how much fault work the site took on, and who closed it. Both come from counts of action tickets. Script: `scripts/alerts_resolved.py`, which builds every figure, row, link and note below.
 
@@ -8,7 +8,7 @@ The two answer the same question from either end: how much fault work the site t
 
 Nothing. The script fills the chart and the leaderboard.
 
-A window with nothing resolved means no section. The recovery rate has no denominator, "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. The script leaves out the section, its operational impact row and its notes items, and gives the open count to say in chat instead. Key wins goes with it. A newly onboarded site is where this happens.
+A window with nothing resolved means no section. With no alert closed in the quarter the recovery rate has no denominator; with no action resolved in the six months "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. Either one leaves out the section, its operational impact row, its notes items and its partial figures in the reporting window note. The script says in chat which it was, with the counts left unshown. Key wins goes with it. A newly onboarded site is where this happens.
 
 ## Operational impact row
 
@@ -27,7 +27,7 @@ Recovery rate is alerts resolved in the period with fault status recovered divid
 | Average   | >= 90%        |
 | Poor      | < 90%         |
 
-## Monthly alerts raised vs resolved
+## Monthly actions raised vs resolved
 
 Faults triaged and resolved
 Date: the six complete months ending with the quarter, and the month to date where the report carries one
@@ -61,7 +61,7 @@ Date: the 6 month window
 - Resolved and Open now as plain numerals. No bars
 - Close with a total row, separated from the rank
 - Include assignees with zero resolved but open actions. Exclude actions marked as Not Doing
-- Exclude non-human users from the leaderboard: Agent Hannah, or any other agent. They still count in raised vs resolved. No need to call this out in the report
+- Exclude CIM's own system accounts from the leaderboard: CIM Support, the CIM API logins and the AI agents (Agent Hannah, or any other agent). `peak_io.system_account` decides by PEAK user id, from the list in `peak_io.SYSTEM_ACCOUNTS`, with the agent name rule for agents added later. CIM's people rank like anyone else, and so do contractors' shared logins, such as a dispatch desk or a generic BMS account. The excluded accounts' actions still count in raised vs resolved and faults resolved. No need to call this out in the report
 - Each assignee sits beside their company's logo in a square tile, as PEAK shows it. The script fetches each logo once from its `logo_url` and embeds it. A company without one gets its initials instead, and the script names it to say in chat
 - Truncate assignee and company name with ellipsis, do not wrap rows
 
@@ -89,7 +89,7 @@ All in the main batch:
 | Verified recovery | `search_alert_tickets(status:"closed", rule_states:["running"])` over the quarter, plain and with `fault_statuses:["recovered"]`, `limit:1` each: the two `pagination.total` values |
 
 - Every count carries `ticket_types:["escalated"]`, which counts actions, one per ticket, never the alerts behind them: an action can be bulk-linked to dozens of alerts. Every status list leaves out Not Doing. The server reads each window in site time, and a count cannot be cut short by a `limit`
-- The leaderboard joins the two assignee counts on `assignee_id`, keeping anyone with open work and nothing resolved, leaving out the null id (unassigned work) and any agent by name. Company is `entity{name}` for the same id off the rows, and its logo `entity{logo_url}`, a PNG on PEAK's public downloads
+- The leaderboard joins the two assignee counts on `assignee_id`, keeping anyone with open work and nothing resolved, leaving out the null id (unassigned work) and CIM's system accounts by user id, or any agent by name: the counts carry no email, so the id list and the name rule decide. Company is `entity{name}` for the same id off the rows, and its logo `entity{logo_url}`, a PNG on PEAK's public downloads
 - The median runs over the actions resolved in the quarter, the operational impact row's own window, from `age`, which on a resolved action is the milliseconds from creation to resolution. Under a day it reads in hours
 - `count_tickets` is no substitute for the alert counts: it cannot filter on alert status or rule state
 - Closures that land minutes apart, ten or more in a run, are a bulk close-out rather than repairs. The script names them to say in chat, since they explain a resolved peak

@@ -62,21 +62,24 @@ def board(ctx, size, unit, ranking):
     for k, sid in ranked[:SHOWN]:
         r = {"rank": k, "name": name(sid), "value": fmt(now[sid]), "move": moves[sid] or None, "link": links.get(sid)}
         if k == 1:
-            r["meta"] = [x for x in (pio.state(site[sid]), "%s %s" % (pio.num(size[sid]), unit) if size.get(sid) else None)
-                         if x]
+            r["meta"] = [x for x in (pio.region(ctx, site[sid]),
+                                     "%s %s" % (pio.num(size[sid]), unit) if size.get(sid) else None) if x]
         rows.append(r)
-    c = pio.climber(ranked[:SHOWN], moves)
-    return ({"title": ranking["label"], "anchor": ranking.get("anchor"), "window": pio.board_window(ctx, ranking["window"]),
-             "unit": ranking.get("unit"), "rows": rows,
-             "climber": dict(c, name=name(c["key"]), link=links.get(c["key"])) if c else None},
-            ranked[0][1] if ranked else None)
+    b = {"title": ranking["label"], "anchor": ranking.get("anchor"), "window": pio.board_window(ctx, ranking["window"]),
+         "unit": ranking.get("unit"), "rows": rows}
+    if pio.climbers(ctx):                 # a portfolio of three sites or fewer shows no climber tier
+        c = pio.climber(ranked[:SHOWN], moves)
+        b["climber"] = dict(c, name=name(c["key"]), link=links.get(c["key"])) if c else None
+    return b, (ranked[0][1] if ranked else None), len(ranked), {k for _, k in ranked}
 
 
 def build(ctx, work, shared):
     size, unit, _ = pio.sizes(ctx, shared["facts"])
-    built = [(b, sid) for b, sid in (board(ctx, size, unit, r) for r in shared.get("rankings") or []) if b["rows"]]
+    made = [board(ctx, size, unit, r) for r in shared.get("rankings") or []]
+    built = [(b, sid) for b, sid, _, _ in made if b["rows"]]
     if not built:
         return {"drop": [NAME]}
+    counts = sorted({n for b, _, n, _ in made if b["rows"]})
     # each leader's building photo, fetched once however many boards it leads
     links, photos = {}, {}
     for b, sid in built:
@@ -91,7 +94,9 @@ def build(ctx, work, shared):
         chat.append("No building photo in PEAK%s for %s, so %s leader panel shows a plain building mark."
                     % ("" if not any(links[sid] for b, sid in built if not photos[sid]) else ", or none that could be fetched,",
                        io.listing(bare), "its" if len(bare) == 1 else "each"))
-    n = len(ctx["sites"])
+    more = []
+    if counts[-1] > SHOWN:
+        more.append("Top %d of %s sites on each board." % (
+            SHOWN, "%d" % counts[-1] if len(counts) == 1 else "%d to %d" % (max(counts[0], SHOWN), counts[-1])))
     return {"boards": [b for b, _ in built], "chat": chat,
-            "dated_heads": {"Site leaderboard": pio.board_head(
-                ctx, "the sites on one measure", "Top %d of %d sites on each board." % (SHOWN, n) if n > SHOWN else None)}}
+            "dated_heads": {"Site leaderboard": pio.board_head(ctx, "the sites on one measure", " ".join(more) or None)}}

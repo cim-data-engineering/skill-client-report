@@ -11,6 +11,7 @@ unpacked.
 """
 import json
 import os
+import re
 from datetime import date
 
 MONTHS = ["January", "February", "March", "April", "May", "June", "July",
@@ -92,6 +93,68 @@ def gql(file, query, args, fields):
 SYSTEM_TYPES = [21, 37, 69, 70, 87, 105, 114]
 
 
+# ── who ranks ───────────────────────────────────────────────────────────────
+# CIM's own system accounts, by PEAK user id: support, the API logins and the AI agents. Their actions
+# count wherever work is measured, but they never rank as people, and CIM's company figure leaves them
+# out. PEAK has no system-account flag, and a name rule misfires (a CIM engineer's surname is recorded
+# as "Support"), so the ids decide, backed by an email rule for accounts added later.
+SYSTEM_ACCOUNTS = {
+    "4ddcfd76-f5f0-46f3-863a-2bf90ce22469": "CIM Support",
+    "e28a4b09-a670-4954-823b-72e411e7cc2d": "CIM Engineering API",
+    "d266f1a8-4822-4235-b174-aebce72328e8": "Engineering Read-Only CIM API User",
+    "7ba072a9-ada6-4f2b-82d3-b86cbc71558c": "Agent Hannah Escalations",
+    "ceb1f491-e901-4369-8708-2a38bbc4e9ea": "Agent Hana v1.0",
+}
+CIM_DOMAINS = ("cim.io", "cimenviro.com")
+AGENT = re.compile(r"^\s*agent\b", re.I)          # the AI review agents, whatever company they sit under
+
+
+def system_account(user_id, email=None, name=None):
+    """True for an account that is CIM's system rather than a person: one of SYSTEM_ACCOUNTS, a
+    CIM-domain address whose local part is `support` or carries `+api`, or an agent by name.
+    Contractors' shared logins (a dispatch desk, a BMS controls account) are people here: they rank."""
+    if user_id and str(user_id) in SYSTEM_ACCOUNTS:
+        return True
+    local, _, domain = (email or "").strip().lower().partition("@")
+    if domain in CIM_DOMAINS and (local == "support" or "+api" in local):
+        return True
+    return bool(name and AGENT.match(name))
+
+
+# ── time zones ──────────────────────────────────────────────────────────────
+# Legacy IANA names PEAK still stores on some sites, each mapped to the zone it links to. Slim tzdata
+# builds ship without the links, so ZoneInfo("Australia/Queensland") fails there.
+LEGACY_ZONES = {
+    "Australia/ACT": "Australia/Sydney", "Australia/Canberra": "Australia/Sydney",
+    "Australia/NSW": "Australia/Sydney", "Australia/North": "Australia/Darwin",
+    "Australia/Queensland": "Australia/Brisbane", "Australia/South": "Australia/Adelaide",
+    "Australia/Tasmania": "Australia/Hobart", "Australia/Victoria": "Australia/Melbourne",
+    "Australia/West": "Australia/Perth", "Australia/Yancowinna": "Australia/Broken_Hill",
+    "Australia/LHI": "Australia/Lord_Howe",
+    "US/Eastern": "America/New_York", "US/Central": "America/Chicago", "US/Mountain": "America/Denver",
+    "US/Pacific": "America/Los_Angeles", "US/Arizona": "America/Phoenix", "US/Alaska": "America/Anchorage",
+    "US/Hawaii": "Pacific/Honolulu", "US/East-Indiana": "America/Indiana/Indianapolis",
+    "US/Michigan": "America/Detroit",
+    "Canada/Eastern": "America/Toronto", "Canada/Central": "America/Winnipeg",
+    "Canada/Mountain": "America/Edmonton", "Canada/Pacific": "America/Vancouver",
+    "Canada/Atlantic": "America/Halifax", "Canada/Newfoundland": "America/St_Johns",
+    "GB": "Europe/London", "GB-Eire": "Europe/London", "Eire": "Europe/Dublin", "NZ": "Pacific/Auckland",
+    "Singapore": "Asia/Singapore", "Hongkong": "Asia/Hong_Kong", "PRC": "Asia/Shanghai", "Japan": "Asia/Tokyo",
+    "Brazil/East": "America/Sao_Paulo",
+}
+
+
+def zone(name):
+    """The ZoneInfo for a site's time zone, legacy names read as the zone they link to."""
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+    name = (name or "").strip() or "UTC"
+    try:
+        return ZoneInfo(LEGACY_ZONES.get(name, name))
+    except (ZoneInfoNotFoundError, ValueError):
+        raise SystemExit("unknown time zone %r on the site in PEAK: add it to LEGACY_ZONES in scripts/peak_io.py"
+                         % name)
+
+
 # ── windows ─────────────────────────────────────────────────────────────────
 PART_MONTH_DAYS = 7          # complete days of today's month before it joins the windows
 
@@ -168,16 +231,51 @@ def and_to_date(ctx, lead=", and "):
 
 
 # ── formats ─────────────────────────────────────────────────────────────────
-# the site's currency as PEAK names it: (code, labour rate per hour for the region, symbol)
+# the site's currency as PEAK names it (every MonetaryCurrencyEnum value): (code, labour rate per hour
+# for the region, symbol). The symbol prints straight before the figure, so a code that reads as a word
+# carries its own space.
 CURRENCIES = {"australian dollar": ("AUD", 150, "$"), "us dollar": ("USD", 100, "$"),
               "united states dollar": ("USD", 100, "$"), "new zealand dollar": ("NZD", 150, "$"),
               "british pound": ("GBP", 75, "£"), "pound sterling": ("GBP", 75, "£"),
-              "canadian dollar": ("CAD", 150, "$"), "euro": ("EUR", 100, "€")}
+              "canadian dollar": ("CAD", 150, "$"), "euro": ("EUR", 100, "€"),
+              "singapore dollar": ("SGD", 120, "S$"), "swiss franc": ("CHF", 120, "CHF "),
+              "swedish krona": ("SEK", 900, "SEK "), "brazilian real": ("BRL", 250, "R$"),
+              "chinese yuan": ("CNY", 300, "¥"), "indonesian rupiah": ("IDR", 500000, "Rp ")}
 
 
 def currency(facts):
     """(code, labour rate per hour, symbol) for a site, from its site facts."""
     return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", 100, "$"))
+
+
+# the working day the labour model counts in, by country; 7.6 hours elsewhere (the Australian standard)
+WORKING_DAY = {"united states": 8, "usa": 8, "us": 8, "united states of america": 8, "canada": 8,
+               "new zealand": 8, "united kingdom": 7.5, "ireland": 7.8, "singapore": 8.8}
+
+
+def working_day(facts):
+    """Hours in the working day the labour model counts, for the site's country."""
+    return WORKING_DAY.get((facts.get("country") or "").strip().lower(), 7.6)
+
+
+# ── building size ───────────────────────────────────────────────────────────
+# PEAK stores every site's building size in square metres, US sites included (the schema says so, and
+# published dealership sizes match the stored figures read as m²). US sites show square feet, converted.
+FEET = ("united states", "usa", "us", "united states of america")
+SQFT_PER_SQM = 10.7639
+
+
+def in_feet(country):
+    """True where building sizes read in square feet: the United States."""
+    return (country or "").strip().lower() in FEET
+
+
+def area(m2, feet):
+    """A PEAK building size (m²) in the unit the page shows: m² as stored, or square feet converted
+    and rounded to the nearest 100 ft², the precision the stored figures were entered at."""
+    if m2 is None:
+        return None
+    return round(m2 * SQFT_PER_SQM / 100) * 100 if feet else m2
 
 
 def mon(s):

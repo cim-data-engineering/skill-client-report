@@ -18,12 +18,14 @@ each win's ticket images and tiles them into one numbered contact sheet per win;
 assemble() turns wins.json into the bundle's wins at fill time. See
 references/portfolio-leaderboard/actions-and-wins/key-wins.md.
 """
+import html
 import json
 import os
 import re
 import sys
 import urllib.request
-from collections import Counter
+from collections import Counter, defaultdict
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
@@ -35,7 +37,9 @@ MAX_WINS = 10
 MAX_SHORTLIST = 25     # tickets read in full: enough to find ten wins, few enough to read
 TOP = 60               # candidates the digest prints, best first, a third of them kept for work in flight
 SEVERITY = ["safety", "reliability", "comfort", "energy", "water", "other"]
-AGENT = re.compile(r"^\s*agent\b", re.I)
+AGENT = io.AGENT
+SYSTEM_NAMES = {n.lower() for n in io.SYSTEM_ACCOUNTS.values()}
+BULK_SECONDS = 120     # closures at one site within two minutes of each other are one close-out
 IMAGE = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp"}
 PER_WIN = 16           # images tiled per win; a ticket can carry dozens of uploads
 COMMENT_CHARS = 420
@@ -67,21 +71,44 @@ def calls(ctx):
 
 
 # ── candidates and the digest ───────────────────────────────────────────────
+def system(name):
+    """A comment author that is CIM's system rather than a person: an agent, or a system account by name."""
+    name = (name or "").strip()
+    return bool(AGENT.match(name)) or name.lower() in SYSTEM_NAMES
+
+
 def human(r):
-    return [c for c in r.get("comments") or [] if not AGENT.match(c.get("author_full_name") or "")]
+    return [c for c in r.get("comments") or [] if not system(c.get("author_full_name"))]
+
+
+def stamp(ts):
+    """A PEAK timestamp as an aware datetime, None where there is none."""
+    if not ts:
+        return None
+    try:
+        return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 def screen(rows, since):
     """Drop what needs no reading: closures nobody worked, bulk close-outs, tickets whose
     only commenter is an agent, and open work no person has commented on since `since`,
     the first of the 90 days. Returns (kept, reasons)."""
-    stamps = Counter((r.get("site_id"), r["resolved_at"][:19]) for r in rows if r.get("resolved_at"))
+    closed = defaultdict(list)
+    for r in rows:
+        t = stamp(r.get("resolved_at"))
+        if t:
+            closed[r.get("site_id")].append(t)
+    near = lambda r: sum(1 for t in closed[r.get("site_id")]
+                         if abs((t - stamp(r["resolved_at"])).total_seconds()) <= BULK_SECONDS)
     why, keep = Counter(), []
     for r in rows:
-        if r.get("resolved_at") and r.get("created_at", "")[:19] == r["resolved_at"][:19]:
+        made, done = stamp(r.get("created_at")), stamp(r.get("resolved_at"))
+        if done and made and abs((done - made).total_seconds()) < 1:
             why["created and resolved the same moment"] += 1
-        elif r.get("resolved_at") and stamps[(r.get("site_id"), r["resolved_at"][:19])] >= 3:
-            why["bulk close-out, three or more at one site sharing a resolved second"] += 1
+        elif done and near(r) >= 3:
+            why["bulk close-out, three or more at one site closed within two minutes"] += 1
         elif not human(r):
             why["only an agent commented"] += 1
         # comments come newest first, so the eight read always hold the latest
@@ -112,12 +139,21 @@ def digest(root, paths, top=TOP):
     """Candidate pulls, screened and ranked, one line each with the site. With the light
     first-pass rows this is the list to shortlist from; with the full second-pass rows each
     line carries the description, solution and comments to choose and write from."""
-    ctx = io.Work(root).ctx
+    work = io.Work(root)
+    ctx = work.ctx
     sites = {s["site_id"]: s for s in ctx["sites"]}
+    facts = {r["site_id"]: r for r in pio.rows(work, "overview/sites.json")}
     rows = [r for p in paths for r in io.read(p).rows]
     keep, why = screen(rows, ctx["wins"][0])
     keep.sort(key=rank)
-    day = lambda ts: ts[:10] if ts else "?"
+
+    def day(ts, sid=None):
+        """The date in the site's own time, as the reader dates the work."""
+        t = stamp(ts)
+        if not t:
+            return "?"
+        tz = (sites.get(sid) or {}).get("timezone")
+        return (t.astimezone(io.zone(tz)) if tz else t).date().isoformat()
     print("%d candidates, %d left after screening. Screened out: %s." % (
         len(rows), len(keep), "; ".join("%d %s" % (n, w) for w, n in why.items()) or "nothing"))
     if top and len(keep) > top:
@@ -128,11 +164,14 @@ def digest(root, paths, top=TOP):
         keep = shown
     for r in keep:
         site = sites.get(r.get("site_id")) or {"site_name": "site %s" % r.get("site_id")}
-        state = ("closed %s" % day(r.get("resolved_at"))) if r.get("resolved_at") else "open"
-        saved = (" · savings %s" % "{:,}".format(round(r["savings"]))) if round(r.get("savings") or 0) else ""
+        sid = r.get("site_id")
+        state = ("closed %s" % day(r.get("resolved_at"), sid)) if r.get("resolved_at") else "open"
+        sym = io.currency(facts.get(sid) or {})[2]
+        saved = (" · savings %s%s" % (sym, "{:,}".format(round(r["savings"])))) if round(r.get("savings") or 0) else ""
         people = len({c.get("author_full_name") for c in human(r)})
+        pr = r.get("priority_id")
         print("\n[%s] %s · %s · P%s · %d comment%s by %d %s%s · %s" % (
-            r["ticket_id"], site["site_name"].strip(), state, r.get("priority_id") or "?", len(human(r)),
+            r["ticket_id"], site["site_name"].strip(), state, pr if pr and 1 <= pr <= 5 else "-", len(human(r)),
             "" if len(human(r)) == 1 else "s", people, "person" if people == 1 else "people", saved,
             (r.get("summary") or "").strip()))
         for k in ("description", "solution"):
@@ -142,7 +181,7 @@ def digest(root, paths, top=TOP):
         for c in sorted(r.get("comments") or [], key=lambda c: c.get("created_at") or ""):
             if clip(c.get("text")):
                 who = c.get("author_full_name") or "?"
-                print("  - %s, %s%s: %s" % (day(c.get("created_at")), who, " (agent)" if AGENT.match(who) else "",
+                print("  - %s, %s%s: %s" % (day(c.get("created_at"), sid), who, " (system)" if system(who) else "",
                                             clip(c.get("text"))))
 
 
@@ -231,8 +270,15 @@ def fetch(url, dest):
 def photos(root):
     work = io.Work(root)
     wins = load_wins(work)
+    if wins is None:
+        raise SystemExit("No %s/wins.json yet: choose the wins by key-wins.md and write it, then run "
+                         "python3 scripts/report.py next %s for their impact and photo calls." % (root, root))
     if not wins:
-        raise SystemExit("write %s/wins.json first" % root)
+        print("wins.json holds no win, so there are no photos. Next: python3 scripts/report.py fill %s" % root)
+        return
+    if not work.has("kw/attachments.json"):
+        raise SystemExit("kw/attachments.json is not saved yet: run python3 scripts/report.py next %s and make the "
+                         "calls it prints, then photos again." % root)
     att = {r["ticket_id"]: r.get("attachments") or [] for r in work.get("kw/attachments.json").rows}
     jobs, plan = [], {}
     out_dir = os.path.join(root, "kw", "photos")
@@ -242,7 +288,8 @@ def photos(root):
         for t in w["tickets"]:
             for a in att.get(t, []):
                 ext = IMAGE.get((a.get("mime_type") or "").lower())
-                name = (a.get("file_name") or "").strip().lower()
+                # one upload attached to two tickets is one photo; two uploads sharing a file name are two
+                name = a.get("attachment_id") or ((a.get("link") or {}).get("url") or "").split("?")[0]
                 if not ext or name in seen or n >= PER_WIN:
                     continue
                 seen.add(name)
@@ -253,7 +300,8 @@ def photos(root):
                 plan.setdefault(k, []).append(pick)
 
     if not jobs:
-        print("No win's tickets carry an image, so there are no sheets. Next: python3 scripts/report.py fill %s" % root)
+        print("No win's tickets carry an image, so there are no sheets. Next: python3 scripts/report.py next %s, "
+              "which prints the level call if it is still due, then fill." % root)
         return
 
     def get(job):
@@ -271,6 +319,7 @@ def photos(root):
     if failed and len(failed) == len(got):
         raise SystemExit("no photo downloaded (%s). The links lapse twenty minutes after the call: make the "
                          "kw/attachments.json call again, save it, and re-run photos." % failed[0][1])
+    unsign(work)
     sheets = contact_sheets(root, plan, {p: d for p, d, e in got if d})
     print("Downloaded %d of %d images. One sheet per win, each tile numbered with its pick:" % (len(got) - len(failed), len(got)))
     for k, s in sheets:
@@ -279,6 +328,18 @@ def photos(root):
         print("Not downloaded: " + ", ".join(p for p, e in failed))
     print("Look at each sheet, then add the picks to that win's photos in wins.json, in story order, e.g. "
           '"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]. A win with no good photo gets none.')
+
+
+def unsign(work):
+    """Rewrite kw/attachments.json without its signed links once the photos are on disk: the files keep
+    counts, ids and names only, never a credential."""
+    path = work.path("kw/attachments.json")
+    with open(path, encoding="utf-8") as fh:
+        text = fh.read()
+    clean = re.sub(r'"(?:url)"\s*:\s*"https?://[^"]*"', '"url": null', text)
+    if clean != text:
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(clean)
 
 
 def contact_sheets(root, plan, files):
@@ -361,10 +422,15 @@ def assemble(ctx, work, facts):
         if saved and not SAVING.search(w["body"]):
             chat.append("The tickets behind \"%s\" record %s%s in savings, which its text does not mention."
                         % (w["heading"], sym, "{:,}".format(saved)))
-        body = SAVING.sub(r"<strong>\1</strong>", w["body"])
-        win = {"site": {"name": site["site_name"].strip(), "state": pio.state(site)}, "impact": impact,
-               "heading": w["heading"], "body": body,
-               "refs": [{"url": imp[t]["ticket_link"], "title": imp[t].get("title")} for t in w["tickets"]]}
+        body = SAVING.sub(r"<strong>\1</strong>", html.escape(w["body"], quote=False))
+        titles = Counter((imp[t].get("title") or "").strip() for t in w["tickets"])
+        ref = lambda t: (imp[t].get("title") or "").strip() + (
+            " (raised %s)" % io.day_short(imp[t]["created_at"]) if titles[(imp[t].get("title") or "").strip()] > 1
+            and imp[t].get("created_at") else "")
+        win = {"site": {"name": site["site_name"].strip(), "state": pio.region(ctx, site)}, "site_id": sid,
+               "impact": impact,
+               "heading": html.escape(w["heading"], quote=False), "body": body,
+               "refs": [{"url": imp[t]["ticket_link"], "title": ref(t)} for t in w["tickets"]]}
         if names:
             win["level"] = names[0] if len(names) == 1 else names
         if pics:

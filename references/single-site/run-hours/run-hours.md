@@ -15,7 +15,7 @@ Nothing. Report in chat, not on the page: units left off the chart and why (only
 - **Working hours** come from the site in PEAK, each day its own; a closed day has no working-hours column and all its running is outside hours. All days closed or all `00:00` stops the plan step: ask the user what hours to assess against, never guess, and run `report.py plan` again with `--hours "Mon-Fri 08:00-18:00, Sat 09:00-13:00"`
 - **Equipment**: every type in `run-hours-signals.md`, central plant first, then field units. VAVs, chilled beams, lighting, lifts and meters stay out
 - **Sensors only**: a row is drawn only from a sensor that reports the unit running, a run status, a speed, current or power reading, or a compressor status. An enable, command or occupancy schedule says what the unit was told to do, not that it ran
-- **First pass**: up to 100 units, central plant always whole. The report draws the first pass only; the rest is named in chat
+- **First pass**: up to 100 units, central plant always whole, each other type whole or not at all. The report draws the first pass only and makes no later pass: the rest is named in chat, with the count of units the page draws, and never offered as a further fetch
 
 ## Which point draws the row
 

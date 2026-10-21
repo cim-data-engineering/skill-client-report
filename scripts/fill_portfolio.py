@@ -79,9 +79,9 @@ def ordinal(n):
 
 def board(b):
     """One board, a small ranked table: the head; the leader set large under its building photo or
-    beside its company's logo, its figure carrying the board's unit; the biggest climber, or a dash
-    for none; then the chasing pack. Every tier shares the rank column, so all the names start on
-    one line."""
+    beside its company's logo, its figure carrying the board's unit; the biggest climber, "None" when
+    no one climbed, or no climber tier where the board has none; then the chasing pack. Every tier
+    shares the rank column, so all the names start on one line."""
     lead, pack = b["rows"][0], b["rows"][1:]
     logos = any("tile" in r for r in b["rows"])
     mini = lambda r: tile((r.get("tile") or {}).get("company"), (r.get("tile") or {}).get("logo"), "tlogo")
@@ -98,11 +98,12 @@ def board(b):
                    '<a href=%s class="lname"><span class="sn">%s</span>&nbsp;<span class="chev">&rsaquo;</span></a>' % (
                        jump(lead, b), esc(lead["name"])), " &middot; ".join(esc(x) for x in lead.get("meta") or []),
                    lead["value"], "<span>%s</span>" % esc(b["unit"]) if b.get("unit") else ""))
-    c = b.get("climber")
-    out.append('      <div class="climb%s"><span class="rkmark">%s</span><p class="clab">Biggest climber</p>%s<p class="cwho">%s</p>%s</div>' % (
-        " co" if logos else "", CLIMB, '<span class="clogo">%s</span>' % mini(c) if logos and c else "",
-        '<a href=%s>%s</a>' % (jump(c, b), esc(c["name"])) if c else "-",
-        '<span class="cup">&uarr;%d to %s</span>' % (c["places"], ordinal(c["rank"])) if c else ""))
+    if "climber" in b:
+        c = b["climber"]
+        out.append('      <div class="climb%s"><span class="rkmark">%s</span><p class="clab">Biggest climber</p>%s<p class="cwho%s">%s</p>%s</div>' % (
+            " co" if logos else "", CLIMB, '<span class="clogo">%s</span>' % mini(c) if logos and c else "",
+            "" if c else " none", '<a href=%s>%s</a>' % (jump(c, b), esc(c["name"])) if c else "None",
+            '<span class="cup">&uarr;%d to %s</span>' % (c["places"], ordinal(c["rank"])) if c else ""))
     if pack:
         out += ['      <table class="rk">',
                 '        <colgroup><col class="c-rank">%s<col><col class="c-mv"><col class="c-pv"></colgroup>'
@@ -135,7 +136,11 @@ def cell(v, t, dp, now):
     return '<td class="c %s%s">%.*f</td>' % (band(round(v, dp), t), " now" if now else "", dp, v)
 
 
-def change(mo, dp):
+def change(mo, dp, given=False, value=None):
+    """A row's Chg: its last month less its first, or for the portfolio row the `value` it was handed,
+    which compares only the sites scored at both ends."""
+    if given:
+        return '<span class="chg flat">-</span>' if value is None else chg(round(value, dp), dp)
     if None in (mo[0], mo[-1]) or len(mo) < 2:
         return '<span class="chg flat">-</span>'
     return chg(round(mo[-1], dp) - round(mo[0], dp), dp)
@@ -143,22 +148,27 @@ def change(mo, dp):
 
 def heatmap(d, months):
     dp, t = d["dp"], d["bands"]
+    band = "band_unit" in d               # each site's comfort band, after its counts
     head = ['<th class="rank"></th>', '<th class="lv">Site</th>', '<th class="ct sz">Size <span class="u">%s</span></th>' % d["unit"]]
     head += ['<th class="ct">%s</th>' % c for c in d["counts"]]
+    if band:
+        head += ['<th class="ct bd">Target%s</th>' % (' <span class="u">%s</span>' % esc(d["band_unit"]) if d["band_unit"] else "")]
     head += ['<th class="mo">%s</th>' % m for m in months]
     head += ['<th class="cg">Chg</th>']
     body = []
     for r in d["rows"]:
         mo = r["months"]
-        body.append('      <tr><td class="rank">%s</td><td class="lv">%s</td><td class="ct">%s</td>%s%s<td class="cg">%s</td></tr>'
+        body.append('      <tr><td class="rank">%s</td><td class="lv">%s</td><td class="ct">%s</td>%s%s%s<td class="cg">%s</td></tr>'
                     % (TROPHY if r["rank"] == 1 else r["rank"], site_label(r, r.get("link")), r["size"],
                        "".join('<td class="ct">%s</td>' % c for c in r["counts"]),
+                       '<td class="ct bd">%s</td>' % esc(r.get("band") or "-") if band else "",
                        "".join(cell(v, t, dp, i == len(mo) - 1) for i, v in enumerate(mo)), change(mo, dp)))
     p = d["portfolio"]
-    body.append('      <tr class="total"><td></td><td class="lv">Portfolio</td><td class="ct">%s</td>%s%s<td class="cg">%s</td></tr>'
+    body.append('      <tr class="total"><td></td><td class="lv">Portfolio</td><td class="ct">%s</td>%s%s%s<td class="cg">%s</td></tr>'
                 % (p["size"], "".join('<td class="ct">%s</td>' % c for c in p["counts"]),
+                   '<td class="ct bd"></td>' if band else "",
                    "".join(cell(v, t, dp, i == len(p["months"]) - 1) for i, v in enumerate(p["months"])),
-                   change(p["months"], dp)))
+                   change(p["months"], dp, "change" in p, p.get("change"))))
     return ('  <table class="hm wide">\n    <thead>\n      <tr>%s</tr>\n    </thead>\n    <tbody>\n%s\n    </tbody>\n  </table>\n'
             % ("".join(head), "\n".join(body)))
 
@@ -304,7 +314,8 @@ def fill_slots(s, D):
     s = sub_one(s, r'<p class="prepared">.*?</p>', '<p class="prepared">%s</p>' % m["prepared"], "prepared by")
     for label, key in (("Month", "month"), ("Sites", "sites"), ("Author", "author"), ("Issued", "issued")):
         s = sub_one(s, r"<dt>%s</dt><dd>[^<]*</dd>" % label, "<dt>%s</dt><dd>%s</dd>" % (label, esc(str(m[key]))), label)
-    logo = ('<div class="clientlogo"><img src="%s" alt="%s"></div>' % (m["logo"], esc(m["client"]))
+    logo = ('<div class="clientlogo%s"><img src="%s" alt="%s"></div>' % (" tile" if m.get("logo_tile") else "",
+                                                                       m["logo"], esc(m["client"]))
             if m.get("logo") else '<div class="clientlogo"></div>')
     s = sub_one(s, r'<div class="clientlogo">.*?</div>', logo, "client logo slot")
     o = D["overview"]

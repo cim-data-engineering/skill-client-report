@@ -27,7 +27,9 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True             # leave no __pycache__ beside the skill
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.append(str(Path(__file__).resolve().parents[4] / "scripts"))
 from runhours_history import load_rows  # noqa: E402
+import peak_io as io  # noqa: E402
 
 # ---- Tunables ----------------------------------------------------------------
 SLOTS_PER_DAY   = 96     # 15-minute slots
@@ -97,8 +99,7 @@ def slot_readings(rows, window):
     Slots are on the site's wall clock. A slot is ON if the point was on at any
     reading in it; the gap after it holds the slot's last reading.
     """
-    from zoneinfo import ZoneInfo           # stdlib from 3.9; needs the system tz database
-    tz = ZoneInfo(window["timezone"])
+    tz = io.zone(window["timezone"])        # legacy names read as the zone they link to
     monday = date.fromisoformat(window["days"][0]["date"])
     readings = parse_readings(rows)
     resets = collector_resets(readings)
@@ -581,10 +582,8 @@ def note_lines(window, plan, units, notes, resets, max_pass):
     later = [u for u in plan["units"] if u["pull"] and u["pass"] > max_pass]
     if later:
         types = Counter(u["type_name"] for u in later)
-        calls = sum(1 for c in plan["chunks"] if c["pass"] > max_pass)
-        lines.append(f"Not fetched yet: {units_text(len(later))} in {plural(len(types), 'type')} ("
-                     + ", ".join(f"{t} {n}" for t, n in types.items())
-                     + f"), {plural(calls, 'more history call')}. Offer to fetch them.")
+        lines.append(f"Beyond the first pass, not drawn: {units_text(len(later))} in {plural(len(types), 'type')} ("
+                     + ", ".join(f"{t} {n}" for t, n in types.items()) + ").")
     return lines
 
 

@@ -51,12 +51,13 @@ def board(ctx, ranking):
         if "tiles" in ranking:
             r["tile"] = ranking["tiles"].get(key) or {}
         rows.append(r)
-    c = pio.climber(ranked[:SHOWN], moves)
-    if c and "tiles" in ranking:
-        c["tile"] = ranking["tiles"].get(c["key"]) or {}
     b = {"title": ranking["label"], "anchor": ranking.get("anchor"), "window": pio.board_window(ctx, ranking["window"]),
-         "unit": ranking.get("unit"), "rows": rows, "noun": ranking["noun"],
-         "climber": dict(c, name=names[c["key"]], link=links.get(c["key"])) if c else None}
+         "unit": ranking.get("unit"), "rows": rows, "noun": ranking["noun"]}
+    if pio.climbers(ctx):                 # a portfolio of three sites or fewer shows no climber tier
+        c = pio.climber(ranked[:SHOWN], moves)
+        if c and "tiles" in ranking:
+            c["tile"] = ranking["tiles"].get(c["key"]) or {}
+        b["climber"] = dict(c, name=names[c["key"]], link=links.get(c["key"])) if c else None
     return b, len(ranked), shoutout(ranking, ranked[0][1]) if ranked else None
 
 

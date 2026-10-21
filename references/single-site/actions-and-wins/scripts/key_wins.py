@@ -1,32 +1,39 @@
 #!/usr/bin/env python3
 """Key wins: everything about the section but the choosing and the writing.
 
-    python3 references/single-site/actions-and-wins/scripts/key_wins.py digest <response file> [...]
+    python3 references/single-site/actions-and-wins/scripts/key_wins.py digest [<dir>] <response file> [...]
     python3 references/single-site/actions-and-wins/scripts/key_wins.py photos <dir>
 
 The two candidate pulls, closures with comments and open actions with comments, are
 read where they come back and never saved: what people wrote stays out of the
 files. When one comes back offloaded as a file, `digest` prints it screened and
-compact, reading the file where the gateway put it. Once <dir>/wins.json names
-the chosen tickets, scripts/report.py next prints the impact and photo calls, and
-then the level call; `photos` downloads each win's ticket images and tiles them
-into one numbered contact sheet per win; assemble() turns wins.json into the
-bundle's wins at fill time. See references/single-site/actions-and-wins/key-wins.md.
+compact, reading the file where the gateway put it; given the report's <dir> first,
+its dates read in the site's own time and its savings in the site's currency. Once
+<dir>/wins.json names the chosen tickets, scripts/report.py next prints the impact
+and photo calls, and then the level call; `photos` downloads each win's ticket images,
+tiles them into one numbered contact sheet per win and strips the signed links from
+the saved attachments; assemble() turns wins.json into the bundle's wins at fill time.
+See references/single-site/actions-and-wins/key-wins.md.
 """
+import html
 import json
 import os
 import re
 import sys
+import urllib.parse
 import urllib.request
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
 NAME = "key-wins"
 SEVERITY = ["safety", "reliability", "comfort", "energy", "water", "other"]
-AGENT = re.compile(r"^\s*agent\b", re.I)
+SYSTEM_NAMES = {n.lower() for n in io.SYSTEM_ACCOUNTS.values()}
+BULK_RUN, BULK_GAP = 3, 120     # three or more closures, each within two minutes of the one before: a bulk close-out
+SIGNED = ("link", "preview")    # an attachment's signed links, which never stay on disk
 IMAGE = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp"}
 PER_WIN = 16           # images tiled per win; a ticket can carry dozens of uploads
 COMMENT_CHARS = 420
@@ -53,37 +60,77 @@ def calls(ctx):
 
 
 # ── candidates and the digest ───────────────────────────────────────────────
+def person(name):
+    """Whether a comment's author is a person. Comments carry only the author's name, so CIM's
+    system accounts are known by their names in peak_io's list, and agents by the name rule."""
+    name = " ".join((name or "").split())
+    return name.lower() not in SYSTEM_NAMES and not io.system_account(None, None, name)
+
+
 def human(r):
-    return [c for c in r.get("comments") or [] if not AGENT.match(c.get("author_full_name") or "")]
+    return [c for c in r.get("comments") or [] if person(c.get("author_full_name"))]
+
+
+def when(ts):
+    t = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+
+
+def bulk(rows):
+    """Ticket ids closed in a bulk close-out: BULK_RUN or more closures, each within BULK_GAP
+    seconds of the one before."""
+    out, run = set(), []
+    for r in sorted((r for r in rows if r.get("resolved_at")), key=lambda r: when(r["resolved_at"])) + [None]:
+        if r and run and (when(r["resolved_at"]) - when(run[-1]["resolved_at"])).total_seconds() <= BULK_GAP:
+            run.append(r)
+            continue
+        if len(run) >= BULK_RUN:
+            out |= {x.get("ticket_id") for x in run}
+        run = [r] if r else []
+    return out
 
 
 def screen(rows):
     """Drop what needs no reading: closures nobody worked, bulk close-outs, and tickets
-    whose only commenter is an agent. Returns (kept, reasons)."""
-    stamps = Counter(r["resolved_at"][:19] for r in rows if r.get("resolved_at"))
+    whose only commenters are agents or CIM's system accounts. Returns (kept, reasons)."""
+    closed_together = bulk(rows)
     why, keep = Counter(), []
     for r in rows:
         if r.get("resolved_at") and r.get("created_at", "")[:19] == r["resolved_at"][:19]:
             why["created and resolved the same moment"] += 1
-        elif r.get("resolved_at") and stamps[r["resolved_at"][:19]] >= 3:
-            why["bulk close-out, three or more sharing a resolved second"] += 1
+        elif r.get("resolved_at") and r.get("ticket_id") in closed_together:
+            why["bulk close-out, three or more closed each within two minutes of the last"] += 1
         elif not human(r):
-            why["only an agent commented"] += 1
+            why["only an agent or a CIM system account commented"] += 1
         else:
             keep.append(r)
     return keep, why
 
 
-def digest(paths):
-    """A candidate pull that came back as a file, screened and printed compact."""
+def digest(args):
+    """Candidate pulls that came back as files, screened and printed compact. With the report's
+    folder first, dates read in the site's own time and savings carry its currency."""
+    root = args[0] if os.path.isfile(os.path.join(args[0], "plan.json")) else None
+    paths = args[1:] if root else args
+    if not paths:
+        raise SystemExit("usage: key_wins.py digest [<dir>] <response file> [...]")
+    tz, sym = None, ""
+    if root:
+        work = io.Work(root)
+        tz = io.zone(work.ctx["site"]["timezone"])
+        facts = (work.get("overview/site.json").first() or {}) if work.has("overview/site.json") else {}
+        sym = io.currency(facts)[2] if facts.get("monetary_currency") else ""
     rows = [r for p in paths for r in io.read(p).rows]
     keep, why = screen(rows)
-    day = lambda ts: ts[:10] if ts else "?"
+    day = lambda ts: (when(ts).astimezone(tz).date().isoformat() if tz else ts[:10]) if ts else "?"
     print("%d candidates, %d left after screening. Screened out: %s." % (
         len(rows), len(keep), "; ".join("%d %s" % (n, w) for w, n in why.items()) or "nothing"))
+    if not root:
+        print("Dates are UTC. Pass the report's folder first, digest <dir> <file>, for the site's own dates "
+              "and currency.")
     for r in sorted(keep, key=lambda r: -len(human(r))):
         state = ("closed %s" % day(r.get("resolved_at"))) if r.get("resolved_at") else "open"
-        saved = (" · savings %s" % "{:,}".format(round(r["savings"]))) if round(r.get("savings") or 0) else ""
+        saved = (" · savings %s%s" % (sym, "{:,}".format(round(r["savings"])))) if round(r.get("savings") or 0) else ""
         print("\n[%s] %s, raised %s%s · %s" % (r["ticket_id"], state, day(r.get("created_at")), saved,
                                               (r.get("summary") or "").strip()))
         for k in ("description", "solution"):
@@ -106,8 +153,14 @@ def load_wins(work):
     path = os.path.join(work.root, "wins.json")
     if not os.path.isfile(path):
         return None
-    with open(path, encoding="utf-8") as fh:
-        wins = json.load(fh)
+    try:
+        with open(path, encoding="utf-8") as fh:
+            wins = json.load(fh)
+    except ValueError as e:
+        raise SystemExit("wins.json is not valid JSON (%s): write the chosen wins as a list, or [] when none "
+                         "qualified" % e)
+    if not isinstance(wins, list) or not all(isinstance(w, dict) for w in wins):
+        raise SystemExit("wins.json holds a list of wins, one object each, or [] when none qualified")
     for w in wins:
         bad = [t for t in w.get("tickets") or [] if not UUID.match(t)]
         if bad or not w.get("tickets"):
@@ -152,33 +205,83 @@ def fetch(url, dest):
     return dest
 
 
-def photos(root):
-    work = io.Work(root)
-    wins = load_wins(work)
-    if not wins:
-        raise SystemExit("write %s/wins.json first" % root)
-    att = {r["ticket_id"]: r.get("attachments") or [] for r in work.get("kw/attachments.json").rows}
+def links(a):
+    """An attachment's download links, the original first."""
+    return [u for u in ((a.get("link") or {}).get("url"), ((a.get("preview") or {}).get("link") or {}).get("url")) if u]
+
+
+def identity(a):
+    """What tells one attachment from another: its id, else its link without the signature. Never
+    the file name, which screenshots share ("image.png")."""
+    if a.get("attachment_id"):
+        return a["attachment_id"]
+    return urllib.parse.urlsplit(links(a)[0]).path if links(a) else None
+
+
+def picks(wins, att, out_dir):
+    """(download jobs, {win: picks}): each win's image attachments, one copy of each and PER_WIN
+    at most, numbered w<win>-<n> in the order the tickets carry them."""
     jobs, plan = [], {}
-    out_dir = os.path.join(root, "kw", "photos")
-    os.makedirs(out_dir, exist_ok=True)
     for k, w in enumerate(wins, 1):
         seen, n = set(), 0
         for t in w["tickets"]:
             for a in att.get(t, []):
                 ext = IMAGE.get((a.get("mime_type") or "").lower())
-                name = (a.get("file_name") or "").strip().lower()
-                if not ext or name in seen or n >= PER_WIN:
+                key = identity(a)
+                if not ext or key is None or key in seen or n >= PER_WIN:
                     continue
-                seen.add(name)
+                seen.add(key)
                 n += 1
                 pick = "w%d-%d" % (k, n)
-                urls = [u for u in ((a.get("link") or {}).get("url"), ((a.get("preview") or {}).get("link") or {}).get("url")) if u]
-                jobs.append((pick, urls, os.path.join(out_dir, "%s.%s" % (pick, ext))))
+                jobs.append((pick, links(a), os.path.join(out_dir, "%s.%s" % (pick, ext))))
                 plan.setdefault(k, []).append(pick)
+    return jobs, plan
+
+
+def unsign(work):
+    """Rewrite kw/attachments.json without its signed links, which carry security tokens and lapse
+    anyway: each attachment keeps everything else, its id, name and type. Nothing after the photos
+    reads the links."""
+    saved = work.get("kw/attachments.json")
+    rows = [dict(r, attachments=[{k: v for k, v in a.items() if k not in SIGNED} for a in r.get("attachments") or []])
+            for r in saved.rows]
+    out = {"results": rows}
+    if saved.total is not None:
+        out["pagination"] = {"total": saved.total, "has_more": saved.has_more}
+    with open(work.path("kw/attachments.json"), "w", encoding="utf-8") as fh:
+        json.dump(out, fh, ensure_ascii=False)
+
+
+def photos(root):
+    work = io.Work(root)
+    wins = load_wins(work)
+    if wins is None:
+        raise SystemExit("No wins.json in %s yet: choose the wins by key-wins.md and write it, then run python3 "
+                         "scripts/report.py next %s for the impact and photo calls, and photos once they are saved."
+                         % (root, root))
+    if not wins:
+        print("wins.json names no win, so key wins is left out and there are no photos to fetch. Next: python3 "
+              "scripts/report.py fill %s" % root)
+        return
+    if not work.has("kw/attachments.json"):
+        raise SystemExit("kw/attachments.json is not saved yet: run python3 scripts/report.py next %s, make the calls "
+                         "it prints and save them, then run photos straight away." % root)
+    att = {r["ticket_id"]: r.get("attachments") or [] for r in work.get("kw/attachments.json").rows}
+    out_dir = os.path.join(root, "kw", "photos")
+    os.makedirs(out_dir, exist_ok=True)
+    jobs, plan = picks(wins, att, out_dir)
+    nxt = "python3 scripts/report.py next %s" % root
+    again = ("Delete %s, run %s for the photo call again, save it and run photos straight away."
+             % (work.path("kw/attachments.json"), nxt))
 
     if not jobs:
-        print("No win's tickets carry an image, so there are no sheets. Next: python3 scripts/report.py fill %s" % root)
+        unsign(work)
+        print("No win's tickets carry an image, so there are no sheets. Next: %s, which prints the level call if "
+              "one is still due or says there are none; then fill." % nxt)
         return
+    if not any(urls for _, urls, _ in jobs):
+        raise SystemExit("kw/attachments.json holds no photo links: the photos step removes them once it has run, "
+                         "since they are signed. " + again)
 
     def get(job):
         pick, urls, dest = job
@@ -190,18 +293,21 @@ def photos(root):
         return pick, None, err
     with ThreadPoolExecutor(8) as pool:
         got = list(pool.map(get, jobs))
+    unsign(work)                                   # downloaded or lapsed, the signed links leave the disk
     failed = [(p, e) for p, d, e in got if not d]
     if failed and len(failed) == len(got):
-        raise SystemExit("no photo downloaded (%s). The links lapse twenty minutes after the call: make the "
-                         "kw/attachments.json call again, save it, and re-run photos." % failed[0][1])
+        raise SystemExit("No photo downloaded (%s). The links lapse twenty minutes after the call. %s Where they "
+                         "cannot be fetched from where you are running, the wins go out without photos: say so in "
+                         "chat, run %s, then fill." % (failed[0][1], again, nxt))
     sheets = contact_sheets(root, plan, {p: d for p, d, e in got if d})
     print("Downloaded %d of %d images. One sheet per win, each tile numbered with its pick:" % (len(got) - len(failed), len(got)))
     for k, s in sheets:
         print("  win %d (%s): %s" % (k, wins[k - 1].get("heading", "")[:60], s))
     if failed:
-        print("Not downloaded: " + ", ".join(p for p, e in failed))
+        print("Not downloaded: %s. To try them again: %s" % (", ".join(p for p, e in failed), again))
     print("Look at each sheet, then add the picks to that win's photos in wins.json, in story order, e.g. "
-          '"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]. A win with no good photo gets none.')
+          '"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]. A win with no good photo gets none. '
+          "Next: %s, which prints the level call if one is still due or says there are none; then fill." % nxt)
 
 
 def contact_sheets(root, plan, files):
@@ -278,26 +384,24 @@ def assemble(ctx, work, facts):
         if saved and not SAVING.search(w["body"]):
             chat.append("The tickets behind \"%s\" record %s%s in savings, which its text does not mention."
                         % (w["heading"], sym, "{:,}".format(saved)))
-        body = SAVING.sub(r"<strong>\1</strong>", w["body"])
-        win = {"impact": impact, "heading": w["heading"], "body": body,
-               "refs": [{"url": imp[t]["ticket_link"], "title": imp[t].get("title")} for t in w["tickets"]]}
+        # the model's words go in as text, with a saving it marked ** set bold
+        body = SAVING.sub(r"<strong>\1</strong>", html.escape(w["body"], quote=False))
+        titles = Counter((imp[t].get("title") or "").strip() for t in w["tickets"])
+        ref = lambda t: (imp[t].get("title") or "").strip() + (
+            " (raised %s)" % io.day_short(imp[t]["created_at"]) if titles[(imp[t].get("title") or "").strip()] > 1
+            and imp[t].get("created_at") else "")
+        win = {"impact": impact, "heading": html.escape(w["heading"], quote=False), "body": body,
+               "refs": [{"url": imp[t]["ticket_link"], "title": html.escape(ref(t), quote=False)} for t in w["tickets"]]}
         if names:
             win["level"] = names[0] if len(names) == 1 else names
         if pics:
             win["photos"] = pics
-        win["_state"] = w.get("state", "fixed")
         out.append(win)
     out.sort(key=lambda w: 0 if len(w.get("photos", [])) >= 2 else 1 if w.get("photos") else 2)
-    states = [w.pop("_state") for w in out]
-    fixed = all(s == "fixed" for s in states)
     qw = io.whole(ctx, ctx["quarter_months"])
-    q = io.span(qw[0], qw[-1]) + io.and_to_date(ctx, " and ")
     return {"wins": out,
-            "statements": {"Key wins": "What changed in the building this quarter" if fixed
-                           else "What we found and acted on this quarter"},
-            "datelines": {"Key wins": "%s. %s" % (q, "Faults found by continuous monitoring and fixed on the floor."
-                                                      if fixed else "Repairs made this quarter, and faults found by "
-                                                      "continuous monitoring that are still being worked.")},
+            "statements": {"Key wins": "Key wins this quarter"},
+            "datelines": {"Key wins": io.span(qw[0], qw[-1]) + io.and_to_date(ctx, " and ")},
             "chat": chat}
 
 

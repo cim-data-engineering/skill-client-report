@@ -6,16 +6,16 @@ Owns the key wins section. No operational impact row. Scaffold part: `key-wins`.
 
 The choosing and the words. Everything else is the script's: the candidates, the evidence calls, the impact tags, the levels, the ticket links, the order, the statement and date line, the photo downloads and crops.
 
-1. Read the two candidate pulls the plan lists to read, where they come back: the quarter's closures with comments and the open actions with comments, each with its description, solution, savings and comment history. Never save them; they carry what people wrote. One that comes back offloaded as a file prints screened and compact with `key_wins.py digest <that file>`
+1. Read the two candidate pulls the plan lists to read, where they come back: the quarter's closures with comments and the open actions with comments, each with its description, solution, savings and comment history. Never save them; they carry what people wrote. One that comes back offloaded as a file prints screened and compact with `key_wins.py digest report <that file>`, its dates in the site's own time and its savings in the site's currency
 2. Choose by **Selection** below, and write `report/wins.json`, best first:
 
 ```json
-[{"tickets": ["00000000-0000-4000-8000-000000000001"], "state": "fixed", "heading": "...", "body": "..."},
- {"tickets": ["00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003"], "state": "in_flight", "heading": "...", "body": "..."}]
+[{"tickets": ["00000000-0000-4000-8000-000000000001"], "heading": "...", "body": "..."},
+ {"tickets": ["00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003"], "heading": "...", "body": "..."}]
 ```
 
-   `tickets` are full ticket ids, every ticket the win stands on. `state` is `fixed` or `in_flight`, which sets the section's statement and date line. Where the tickets reference a saving, the body states it, per **Display**
-3. `report.py next` prints the impact and photo calls for those tickets. Once they are saved, run `key_wins.py photos report` straight away, since the photo links lapse twenty minutes after the call, then `report.py next` again for the level call
+   `tickets` are full ticket ids, every ticket the win stands on. Where the tickets reference a saving, the body states it, per **Display**
+3. `report.py next` prints the impact and photo calls for those tickets. Once they are saved, run `key_wins.py photos report` straight away, since the photo links lapse twenty minutes after the call, then `report.py next` again: it prints the level call, or says there is none, whether or not any win carried a photo
 4. Look at the one numbered contact sheet per win, choose by **Photos** below, and add the picks to each win: `"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]`. A win with nothing worth showing gets none
 5. After `report.py fill`, look at every tile in `report/tiles/`: a crop can cut off the very detail that earned the photo its place. Adjust `focus` and `zoom` and fill again
 
@@ -23,8 +23,8 @@ This is the section the facility manager reads first and the one they forward to
 
 ## Key wins
 
-Statement: "What we found and acted on this quarter". Where every win is a finished repair, "What changed in the building this quarter" is better.
-Date: the quarter
+Statement: "Key wins this quarter", whether the wins are finished repairs or work still in flight.
+Date: the quarter's dates, and nothing else
 
 **Voice:**
 
@@ -50,7 +50,7 @@ Either way it needs a comment history showing a person engaged with it. Exclude 
 - The impact is the one its linked action tickets carry, never one you read off the story. A win about a chiller that plainly saves energy is tagged `reliability` if that is what the tickets say. The engineer who worked the ticket set that field, and the report has no standing to overrule it
 - Where a win links several tickets whose impacts differ, take the most severe: `safety`, then `reliability`, `comfort`, `energy`, `water`, `other`. Never merge two into a compound tag, and never show two tags on one win
 - Where the tickets carry no impact at all, or carry `other`, tag it `Other` rather than picking the one that would look best. Then say so in chat — name the ticket and its title — so the user can set the impact in PEAK and re-run. Fixing the ticket fixes every report that reads it; guessing here fixes nothing and puts a claim on the page the ticket does not support
-- Say where it stands. A win in flight is written as in flight: what was found, who has it, what happens next. The date line under the section heading follows the wins too, so do not leave a line promising everything was fixed when some of it is still open
+- Say where it stands. A win in flight is written as in flight: what was found, who has it, what happens next
 - Two to three sentences: what was wrong, what was changed, why it matters
 - Where any of the win's tickets reference a saving, in the savings field, the description, the solution or a comment, state it, and wrap the figure in `**` to set it bold: "…closed by 24 June, with an estimated saving of **$6,800**." Give it in the site's currency, rounded sensibly and summed across the win's tickets, with a period only where the ticket gives one. On a win in flight it is the expected saving. Where the savings field holds a figure the text leaves out, `report.py fill` says so in chat
 - Lead with the building outcome: comfort, reliability, energy, tenant experience
@@ -89,15 +89,15 @@ This is a client deliverable, so the section carries wins or it does not appear.
 | Fixed | In the main batch, read and not saved: `tickets.tickets` `status_id:6`, `has_comments:true`, resolved inside the quarter, with `summary`, `description`, `solution`, `savings`, `equipment_ids` and `comments` (`limit:8`, `user_only:true`) inline |
 | In flight | In the main batch, read and not saved: the same, `status_ids:[1,3,7]`, no date bound |
 | Impact, link, title | Once `wins.json` exists: one `search_action_tickets` on the wins' tickets, reading `impacts`, `savings`, `ticket_link`, `title` and `equipment_ids` |
-| Photos | In the same batch: one `tickets.tickets` on the wins' tickets selecting `attachments.attachment_id`, `file_name`, `mime_type`, `preview.link.url` and `link.url` |
+| Photos | In the same batch: one `tickets.tickets` on the wins' tickets selecting `attachments.attachment_id`, `file_name`, `mime_type`, `preview.link.url` and `link.url`. The links are signed, so the photos step strips them from the saved file once it has run |
 | Level | Once the impact rows are saved: one `platform.equipment` on their `equipment_ids`, selecting `zone.level.level_name` and `zone.level.system` |
 
 The candidate pulls are the only responses the report reads without saving. Every saved response holds counts, scores, ids and type, level or company names: what people wrote on a ticket never goes into a file, and never needs writing out again.
 
 Key wins runs its own closed pull because it wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, and holding to the quarter cuts it again, leaving a set small enough to carry its comments inline.
 
-Some patterns need no reading, and the digest screens them out when it is used: a closure created and resolved the same moment, nobody worked it; three or more sharing a resolved second, a bulk cleanup; a ticket whose only commenter is an agent. Two more patterns are left to you, since only the comments show them: closures summarised as still in fault, and alerts closed by stopping or tuning a rule.
+Some patterns need no reading, and the digest screens them out when it is used: a closure created and resolved the same moment, nobody worked it; three or more closed each within two minutes of the last, a bulk cleanup; a ticket whose only commenters are agents or CIM's system accounts (CIM Support, the CIM API logins). Two more patterns are left to you, since only the comments show them: closures summarised as still in fault, and alerts closed by stopping or tuning a rule.
 
 `impacts` comes back as a list, sometimes `[]`: a ticket with an empty list has no impact set, which is the `Other` case in **Display**, and `report.py fill` names each such ticket for you to say in chat. A level with `system:true` is PEAK's placeholder, `__SYSTEM__`, not a place, so that equipment gets no line.
 
-`key_wins.py photos` keeps the image attachments, one copy per file name and sixteen per win, downloads the originals in parallel and tiles them into `report/kw/sheet-w<n>.jpg`, each tile labelled with its pick and the original's size. The links are signed and lapse twenty minutes after the call: if the photos step reports them lapsed, make the photo call again and re-run it. Where they cannot be fetched from where you are running, the wins go out without photos; say so in chat. `fill_report.py` turns each photo upright, crops it to its tile around `focus` (fractions across and down the frame) and `zoom` (that many times tighter), shrinks and re-encodes it, which also drops the original's EXIF block, GPS position included. A photo reaches the report only through the script.
+`key_wins.py photos` keeps the image attachments, one copy of each by its attachment id (never by file name, which screenshots share) and sixteen per win, downloads the originals in parallel and tiles them into `report/kw/sheet-w<n>.jpg`, each tile labelled with its pick and the original's size. It then rewrites `kw/attachments.json` without the signed links, keeping each attachment's id, name and type, so no security token stays on disk. The links lapse twenty minutes after the call: if the photos step reports them lapsed, or a re-run finds them stripped, it says how to make the photo call again. Where they cannot be fetched from where you are running, the wins go out without photos; say so in chat. `fill_report.py` turns each photo upright, crops it to its tile around `focus` (fractions across and down the frame) and `zoom` (that many times tighter), shrinks and re-encodes it, which also drops the original's EXIF block, GPS position included. A photo reaches the report only through the script.

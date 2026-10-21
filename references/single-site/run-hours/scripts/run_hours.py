@@ -69,7 +69,7 @@ def window(ctx, peak, rel, monday=None):
     for paging. The latest full week unless `monday` names an earlier one."""
     rh = os.path.join(peak, rel)
     os.makedirs(rh, exist_ok=True)
-    args = ["window", ctx["site_file"], rh, "--today", ctx["today"]]
+    args = ["window", ctx["site_file"], rh, "--site-id", str(ctx["site"]["site_id"]), "--today", ctx["today"]]
     if monday:
         args += ["--week-of", monday]
     if ctx.get("hours"):
@@ -310,7 +310,9 @@ def build(ctx, work, shared):
         chat.append("Run hours draws %s with its gap hatched: the site's data stopped at %s, and the full week "
                     "before that falls outside the reporting period." % (latest, stop))
     if later:
-        chat.append("Run hours draws the first pass of 100 units; %d more units are not drawn." % len(later))
+        drawn = sum(len(g["rows"]) for p in agg["pages"] for g in p["groups"])
+        chat.append("Run hours draws %d units. Its first pass holds up to 100 and takes each type whole, so the %d "
+                    "beyond it are not drawn; the report makes no later pass." % (drawn, len(later)))
     return {
         "run_hours": {"html": render(agg)},
         "datelines": {"Equipment run hours":

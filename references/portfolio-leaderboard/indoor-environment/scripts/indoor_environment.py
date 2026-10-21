@@ -44,9 +44,10 @@ def build(ctx, work, shared):
     scores = defaultdict(dict)
     for r in pio.rows(work, "ie/site-month.json", PAGE):
         scores[r["site_id"]][month_of(r)] = r["score"] * 100
-    levels = defaultdict(set)
+    levels, units = defaultdict(set), {}
     for r in pio.rows(work, "ie/level-all.json", PAGE):
         levels[r["site_id"]].add(r["level_id"])
+        units.setdefault(r["site_id"], r.get("unit"))
     points = {}
     for r in pio.rows(work, "ie/zones-by-level.json"):
         points[r["level_id"]] = (r["site_id"], r.get("included_point_count") or 0)
@@ -60,6 +61,7 @@ def build(ctx, work, shared):
         return {"drop": [NAME]}
 
     sids = [s["site_id"] for s in scored]
+    pio.shown(shared, sids)
     shared["thermal_zones"] = sum(zones(sid) for sid in sids)
     now = {sid: months(sid)[-1] for sid in sids}           # the leaderboard month
     start = {sid: months(sid)[-2] for sid in sids}         # the month last month's board ranked
@@ -71,17 +73,24 @@ def build(ctx, work, shared):
     link = lambda sid: ("%s/indoor-environment/thermal-comfort?summary_site_id=%s&summary_ts=%s&site_ids=%s"
                         "&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
                         % (host, sid, qm[-1], sid, ctx["quarter"][0], ctx["through"]))
-    rows = [{"rank": k, "name": s["site_name"].strip(), "state": pio.state(s), "link": link(s["site_id"]),
+    # each site's comfort band as its default in PEAK sets it, in the site's own unit
+    unit_t = lambda sid: units.get(sid) or ("°F" if io.in_feet((shared["facts"].get(sid) or {}).get("country")) else "°C")
+    t_units = {unit_t(s["site_id"]) for s in scored}
+    rows = [{"rank": k, "name": s["site_name"].strip(), "state": pio.region(ctx, s), "link": link(s["site_id"]),
              "size": pio.num(size[s["site_id"]]),
              "counts": ["{:,}".format(len(levels[s["site_id"]])), "{:,}".format(zones(s["site_id"]))],
+             "band": band_text(shared["facts"].get(s["site_id"]) or {}, unit_t(s["site_id"]) if len(t_units) > 1 else None),
              "months": months(s["site_id"])} for k, s in order]
-    portfolio = [pio.weighted({sid: scores[sid].get(m[:7]) for sid in sids}, size) for m in qm]
+    portfolio, change, left = pio.portfolio_months({sid: scores[sid] for sid in sids}, [m[:7] for m in qm])
     shown_size = [size[sid] for sid in sids if size[sid]]
     heat = {"unit": unit, "dp": 1, "bands": BANDS, "counts": ["Levels", "Zones"], "rows": rows,
+            "band_unit": t_units.pop() if len(t_units) == 1 else "",
             "portfolio": {"size": pio.num(sum(shown_size)) if shown_size else "-",
                           "counts": ["{:,}".format(sum(len(levels[sid]) for sid in sids)),
                                      "{:,}".format(shared["thermal_zones"])],
-                          "months": portfolio}}
+                          "months": portfolio, "change": change}}
+    if not any(r["band"] for r in rows):
+        heat.pop("band_unit")
     shared.setdefault("rankings", []).append({"label": "Thermal comfort", "anchor": ANCHOR, "window": "month",
                                               "now": now, "start": start, "dp": 1, "unit": "%"})
 
@@ -89,10 +98,23 @@ def build(ctx, work, shared):
     if missing:
         chat.append("No thermal comfort score from %s to %s for %s: left out of the thermal comfort table and "
                     "ranking." % (io.month(qm[0]), io.month(qm[-1]), io.listing(missing)))
+    note = ("%s. Share of zone readings inside the site's comfort band in PEAK during working hours; the "
+            "portfolio row averages the sites." % pio.reporting_period(ctx))
+    if left and len(sids) - len(left) > 0:
+        note += " Its Chg compares the %s scored in both %s and %s." % (
+            pio.site_count(len(sids) - len(left)), io.month(qm[0]), io.month(qm[-1]))
     return {
         "comfort": heat,
-        "datelines": {"Indoor environment health snapshot":
-                      "%s. Share of zone readings inside the ASHRAE comfort band during working hours."
-                      % pio.reporting_period(ctx)},
+        "datelines": {"Indoor environment health snapshot": note},
         "chat": chat,
     }
+
+
+def band_text(fact, unit=None):
+    """'21-24.9': the site's default comfort band in PEAK, its unit added where the table's sites differ;
+    None where PEAK holds no band."""
+    lo, hi = fact.get("thermal_comfort_min_temp"), fact.get("thermal_comfort_max_temp")
+    if lo is None or hi is None:
+        return None
+    num = lambda v: ("%.1f" % v).rstrip("0").rstrip(".")
+    return "%s-%s%s" % (num(lo), num(hi), " %s" % unit if unit else "")

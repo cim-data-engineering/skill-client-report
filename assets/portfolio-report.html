@@ -14,6 +14,8 @@
 /* Masthead: the client logo slot, right of the title block. Empty and invisible unless the user supplied a logo */
 .clientlogo{flex:none;width:168px;height:72px;display:flex;align-items:center;justify-content:flex-end}
 .clientlogo svg,.clientlogo img{max-width:100%;max-height:100%}
+/* a dark logo sits on a light tile, so it never vanishes into the navy */
+.clientlogo.tile img{box-sizing:border-box;padding:8px 12px;border-radius:6px;background:#fff}
 
 /* Site names: the state follows in brackets, muted; long names wrap inside a fixed row height */
 .rg{font-weight:400;color:var(--text-muted);white-space:nowrap}
@@ -60,7 +62,7 @@ section.lead{padding:28px 56px 24px}
 .leader .rkmark .mv{display:block;margin-top:5px}
 .leader .who{grid-column:2;grid-row:1 / span 2;align-self:center;max-width:none}
 .leader .lname{grid-column:-3 / -1;font-family:var(--display);font-size:1.125rem;font-weight:600;line-height:1.25;color:var(--text-heading)}
-.leader .lmeta{grid-column:-3;align-self:end;padding-bottom:3px;font-size:.75rem;color:var(--text-muted)}
+.leader .lmeta{grid-column:-3;align-self:end;padding-bottom:3px;font-size:.75rem;color:var(--text-muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .leader .lval{grid-column:-2;align-self:end;justify-self:end;padding-left:8px;font-family:var(--display);font-size:2rem;font-weight:700;line-height:1;letter-spacing:-.02em;color:var(--text-heading);font-variant-numeric:tabular-nums;white-space:nowrap}
 .leader .lval span{margin-left:3px;font-family:var(--sans);font-size:.9375rem;font-weight:500;letter-spacing:0;color:var(--text-muted)}
 .rkcol a .chev{color:var(--primary)}
@@ -71,6 +73,7 @@ section.lead{padding:28px 56px 24px}
 .climb .clab{grid-column:2 / -1;margin:0;font-size:.75rem;font-weight:500;color:var(--text-muted)}
 .climb .cwho{grid-column:2;margin:0;font-family:var(--display);font-size:.9375rem;font-weight:600;line-height:1.3;color:var(--text-heading)}
 .climb .cwho a{color:var(--text-heading)}
+.climb .cwho.none{font-family:var(--sans);font-size:.8125rem;font-weight:500;color:var(--text-muted)}
 .climb.co{grid-template-columns:24px 50px 1fr auto}
 .climb.co .cwho{grid-column:3}
 .climb .clogo{grid-column:2;grid-row:2;align-self:center}
@@ -87,7 +90,7 @@ table.rk td.mvc{text-align:right}
 table.rk td.pv{padding-right:0;text-align:right;font-variant-numeric:tabular-nums;color:var(--text-body)}
 .mv{font-size:.6875rem;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .mv.up{color:var(--on-success-container)}
-.mv.down{color:var(--on-error-container)}
+.mv.down{color:var(--text-muted)}         /* a place lost reads quietly: only a climb takes colour */
 .mv.new{color:var(--text-muted);font-weight:500}
 /* team boards: a company logo beside the climber and each name in the pack, wide enough for a wordmark, in a soft
    neutral grey that darkens a pale mark and lifts an off-white ground to white, so the colour sits with the leader's
@@ -121,7 +124,12 @@ table.op .agebar span{flex:none;height:100%;margin-right:2px;border-radius:2px}
 table.op td.ct{padding-right:0;text-align:right;font-weight:600;color:var(--text-heading);font-variant-numeric:tabular-nums}
 table.op .tlogo img{filter:grayscale(1) brightness(.8) contrast(2) opacity(.75)}
 /* names never take more than two lines, so every row keeps its height however long a name is */
-table.rk td.lv a,.leader .lname,.climb .cwho,table.hm.wide td.lv a,table.nbt td.lv a{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+table.rk td.lv a,.leader .lname,.climb .cwho,table.nbt td.lv a{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+table.hm.wide td.lv a{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+/* each site's comfort band: wide enough for "21-24.9", its unit under the heading */
+table.hm.wide th.ct.bd{width:10%;white-space:normal;line-height:1.3}
+table.hm.wide th.bd .u{display:block}
+table.hm.wide td.bd{white-space:nowrap}
 @media screen and (max-width:760px){.rkgrid,.rkgrid.n2{grid-template-columns:1fr;row-gap:0}.rkcol{margin-bottom:32px}.sechead:has(> .shout){display:block}.shout{margin-top:14px}}
 /* a leaderboard never splits across pages, whatever paper or margins the browser prints with */
 section.lead,.rkcol{break-inside:avoid}
@@ -167,7 +175,11 @@ td.nb.none{color:var(--text-muted)}
   section.overview.strip{padding:14px 56px}
   .strip .stat{padding:10px 14px}
   .strip .stat .k{margin-bottom:4px}
-  section.lead{padding:18px 56px 0;border-bottom:0;break-inside:avoid;break-after:page}
+  section.lead{padding:48px 56px 0;border-bottom:0;break-inside:avoid;break-after:page}
+  /* only page one's leaderboard tightens to fit under the masthead; page two's opens like every other page */
+  section.lead.sites{padding-top:18px}
+  /* a long ranked table runs on to the next page under its repeated header rather than leaving a gap */
+  table.hm.wide,table.nbt{break-inside:auto}
   .rkgrid{break-inside:avoid}
   /* the boards stay side by side in print */
   .rkgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -215,7 +227,7 @@ td.nb.none{color:var(--text-muted)}
 </section>
 
 <!-- part: site-leaderboard -->
-<section class="lead">
+<section class="lead sites">
   <div class="sechead">
     <p class="eyebrow">August 2026</p>
     <h2>Site leaderboard</h2>
@@ -405,7 +417,7 @@ td.nb.none{color:var(--text-muted)}
 <section>
   <div class="sechead">
     <p class="eyebrow">Key wins</p>
-    <h2>What was found and acted on in the last 90 days</h2>
+    <h2>Key wins past 90 days</h2>
     <p class="h2note">18 June - 15 September 2026.</p>
   </div>
 <!-- fill: wins -->
@@ -455,7 +467,7 @@ td.nb.none{color:var(--text-muted)}
     </tbody>
   </table>
 <!-- /fill: ratings -->
-  <p class="chartsource">Source: sustainability ratings recorded in PEAK. The portfolio row is weighted by building size.</p>
+  <p class="chartsource">Source: sustainability ratings recorded in PEAK. The portfolio row is weighted by building size over the sites with a current rating, and shows where two or more sites hold one.</p>
 </section>
 
 <!-- part: close -->

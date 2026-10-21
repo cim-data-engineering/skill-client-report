@@ -2,7 +2,7 @@
 """Plan a run-hours pull: which week, which points, and in what order.
 
 Usage:
-    python3 runhours_plan.py window <site.json> <workdir> [--week-of YYYY-MM-DD] [--include LT,...]
+    python3 runhours_plan.py window <site.json> <workdir> [--site-id N] [--week-of YYYY-MM-DD] [--include LT,...]
                                     [--hours "Mon-Fri 08:00-18:00, Sat 09:00-13:00"]
     python3 runhours_plan.py plan <workdir> <discovery.json> [more.json ...] [--census census.json ...] [--cap N]
     python3 runhours_plan.py calls <workdir> [--pass 2]
@@ -11,7 +11,8 @@ Usage:
 window  Reads the saved search_sites result (timezone and working hours), fixes
         the last full Monday-to-Sunday week in site local time, writes
         <workdir>/window.json and prints the discovery and census calls to make.
-        --hours assesses against the user's hours instead of the site's.
+        --site-id picks the site where the search returned several, --hours
+        assesses against the user's hours instead of the site's.
 plan    Sorts every discovered point with the rules in
         references/single-site/run-hours/run-hours-signals.md, picks each unit's
         candidate points, orders the units for the view, splits them into a
@@ -36,7 +37,9 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True             # leave no __pycache__ beside the skill
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.append(str(Path(__file__).resolve().parents[4] / "scripts"))
 from runhours_history import read_page, read_results  # noqa: E402
+import peak_io as io  # noqa: E402
 
 SIGNALS = Path(__file__).resolve().parent.parent / "run-hours-signals.md"
 
@@ -242,14 +245,18 @@ class Rules:
 
 
 # ---- window ------------------------------------------------------------------
-def load_site(path):
+def load_site(path, site_id=None):
+    """The site's search_sites row: the one --site-id names, else the first."""
     try:
         rows = read_results(path)
-        site = rows[0] if rows else None
     except ValueError:
-        site = json.loads(Path(path).read_text())
+        rows = [json.loads(Path(path).read_text())]
+    if site_id is not None:
+        rows = [r for r in rows if isinstance(r, dict) and str(r.get("site_id")) == str(site_id)]
+    site = rows[0] if rows else None
     if not isinstance(site, dict) or "timezone" not in site:
-        sys.exit(f"{path}: expected the search_sites result for one site, with timezone")
+        sys.exit(f"{path}: expected the search_sites result for "
+                 f"{'site %s' % site_id if site_id is not None else 'one site'}, with timezone")
     return site
 
 
@@ -312,9 +319,8 @@ def week_label(days):
 
 
 def cmd_window(args):
-    from zoneinfo import ZoneInfo           # stdlib from 3.9; needs the system tz database
-    site = load_site(args.site)
-    tz = ZoneInfo(site["timezone"])
+    site = load_site(args.site, args.site_id)
+    tz = io.zone(site["timezone"])          # legacy names read as the zone they link to
     work = Path(args.workdir)
     work.mkdir(parents=True, exist_ok=True)
 
@@ -722,7 +728,6 @@ def cmd_calls(args):
 
 def cmd_last(args):
     """When the site last reported before the week: the newest reading of the points the plan probed."""
-    from zoneinfo import ZoneInfo           # stdlib from 3.9; needs the system tz database
     work = Path(args.workdir)
     window = json.loads((work / "window.json").read_text())
     probe = {str(p["fav_id"]): p for p in json.loads((work / "plan.json").read_text()).get("probe") or []}
@@ -737,7 +742,7 @@ def cmd_last(args):
         return
     newest = max(rows, key=lambda r: datetime.fromisoformat(str(r["ts"]).replace("Z", "+00:00")))
     local = datetime.fromisoformat(str(newest["ts"]).replace("Z", "+00:00")).astimezone(
-        ZoneInfo(window["timezone"]))
+        io.zone(window["timezone"]))
     p = probe[str(newest["fav_id"])]
     when = f"{local:%a} {local.day} {local:%b %Y %H:%M} {local.tzname()}"
     (work / "last.json").write_text(json.dumps({"local": local.isoformat(), "text": when,
@@ -753,6 +758,7 @@ def main(argv):
     w = sub.add_parser("window", help="fix the week and print the discovery calls")
     w.add_argument("site", help="saved search_sites result for the site")
     w.add_argument("workdir")
+    w.add_argument("--site-id", type=int, help="the site to plan, where the search returned several")
     w.add_argument("--week-of", help="any date in the Monday-to-Sunday week to show")
     w.add_argument("--include", help="never-charted type codes the user asked for, e.g. LT")
     w.add_argument("--hours", help='the user\'s working hours, e.g. "Mon-Fri 08:00-18:00, Sat 09:00-13:00"; '
