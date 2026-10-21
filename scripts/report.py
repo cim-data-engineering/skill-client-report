@@ -3,12 +3,16 @@
 PEAK calls and picks and writes the key wins.
 
     python3 scripts/report.py plan   <dir> --site <dir>/site.json --author "Full Name" [--sections ...]
+    python3 scripts/report.py plan   <dir> --sites <dir>/sites.json [...] --client "Name" --author "Full Name"
+                                     [--client-logo <file>] [--site-ids ...]
     python3 scripts/report.py next   <dir>
     python3 scripts/report.py bundle <dir>
     python3 scripts/report.py fill   <dir> [--out <file.html>]
 
 plan    Fixes the quarter from today in site time and prints every call the chosen
         sections need, each with the file under <dir>/peak/ its response is saved as.
+        --site plans the single-site report; --sites plans the portfolio report over
+        the active sites in those search_sites pages, with every section.
 next    Checks every printed call was saved, then prints the follow-up calls the
         responses call for (paging, a single-level site's zones, run hours history,
         key win evidence once wins.json exists), or says there are none.
@@ -17,12 +21,14 @@ bundle  Builds every figure, row, series, link and note into <dir>/data.json, an
 fill    Merges <dir>/wins.json into the bundle, fills the report and runs the
         check.
 
-Each section is a folder under references/ holding its reference and its
-scripts; MODULES below is the whole registry. A module exposes calls(ctx),
-more(ctx, work) and build(ctx, work, shared).
+Each section is a folder under references/<mode>/ holding its reference and its
+scripts; MODES below is the whole registry, one entry per report. A module exposes
+calls(ctx), more(ctx, work) and build(ctx, work, shared). plan.json names the mode,
+and one without a mode is single-site.
 """
 import argparse
 import importlib
+import importlib.util
 import json
 import os
 import re
@@ -54,16 +60,47 @@ ORDER = ["sustainability-ratings", "equipment-health", "indoor-environment", "al
 # when the site has nothing to show.
 AUTO = ["sustainability-ratings"]
 
+# The portfolio report: every section, no prompt. Each drops itself when PEAK has nothing
+# for it. The leaderboard and the overview build last, from the figures the sections
+# leave in `shared`.
+PORTFOLIO_MODULES = {"overview": ("portfolio-leaderboard/overview", "overview"),
+                     "site-leaderboard": ("portfolio-leaderboard/site-leaderboard", "site_leaderboard"),
+                     "equipment-health": ("portfolio-leaderboard/equipment-health", "equipment_health"),
+                     "indoor-environment": ("portfolio-leaderboard/indoor-environment", "indoor_environment"),
+                     "actions-by-company": ("portfolio-leaderboard/actions-and-wins", "actions_by_company"),
+                     "key-wins": ("portfolio-leaderboard/actions-and-wins", "key_wins"),
+                     "sustainability-ratings": ("portfolio-leaderboard/sustainability-ratings",
+                                                "sustainability_ratings")}
+PORTFOLIO_ORDER = ["equipment-health", "indoor-environment", "actions-by-company", "key-wins",
+                   "sustainability-ratings", "site-leaderboard", "overview"]
+MODES = {"single-site": {"options": OPTIONS, "modules": MODULES, "order": ORDER, "auto": AUTO},
+         "portfolio": {"options": {}, "modules": PORTFOLIO_MODULES, "order": PORTFOLIO_ORDER,
+                       "auto": PORTFOLIO_ORDER}}
 
-def module(section):
-    folder, name = MODULES[section]
+
+def mode_of(ctx):
+    return ctx.get("mode", "single-site")
+
+
+def module(section, mode="single-site"):
+    folder, name = MODES[mode]["modules"][section]
     path = os.path.join(ROOT, "references", folder, "scripts")
+    if mode != "single-site":
+        # loaded by path under a name of its own, so no module of the other mode can shadow it
+        key = "%s_%s" % (mode, name)
+        if key not in sys.modules:
+            spec = importlib.util.spec_from_file_location(key, os.path.join(path, name + ".py"))
+            sys.modules[key] = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(sys.modules[key])
+        return sys.modules[key]
     if path not in sys.path:
         sys.path.insert(0, path)
     return importlib.import_module(name)
 
 
 def active(ctx):
+    if mode_of(ctx) == "portfolio":
+        return list(PORTFOLIO_ORDER)
     return ["overview"] + [s for s in ORDER if s in ctx["sections"]]
 
 
@@ -85,8 +122,17 @@ READ_RULE = ("Read these where they come back and never save them: they carry wh
              "screened and compact with: python3 references/single-site/actions-and-wins/scripts/key_wins.py digest <that file>")
 
 
+PORTFOLIO_READ_RULE = ("Read these where they come back and never save them: they carry what people wrote on "
+                       "the tickets, and the files hold none of that. A pull whose pagination says has_more is read "
+                       "on with the same call at the next start_index. One that comes back offloaded as a file prints "
+                       "screened and compact, each candidate with its site, with: python3 "
+                       "references/portfolio-leaderboard/actions-and-wins/scripts/key_wins.py digest <dir> <that file>")
+
+
 # ── plan ────────────────────────────────────────────────────────────────────
 def cmd_plan(a):
+    if a.sites:
+        return plan_portfolio(a)
     site_rows = io.read(a.site).rows
     if a.site_id:
         site_rows = [r for r in site_rows if r.get("site_id") == a.site_id]
@@ -129,6 +175,50 @@ def cmd_plan(a):
         show(read, len(save) + 1)
 
 
+def plan_portfolio(a):
+    import portfolio_io as pio
+    sites, seen = [], set()
+    for r in [r for f in a.sites for r in io.read(f).rows]:
+        sid = r.get("site_id")
+        if sid in seen or r.get("is_active") is False or (a.site_ids and sid not in a.site_ids):
+            continue
+        seen.add(sid)
+        sites.append({k: r.get(k) for k in ("site_id", "site_name", "state", "country", "city", "timezone",
+                                             "site_link")})
+    if not sites:
+        sys.exit("%s holds no active site%s" % (", ".join(a.sites), " among --site-ids" if a.site_ids else ""))
+    if len(sites) == 1:
+        sys.exit("%s holds one active site, %s: build the single-site report for it, planned with --site"
+                 % (", ".join(a.sites), sites[0]["site_name"].strip()))
+    logo = os.path.abspath(a.client_logo) if a.client_logo else None
+    if logo and not os.path.isfile(logo):
+        sys.exit("client logo not found: %s" % a.client_logo)
+    from zoneinfo import ZoneInfo
+    today = io.d(a.today) if a.today else datetime.now(ZoneInfo(sites[0]["timezone"])).date()
+    root = os.path.abspath(a.dir)
+    os.makedirs(os.path.join(root, "peak"), exist_ok=True)
+    ctx = dict(io.windows(today), mode="portfolio", sites=sites, client=a.client.strip(), client_logo=logo,
+               author=a.author, sections=list(PORTFOLIO_ORDER), dir=root, brand=brand())
+    ctx["prev_quarter"] = pio.prev_quarter(ctx)
+    with open(os.path.join(root, "plan.json"), "w") as fh:
+        json.dump(ctx, fh, indent=1)
+    calls = [c for s in active(ctx) for c in module(s, "portfolio").calls(ctx)]
+    with open(os.path.join(root, "calls.json"), "w") as fh:
+        json.dump(calls, fh, indent=1)
+    save = [c for c in calls if not c.get("read")]
+    read = [c for c in calls if c.get("read")]
+    print("%s portfolio: %d sites, quarter %s, issued %s%s." % (
+        ctx["client"], len(sites), pio.reporting_period(ctx, True), io.day_short(ctx["today"]),
+        io.and_to_date(ctx, "; both windows close on ")))
+    print("Sections: every one with data. Each site's dates are its own local calendar.")
+    print("\n%d calls. Make them all in one parallel batch, each exactly as printed: the tool, then its "
+          "arguments. %s Then run: python3 scripts/report.py next %s\n" % (len(calls), save_rule(a.dir), a.dir))
+    show(save, 1)
+    if read:
+        print("\nIn the same batch, %d to read: the key win candidates. %s\n" % (len(read), PORTFOLIO_READ_RULE))
+        show(read, len(save) + 1)
+
+
 def brand():
     """BRAND.md's identity: name / service-name replace the masthead's CIM defaults."""
     path = os.path.join(ROOT, "BRAND.md")
@@ -147,12 +237,14 @@ def cmd_next(a):
     missing = [c["file"] for c in calls if not c.get("read") and not work.has(c["file"])]
     if missing:
         sys.exit("Not saved yet: %s. %s" % (", ".join(missing), save_rule(a.dir)))
-    new = [c for s in active(work.ctx) for c in module(s).more(work.ctx, work)]
+    mode = mode_of(work.ctx)
+    new = [c for s in active(work.ctx) for c in module(s, mode).more(work.ctx, work)]
     if not new:
+        folder = "portfolio-leaderboard" if mode == "portfolio" else "single-site"
         print("No more calls. Next: python3 scripts/report.py bundle %s" % a.dir
               if not os.path.isfile(os.path.join(work.root, "wins.json"))
               else "No more calls. Next, if any win could carry photos: python3 "
-                   "references/single-site/actions-and-wins/scripts/key_wins.py photos %s; then fill." % a.dir)
+                   "references/%s/actions-and-wins/scripts/key_wins.py photos %s; then fill." % (folder, a.dir))
         return
     have = {c["file"] for c in calls}
     calls += [c for c in new if c["file"] not in have]
@@ -177,6 +269,8 @@ def merge(into, part):
 def cmd_bundle(a):
     work = io.Work(a.dir)
     ctx = work.ctx
+    if mode_of(ctx) == "portfolio":
+        return bundle_portfolio(a, work)
     shared = {"site_facts": work.get("overview/site.json").first() or {}}
     data = {}
     for s in [s for s in ORDER if s in ctx["sections"]] + ["overview"]:
@@ -202,10 +296,33 @@ def cmd_bundle(a):
         print("Next: python3 scripts/report.py fill %s" % a.dir)
 
 
+def bundle_portfolio(a, work):
+    ctx = work.ctx
+    shared = {"facts": module("overview", "portfolio").facts(ctx, work)}
+    data = {}
+    for s in PORTFOLIO_ORDER:
+        merge(data, module(s, "portfolio").build(ctx, work, shared))
+    data["sections"] = ",".join(s for s in PORTFOLIO_ORDER if s != "overview" and s not in data.get("drop", []))
+    data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]], "to_date": bool(ctx["to_date"])}
+    with open(os.path.join(work.root, "data.json"), "w") as fh:
+        json.dump(data, fh, indent=1, ensure_ascii=False)
+    print("Wrote %s/data.json." % a.dir)
+    for c in data.get("chat", []):
+        print("Say in chat at hand-over: " + c)
+    if "key-wins" not in data.get("drop", []):
+        print("Next: choose the key wins from the candidate pulls and write %s/wins.json, both by "
+              "references/portfolio-leaderboard/actions-and-wins/key-wins.md. Then run: python3 scripts/report.py "
+              "next %s" % (a.dir, a.dir))
+    else:
+        print("Next: python3 scripts/report.py fill %s" % a.dir)
+
+
 # ── fill ────────────────────────────────────────────────────────────────────
 def cmd_fill(a):
     work = io.Work(a.dir)
     ctx = work.ctx
+    if mode_of(ctx) == "portfolio":
+        return fill_portfolio(a, work)
     with open(os.path.join(work.root, "data.json"), encoding="utf-8") as fh:
         data = json.load(fh)
     sections = data["sections"].split(",")
@@ -244,13 +361,58 @@ def cmd_fill(a):
         sys.exit(r.returncode)
 
 
+def fill_portfolio(a, work):
+    ctx = work.ctx
+    with open(os.path.join(work.root, "data.json"), encoding="utf-8") as fh:
+        data = json.load(fh)
+    sections = [s for s in data["sections"].split(",") if s]
+    chat = []
+    if "key-wins" in sections:
+        kw = module("key-wins", "portfolio")
+        got = kw.load_wins(work)
+        if not got:
+            sections.remove("key-wins")
+            chat.append("Key wins left out: no win qualified. Say what you read and rejected, per key-wins.md.")
+        else:
+            merge(data, kw.assemble(ctx, work))
+    data["sections"] = ",".join(sections)
+    chat = data.pop("chat", []) + chat
+    data.pop("drop", None)
+    final = os.path.join(work.root, "report-data.json")
+    with open(final, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=1, ensure_ascii=False)
+    name = re.sub(r"[^a-z0-9]+", "-", ctx["client"].lower()).strip("-") or "portfolio"
+    last = io.d(io.whole(ctx, ctx["quarter_months"])[-1])     # the quarter's last complete month names the file
+    out = a.out or os.path.join(work.root, "%s-portfolio-q%d-%d.html" % (name, (last.month - 1) // 3 + 1, last.year))
+    tiles = os.path.join(work.root, "tiles")
+    r = subprocess.run([sys.executable, os.path.join(HERE, "fill_portfolio.py"), final, "--out", out,
+                        "--photos-out", tiles], capture_output=True, text=True)
+    print((r.stdout + r.stderr).strip())
+    if r.returncode:
+        sys.exit(r.returncode)
+    r = subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "check", out, "--mode", "portfolio"],
+                       capture_output=True, text=True)
+    print((r.stdout + r.stderr).strip())
+    if any(os.scandir(tiles)) if os.path.isdir(tiles) else False:
+        print("Photo tiles exactly as printed: %s" % tiles)
+    for c in chat:
+        print("Say in chat: " + c)
+    if r.returncode:
+        sys.exit(r.returncode)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("plan")
     p.add_argument("dir")
-    p.add_argument("--site", required=True, help="the saved search_sites response")
+    which = p.add_mutually_exclusive_group(required=True)
+    which.add_argument("--site", help="the saved search_sites response: the single-site report")
+    which.add_argument("--sites", nargs="+", help="the saved search_sites pages: the portfolio report")
     p.add_argument("--site-id", type=int)
+    p.add_argument("--client", help="portfolio: the name the report carries")
+    p.add_argument("--client-logo", help="portfolio: a logo file the user supplied")
+    p.add_argument("--site-ids", type=int, nargs="+", help="portfolio: only these of the saved sites")
     p.add_argument("--author", required=True, help="who_am_i's user_name")
     p.add_argument("--sections", help="comma-separated: %s, or all (default)" % ", ".join(OPTIONS))
     p.add_argument("--today", help="issue date, YYYY-MM-DD in site time (default: today)")
@@ -265,6 +427,8 @@ def main():
     f.add_argument("--out")
     f.set_defaults(func=cmd_fill)
     a = ap.parse_args()
+    if a.cmd == "plan" and a.sites and not a.client:
+        ap.error("--sites needs --client")
     a.func(a)
 
 
