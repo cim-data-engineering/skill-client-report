@@ -17,14 +17,14 @@ The row carries a movement, not a baseline: the reporting period's last month mi
 | Rating chip | Metric label                                 | Value                          | Subtitle                                         |
 | ----------- | -------------------------------------------- | ------------------------------ | ------------------------------------------------ |
 | Continuous  | x automated equipment health checks ran 24/7 | Total executions over the quarter | Averaging x monthly checks across y scored rules |
-| Modelled    | $x labor cost avoided                        | See the labor cost model below | x hours and y.y working days of inspection time  |
+| Modelled    | $x labor cost avoided                        | The monthly figures Chart 2 draws for the reporting period, added up | x hours and y.y working days of inspection time  |
 
 Section link, labelled "See live equipment health dashboard", over the quarter. Bundle slot `equipment_health`:
 `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
 ## Labor cost avoided model
 
-Unique rules scored (by priority) over the quarter x annual mins saved per rule x (days in window / 365) x labor cost per minute. Assumed labor rates based on site region: USD 100/hr, AUD 150/hr, NZD 150/hr, GBP 75/hr, CAD 150/hr, EUR 100/hr.
+Each month: rules scored that month (by priority) x annual mins saved per rule x (the month's days / 365) x labor cost per minute, the month to date over its days so far. The headline is those monthly figures added up over the reporting period, so it always equals the bars Chart 2 draws for the same months. Labor rates and the working day come from the site's currency and country (`peak_io.currency`, `peak_io.working_day`): AUD 150/hr, USD 100/hr, GBP 75/hr, EUR 100/hr and so on; a 7.6-hour day unless the country keeps another (8 in the US, 7.5 in the UK, 7.8 in Ireland). The note names both.
 
 | Priority | Annual checks | Mins per check | Annual mins saved per rule | Labor cost per hour ($US) | Annual cost saved per rule ($US) |
 | -------- | ------------- | -------------- | -------------------------- | ------------------------- | -------------------------------- |
@@ -33,7 +33,7 @@ Unique rules scored (by priority) over the quarter x annual mins saved per rule 
 | P3       | 12            | 1.00           | 12.0                       | $100                      | $30.00                           |
 | P4-5     | 4             | 1.00           | 4.0                        | $100                      | $10.00                           |
 
-Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the days monitored in the period.
+Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the days monitored in the period: a site that went live inside the window is priced only over the months it was monitored in full, never the days before it went live.
 
 ## Equipment score benchmark
 
@@ -102,6 +102,17 @@ Under it, a chart note carrying the labor cost avoided notes item word for word,
 - Source link on Chart 1, over the 6 month window the chart draws. Bundle slot `trend_eh`
 - `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{trend_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 
+## Newly onboarded sites
+
+The rules are SKILL.md's, [Newly onboarded sites](../../../SKILL.md#newly-onboarded-sites); the script applies them.
+
+- **Go-live**: a site whose `site` × `month` series starts after the trend window's first month went live in its first scored month. The day is read from that month's checks per rule against the next scored month's pace per rule and day; a month that ran at nine tenths of that pace or more ran from the 1st
+- **Windows**: the go-live month is dropped unless it ran from the 1st or nothing follows it, so both windows start with the first month monitored in full. The heatmap, both charts, the impact rows and the date lines all take the trimmed months, and the section hands on that first month and the go-live date for the masthead
+- **Headline score**: PEAK's quarter rollup would still hold the go-live days, so `next` asks for `site` × `all` from the first kept month (`eh/site-all-live.json`)
+- **One month**: the score with no movement ("Scored over September."), and no Chg column, the rows lowest score first
+- **Fewer than three points**: Chart 1 is left out and the section's title becomes "The trend so far"; Chart 2 stays
+- **Outage or coverage change**: a month whose rule count is under half the count of the months either side (or of the one month beside it, at either end of the window), or that scored none, is an outage, said in chat. A rule count that moves by half again or more from one month to the next and stays is a coverage change, said in chat on its own line, never as an outage
+
 ## Notes band items
 
 - **Labor cost avoided.** The model above, with the region's rate named
@@ -117,10 +128,11 @@ All in the main batch. Type names come from `platform.metadata_types`, selecting
 | `equipment`          | `all`              | quarter  | the Equipment count, distinct equipment per type |
 | `site`               | `month`            | 6 months | snapshot site row (the quarter's months), Chart 1 (all) |
 | `site`               | `all`              | quarter  | the headline score in the operational impact row |
-| `priority`           | `all`              | quarter  | the checks and labor cost rows                   |
-| `priority`           | `month`            | 6 months | Chart 2 bars                                     |
+| `priority`           | `all`              | quarter  | the scored rules count in the checks row         |
+| `priority`           | `month`            | 6 months | Chart 2 bars, and the checks and labor cost rows, summed over the reporting period |
+| `site`               | `all`              | from the first month kept | follow-up for a site that went live inside the quarter: its headline score |
 
 - `local_end_date` is exclusive, so the scripts pass the first of the month after the window's last month, the month to date included, which then holds whatever exists so far. A mid-month bound is refused for scanning too many rows
 - The type rows carry rules but no equipment count, and PEAK does not group by `metadata_type` and `equipment` together, so the Equipment column counts distinct `equipment_id` per type off the `equipment` rows, which return their type
-- Executions sum across priorities for the checks total, and the per-priority split drives the labor model, each month priced over its own days in Chart 2
+- Executions sum across priorities for the checks total, and the per-priority split drives the labor model, each month priced over its own days; the checks and labor cost rows add up the same monthly figures Chart 2 draws
 - Distinct equipment and rule counts come from an `all` call, never by summing months: it counts distinct across the whole window, so it is legitimately higher than any single month. Scores never sum, and the site row is its own rollup

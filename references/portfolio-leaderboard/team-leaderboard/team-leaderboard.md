@@ -24,21 +24,21 @@ One board per team ranking, in the order the rankings come. Each is a small rank
 
 **Ranking:**
 
-- Most first on the figure. Equal figures split alphabetically by name, ignoring case. No shared places, and no note explaining a tie
+- Most first on the figure. Equal figures split alphabetically by name, ignoring case, so no two share a place, and no note explains a tie. A climb that comes from that order stands
 - A company or person with no figure now is not on that board
 - Last month's board ranks every company or person with a figure on the window it ranked, whether or not they are on the board now. Movement is the place there less the place now. One with no figure there shows "New"
 
-**Each board** reads in three steps, the leader first:
+**Each board** reads in three steps, the leader first. In a portfolio of three sites or fewer no board carries the climber, on this leaderboard or the site leaderboard, and the pack follows the leader:
 
-1. **Leader**: rank 1, its row set large. The trophy and the movement in the rank column, the company's logo in its tile and in its own colours, the name, then the meta line the ranking gives its leader with the value and unit: "4 sites" for a company, "Kestrel Air Services · 2 sites" for a person
-2. **Biggest climber**: the one challenger, the row under the leader: "Biggest climber", the company logo, the name and "↑{places} to {place now}", "↑2 to 10th". It is the largest climb among ranks 2 to 10, so it is never the leader and always on the board. Those tied on the climb go to the one placed highest. With no climber, the row shows a dash
+1. **Leader**: rank 1, its row set large. The trophy and the movement in the rank column, the company's logo in its tile and in its own colours, the name, then the meta line the ranking gives its leader with the value and unit: the busiest site and "+ {N} sites" for the rest for a company, "Allendale Square + 3 sites"; the company, then the same, for a person, "Kestrel Air Services · 88 Walker St". The meta line clamps to two lines
+2. **Biggest climber**: the one challenger, the row under the leader: "Biggest climber", the company logo, the name and "↑{places} to {place now}", "↑2 to 10th". It is the largest climb among ranks 2 to 10, so it is never the leader and always on the board. Those tied on the climb go to the one placed highest. Where no one below the leader climbed, the row reads "None", muted
 3. **Chasing pack**: ranks 2 to 10, each with rank, company logo, name, movement and value, a step smaller
 
 **Display:**
 
 - Every name sits beside its company's logo, so the reader knows whose crew a person is in: a company's own logo, a person's company's. Only the leader's is in colour; the climber's and the pack's are grey. A company without a logo gets its initials; a person with no company, an empty space
 - Every tier shares the rank and logo columns, so the leader's name, the climber's and the pack's all start on one line
-- Movement: "↑N" in green, "↓N" in red, nothing when a company or person holds its place
+- Movement: "↑N" in green, "↓N" muted, nothing when a company or person holds its place. A place lost reads quietly; only a climb takes colour
 - Names clamp to two lines. The tiers sit level across the boards, whichever names take two lines
 - The boards sit side by side. A board renders when its ranking holds anyone, and fewer boards take the width the missing ones leave
 
@@ -55,10 +55,10 @@ A button beside the title, "Send Mara a shoutout", thanking the leader of the fi
 `https://airtable.com/app11XTZy9PtGOZwf/shrwYEpydoRJ62FzK?prefill_assignee_shoutout_name={{email}}&prefill_assignee_shoutout_site={{site_name}}&prefill_comment=Nice%20job%21`
 
 - The email is the leader's, and goes in the link only, never in the page's text
-- A leader with no shoutout gets no button
+- A leader with no shoutout gets no button: one whose first name and email PEAK could not return
 
 ## Data
 
 No calls of its own. **Takes:**
 
-- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, and for people each one's first name, email and busiest site for the shoutout
+- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, and for people the leader's first name, email and busiest site for the shoutout. Who ranks is the ranking's to decide, not this section's

@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: any leader with no bui
 
 Eyebrow: the leaderboard month, "September 2026"  
 Statement: Site leaderboard  
-Date line: "Each board ranks the sites on one measure, with moves since {the month before}.", then with more than 10 sites "Top 10 of {N} sites on each board.", N being the sites in the report.
+Date line: "Each board ranks the sites on one measure, with moves since {the month before}.", then, where a board ranks more than 10, "Top 10 of {N} sites on each board.", N being the sites the boards rank, a range "Top 10 of 34 to 35 sites on each board." where the boards differ. A site with no figure on a board is not counted on it.
 
 ## Boards
 
@@ -24,23 +24,23 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 
 **Ranking:**
 
-- Best first on the unrounded value. Equal values split alphabetically by site name, ignoring case. No shared places, and no note explaining a tie
+- Best first on the value rounded to 2 decimal places, one more than the board prints. Equal values split alphabetically by site name, ignoring case, so no two sites share a place, and no note explains a tie. A climb that comes from that order stands
 - A site with no figure now is not on that board
 - Last month's board ranks every site with a figure on the window it ranked, whether or not the site is on the board now. Movement is the site's place there less its place now. A site with no figure there shows "New"
 
-**Each board** reads in three steps, the leader first:
+**Each board** reads in three steps, the leader first. In a portfolio of three sites or fewer a climb is mostly two sites swapping places, so no board carries the climber, on this leaderboard or the team leaderboard, and the pack follows the leader:
 
-1. **Leader**: rank 1, its row set large under the building's photo, cropped to a wide band. The trophy and the movement in the rank column, the site name, then "{state} · {building size}" with the value and unit. A leader with no photo in PEAK gets a plain panel with a building mark, and the script names it in chat
-2. **Biggest climber**: the one challenger, the row under the leader: "Biggest climber", the site name, and "↑{places} to {place now}", "↑2 to 5th". It is the largest climb among ranks 2 to 10, so it is never the leader and always on the board. Sites tied on the climb go to the one placed highest. With no climber, the row shows a dash
+1. **Leader**: rank 1, its row set large under the building's photo, cropped to a wide band. The trophy and the movement in the rank column, the site name, then "{region} · {building size}" with the value and unit, the region label per [How sections fit together](../../../SKILL.md#how-sections-fit-together) and either part left off where it is empty: "NSW · 18,400 m²". A leader with no photo in PEAK gets a plain panel with a building mark, and the script names it in chat
+2. **Biggest climber**: the one challenger, the row under the leader: "Biggest climber", the site name, and "↑{places} to {place now}", "↑2 to 5th". It is the largest climb among ranks 2 to 10, so it is never the leader and always on the board. Sites tied on the climb go to the one placed highest. Where no one below the leader climbed, the row reads "None", muted
 3. **Chasing pack**: ranks 2 to 10, each with rank, site name, movement and value, a step smaller
 
 **Display:**
 
 - Every tier shares the rank column, so the leader's name, its meta line, the climber and the pack's names all start on one line
-- Movement: "↑N" in green, "↓N" in red, nothing when a site holds its place
+- Movement: "↑N" in green, "↓N" muted, nothing when a site holds its place. A place lost reads quietly; only a climb takes colour
 - Names clamp to two lines. The tiers sit level across the boards, whichever names take two lines
 - Up to three boards side by side. A board renders when its ranking holds a site, and fewer boards take the width the missing ones leave
-- The site label on a board is the name alone; the state moves to the leader's meta line
+- The site label on a board is the name alone; the region moves to the leader's meta line
 
 **Links:**
 
@@ -54,4 +54,4 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 No PEAK calls of its own. The script fetches each leader's photo once from its link, crops it to the band and embeds it as a JPEG. **Takes:**
 
 - **Rankings**: each a label, an anchor or each site's PEAK report, a window (month or quarter), its unit, each site's figure now and on the window last month's board ranked, and the decimals to show
-- **Site facts**: each leader's state, building size and building photo link
+- **Site facts**: each leader's state, country, building size and building photo link

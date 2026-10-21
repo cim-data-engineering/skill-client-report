@@ -111,35 +111,34 @@ def set_links(s, links):
 # ── heatmaps ────────────────────────────────────────────────────────────────
 def heatmap(d, months, to_date=False):
     """A month to date closes the columns: its header says so, and its cells band like the
-    rest, since a score is a rate over whatever days exist."""
+    rest, since a score is a rate over whatever days exist. A section that trims its window
+    for a newly onboarded site hands on its own months; with one month there is no change
+    to show, so the Chg column goes. A month with no score is a dash, the site row's too."""
+    months, to_date = d.get("months", months), d.get("to_date", to_date)
     dp, t, counts = d["dp"], d["bands"], d.get("counts", [])
+    moves = len(months) > 1
     head = ['        <th class="lv">%s</th>' % d["label"]]
     head += ['        <th class="ct">%s</th>' % c for c in counts]
     head += ['        <th class="mo">%s%s</th>' % (m, "<em>to date</em>" if to_date and i == len(months) - 1 else "")
              for i, m in enumerate(months)]
-    head += ['        <th class="cg">Chg</th>']
+    head += ['        <th class="cg">Chg</th>'] if moves else []
+    cell = lambda v, now: ('<td class="c none">&mdash;</td>' if v is None else
+                           '<td class="c %s%s">%.*f</td>' % (band(v, t), " now" if now else "", dp, v))
+    delta = lambda mo: ('<td class="cg">%s</td>' % ('<span class="chg flat">&mdash;</span>' if None in (mo[0], mo[-1])
+                                                     else chg(mo[-1] - mo[0], dp))) if moves else ""
     body = []
     for r in d["rows"]:
         cells = "".join('<td class="ct">%s</td>' % (f"{v:,}" if isinstance(v, int) else v)
                         for v in r.get("counts", []))
         mo = r["months"]
-        cells += "".join(
-            '<td class="c none">&mdash;</td>' if v is None else
-            '<td class="c %s%s">%.*f</td>' % (band(v, t), " now" if i == len(mo) - 1 else "", dp, v)
-            for i, v in enumerate(mo))
+        cells += "".join(cell(v, i == len(mo) - 1) for i, v in enumerate(mo))
         link = ('<a href="%s">%s &rsaquo;</a>' % (href(r["link"]), r["name"])) if r.get("link") else r["name"]
-        delta = ('<span class="chg flat">&mdash;</span>' if None in (mo[0], mo[-1])
-                 else chg(mo[-1] - mo[0], dp))
-        body.append('      <tr><td class="lv">%s</td>%s<td class="cg">%s</td></tr>'
-                    % (link, cells, delta))
+        body.append('      <tr><td class="lv">%s</td>%s%s</tr>' % (link, cells, delta(mo)))
     sr = d["site"]
-    cells = "".join('<td class="ct">%s</td>' % f"{v:,}" for v in sr.get("counts", []))
+    cells = "".join('<td class="ct">%s</td>' % (f"{v:,}" if isinstance(v, int) else v) for v in sr.get("counts", []))
     mo = sr["months"]
-    cells += "".join('<td class="c %s%s">%.*f</td>'
-                     % (band(v, t), " now" if i == len(mo) - 1 else "", dp, v)
-                     for i, v in enumerate(mo))
-    body.append('      <tr class="total"><td class="lv">Site</td>%s<td class="cg">%s</td></tr>'
-                % (cells, chg(mo[-1] - mo[0], dp)))
+    cells += "".join(cell(v, i == len(mo) - 1) for i, v in enumerate(mo))
+    body.append('      <tr class="total"><td class="lv">Site</td>%s%s</tr>' % (cells, delta(mo)))
     return ('<table class="hm">\n    <thead>\n      <tr>\n' + "\n".join(head)
             + '\n      </tr>\n    </thead>\n    <tbody>\n' + "\n".join(body)
             + '\n    </tbody>\n  </table>')
@@ -159,31 +158,70 @@ def to_date_marks(months, to_date):
     return band, sub
 
 
+def chart_months(d, months, to_date):
+    """The months a chart draws and its values over them. A section that trims its window for a
+    newly onboarded site hands on its own months, its values one per month and None where a
+    month returned nothing. A series handed on without months holds the window's latest months."""
+    v = list(d["values"])
+    if "months" in d:
+        return d["months"], d.get("to_date", to_date), v
+    return months, to_date, [None] * (len(months) - len(v)) + v
+
+
+def text_w(t):
+    """About how wide a value label prints, in px: the face is sans at 11px, semibold."""
+    return sum(3.2 if ch in ".,:" else 9.6 if ch in "MW" else 6.6 for ch in t)
+
+
 def line_chart(d, months, to_date=False):
-    """Y range spans the data and whichever thresholds are drawn, plus padding. A month to
-    date closes the line dashed, on an open point: its score can still move."""
-    v, th, dp = d["values"], d["thresholds"], d["dp"]
-    lo, hi = min(v + [t[0] for t in th]), max(v + [t[0] for t in th])
+    """Y range spans the data and whichever thresholds are drawn, plus padding. Each point sits
+    over its own month, and a month with no score leaves a gap in the line. A month to date
+    closes the line dashed, on an open point: its score can still move."""
+    months, to_date, v = chart_months(d, months, to_date)
+    th, dp = d["thresholds"], d["dp"]
+    C = xs(len(months))
+    vals = [val for val in v if val is not None]
+    lo, hi = min(vals + [t[0] for t in th]), max(vals + [t[0] for t in th])
     pad = max((hi - lo) * 0.18, 0.15)
     lo, hi = lo - pad, hi + pad
     top, bot = 50.0, 190.0
     y = lambda val: top + (hi - val) * (bot - top) / (hi - lo)
+    pts = [(C[i], val, i) for i, val in enumerate(v) if val is not None]
+    # runs of consecutive months holding a score: the line joins each run's points
+    runs, run = [], []
+    for x, val, i in pts:
+        if run and run[-1][2] != i - 1:
+            runs.append(run)
+            run = []
+        run.append((x, val, i))
+    runs.append(run)
     out = []
     # Value labels sit above or below each point; a threshold label takes the first of
-    # four places (left or right end, above or below its line) that no value label covers.
+    # four places (left or right end, above or below its line) that no value label, point
+    # or stretch of the line covers, else the first such place further along its line.
     boxes = []
-    for x, val in zip(xs(len(v)), v):
+    for x, val, _ in pts:
         ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
         w = 6.2 * len("%.*f%%" % (dp, val))
         boxes.append((x - w / 2 - 3, ly - 10, x + w / 2 + 3, ly + 3))
         boxes.append((x - 6, y(val) - 6, x + 6, y(val) + 6))
+    segs = [(p[0], y(p[1]), q[0], y(q[1])) for r in runs for p, q in zip(r, r[1:])]
+    def crosses(x0, y0, x1, y1):
+        for ax, ay, bx, by in segs:
+            n = max(int(abs(bx - ax) / 2), 1)
+            if any(x0 - 6 <= ax + (bx - ax) * k / n <= x1 + 6 and y0 - 3 <= ay + (by - ay) * k / n <= y1 + 3
+                   for k in range(n + 1)):
+                return True
+        return False
     def clear(x0, y0, x1, y1):
-        return all(x1 < a or x0 > c or y1 < b or y0 > e for a, b, c, e in boxes)
+        return all(x1 < a or x0 > c or y1 < b or y0 > e for a, b, c, e in boxes) and not crosses(x0, y0, x1, y1)
     for tv, tlabel in th:
         text, ty = "%s threshold" % tlabel, y(tv)
         w = 6.0 * len(text)          # the axis face is mono at 10px: 6px a character
-        for x, yy, anchor in ((44, ty - 8, "start"), (44, ty + 14, "start"),
-                              (RIGHT - 4, ty - 8, "end"), (RIGHT - 4, ty + 14, "end")):
+        # the ends of the line first; where the series covers both, the first clear place along it
+        slide = [(x, yy, "start") for x in range(66, int(RIGHT - 4 - w), 22) for yy in (ty - 8, ty + 14)]
+        for x, yy, anchor in [(44, ty - 8, "start"), (44, ty + 14, "start"),
+                              (RIGHT - 4, ty - 8, "end"), (RIGHT - 4, ty + 14, "end")] + slide:
             x0 = x if anchor == "start" else x - w
             if clear(x0, yy - 9, x0 + w, yy + 2):
                 break
@@ -195,26 +233,31 @@ def line_chart(d, months, to_date=False):
                    '<text class="axis" x="4" y="%.1f">%.1f</text>'
                    % (LEFT, y(tv), RIGHT, y(tv), y(tv) + 3, tv))
     out.append('        <line class="baseline" x1="%d" y1="%d" x2="%d" y2="%d"/>' % (LEFT, BASELINE, RIGHT, BASELINE))
-    pts = ["%d,%.1f" % (x, y(val)) for x, val in zip(xs(len(v)), v)]
-    part = to_date and len(v) == len(months) and len(v) > 1
-    out.append('        <polyline class="series-line" points="%s"/>' % " ".join(pts[:-1] if part else pts))
-    if part:
-        out.append('        <polyline class="series-line todate-line" points="%s"/>' % " ".join(pts[-2:]))
+    last = len(v) - 1
+    part = to_date and v[last] is not None and len(pts) > 1
+    for r in runs:
+        xy = ["%d,%.1f" % (x, y(val)) for x, val, _ in r]
+        dash = part and r[-1][2] == last and len(r) > 1
+        if len(xy) - dash > 1:
+            out.append('        <polyline class="series-line" points="%s"/>' % " ".join(xy[:-1] if dash else xy))
+        if dash:
+            out.append('        <polyline class="series-line todate-line" points="%s"/>' % " ".join(xy[-2:]))
     out += ['        <circle cx="%d" cy="%.1f" r="4.5" class="%s"/>'
-            % (x, y(val), "pt todate-pt" if part and i == len(v) - 1 else "pt")
-            for i, (x, val) in enumerate(zip(xs(len(v)), v))]
-    for x, val in zip(xs(len(v)), v):
+            % (x, y(val), "pt todate-pt" if part and i == last else "pt") for x, val, i in pts]
+    for x, val, _ in pts:
         ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
         out.append('        <text class="val" x="%d" y="%.1f" text-anchor="middle">%.*f%%</text>' % (x, ly, dp, val))
     out += ['        <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m)
-            for x, m in zip(xs(len(months)), months)]
-    band, sub = to_date_marks(months, to_date and len(v) == len(months))
+            for x, m in zip(C, months)]
+    band, sub = to_date_marks(months, to_date)
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n      </svg>'
             % (d["alt"], "\n".join(band + out + sub)))
 
 
 def grouped_bar(d, months, to_date=False):
-    """A month to date sits in a tinted column: its bars count only the days so far."""
+    """A month to date sits in a tinted column: its bars count only the days so far. A section
+    that trims its window hands on its own months, one bar pair for each."""
+    months, to_date = d.get("months", months), d.get("to_date", to_date)
     a, b = d["a"], d["b"]
     # Compact labels keep long values from colliding; the bundle may supply its own.
     la = d.get("labels_a") or [d.get("fmt_a", "%s") % v for v in a]
@@ -241,14 +284,37 @@ def grouped_bar(d, months, to_date=False):
     for k in range(len(months)):
         ta = BASELINE - (a[k] / amax) * H
         tb = BASELINE - (b[k] / bmax) * H
+        xa, xb = C[k] - w / 2 - 3, C[k] + w / 2 + 3
+        # Two labels side by side at one height read as one figure ("1.97M$7.4k"), so a pair
+        # that would sit closer than a clear gap moves apart, each away from the other.
+        gap = (xb - xa) - (text_w(la[k]) + text_w(lb[k])) / 2
+        if gap < 6 and abs(ta - tb) < 12:
+            xa, xb = xa - (6 - gap) / 2, xb + (6 - gap) / 2
         out.append('      <text class="val" x="%d" y="%.1f" text-anchor="middle">%s</text>'
                    '<text class="val" x="%d" y="%.1f" text-anchor="middle">%s</text>'
-                   % (C[k] - w / 2 - 3, ta - 8, la[k], C[k] + w / 2 + 3, tb - 8, lb[k]))
+                   % (xa, ta - 8, la[k], xb, tb - 8, lb[k]))
     out += ['      <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m)
             for x, m in zip(xs(len(months)), months)]
     band, sub = to_date_marks(months, to_date)
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n    </svg>'
             % (d["alt"], "\n".join(band + out + sub)))
+
+
+def drop_chart(s, title):
+    """Delete the chart block a title heads, for a trend too short to draw, and its section
+    with it once no chart is left there."""
+    i = s.index('<h3 class="charttitle">%s' % title)
+    start = s.rindex("\n", 0, s.rindex('<div class="chartblock">', 0, i)) + 1
+    sec0 = s.rindex("<section", 0, start)
+    sec1 = s.index("</section>", i)
+    nxt = s.find('<div class="chartblock">', i, sec1)
+    stop = s.rindex("\n", 0, nxt) + 1 if nxt != -1 else s.rindex("\n", 0, sec1) + 1
+    s = s[:start] + s[stop:]
+    s = re.sub(r"\n[ \t]*\n(?:[ \t]*\n)+", "\n\n", s)
+    sec1 = s.index("</section>", sec0) + len("</section>")
+    if '<div class="chartblock">' not in s[sec0:sec1]:
+        s = s[:s.rindex("\n", 0, sec0) + 1] + s[sec1:].lstrip("\n")
+    return s
 
 
 # ── sustainability ratings ──────────────────────────────────────────────────
@@ -358,7 +424,8 @@ def photo_row(photos, base, out=None, name="win"):
     crops to 3:2 so its row keeps the height of three squares; one, three or
     four crop square. No caption: the win's text explains its photos, and a
     caption would be one more claim to get wrong. With `out`, each tile is also
-    saved there as <name>-<n>.jpg, exactly as embedded, to be looked at."""
+    saved there exactly as embedded, to be looked at: as <name>-<n>.jpg, or with
+    no name under its own photo's name, so a tile keeps its pick's number (w2-1.jpg)."""
     pair = len(photos) == 2
     figs = []
     for n, p in enumerate(photos, 1):
@@ -366,7 +433,8 @@ def photo_row(photos, base, out=None, name="win"):
         src = p["src"] if os.path.isabs(p["src"]) else os.path.join(base, p["src"])
         jpg = photo_jpeg(src, 1.5 if pair else 1.0, p.get("focus"), p.get("zoom", 1))
         if out:
-            open(os.path.join(out, "%s-%d.jpg" % (name, n)), "wb").write(jpg)
+            tile = "%s-%d" % (name, n) if name else os.path.splitext(os.path.basename(p["src"]))[0]
+            open(os.path.join(out, tile + ".jpg"), "wb").write(jpg)
         figs.append('<figure><img src="data:image/jpeg;base64,%s" alt="Photo from the action ticket"></figure>'
                     % base64.b64encode(jpg).decode())
     return '<div class="photos%s">%s</div>' % (" pair" if pair else "", "".join(figs))
@@ -512,6 +580,9 @@ def main():
         if key not in D:
             continue
         c = D[key]
+        if c is None:                     # a trend too short to draw: the section left it out
+            s = drop_chart(s, anchor)
+            continue
         svg = (line_chart(c, months["trend"], to_date) if kind == "line"
                else grouped_bar(c, months["trend"], to_date))
         s = swap_svg(s, anchor, svg)
@@ -562,7 +633,7 @@ def main():
     if "wins" in D:
         base = os.path.dirname(os.path.abspath(a.data))   # photo paths are relative to the bundle
         blocks = []
-        for wn, w in enumerate(D["wins"], 1):
+        for w in D["wins"]:
             photos = w.get("photos") or []
             if len(photos) > MAX_PHOTOS:
                 sys.exit("fill: %d photos on %r — %d at most (references/single-site/actions-and-wins/key-wins.md)"
@@ -584,13 +655,13 @@ def main():
                 b += pad + '<p class="where"><span class="k">%s</span>%s</p>\n' % (
                     "Levels" if len(lv) > 1 else "Level", ", ".join(lv))
             if photos and not side:
-                b += pad + photo_row(photos, base, a.photos_out, "win%d" % wn) + "\n"
+                b += pad + photo_row(photos, base, a.photos_out, name=None) + "\n"
             b += pad + '<p>%s</p>\n' % w["body"]
             b += pad + '<p class="refs">' + " &middot; ".join(
                 '<a href="%s">%s</a>' % (href(r["url"]), r["title"]) for r in w["refs"]) + '</p>\n'
             if side:
                 b = ('  <div class="win compact">\n    %s\n    <div class="wtext">\n%s    </div>\n  </div>'
-                     % (photo_row(photos, base, a.photos_out, "win%d" % wn), b))
+                     % (photo_row(photos, base, a.photos_out, name=None), b))
             else:
                 b = '  <div class="win">\n' + b + '  </div>'
             blocks.append(b)
