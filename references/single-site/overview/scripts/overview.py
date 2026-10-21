@@ -4,8 +4,8 @@ impact and notes frames. See references/single-site/overview/overview.md.
 
 Imported by scripts/report.py, which hands each section module the same three
 hooks: calls() before the fetch, more() for any follow-up round, build() to turn
-the saved responses into the bundle. This one builds last, so it can take the
-thermal zones figure off the indoor environment site row when that section is in.
+the saved responses into the bundle. It takes the thermal zones figure from `shared`
+when a section hands one on, so it builds after the sections.
 """
 import os
 import sys
@@ -14,7 +14,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 
 NAME = "overview"
-SYSTEM_TYPES = [21, 37, 69, 70, 87, 105, 114]     # the platform checking itself, not plant
 
 
 def calls(ctx):
@@ -27,10 +26,10 @@ def calls(ctx):
         io.call("overview/sensors.json", "search_favourites", site_ids=[sid], limit=1),
         io.call("overview/equipment.json", "search_equipment", site_ids=[sid], limit=1),
         io.call("overview/equipment-system.json", "search_equipment", site_ids=[sid],
-                metadata_type_ids=SYSTEM_TYPES, limit=1),
+                metadata_type_ids=io.SYSTEM_TYPES, limit=1),
     ]
-    if "indoor-environment" not in ctx["sections"]:
-        # Thermal zones is the snapshot's site row: points on the levels that scored.
+    if "thermal_zones" not in ctx["handed_on"]:
+        # With no section handing thermal zones on, the overview counts them: points on the levels that scored.
         out += [io.call("overview/zones-by-level.json", "count_indoor_environment_zones",
                         metric="temperature", site_ids=[sid], aggregate_entity="level"),
                 io.call("overview/levels-scored.json", "search_indoor_environment", metric="temperature",
@@ -40,7 +39,7 @@ def calls(ctx):
 
 
 def more(ctx, work):
-    if "indoor-environment" not in ctx["sections"] and work.has("overview/levels-scored.json"):
+    if "thermal_zones" not in ctx["handed_on"] and work.has("overview/levels-scored.json"):
         r = work.get("overview/levels-scored.json")
         if r.has_more:
             return [dict(c, file="overview/levels-scored-80.json", args=dict(c["args"], start_index=80))
@@ -71,7 +70,7 @@ def build(ctx, work, shared):
     unit = "ft²" if (site.get("country") or "").lower() in ("united states", "usa", "us") else "m²"
     brand = ctx.get("brand") or {}
     shared["site_facts"] = facts
-    window = reporting_window(ctx)
+    window = reporting_window(ctx, shared.get("partial"))
     return {
         "masthead": {
             "site_name": name,
@@ -97,15 +96,10 @@ def build(ctx, work, shared):
     }
 
 
-def reporting_window(ctx):
-    secs = ctx["sections"]
-    volume = []
-    if "equipment-health" in secs:
-        volume += ["automated checks", "labour cost avoided"]
-    if "alerts-resolved" in secs:
-        volume += ["action counts"]
+def reporting_window(ctx, volume):
+    """volume: the partial figures handed on, None when no section shows the month to date."""
     m = ctx["to_date"]
-    if not m or not set(secs) & {"equipment-health", "indoor-environment", "alerts-resolved"}:
+    if not m or volume is None:
         return ""
     full = (io.add_months(io.d(m), 1) - io.d(m)).days
     text = "%s %d covers %d of %d days, to the issue date. " % (io.month(m), io.d(m).year, io.days_in(ctx, m), full)

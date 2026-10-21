@@ -2,7 +2,7 @@
 
 Owns the sustainability ratings section: a card per NABERS measure and each measure's rating history. No operational impact row and no notes band item. Scaffold part: `sustainability-ratings`. Script: `scripts/sustainability_ratings.py`, which builds every card, chart and link below.
 
-Not one of the section choices. Every report fetches the site's ratings, and the section renders only when PEAK holds at least one current rating for it. It sits straight after operational impact, or after the analytics overview when operational impact is out.
+Not one of the section choices. Every report fetches the site's ratings, and the section renders only when PEAK holds at least one current rating for it.
 
 ## What you write
 

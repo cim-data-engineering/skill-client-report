@@ -1,10 +1,10 @@
 # Indoor environment
 
-Owns the thermal comfort by site table, its portfolio row, the figures the thermal comfort board ranks on, and the thermal zones figure in the scorecards. Scaffold part: `indoor-environment`. Script: `scripts/indoor_environment.py`, which builds every row, cell and link below.
+Owns the thermal comfort by site table and its portfolio row, and hands on the sites' scores as a ranking and the zone points as the thermal zones figure. Scaffold part: `indoor-environment`. Script: `scripts/indoor_environment.py`, which builds every row, cell and link below.
 
 ## What you write
 
-Nothing on the page. In chat, say what the script prints: any site with no comfort score in the quarter, which is left out of the table and the board.
+Nothing on the page. In chat, say what the script prints: any site with no comfort score in the quarter, which is left out of the table and the ranking.
 
 ## Section header
 
@@ -43,7 +43,7 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 **Portfolio row:**
 
 - Each month's score is weighted by building size over the sites with a score that month. A site with no building size is left out of the weighting
-- Size, Levels and Zones are summed over the rows shown. The Zones total is the thermal zones figure in the scorecards, so the two always agree
+- Size, Levels and Zones are summed over the rows shown. The Zones total is the thermal zones figure it hands on
 - Chg is the portfolio row's own last month less its first
 
 **Display:**
@@ -58,13 +58,16 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 
 - Each site name links to that site's thermal comfort dashboard over the period, with a chevron:
   `https://ace.cimenviro.com/indoor-environment/thermal-comfort?summary_site_id={{site_id}}&summary_ts={{quarter_last_month}}&site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
-- The section carries the anchor `cf-by-site`, which the leaderboard's thermal comfort board links to
+- The section carries the anchor `cf-by-site`
 
-**Board figures:** each site's score for the period's first and last month, handed to the leaderboard.
+**Hands on:**
+
+- **A ranking** labelled Thermal comfort, under the anchor `cf-by-site`, over months: each site's score for the period's first and last month, to 1dp
+- **Thermal zones**: the Zones total, and every zone temperature point configured across the sites for a quarter in which no site scored
 
 ## Notes band items
 
-None. The date line defines the score, and the Zones total matches the scorecards by construction.
+None. The date line defines the score.
 
 ## Data
 
@@ -79,4 +82,4 @@ All in the main batch, every call with `metric:"temperature"`:
 - Both `search_indoor_environment` calls page at 80 rows: `report.py next` asks for each further page from the first page's total
 - The zone count returns every level in one response, which PEAK refuses past 40,000 characters, so it takes ten sites a call
 - Zones counts `included_point_count`, points configured for comfort scoring. A level that returned no score counts in neither column. Never count zone objects from `search_zones`, `platform.levels` or `platform.zones`: they are not zone temperature points
-- With no comfort score at any site the section drops, and the scorecards' thermal zones figure is every configured point across the sites, off the same zone count
+- With no comfort score at any site the section drops, and still hands on every configured point across the sites, off the same zone count

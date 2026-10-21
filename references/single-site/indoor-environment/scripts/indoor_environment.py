@@ -11,6 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 
 NAME = "indoor-environment"
+HANDS_ON = ["thermal_zones"]      # known at plan time, so the overview fetches no zones of its own
 BANDS = [(92.0, "Excellent"), (85.0, "Good"), (75.0, "Average")]
 PAGE = 80
 
@@ -93,6 +94,7 @@ def band(v):
 
 
 def build(ctx, work, shared):
+    shared.setdefault("partial", [])                  # its scores show the month to date and stand as they are
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
     qw, tw = io.whole(ctx, qm), io.whole(ctx, tm)
     month_of = lambda r: (r.get("date") or "")[:7]
@@ -152,7 +154,7 @@ def build(ctx, work, shared):
     score = io.pct(site_all.first()["score"], 1)
     delta, sub = io.movement(site_q[0], site_q[-1], 1, io.month(qm[0]), io.month_label(ctx, qm[-1]))
     impact = [dict({"chip": band(score), "chip_class": "pos" if band(score) in ("Excellent", "Good") else "warn",
-                    "fig": "%.1f%%" % score, "cap": "thermal comfort maintained", "sub": sub, "order": 2},
+                    "fig": "%.1f%%" % score, "cap": "thermal comfort maintained", "sub": sub, "row": "thermal-comfort"},
                    **({"delta": delta} if delta else {}))]
 
     tmonths = [m for m in tm if m[:7] in site_m]

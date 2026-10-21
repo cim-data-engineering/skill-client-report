@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Thermal comfort by site: the ranked heatmap, its portfolio row, the figures the
-thermal comfort board ranks on, and the thermal zones figure for the scorecards. See
+"""Thermal comfort by site: the ranked heatmap and its portfolio row, with the sites'
+scores handed on as a ranking and the zone points as the thermal zones figure. See
 references/portfolio-leaderboard/indoor-environment/indoor-environment.md.
 """
 import os
@@ -12,6 +12,7 @@ import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
 NAME = "indoor-environment"
+ANCHOR = "cf-by-site"
 BANDS = [92, 85, 75]
 CHUNK, PAGE = 100, 80
 ZONE_CHUNK = 10              # the zone count returns a row per level and refuses a response over 40,000 characters
@@ -82,12 +83,13 @@ def build(ctx, work, shared):
                           "months": portfolio}}
     if any(v is not None for v in portfolio):
         shared["weighted"] = True
-    shared.setdefault("boards", {})[NAME] = {"now": now, "start": start, "dp": 1}
+    shared.setdefault("rankings", []).append({"label": "Thermal comfort", "anchor": ANCHOR, "window": "months",
+                                              "now": now, "start": start, "dp": 1})
 
     chat = []
     if missing:
         chat.append("No thermal comfort score this quarter for %s: left out of the thermal comfort table and "
-                    "board." % io.listing(missing))
+                    "ranking." % io.listing(missing))
     return {
         "comfort": heat,
         "datelines": {"Indoor environment health snapshot":

@@ -1,6 +1,6 @@
 # Sustainability ratings
 
-Owns the sustainability ratings by site table, the last content section before the notes. Scaffold part: `sustainability-ratings`. Script: `scripts/sustainability_ratings.py`, which builds every row, cell, link and note below.
+Owns the sustainability ratings by site table. Scaffold part: `sustainability-ratings`. Script: `scripts/sustainability_ratings.py`, which builds every row, cell, link and note below.
 
 Every portfolio report fetches the sites' ratings, and the section renders only when at least one site holds a current rating.
 

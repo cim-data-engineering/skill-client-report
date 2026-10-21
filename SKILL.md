@@ -66,6 +66,7 @@ Each folder holds the section's reference and a `scripts/` folder with its arith
 - [Operational impact](#operational-impact) and the [Notes band](#notes-band) are frames around rows and items the sections own, so they render only when a section that owns one is in. The scaffold builds it that way
 - Never leave behind an empty section, a header with no content, a link to a section that is out, or a note explaining a number the report no longer shows. The scripts handle the parts they know about; check the wins yourself
 - Three things can come up empty after the fetch, and only the fetch can tell: Actions and key wins when nothing was resolved in the window, Key wins alone when no win qualifies, and run hours when no plant carries a sensor that shows it running. The scripts leave the section out and print why; say so in chat, not on the page
+- Where what survives is the masthead and the analytics overview alone, say so before handing the file over rather than shipping it as a review
 
 ### Automatic sections
 
@@ -89,7 +90,32 @@ The portfolio report never asks which sections to include. Every section is plan
 | Key wins | `actions-and-wins/`, `key-wins.md` | at least one win qualifies |
 | Sustainability ratings by site | `sustainability-ratings/` | any site holds a current rating; never mentioned in chat |
 
-Each folder holds the section's reference and a `scripts/` folder with its arithmetic. A site with no data for a section is left out of that section's table and board, and its script names it to say in chat.
+Each folder holds the section's reference and a `scripts/` folder with its arithmetic. A site with no data for a section is left out of that section's table and ranking, and its script names it to say in chat.
+
+## How sections fit together
+
+Each section's reference owns its section: what it shows, its rules, its calls, its notes band items, its anchor and what it says in chat. It names what it hands on and what it takes by the figure, never by the section at the other end, and cites this file and `DESIGN.md` but no other reference. Where each section sits, which figures feed which section and the build order live here, and the registry at the top of `scripts/report.py` carries the same in code.
+
+- **Build order**: a section builds after every section whose figures it takes. The registry fixes the order
+- **System types**: equipment types 21, 37, 69, 70, 87, 105 and 114, the platform checking itself rather than building plant. Every equipment and rule count leaves them out
+
+**Single-site page:** the masthead, the analytics overview, operational impact, sustainability ratings, the equipment health and indoor environment snapshots, their monthly trends, equipment run hours, monthly alerts and the actions leaderboard, key wins, then the notes band. A section that is out leaves no gap.
+
+| Figure | Handed on by | Taken by |
+| --- | --- | --- |
+| Site facts: name, photo, building size, currency | the overview, before any section builds | every section |
+| Thermal zones: zone points on the levels that scored | indoor environment, known at plan time | the analytics overview, which counts its own only when no section hands them on, so its figure always equals the comfort site row |
+| Partial figures: volumes that run short over a month to date | equipment health and alerts resolved; indoor environment shows the month to date with none | the reporting window note |
+
+**Portfolio page:** page one holds the masthead, the scorecard strip and the site rankings, and the other sections follow in the order of the [Portfolio sections](#portfolio-sections) table.
+
+| Figure | Handed on by | Taken by |
+| --- | --- | --- |
+| Site facts: building size, currency, state, country | the overview, before any section builds | every section |
+| A ranking: a label, an anchor, a window of months or quarters, each site's figure on both windows | equipment health, indoor environment and actions by company, in that order | site rankings, one board each, its site names linking to the anchor |
+| Thermal zones: zone points on the levels that scored, and every configured point | indoor environment | the scorecards, so the card always equals the comfort table's Zones total |
+| A size-weighted portfolio row drawn | any section | the Portfolio rows note |
+| Partial figures: volumes that run short over a month to date | actions by company | the reporting window note |
 
 ## Writing the narrative
 
@@ -155,11 +181,11 @@ Each row belongs to a section and is specified in that reference: three to equip
 
 ## Notes band
 
-Numbered notes in report order, each owned by the section it explains. A note carries business logic the page does not already show: an assumption, a scope rule, or why two figures differ. Anything a legend, chart heading, date line or impact row already says stays out. Write each as a short professional definition, not an explanation.
+Numbered notes in page order, each owned by the section it explains. A note carries business logic the page does not already show: an assumption, a scope rule, or why two figures differ. Anything a legend, chart heading, date line or impact row already says stays out. Write each as a short professional definition, not an explanation.
 
 One item is shared, and only when the report carries a month to date:
 
-- **The reporting window**: the month to date and how many of its days it holds, the volume series the report shows that are partial there, and that scores are unaffected. It closes the band
+- **The reporting window**: the month to date and how many of its days it holds, the partial figures the sections hand on, and that scores are unaffected. It closes the band
 
 ## After the render
 

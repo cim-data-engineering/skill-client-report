@@ -1,10 +1,10 @@
 # Overview
 
-The parts every portfolio report carries: the masthead, the scorecard strip and the notes band frame. Scaffold parts: `masthead`, `scorecards`, `notes`. Script: `scripts/overview.py`, which fills every slot below and hands each section the sites' building sizes before any of them builds.
+The parts every portfolio report carries: the masthead, the scorecard strip and the notes band frame. Scaffold parts: `masthead`, `scorecards`, `notes`. Script: `scripts/overview.py`, which fills every slot below and hands on the site facts.
 
 ## What you write
 
-Nothing. The overview builds last, so it takes the thermal zones figure off the indoor environment section and the notes frame off whichever sections drew a portfolio row. It names in chat any site with no building size, and any site whose size was converted into the portfolio's unit.
+Nothing on the page. In chat, say what the script prints: any site with no building size, and any site whose size was converted into the portfolio's unit.
 
 ## Masthead
 
@@ -22,15 +22,15 @@ Nothing. The overview builds last, so it takes the thermal zones figure off the 
 
 ## Scorecard strip
 
-The analytics overview's stat cards, set straight under the masthead with no section header, so page one has room for the leaderboard. Each figure is the sum of the per-site figures.
+The analytics overview's stat cards, as a scorecard strip with no section header. Each figure is the sum of the per-site figures.
 
 | Card | Figure |
 | --- | --- |
 | Portfolio size | The sites' building sizes summed, in square metres or square feet |
-| Equipment | Equipment at every site, less the system types (the platform checking itself, not plant) |
+| Equipment | Equipment at every site, less the system types |
 | Sensors | Sensors at every site |
 | Rules running | Rules with status running at every site |
-| Thermal zones | Zone temperature points on the levels that scored in the quarter, the same figure the thermal comfort table totals |
+| Thermal zones | The thermal zones figure it takes: zone temperature points on the levels that scored in the quarter, or every configured point where no site scored |
 
 **Sizes and units:**
 
@@ -40,10 +40,8 @@ The analytics overview's stat cards, set straight under the masthead with no sec
 
 ## Notes band items
 
-Numbered in report order, each owned by the section it explains. A note carries business logic the page does not already show; anything a legend, heading or date line says stays out. This section owns two:
-
-- **Portfolio rows.** "Scores are weighted by building size; counts are summed." Shown when any section draws a weighted portfolio row. It opens the band
-- **The reporting window.** Shown when the report carries a month to date: the month, how many of its days it holds, that actions resolved this quarter include those days when the actions section is in, and that scores are unaffected. It closes the band
+- **Portfolio rows.** "Scores are weighted by building size; counts are summed." Shown when any section draws a weighted portfolio row
+- **The reporting window.** Shown when the report carries a month to date: the month, how many of its days it holds, that the partial figures it takes include those days, and that scores are unaffected
 
 ## Data
 
@@ -57,5 +55,8 @@ All in the main batch, the site facts 100 sites a call and each count 10, since 
 | Equipment | `search_equipment(limit:1)` with `site_ids` twice, plain and filtered to the system types 21, 37, 69, 70, 87, 105 and 114, the second total subtracted from the first |
 
 - The totals of a split call add across its chunks
-- Thermal zones come from the indoor environment section's figures. When that section has no data, the figure is every zone temperature point configured across the sites, off the same section's zone count
 - The client name comes from `--client`, the author from `who_am_i` passed as `--author`, and the company and service names from `BRAND.md`
+
+**Hands on:** the site facts, each site's building size, currency, state and country, before any section builds.
+
+**Takes:** the thermal zones figure, whether any section drew a weighted portfolio row, and the names of the figures shown that run partial over the month to date.

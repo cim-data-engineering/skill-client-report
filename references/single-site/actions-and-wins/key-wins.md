@@ -1,6 +1,6 @@
 # Key wins
 
-Owns the key wins section. No operational impact row. Scaffold part: `key-wins`. Script: `scripts/key_wins.py`. One choice in the section prompt with `alerts-resolved.md`, Actions and key wins.
+Owns the key wins section. No operational impact row. Scaffold part: `key-wins`. Script: `scripts/key_wins.py`.
 
 ## What you write
 
@@ -81,7 +81,6 @@ This is a client deliverable, so the section carries wins or it does not appear.
 - Never write the selection out loud on the page: how many closures you read, which you rejected, or why. Printed, it reads as an audit of the maintenance contractor rather than a review of the building
 - Never pad, and never write work as more finished than it is. "The sensor is locked and a replacement is on order" is a win in flight; "the sensor was replaced" is a repair. Dressing the first as the second is the one thing that costs the reader's trust
 - Report it in chat instead, to whoever ran the skill: what you read, what you rejected, why. A quarter with no described repairs is a customer-success signal worth someone knowing about
-- Where dropping the section would leave nothing but the masthead and the analytics overview, say so before handing the file over rather than shipping two sections as a review
 
 ## Data
 
@@ -95,7 +94,7 @@ This is a client deliverable, so the section carries wins or it does not appear.
 
 The candidate pulls are the only responses the report reads without saving. Every saved response holds counts, scores, ids and type, level or company names: what people wrote on a ticket never goes into a file, and never needs writing out again.
 
-Key wins runs its own closed pull rather than riding the leaderboard's, because the two want opposite shapes: the leaderboard wants every row and few fields, this wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, and holding to the quarter cuts it again, leaving a set small enough to carry its comments inline.
+Key wins runs its own closed pull because it wants few rows and every field. `has_comments:true` drops each closure nobody wrote on, and holding to the quarter cuts it again, leaving a set small enough to carry its comments inline.
 
 Some patterns need no reading, and the digest screens them out when it is used: a closure created and resolved the same moment, nobody worked it; three or more sharing a resolved second, a bulk cleanup; a ticket whose only commenter is an agent. Two more patterns are left to you, since only the comments show them: closures summarised as still in fault, and alerts closed by stopping or tuning a rule.
 

@@ -1,10 +1,10 @@
 # Equipment health
 
-Owns the equipment health by site table, its portfolio row, and the figures the equipment health board ranks on. Scaffold part: `equipment-health`. Script: `scripts/equipment_health.py`, which builds every row, cell, link and note below.
+Owns the equipment health by site table and its portfolio row, and hands on the sites' scores as a ranking. Scaffold part: `equipment-health`. Script: `scripts/equipment_health.py`, which builds every row, cell, link and note below.
 
 ## What you write
 
-Nothing on the page. In chat, say what the script prints: any site with no score in the quarter, which is left out of the table and the board, and any site whose scored rules in a month fell below half of its busiest month. That month covers part of the plant, from an outage or rules still going live, so it moves the site's change and the portfolio row without the plant having changed.
+Nothing on the page. In chat, say what the script prints: any site with no score in the quarter, which is left out of the table and the ranking, and any site whose scored rules in a month fell below half of its busiest month. That month covers part of the plant, from an outage or rules still going live, so it moves the site's change and the portfolio row without the plant having changed.
 
 ## Section header
 
@@ -52,7 +52,7 @@ One row per site with a score in the quarter, ranked by its score for the period
 - Scores to 1dp. Only the closing month column carries weight, per the `heatmap` component
 - A month a site had no score shows a dash with no fill, and Chg is a dash when either end is missing
 - Equip, Rules and Size as plain numerals, never colored and never barred
-- Equip and Rules leave out the system types (the platform checking itself, not building plant), the same ones the scorecards subtract from equipment
+- Equip and Rules leave out the system types
 - Every site, not a sample. The table breaks between rows across pages, its header repeating
 - Site names wrap within a fixed row height rather than truncating
 
@@ -60,9 +60,9 @@ One row per site with a score in the quarter, ranked by its score for the period
 
 - Each site name links to that site's equipment health dashboard over the period, with a chevron:
   `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
-- The section carries the anchor `eh-by-site`, which the leaderboard's equipment health board links to
+- The section carries the anchor `eh-by-site`
 
-**Board figures:** each site's score for the period's first and last month, handed to the leaderboard.
+**Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, over months: each site's score for the period's first and last month, to 1dp.
 
 ## Notes band items
 

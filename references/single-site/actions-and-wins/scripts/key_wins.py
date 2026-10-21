@@ -231,7 +231,7 @@ def contact_sheets(root, plan, files):
 
 
 # ── assembly, at fill time ──────────────────────────────────────────────────
-def assemble(ctx, work):
+def assemble(ctx, work, facts):
     """wins.json -> the bundle's wins, plus the Key wins statement and date line and
     anything to say in chat."""
     wins = load_wins(work)
@@ -242,7 +242,7 @@ def assemble(ctx, work):
             lv = ((r.get("zone") or {}).get("level") or {})
             if lv.get("level_name") and not lv.get("system"):
                 levels[r["equipment_id"]] = lv["level_name"]
-    sym = io.currency(work.get("overview/site.json").first() or {})[2]
+    sym = io.currency(facts)[2]
     chat, out = [], []
     for w in wins:
         tags = []

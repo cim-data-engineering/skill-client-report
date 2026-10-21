@@ -131,6 +131,7 @@ def sittings(stamps):
 
 
 def build(ctx, work, shared):
+    shared.setdefault("partial", []).append("action counts")
     tm, (q0, q1), (t0, t1) = ctx["trend_months"], ctx["quarter"], ctx["trend"]
     tz = ctx["site"]["timezone"]
     count = lambda f: (work.get(f).first() or {}).get("ticket_count", 0)
@@ -182,7 +183,7 @@ def build(ctx, work, shared):
     impact = [{"chip": band(pct_rec), "chip_class": "pos" if band(pct_rec) in ("Excellent", "Good") else "warn",
                "fig": "{:,}".format(faults), "cap": "faults resolved with %d%% verified recovery" % round(pct_rec),
                "sub": "Median time to resolve of %s, measured from linked action creation to resolution." % med_text,
-               "order": 5}]
+               "row": "faults-resolved"}]
 
     # a run of closures minutes apart is a bulk close-out, not a run of repairs
     bulk = sittings(sorted(r["resolved_at"] for r in res_rows if r.get("resolved_at") and r.get("status_id") != 8))

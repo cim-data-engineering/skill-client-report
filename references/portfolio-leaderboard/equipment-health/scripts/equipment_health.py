@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Equipment health by site: the ranked heatmap, its portfolio row, and the figures
-the equipment health board ranks on. See
+"""Equipment health by site: the ranked heatmap and its portfolio row, and the sites'
+scores handed on as a ranking. See
 references/portfolio-leaderboard/equipment-health/equipment-health.md for what each
 figure means; this module is that reference's arithmetic.
 """
@@ -13,7 +13,7 @@ import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
 NAME = "equipment-health"
-SYSTEM_TYPES = {21, 37, 69, 70, 87, 105, 114}     # the platform checking itself, not plant
+ANCHOR = "eh-by-site"
 BANDS = [99, 97, 90]
 # Each call scans every rule's month rows for its sites, and PEAK refuses a call over 200,000 rows:
 # about 10,000 a site over a quarter, three times that at the largest. Six sites a call keeps inside it.
@@ -45,10 +45,10 @@ def build(ctx, work, shared):
         rules_by_month[r["site_id"]][month_of(r)] = r.get("task_count") or 0
     rules, equip = defaultdict(int), defaultdict(set)
     for r in pio.rows(work, "eh/type-all.json"):
-        if r.get("metadata_type_id") not in SYSTEM_TYPES:
+        if r.get("metadata_type_id") not in io.SYSTEM_TYPES:
             rules[r["site_id"]] += r.get("task_count") or 0
     for r in pio.rows(work, "eh/equipment-all.json"):
-        if r.get("metadata_type_id") not in SYSTEM_TYPES:
+        if r.get("metadata_type_id") not in io.SYSTEM_TYPES:
             equip[r["site_id"]].add(r["equipment_id"])
 
     months = lambda sid: [scores[sid].get(m[:7]) for m in qm]
@@ -80,12 +80,13 @@ def build(ctx, work, shared):
                           "months": portfolio}}
     if any(v is not None for v in portfolio):
         shared["weighted"] = True
-    shared.setdefault("boards", {})[NAME] = {"now": now, "start": start, "dp": 1}
+    shared.setdefault("rankings", []).append({"label": "Equipment health", "anchor": ANCHOR, "window": "months",
+                                              "now": now, "start": start, "dp": 1})
 
     chat = []
     if missing:
         chat.append("No equipment health score this quarter for %s: left out of the equipment health table and "
-                    "board." % io.listing(missing))
+                    "ranking." % io.listing(missing))
     # A month that scored off under half of a site's busiest month is an outage, or rules still going live:
     # either way its score covers part of the plant, and it moves the site's change and the portfolio row.
     for s in scored:
@@ -101,8 +102,8 @@ def build(ctx, work, shared):
         "equipment_health": heat,
         "datelines": {"Equipment health snapshot": "%s. Share of rule executions returning no fault."
                                                    % pio.reporting_period(ctx)},
-        "notes": {"Scored equipment": {"order": 2, "html": "<strong>Scored equipment.</strong> Equip and Rules count "
-                                                           "equipment and rules that scored in the period, so they can "
-                                                           "sit below the monitored totals in the scorecards."}},
+        "notes": {"Scored equipment": {"html": "<strong>Scored equipment.</strong> Equip and Rules count equipment and "
+                                                "rules that scored in the period, so they can sit below the monitored "
+                                                "totals in the scorecards."}},
         "chat": chat,
     }

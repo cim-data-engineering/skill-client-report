@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Actions resolved by company: the company table, its total row, and each site's
-actions resolved this quarter and last, which the actions board ranks on. Every count
-on the board and in the total row is a count_tickets figure; the ticket rows only say
+"""Actions resolved by company: the company table and its total row, with each site's
+actions resolved this quarter and last handed on as a ranking. Every count in the
+ranking and the total row is a count_tickets figure; the ticket rows only say
 which company holds each action. See
 references/portfolio-leaderboard/actions-and-wins/actions-by-company.md.
 """
@@ -17,6 +17,7 @@ import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
 NAME = "actions-by-company"
+ANCHOR = "actions-by-company"
 STAT4 = ["open", "in_progress", "closed", "on_hold"]           # every status but Not Doing
 OPEN = ["open", "in_progress", "on_hold"]
 COUNT_CHUNK, PAGE = 20, 1000
@@ -96,11 +97,12 @@ def build(ctx, work, shared):
     sids = [s["site_id"] for s in ctx["sites"]]
     total_res, total_open = sum(resolved[s] for s in sids), sum(open_now[s] for s in sids)
     if sum(resolved[s] for s in sids):
-        shared.setdefault("boards", {})[NAME] = {"now": {s: resolved[s] for s in sids},
-                                                 "start": {s: prev[s] for s in sids}, "dp": 0}
+        shared.setdefault("rankings", []).append({"label": "Actions resolved", "anchor": ANCHOR, "window": "quarters",
+                                                  "now": {s: resolved[s] for s in sids},
+                                                  "start": {s: prev[s] for s in sids}, "dp": 0})
     if not total_res and not total_open:
         return {"drop": [NAME]}
-    shared["actions_shown"] = True
+    shared.setdefault("partial", []).append("Actions resolved this quarter")
 
     names = {s["site_id"]: s["site_name"].strip() for s in ctx["sites"]}
     co_res, co_open, logo_url = defaultdict(set), defaultdict(set), {}
@@ -146,7 +148,7 @@ def build(ctx, work, shared):
                       "Actions resolved %s, ranked by resolved. Completion rate is resolved &divide; (resolved + open "
                       "now), with open now as at %s. Each company's sites are listed by open actions, most first."
                       % (pio.reporting_period(ctx), io.day_long(ctx["today"]))},
-        "notes": {"Completion rate": {"order": 3, "html": "<strong>Completion rate.</strong> Open now includes actions "
-                                                          "raised before the quarter."}},
+        "notes": {"Completion rate": {"html": "<strong>Completion rate.</strong> Open now includes actions raised "
+                                               "before the quarter."}},
         "chat": chat,
     }

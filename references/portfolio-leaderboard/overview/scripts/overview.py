@@ -4,10 +4,9 @@ the notes band frame. See references/portfolio-leaderboard/overview/overview.md.
 
 Imported by scripts/report.py through the same three hooks every section has:
 calls() before the fetch, more() for any follow-up round, build() to turn the saved
-responses into the bundle. facts() hands the sites' building sizes to every section
-before any of them builds. This one builds last, so it can take the thermal zones
-figure off the indoor environment section and the notes frame off whichever
-sections drew a portfolio row.
+responses into the bundle. facts() hands the site facts to every section before any
+of them builds. It takes the thermal zones figure, the weighted flag and the partial
+figures from `shared`, so it builds after the sections that hand them on.
 """
 import base64
 import io as bytes_io
@@ -19,7 +18,6 @@ import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
 NAME = "overview"
-SYSTEM_TYPES = [21, 37, 69, 70, 87, 105, 114]     # the platform checking itself, not plant
 CHUNK = 100
 COUNT_CHUNK = 10              # an unfiltered equipment count across many more sites runs past the gateway's timeout
 LOGO_PX = 288                                     # the slot is 72px tall: four times that keeps it sharp in print
@@ -34,7 +32,7 @@ def calls(ctx):
             + count("overview/rules.json", "search_rules", task_state="running", limit=1)
             + count("overview/sensors.json", "search_favourites", limit=1)
             + count("overview/equipment.json", "search_equipment", limit=1)
-            + count("overview/equipment-system.json", "search_equipment", metadata_type_ids=SYSTEM_TYPES, limit=1))
+            + count("overview/equipment-system.json", "search_equipment", metadata_type_ids=io.SYSTEM_TYPES, limit=1))
 
 
 def more(ctx, work):
@@ -89,11 +87,11 @@ def build(ctx, work, shared):
 
     notes = {}
     if shared.get("weighted"):
-        notes["Portfolio rows"] = {"order": 1, "html": "<strong>Portfolio rows.</strong> Scores are weighted by "
-                                                      "building size; counts are summed."}
-    window = reporting_window(ctx, shared.get("actions_shown"))
+        notes["Portfolio rows"] = {"html": "<strong>Portfolio rows.</strong> Scores are weighted by building size; "
+                                           "counts are summed."}
+    window = reporting_window(ctx, shared.get("partial") or [])
     if window:
-        notes["The reporting window"] = {"order": 9, "html": "<strong>The reporting window.</strong> " + window}
+        notes["The reporting window"] = {"closes": True, "html": "<strong>The reporting window.</strong> " + window}
     return {
         "masthead": {
             "client": ctx["client"],
@@ -122,12 +120,12 @@ def build(ctx, work, shared):
     }
 
 
-def reporting_window(ctx, actions):
+def reporting_window(ctx, partial):
     m = ctx["to_date"]
     if not m:
         return ""
     full = (io.add_months(io.d(m), 1) - io.d(m)).days
     text = "%s %d covers %d of %d days, to the issue date. " % (io.month(m), io.d(m).year, io.days_in(ctx, m), full)
-    if actions:
-        return text + "Actions resolved this quarter include those days; scores are unaffected."
+    if partial:
+        return text + "%s include those days; scores are unaffected." % io.listing(partial)
     return text + "Scores are unaffected."

@@ -59,10 +59,24 @@ ORDER = ["sustainability-ratings", "equipment-health", "indoor-environment", "al
 # Sections the prompt never offers. Every report fetches them, and each drops itself
 # when the site has nothing to show.
 AUTO = ["sustainability-ratings"]
+# The operational impact rows the sections own, in the order the frame shows them.
+IMPACT_ORDER = ["equipment-health-score", "thermal-comfort", "automated-checks", "labour-cost-avoided",
+                "faults-resolved"]
+
+# What sections hand on to each other, through `shared`, by the figure's name; no section
+# names another, and each builds after every section whose figures it takes.
+#   site_facts / facts  the site's, or each site's, platform row, seeded before any section builds
+#   thermal_zones       zone points on the levels that scored (zones_configured: every configured point)
+#   rankings            [{label, anchor, window: "months" | "quarters", now, start, dp}], one board each
+#   weighted            set when a section draws a size-weighted portfolio row
+#   partial             names of the volume figures shown that run short over a month to date; in the
+#                       single-site report, present once any section shows the month to date
+# A figure the plan needs, before anything is fetched, a module names in HANDS_ON: plan.json
+# lists them as handed_on.
 
 # The portfolio report: every section, no prompt. Each drops itself when PEAK has nothing
-# for it. The leaderboard and the overview build last, from the figures the sections
-# leave in `shared`.
+# for it. PORTFOLIO_PAGE is the page order, which numbers the notes band; PORTFOLIO_ORDER
+# the build order.
 PORTFOLIO_MODULES = {"overview": ("portfolio-leaderboard/overview", "overview"),
                      "site-leaderboard": ("portfolio-leaderboard/site-leaderboard", "site_leaderboard"),
                      "equipment-health": ("portfolio-leaderboard/equipment-health", "equipment_health"),
@@ -71,6 +85,8 @@ PORTFOLIO_MODULES = {"overview": ("portfolio-leaderboard/overview", "overview"),
                      "key-wins": ("portfolio-leaderboard/actions-and-wins", "key_wins"),
                      "sustainability-ratings": ("portfolio-leaderboard/sustainability-ratings",
                                                 "sustainability_ratings")}
+PORTFOLIO_PAGE = ["overview", "site-leaderboard", "equipment-health", "indoor-environment", "actions-by-company",
+                  "key-wins", "sustainability-ratings"]
 PORTFOLIO_ORDER = ["equipment-health", "indoor-environment", "actions-by-company", "key-wins",
                    "sustainability-ratings", "site-leaderboard", "overview"]
 MODES = {"single-site": {"options": OPTIONS, "modules": MODULES, "order": ORDER, "auto": AUTO},
@@ -162,6 +178,7 @@ def cmd_plan(a):
     ctx = dict(io.windows(today), site=site, author=a.author, sections=[s for s in ORDER if s in sections],
                dir=root, site_file=os.path.abspath(a.site), hours=a.hours,
                brand=brand())
+    ctx["handed_on"] = sorted({f for s in ctx["sections"] for f in getattr(module(s), "HANDS_ON", [])})
     with open(os.path.join(root, "plan.json"), "w") as fh:
         json.dump(ctx, fh, indent=1)
     calls = [c for s in active(ctx) for c in module(s).calls(ctx)]
@@ -287,19 +304,27 @@ def merge(into, part):
             into[k] = v
 
 
+def site_facts(work):
+    """The site's platform row, which every section takes."""
+    return work.get("overview/site.json").first() or {}
+
+
 def cmd_bundle(a):
     work = io.Work(a.dir)
     ctx = work.ctx
     if mode_of(ctx) == "portfolio":
         return bundle_portfolio(a, work)
-    shared = {"site_facts": work.get("overview/site.json").first() or {}}
+    shared = {"site_facts": site_facts(work)}
     data = {}
     for s in [s for s in ORDER if s in ctx["sections"]] + ["overview"]:
-        merge(data, module(s).build(ctx, work, shared))
+        part = module(s).build(ctx, work, shared)
+        for r in part.get("impact", []):
+            r["section"] = s
+        merge(data, part)
     data["sections"] = ",".join(s for s in ctx["sections"] if s not in data.get("drop", []))
-    data["impact"] = [{k: v for k, v in r.items() if k != "order"}
-                      for r in sorted(data.get("impact", []), key=lambda r: r["order"])
-                      if not ((r["order"] == 5 and "alerts-resolved" in data.get("drop", [])))]
+    data["impact"] = [{k: v for k, v in r.items() if k not in ("row", "section")}
+                      for r in sorted(data.get("impact", []), key=lambda r: IMPACT_ORDER.index(r["row"]))
+                      if r["section"] not in data.get("drop", [])]
     if not data["impact"]:
         data.pop("impact")                 # no row-owning section is in, so neither is the frame
     data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]],
@@ -319,10 +344,13 @@ def cmd_bundle(a):
 
 def bundle_portfolio(a, work):
     ctx = work.ctx
-    shared = {"facts": module("overview", "portfolio").facts(ctx, work)}
+    shared = {"facts": module("overview", "portfolio").facts(ctx, work)}       # each site's platform row
     data = {}
     for s in PORTFOLIO_ORDER:
-        merge(data, module(s, "portfolio").build(ctx, work, shared))
+        part = module(s, "portfolio").build(ctx, work, shared)
+        for n in part.get("notes", {}).values():         # notes run in page order; a closing one ends the band
+            n["order"] = len(PORTFOLIO_PAGE) if n.pop("closes", False) else PORTFOLIO_PAGE.index(s)
+        merge(data, part)
     data["sections"] = ",".join(s for s in PORTFOLIO_ORDER if s != "overview" and s not in data.get("drop", []))
     data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]], "to_date": bool(ctx["to_date"])}
     with open(os.path.join(work.root, "data.json"), "w") as fh:
@@ -355,7 +383,7 @@ def cmd_fill(a):
             sections.remove("key-wins")
             chat.append("Key wins left out: no win qualified. Say what you read and rejected, per key-wins.md.")
         else:
-            merge(data, kw.assemble(ctx, work))
+            merge(data, kw.assemble(ctx, work, site_facts(work)))
     data["sections"] = ",".join(sections)
     chat = data.pop("chat", []) + chat
     data.pop("drop", None)
@@ -395,7 +423,7 @@ def fill_portfolio(a, work):
             sections.remove("key-wins")
             chat.append("Key wins left out: no win qualified. Say what you read and rejected, per key-wins.md.")
         else:
-            merge(data, kw.assemble(ctx, work))
+            merge(data, kw.assemble(ctx, work, module("overview", "portfolio").facts(ctx, work)))
     data["sections"] = ",".join(sections)
     chat = data.pop("chat", []) + chat
     data.pop("drop", None)

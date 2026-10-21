@@ -1,6 +1,6 @@
 # Key wins
 
-Owns the key wins section: the strongest wins across the portfolio, ten at most, with no limit per site. Scaffold part: `key-wins`. Script: `scripts/key_wins.py`. One folder with `actions-by-company.md`.
+Owns the key wins section: the strongest wins across the portfolio, ten at most, with no limit per site. Scaffold part: `key-wins`. Script: `scripts/key_wins.py`.
 
 ## What you write
 
@@ -21,7 +21,7 @@ A portfolio can hold more candidates than anyone can read, so you read them in t
 4. Look at the one numbered contact sheet per win, choose by **Photos** below, and add the picks to each win: `"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]`. A win with nothing worth showing gets none
 5. After `report.py fill`, look at every tile in `report/tiles/`: a crop can cut off the very detail that earned the photo its place. Adjust `focus` and `zoom` and fill again
 
-This is the section an owner reads to see the portfolio is in good hands: problems caught early and acted on across their buildings, rather than counted. Every other section ranks how the sites performed; this one says what was found, who picked it up and where it got to.
+This is the section an owner reads to see the portfolio is in good hands: problems caught early and acted on across their buildings, rather than counted. It says what was found, who picked it up and where it got to.
 
 ## Section header
 
@@ -114,4 +114,4 @@ Engineers often attach photos to an action ticket as they work it, screenshots a
 - `impacts` comes back as a list, sometimes `[]`, which is the `Other` case in **Display**. A level with `system:true` is PEAK's placeholder, not a place, so that equipment gets no level line
 - `key_wins.py photos` keeps the image attachments, one copy per file name and sixteen per win, downloads the originals in parallel and tiles them into `report/kw/sheet-w<n>.jpg`. The links are signed and lapse twenty minutes after the call: if the photos step reports them lapsed, make the photo call again and re-run it. Where they cannot be fetched, the wins go out without photos; say so in chat
 - The fill turns each photo upright, crops it to its tile around `focus` (fractions across and down the frame) and `zoom` (that many times tighter), shrinks and re-encodes it, which also drops the original's EXIF block, GPS position included. A photo reaches the report only through the script
-- The savings currency is the win's site's, from the overview's site facts
+- The savings currency is the win's site's, from the site facts it takes

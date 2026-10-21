@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 
 NAME = "equipment-health"
-SYSTEM_TYPES = {21, 37, 69, 70, 87, 105, 114}
 BANDS = [(99.0, "Excellent"), (97.0, "Good"), (90.0, "Average")]
 # Labour model: annual minutes saved per scored rule, by priority id.
 ANNUAL_MINS = {1: 365 * 0.5, 2: 52 * 1.0, 3: 12 * 1.0, 4: 4 * 1.0, 5: 4 * 1.0}
@@ -47,6 +46,7 @@ def band(v):
 
 
 def build(ctx, work, shared):
+    shared.setdefault("partial", []).extend(["automated checks", "labour cost avoided"])
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
     qw, tw = io.whole(ctx, qm), io.whole(ctx, tm)
     q0 = ctx["quarter"][0]
@@ -71,7 +71,7 @@ def build(ctx, work, shared):
     rows = []
     for r in type_all.rows:
         tid = r["metadata_type_id"]
-        if tid in SYSTEM_TYPES:
+        if tid in io.SYSTEM_TYPES:
             continue
         months = [io.pct(scores[tid][m[:7]]["score"], 1) if m[:7] in scores[tid] else None for m in qm]
         if all(v is None for v in months):
@@ -102,17 +102,17 @@ def build(ctx, work, shared):
     impact = [
         dict({"chip": band(score), "chip_class": "pos" if band(score) in ("Excellent", "Good") else "warn",
               "fig": "%.1f%%" % score, "cap": "equipment health maintained", "sub": sub,
-              "order": 1}, **({"delta": delta} if delta else {})),
+              "row": "equipment-health-score"}, **({"delta": delta} if delta else {})),
         {"chip": "Continuous", "chip_class": "neu", "fig": "{:,}".format(checks),
          "cap": "automated equipment health checks ran 24/7",
          "sub": "Averaging %s monthly checks across %s scored rules." % (io.words(checks / io.month_count(ctx)),
                                                                         "{:,}".format(rules)),
-         "order": 3},
+         "row": "automated-checks"},
         {"chip": "Modelled", "chip_class": "neu", "fig": "%s%s" % (sym, "{:,}".format(int(round(cost)))),
          "cap": "labour cost avoided",
          "sub": "%.1f hours and %.1f working days of inspection time, valued at %s %d/hr."
                 % (mins / 60, mins / 60 / HOURS_PER_DAY, code, per_hr),
-         "order": 4},
+         "row": "labour-cost-avoided"},
     ]
 
     # Chart 1: six months of the site score

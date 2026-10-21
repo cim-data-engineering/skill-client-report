@@ -291,14 +291,13 @@ def contact_sheets(root, plan, files):
 
 
 # ── assembly, at fill time ──────────────────────────────────────────────────
-def assemble(ctx, work):
+def assemble(ctx, work, facts):
     """wins.json -> the bundle's wins, each with its site, plus the Key wins date line and
     anything to say in chat. Finished repairs lead work in flight; within each, the order
     is wins.json's."""
     wins = load_wins(work)
     imp = {r["ticket_id"]: r for r in work.get("kw/impacts.json").rows}
     sites = {s["site_id"]: s for s in ctx["sites"]}
-    facts = {r["site_id"]: r for r in pio.rows(work, "overview/sites.json")}
     levels = {}
     if work.has("kw/levels.json"):
         for r in work.get("kw/levels.json").rows:

@@ -72,7 +72,7 @@ Heatmap table of monthly equipment health scores, one row per equipment type, a 
 - Display all equipment types, not a sample
 - Truncate equipment type name with ellipsis, do not wrap rows
 - Equipment health rules count can differ to overall site rules count as rules can trigger alerts but not score
-- Exclude the system equipment types, the same ones the analytics overview subtracts from its equipment count. They are the platform checking itself, not building plant; Bacer and Water Meters (System) are the two that turn up
+- Exclude the system types. Bacer and Water Meters (System) are the two that turn up
 
 **Links:**
 

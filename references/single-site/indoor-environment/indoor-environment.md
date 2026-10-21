@@ -46,7 +46,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 - Score to 1dp. The benchmark bands sit far from the data here, so 1dp cannot round across a band edge
 - Emphasise only the closing month column, per the `heatmap` component
 - Zones as a plain numeral, left of the score columns, never colored and never barred. It sizes the level, so the reader knows whether a swing covers two zones or twenty
-- Zones counts the zone temperature points configured for comfort scoring. The site row totals the levels shown, and the analytics overview prints that same total as thermal zones, so the two always agree. A level whose points returned no score in the quarter has no row and counts in neither
+- Zones counts the zone temperature points configured for comfort scoring. The site row totals the levels shown, and that total is the thermal zones figure the section hands on. A level whose points returned no score in the quarter has no row and counts in neither
 - Chg signed with a direction glyph. Green up, red down, muted when flat
 - Sort levels in building order, highest level first, ground last, not by Chg. The reader is looking for where in the building comfort is drifting, and the Chg column carries the direction
 - Close with a site row at the bottom, same style as the equipment health snapshot
@@ -93,6 +93,6 @@ All in the main batch: `search_indoor_environment(metric:"temperature")` at thre
 | `site` × `all` | quarter | the headline score |
 | `count_indoor_environment_zones`, `aggregate_entity:"level"` | current configuration | the Zones column and the thermal zones figure |
 
-- The Zones column joins the count's `included_point_count` to the level rows on `level_id`, and a level the count does not return counts 0. Summed over the levels shown, it is the site row and the analytics overview's thermal zones figure. Never page zone rows to count them, and never substitute `search_zones`, `platform.levels` or `platform.zones`: they list zone objects, not zone temperature points
+- The Zones column joins the count's `included_point_count` to the level rows on `level_id`, and a level the count does not return counts 0. Summed over the levels shown, it is the site row and the thermal zones figure. Never page zone rows to count them, and never substitute `search_zones`, `platform.levels` or `platform.zones`: they list zone objects, not zone temperature points
 - A single-level site is the one follow-up: `next` asks for `zone` × `month` rows, which carry `zone_name` and `zone_value`
 - Levels sort into building order from their names: a name with no readable floor first, then numbered floors highest first, ground, then basements. A building PEAK names oddly is worth a line in chat

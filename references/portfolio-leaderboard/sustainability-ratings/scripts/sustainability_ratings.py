@@ -153,7 +153,7 @@ def build(ctx, work, shared):
         "links": {"ratings": link(pio.ids(ctx))},
         "datelines": {"Sustainability ratings": "As at %s. Each site's latest rating for each measure."
                                                 % io.day_long(ctx["today"])},
-        "notes": {"Sustainability ratings": {"order": 4, "html": "<strong>Sustainability ratings.</strong> The "
-                                                                 "portfolio row counts current ratings only, and its "
-                                                                 "arrow compares the same sites' previous ratings."}},
+        "notes": {"Sustainability ratings": {"html": "<strong>Sustainability ratings.</strong> The portfolio row "
+                                                      "counts current ratings only, and its arrow compares the same "
+                                                      "sites' previous ratings."}},
     }

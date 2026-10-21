@@ -1,6 +1,6 @@
 # Actions resolved by company
 
-Owns the actions resolved by company table and its total row, and hands each site's actions resolved this quarter and last quarter to the leaderboard. Scaffold part: `actions-by-company`. Script: `scripts/actions_by_company.py`, which builds every row, figure and note below. One folder with `key-wins.md`: the table says who did the work across the portfolio, the wins say what it was.
+Owns the actions resolved by company table and its total row, and hands on each site's actions resolved as a ranking. Scaffold part: `actions-by-company`. Script: `scripts/actions_by_company.py`, which builds every row, figure and note below.
 
 ## What you write
 
@@ -41,15 +41,18 @@ One row per assignee company with actions resolved in the quarter or open now, t
 
 **Company sites line:** under the company name, the company's sites in `label`, by open actions most first. Up to two are named, each with "N open" in `text-heading` at 600 where non-zero, then "+N more sites".
 
-**Total row:** counts each action once, so its resolved figure equals the sum of the sites on the actions resolved board, and its open figure every action open across the portfolio. Its completion rate is worked from those two.
+**Total row:** counts each action once, so its resolved figure equals the sum of the sites in the ranking it hands on, and its open figure every action open across the portfolio. Its completion rate is worked from those two.
 
 **Logos:** each company's logo from PEAK, embedded once, in the square tile; a company without one gets its initials.
 
-**Board figures:** each site's actions resolved this quarter, and in the three whole months before the quarter, handed to the leaderboard. A site with none counts 0 and still ranks.
+**Links:** the section carries the anchor `actions-by-company`. No dashboard link.
 
-**Links:** the section carries the anchor `actions-by-company`, which the leaderboard's actions board links to. No dashboard link.
+**Renders when:** any action was resolved this quarter or is open now.
 
-**Renders when:** any action was resolved this quarter or is open now. The actions board renders when any was resolved this quarter.
+**Hands on:**
+
+- **A ranking** labelled Actions resolved, under the anchor `actions-by-company`, over quarters: each site's actions resolved this quarter, and in the three whole months before the quarter, as whole numbers. A site with none counts 0 and still ranks. Handed on only when any action was resolved this quarter
+- **Actions resolved this quarter** as a figure partial over the month to date, whenever the section renders
 
 ## Notes band items
 
@@ -69,6 +72,6 @@ All in the main batch:
 
 - Both ticket pulls select only `ticket_id`, `site_id`, `status_id`, and `assignees` with `id`, `entity.name` and `entity.logo_url`: which company holds each action, never what anyone wrote
 - `report.py next` pages each pull from its first page's total, 1000 rows a page
-- Every figure on the board and in the total row is a `count_tickets` count. The ticket rows only say which company holds each action
+- Every figure in the ranking and the total row is a `count_tickets` count. The ticket rows only say which company holds each action
 - Rows with status Not Doing are dropped from the pulls
 - Each window is read in each site's own time zone

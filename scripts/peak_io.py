@@ -88,6 +88,10 @@ def gql(file, query, args, fields):
     return call(file, "execute_graphql_query", query_name=query, args=args, fields=fields)
 
 
+# The system equipment types: the platform checking itself, not plant. Every equipment and rule count leaves them out.
+SYSTEM_TYPES = [21, 37, 69, 70, 87, 105, 114]
+
+
 # ── windows ─────────────────────────────────────────────────────────────────
 PART_MONTH_DAYS = 7          # complete days of today's month before it joins the windows
 
