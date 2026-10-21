@@ -419,16 +419,9 @@ def assemble(ctx, work, facts):
             if not hit:
                 raise SystemExit("wins.json: photo %r is not on disk: run key_wins.py photos first" % pick)
             pics.append(dict(p, src=os.path.join("kw", "photos", hit[0])))
-        sym = io.currency(facts.get(sid) or {})[2]
-        saved = round(sum(imp[t].get("savings") or 0 for t in w["tickets"]))
-        # a saving from MIN_SAVING is stated as a bold figure, a smaller one in words alone
-        if saved and not (SAVING.search(w["body"]) if saved >= io.MIN_SAVING else re.search(r"\bsaving", w["body"], re.I)):
-            chat.append("The tickets behind \"%s\" record %s%s in savings, which its text does not mention%s."
-                        % (w["heading"], sym, "{:,}".format(saved),
-                           "" if saved >= io.MIN_SAVING else "; state it without the figure"))
-        if any(io.small_saving(f) for f in SAVING.findall(w["body"])):
-            raise SystemExit("wins.json: %r states a saving under %s%d; leave the figure out" % (w["heading"], sym, io.MIN_SAVING))
-        body = SAVING.sub(r"<strong>\1</strong>", html.escape(w["body"], quote=False))
+        # a saving's figure shows from MIN_SAVING; a smaller one drops out, its words kept
+        body = re.sub(r"(?:\s+of)?\s*\*\*(.+?)\*\*", lambda m: "" if io.small_saving(m.group(1)) else m.group(0), w["body"])
+        body = SAVING.sub(r"<strong>\1</strong>", html.escape(body, quote=False))
         titles = Counter((imp[t].get("title") or "").strip() for t in w["tickets"])
         ref = lambda t: (imp[t].get("title") or "").strip() + (
             " (raised %s)" % io.day_short(io.local_day(imp[t]["created_at"], site.get("timezone"))) if titles[(imp[t].get("title") or "").strip()] > 1
