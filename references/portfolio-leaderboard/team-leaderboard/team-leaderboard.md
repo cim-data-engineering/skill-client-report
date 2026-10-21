@@ -48,8 +48,17 @@ One board per team ranking, in the order the rankings come. Each is a small rank
 
 **Renders when:** at least one board does.
 
+## Shoutout
+
+A button beside the title, "Send Mara a shoutout", thanking the leader of the first board whose ranking carries shoutouts, the assignees'. Only the leader gets one, never the climber. It opens the shoutout form with whom it thanks, their busiest site and a comment filled in, and the sender adds their own email:
+
+`https://airtable.com/app11XTZy9PtGOZwf/shrwYEpydoRJ62FzK?prefill_assignee_shoutout_name={{email}}&prefill_assignee_shoutout_site={{site_name}}&prefill_comment=Nice%20job%21`
+
+- The email is the leader's, and goes in the link only, never in the page's text
+- A leader with no shoutout gets no button
+
 ## Data
 
 No calls of its own. **Takes:**
 
-- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, and the meta line for whoever leads
+- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, and for people each one's first name, email and busiest site for the shoutout

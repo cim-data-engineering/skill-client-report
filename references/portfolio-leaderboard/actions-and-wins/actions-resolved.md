@@ -18,7 +18,7 @@ Each ranking runs over the quarter and moves against the quarter a month earlier
 
 - **A ranking** labelled Actions resolved: each site's actions resolved. Each site opens its PEAK ticket report over the quarter, grouped by assignee
 - **A team ranking** labelled Companies, of companies: each company's actions resolved, its name and logo, and for whichever leads its sites as the meta line, "4 sites". Each company opens its PEAK ticket report at its sites, narrowed to its assignees and grouped by site
-- **A team ranking** labelled Assignees, of assignees: each person's actions resolved, their name, their company and its logo, and for whoever leads a meta line of their company and their sites, "Kestrel Air Services · 2 sites". Each person opens their PEAK ticket report at their sites, narrowed to them and grouped by company
+- **A team ranking** labelled Assignees, of assignees: each person's actions resolved, their name, their company and its logo, and for whoever leads a meta line of their company and their sites, "Kestrel Air Services · 2 sites". Each person opens their PEAK ticket report at their sites, narrowed to them and grouped by company. It also carries each person's shoutout: their first name, their email and their busiest site, where they resolved the most in the quarter, ties alphabetical
 
 The reports are PEAK's ticket report over the quarter, one `site_ids` per site and one `assignee_ids` per assignee named:
 
@@ -37,7 +37,7 @@ All in the main batch:
 | Who resolved each action | `tickets.tickets` (`type:"escalated"`, `ticket_archived:false`, every `site_ids`) resolved over the quarter, `limit:1000` |
 | Who resolved each action a month earlier | the same, resolved over the quarter a month earlier |
 
-- The ticket pulls select only `ticket_id`, `site_id`, `status_id`, and `assignees` with `id`, `firstname`, `lastname`, `entity.name` and `entity.logo_url`: who holds each action and their company, never what anyone wrote
+- The ticket pulls select only `ticket_id`, `site_id`, `status_id`, and `assignees` with `id`, `firstname`, `lastname`, `email`, `entity.name` and `entity.logo_url`: who holds each action and their company, never what anyone wrote
 - `report.py next` pages each pull from its first page's total, 1000 rows a page
 - Every site figure is a `count_tickets` count. The ticket rows only say who holds each action
 - Rows with status Not Doing are dropped from the pulls

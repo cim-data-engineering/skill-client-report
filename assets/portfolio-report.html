@@ -40,6 +40,13 @@ section.lead{padding:28px 56px 24px}
 /* the board head: a table header over the strong rule */
 .rkhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding-bottom:8px;border-bottom:2px solid var(--secondary);font-size:.75rem;color:var(--text-muted);white-space:nowrap}
 .rkhead .rkt{margin:0;font-family:var(--display);font-size:1.0625rem;font-weight:600;line-height:1.35;color:var(--text-heading)}
+/* the shoutout: the report's one button, beside the team leaderboard's title, over the leader it thanks */
+.sechead:has(> .shout){display:grid;grid-template-columns:1fr auto;column-gap:24px}
+.sechead:has(> .shout) .eyebrow{grid-area:1/1}
+.sechead:has(> .shout) h2{grid-area:2/1}
+.sechead:has(> .shout) .h2note{grid-area:3/1/4/3}
+.shout{grid-area:1/2/3/3;align-self:end;margin-bottom:4px;display:inline-flex;align-items:center;gap:8px;height:36px;box-sizing:border-box;padding:0 16px 0 13px;border-radius:999px;background:var(--primary);color:var(--surface);font-size:.8125rem;font-weight:600;line-height:1;white-space:nowrap}
+.shout .clap{flex:none;font-size:1rem}
 /* the leader's building, cropped to a wide band, framed as the key wins' photos are; a plain panel without one */
 .lphoto{margin-top:12px;aspect-ratio:2/1;box-sizing:border-box;overflow:hidden;border:1px solid var(--outline);border-radius:6px;background:var(--surface-dim)}
 .lphoto img{display:block;width:100%;height:100%;object-fit:cover}
@@ -115,7 +122,7 @@ table.op td.ct{padding-right:0;text-align:right;font-weight:600;color:var(--text
 table.op .tlogo img{filter:grayscale(1) brightness(.8) contrast(2) opacity(.75)}
 /* names never take more than two lines, so every row keeps its height however long a name is */
 table.rk td.lv a,.leader .lname,.climb .cwho,table.hm.wide td.lv a,table.nbt td.lv a{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-@media screen and (max-width:760px){.rkgrid,.rkgrid.n2{grid-template-columns:1fr;row-gap:0}.rkcol{margin-bottom:32px}}
+@media screen and (max-width:760px){.rkgrid,.rkgrid.n2{grid-template-columns:1fr;row-gap:0}.rkcol{margin-bottom:32px}.sechead:has(> .shout){display:block}.shout{margin-top:14px}}
 /* a leaderboard never splits across pages, whatever paper or margins the browser prints with */
 section.lead,.rkcol{break-inside:avoid}
 
@@ -269,6 +276,9 @@ td.nb.none{color:var(--text-muted)}
     <p class="eyebrow">August 2026</p>
     <h2>Team leaderboard</h2>
     <p class="h2note">Each board ranks by actions resolved, with moves since July. Top 10 of 14 assignees.</p>
+<!-- fill: shoutout -->
+    <a data-sample="shoutout" class="shout" href="https://airtable.com/app11XTZy9PtGOZwf/shrwYEpydoRJ62FzK?prefill_assignee_shoutout_name=mara.okafor%40kestrelair.example&amp;prefill_assignee_shoutout_site=12%20Harbour%20Lane&amp;prefill_comment=Nice%20job%21"><span class="clap" aria-hidden="true">&#x1F44F;</span>Send Mara a shoutout</a>
+<!-- /fill: shoutout -->
   </div>
   <!-- Boards: drawn by scripts/fill_portfolio.py from the bundle's team_boards. -->
 <!-- fill: team-boards -->

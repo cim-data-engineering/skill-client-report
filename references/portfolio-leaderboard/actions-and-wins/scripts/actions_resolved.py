@@ -17,10 +17,10 @@ NAME = "actions-resolved"
 STAT4 = ["open", "in_progress", "closed", "on_hold"]           # every status but Not Doing
 COUNT_CHUNK, PAGE = 20, 1000
 UNNAMED = "Unnamed assignee"
-# The rows say only who holds each action: ids, each assignee's name, and their company with
-# its logo link. Never what anyone wrote.
+# The rows say only who holds each action: ids, each assignee's name and email, and their company
+# with its logo link. Never what anyone wrote.
 FIELDS = ["ticket_id", "site_id", "status_id", "assignees.id", "assignees.firstname", "assignees.lastname",
-          "assignees.entity.name", "assignees.entity.logo_url"]
+          "assignees.email", "assignees.entity.name", "assignees.entity.logo_url"]
 
 
 def pulls(ctx):
@@ -104,6 +104,13 @@ def build(ctx, work, shared):
     p_now, p_sites = tally(now, lambda a: a["id"])
     p_then, _ = tally(then, lambda a: a["id"])
     label = lambda p: who[p]["name"] or UNNAMED
+    # each person's busiest site, where they resolved the most, ties alphabetical: for their shoutout
+    site_name = {s["site_id"]: s["site_name"].strip() for s in ctx["sites"]}
+    at = defaultdict(lambda: defaultdict(int))
+    for act in now:
+        for p in {a["id"] for a in act["assignees"] if a["id"]}:
+            at[p][act["site"]] += 1
+    busiest = lambda p: site_name[min(at[p], key=lambda s: (-at[p][s], site_name[s].lower()))]
     every = set(p_now) | set(p_then)
     shared.setdefault("team_rankings", []).append({
         "label": "Assignees", "noun": "assignees", "window": "quarter", "unit": "actions",
@@ -111,7 +118,9 @@ def build(ctx, work, shared):
         "start": {p: len(p_then.get(p, ())) or None for p in every},
         "meta": {p: [x for x in (who[p]["company"], pio.site_count(len(p_sites[p]))) if x] for p in p_now},
         "tiles": {p: {"company": who[p]["company"], "logo": logos.get(who[p]["company"])} for p in p_now},
-        "links": {p: pio.tickets_link(ctx, sorted(p_sites[p]), "user_entity", [p]) for p in p_now}})
+        "links": {p: pio.tickets_link(ctx, sorted(p_sites[p]), "user_entity", [p]) for p in p_now},
+        "shoutouts": {p: {"first": who[p]["first"], "email": who[p]["email"], "site": busiest(p)}
+                      for p in p_now if who[p]["first"] and who[p]["email"]}})
 
     unlogged = sorted(c for c in co_now if not logos.get(c))
     chat = ["Initials stand in for the logos of %s, with none in PEAK or none that could be fetched."

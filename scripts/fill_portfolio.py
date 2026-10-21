@@ -34,6 +34,7 @@ TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="c
 CLIMB = ('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
          'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>'
          '<polyline points="16 7 22 7 22 13"/></svg>')
+CLAP = '<span class="clap" aria-hidden="true">&#x1F44F;</span>'
 DASHES = re.compile("[\u2013\u2014]|&ndash;|&mdash;")
 REGION = re.compile(r"[ \t]*<!-- fill: ([a-z-]+) -->\n(.*?)[ \t]*<!-- /fill: \1 -->\n?", re.S)
 
@@ -113,6 +114,11 @@ def board(b):
         out += ['        </tbody>', '      </table>']
     out.append('    </div>')
     return "\n".join(out)
+
+
+def shoutout(s):
+    """The shoutout button beside the team leaderboard's title; nothing without one."""
+    return '    <a class="shout" href="%s">%s%s</a>\n' % (href(s["url"]), CLAP, esc(s["text"])) if s else ""
 
 
 def boards(bs):
@@ -339,6 +345,7 @@ def main():
     base = os.path.dirname(os.path.abspath(a.data))       # photo paths are relative to the bundle
     render = {"boards": lambda: boards(D["boards"]),
               "team-boards": lambda: boards(D["team_boards"]),
+              "shoutout": lambda: shoutout(D.get("shoutout")),
               "eh-table": lambda: heatmap(D["equipment_health"], months),
               "cf-table": lambda: heatmap(D["comfort"], months),
               "open": lambda: open_actions(D["open_actions"]),

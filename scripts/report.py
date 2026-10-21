@@ -71,9 +71,10 @@ IMPACT_ORDER = ["equipment-health-score", "thermal-comfort", "automated-checks",
 #   rankings            [{label, anchor | links, window: "month" | "quarter", now, start, dp, unit}], one board
 #                       each: now on the leaderboard month or the quarter ending on it, start on the window
 #                       last month's leaderboard ranked; each name jumps to the anchor, or opens its own link
-#   team_rankings       [{label, links, window, noun, unit, names, meta, tiles, now, start}], one board
-#                       each, as rankings but over the companies or people holding the work, keyed by company
-#                       or person; tiles each one's company and its logo
+#   team_rankings       [{label, links, window, noun, unit, names, meta, tiles, now, start, shoutouts}], one
+#                       board each, as rankings but over the companies or people holding the work, keyed by
+#                       company or person; tiles each one's company and its logo, shoutouts each person's
+#                       {first, email, site} for the leader's shoutout
 #   partial             names of the volume figures shown that run short over a month to date, present
 #                       once any section shows the month to date; single-site only
 # A figure the plan needs, before anything is fetched, a module names in HANDS_ON: plan.json

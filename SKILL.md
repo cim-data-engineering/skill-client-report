@@ -114,7 +114,7 @@ Each section's reference owns its section: what it shows, its rules, its calls, 
 | --- | --- | --- |
 | Site facts: building size, currency, state, country, building photo link | the overview, before any section builds | every section |
 | A ranking: a label, an anchor or each site's PEAK report, a window (the leaderboard month or the quarter ending on it), the unit of its figure, each site's figure now and on the window last month's board ranked | equipment health, indoor environment and actions resolved, in that order | the site leaderboard, one board each, its site names linking to the anchor or each to its own PEAK report |
-| A team ranking: a ranking over the companies or people holding the work, with its unit, each one's name, company, logo and PEAK report, and its leader's meta line | actions resolved, companies then assignees | the team leaderboard, one board each |
+| A team ranking: a ranking over the companies or people holding the work, with its unit, each one's name, company, logo and PEAK report, its leader's meta line, and for people each one's shoutout: first name, email and busiest site | actions resolved, companies then assignees | the team leaderboard, one board each |
 | Thermal zones: zone points on the levels that scored, and every configured point | indoor environment | the scorecards, so the card always equals the comfort table's Zones total |
 
 ## Writing the narrative
