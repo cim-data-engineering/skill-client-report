@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: that the section is le
 
 Eyebrow: the issue month, "October 2026"  
 Statement: Open P1-2 actions  
-Date line: "Priority 1 and 2 actions open as at {issue date} by age open.", then where a list is cut, "Top 10 of {N} sites and {N} assignees." naming the lists cut, then "The other {N} sites hold none.", counting the report's other sites with data, "The other site holds none." for one.  
+Date line: "Priority 1 and 2 actions open as at {issue date} by age open.", then where a list is cut, "Top 20 of {N} sites and {N} assignees." naming the lists cut.  
 Legend under it: "≥60d", "30-60d", "<30d", one swatch each.
 
 ## Definitions
@@ -32,8 +32,8 @@ Two lists side by side, Sites then Assignees, each under a board head with "Open
 
 **Rows and ranking:**
 
-- Most first, ties alphabetical by name; the top 10 on each list
-- Sites: every site with an open P1-2 action
+- Most first, ties alphabetical by name; the top 20 on each list
+- Sites: every site with data, those holding none at 0, with no bar and no link
 - Assignees: everyone holding one, CIM, the client's managing agents and AI agents included. An action counts once for each person holding it. Actions held by nobody are one row, "No assignee", with no link; an account with no name in PEAK is "Unnamed assignee"
 
 **Links:** PEAK's ticket report, priority 1 and 2 only, from `{{raised}}`, the day the oldest action the name counts was raised (its age counted back from the issue date, a day early), to `{{issue_date}}`, so every action counted is in it. One `site_ids` per site.
@@ -60,4 +60,4 @@ All in the main batch:
 - Every count and every age split comes from the one pull, so each bar always adds up to its count
 - Each shown company's logo is fetched once from the link on its assignees and embedded; a company without one gets its initials
 
-**Hands on:** the sites with data: each site holding an open P1-2 action. **Takes:** the sites with data marked before it builds, for the date line.
+**Hands on:** the sites with data: each site holding an open P1-2 action. **Takes:** the sites with data marked before it builds, listed at 0.

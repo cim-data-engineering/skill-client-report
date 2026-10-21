@@ -181,8 +181,13 @@ td.nb.none{color:var(--text-muted)}
   .lead.sites .sechead{margin-bottom:14px}
   .lead.sites .lphoto{aspect-ratio:5/2}
   .lead.sites table.rk td{height:27px}
-  /* a long ranked table runs on to the next page under its repeated header rather than leaving a gap */
-  table.hm.wide,table.nbt{break-inside:auto}
+  /* a by-site section moves to the next page whole rather than split; one whose table runs to 16 rows or more
+     starts its own page and breaks between rows under its repeated header */
+  #eh-by-site,#cf-by-site,#sustainability-ratings{break-inside:avoid}
+  :is(#eh-by-site,#cf-by-site,#sustainability-ratings):has(tbody tr:nth-child(16)){break-before:page;break-inside:auto}
+  /* twenty rows a list, or sixteen sites a table, fit one page */
+  table.op td{height:40px}
+  table.hm.wide tbody td,table.nbt tbody td{height:44px}
   .rkgrid{break-inside:avoid}
   /* the boards stay side by side in print */
   .rkgrid{grid-template-columns:repeat(3,minmax(0,1fr))}

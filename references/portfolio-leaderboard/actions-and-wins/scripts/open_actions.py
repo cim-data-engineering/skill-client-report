@@ -15,7 +15,7 @@ import portfolio_io as pio  # noqa: E402
 NAME = "open-actions"
 PRIORITIES = [1, 2]
 PAGE = 1000
-SHOWN = 10
+SHOWN = 20
 DAY_MS = 86400000
 AGES = (60, 30)                        # days: 60 or more, 30 to 60, under 30
 UNNAMED, NOBODY = "Unnamed assignee", "No assignee"
@@ -109,9 +109,13 @@ def build(ctx, work, shared):
     shown = {who[p]["company"] for _, p in ranked_people[:SHOWN] if p != NOBODY}
     logos = pio.fetch_logos({c: u for c, u in pio.logo_links(actions).items() if c in shown})
 
+    # every site with data, those holding none at 0
+    pio.shown(shared, on_sites)
+    listed = {s: on_sites.get(s, 0) for s in shared["shown_sites"] if s in site}
     site_rows = [{"rank": k, "name": site[s]["site_name"].strip(), "state": pio.region(ctx, site[s]),
-                  "count": on_sites[s], "ages": site_ages[s], "link": link(ctx, oldest[s], [s], "assignee")}
-                 for k, s in most_first(on_sites, lambda s: site[s]["site_name"])[:SHOWN]]
+                  "count": listed[s], "ages": site_ages[s],
+                  "link": link(ctx, oldest[s], [s], "assignee") if listed[s] else None}
+                 for k, s in most_first(listed, lambda s: site[s]["site_name"])[:SHOWN]]
     person_rows = []
     for k, p in ranked_people[:SHOWN]:
         row = {"rank": k, "name": label(p), "count": people[p], "ages": person_ages[p], "tile": {}}
@@ -122,14 +126,10 @@ def build(ctx, work, shared):
         person_rows.append(row)
 
     note = "Priority 1 and 2 actions open as at %s by age open." % io.day_long(ctx["today"])
-    over = [what for n, what in ((len(on_sites), "%d sites" % len(on_sites)), (len(set(people) - {NOBODY}), "%d assignees" % len(set(people) - {NOBODY})))
+    over = [what for n, what in ((len(listed), "%d sites" % len(listed)), (len(set(people) - {NOBODY}), "%d assignees" % len(set(people) - {NOBODY})))
             if n > SHOWN]
     if over:
         note += " Top %d of %s." % (SHOWN, " and ".join(over))
-    pio.shown(shared, on_sites)
-    idle = len(shared["shown_sites"]) - len(on_sites)      # the report's other sites, those with any data
-    if idle:
-        note += " The other site holds none." if idle == 1 else " The other %d sites hold none." % idle
     month = "%s %d" % (io.month(ctx["today"]), io.d(ctx["today"]).year)
     return {"open_actions": {"panels": [{"title": "Sites", "rows": site_rows},
                                         {"title": "Assignees", "rows": person_rows}]},
