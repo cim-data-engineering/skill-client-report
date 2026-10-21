@@ -50,8 +50,9 @@ def photo(url):
     return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 
 
-def board(ctx, size, unit, ranking):
-    """The board for one ranking, and the site that leads it."""
+def board(ctx, size, unit, ranking, client):
+    """The board for one ranking, and the site that leads it. `client` is {site_id: primary client name}, empty
+    where every site shares one."""
     now, start, dp = ranking["now"], ranking["start"], ranking["dp"]
     site = {s["site_id"]: s for s in ctx["sites"]}
     name = lambda sid: site[sid]["site_name"].strip()
@@ -62,7 +63,7 @@ def board(ctx, size, unit, ranking):
     for k, sid in ranked[:SHOWN]:
         r = {"rank": k, "name": name(sid), "value": fmt(now[sid]), "move": moves[sid] or None, "link": links.get(sid)}
         if k == 1:
-            r["meta"] = [x for x in (pio.region(ctx, site[sid]),
+            r["meta"] = [x for x in (client.get(sid), pio.region(ctx, site[sid]),
                                      "%s %s" % (pio.num(size[sid]), unit) if size.get(sid) else None) if x]
         rows.append(r)
     b = {"title": ranking["label"], "anchor": ranking.get("anchor"), "window": pio.board_window(ctx, ranking["window"]),
@@ -75,7 +76,11 @@ def board(ctx, size, unit, ranking):
 
 def build(ctx, work, shared):
     size, unit, _ = pio.sizes(ctx, shared["facts"])
-    made = [board(ctx, size, unit, r) for r in shared.get("rankings") or []]
+    # each leader's primary client, left off where every site in the report shares one
+    client = {s["site_id"]: (shared["facts"].get(s["site_id"]) or {}).get("client") for s in ctx["sites"]}
+    if len(set(client.values())) < 2:
+        client = {}
+    made = [board(ctx, size, unit, r, client) for r in shared.get("rankings") or []]
     built = [(b, sid) for b, sid, _, _ in made if b["rows"]]
     if not built:
         return {"drop": [NAME]}

@@ -30,7 +30,7 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 
 **Each board** reads in three steps, the leader first. In a portfolio of three sites or fewer, where a climb is mostly two sites swapping places, no board carries the climber:
 
-1. **Leader**: rank 1, its row set large under the building's photo, cropped to a wide band. The trophy and the movement in the rank column, the site name, then "{region} · {building size}" with the value and unit, the region label per [How sections fit together](../../../SKILL.md#how-sections-fit-together), either part left off where it is empty. A leader with no photo in PEAK gets a plain panel with a building mark, and the script names it in chat
+1. **Leader**: rank 1, its row set large under the building's photo, cropped to a wide band. The trophy and the movement in the rank column, the site name, then "{primary client} · {region} · {building size}" with the value and unit, the primary client per the overview's site facts and the region label per [How sections fit together](../../../SKILL.md#how-sections-fit-together), any part left off where it is empty. The client is left off every board where all the report's sites share one, as in a single client's portfolio. A leader with no photo in PEAK gets a plain panel with a building mark, and the script names it in chat
 2. **Biggest climber**: the one challenger, the row under the leader: "Biggest climber", the site name, and "↑{places} to {place now}", "↑2 to 5th". It is the largest climb among ranks 2 to 10, so it is never the leader and always on the board. Sites tied on the climb go to the one placed highest. Where no one below the leader climbed, the row reads "None", muted
 3. **Chasing pack**: ranks 2 to 10, each with rank, site name, movement and value, a step smaller
 
@@ -54,4 +54,4 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 No PEAK calls of its own. The script fetches each leader's photo once from its link, crops it to the band and embeds it as a JPEG. **Takes:**
 
 - **Rankings**: each a label, an anchor or each site's PEAK report, a window (month or quarter), its unit, each site's figure now and on the window last month's board ranked, and the decimals to show
-- **Site facts**: each leader's state, country, building size and building photo link
+- **Site facts**: each leader's state, country, building size, building photo link and primary client
