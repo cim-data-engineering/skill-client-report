@@ -106,12 +106,6 @@ def build(ctx, work, shared):
 
     chat = []
     shown = shared.get("shown_sites") or set()
-    blank = [s["site_name"].strip() for s in ctx["sites"] if s["site_id"] not in shown]
-    if blank and shown:
-        chat.append("PEAK holds no scores, actions or ratings for %s in this report's windows, so %s left out of the "
-                    "masthead's site count. %s equipment, sensors and rules still count in the scorecards."
-                    % (io.listing(blank), "it is" if len(blank) == 1 else "they are",
-                       "Its" if len(blank) == 1 else "Their"))
     unsized = [s["site_name"].strip() for s in ctx["sites"] if not size[s["site_id"]]]
     if unsized:
         chat.append("No building size in PEAK for %s: left out of the portfolio size and of the sustainability "

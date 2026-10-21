@@ -122,7 +122,7 @@ def build(ctx, work, shared):
         person_rows.append(row)
 
     note = "Priority 1 and 2 actions open as at %s by age open." % io.day_long(ctx["today"])
-    over = [what for n, what in ((len(on_sites), "%d sites" % len(on_sites)), (len(people), "%d assignees" % len(people)))
+    over = [what for n, what in ((len(on_sites), "%d sites" % len(on_sites)), (len(set(people) - {NOBODY}), "%d assignees" % len(set(people) - {NOBODY})))
             if n > SHOWN]
     if over:
         note += " Top %d of %s." % (SHOWN, " and ".join(over))

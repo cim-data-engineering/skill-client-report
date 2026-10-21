@@ -425,7 +425,7 @@ def assemble(ctx, work, facts):
         body = SAVING.sub(r"<strong>\1</strong>", html.escape(w["body"], quote=False))
         titles = Counter((imp[t].get("title") or "").strip() for t in w["tickets"])
         ref = lambda t: (imp[t].get("title") or "").strip() + (
-            " (raised %s)" % io.day_short(imp[t]["created_at"]) if titles[(imp[t].get("title") or "").strip()] > 1
+            " (raised %s)" % io.day_short(io.local_day(imp[t]["created_at"], site.get("timezone"))) if titles[(imp[t].get("title") or "").strip()] > 1
             and imp[t].get("created_at") else "")
         win = {"site": {"name": site["site_name"].strip(), "state": pio.region(ctx, site)}, "site_id": sid,
                "impact": impact,

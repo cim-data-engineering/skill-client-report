@@ -117,4 +117,4 @@ def band_text(fact, unit=None):
     if lo is None or hi is None:
         return None
     num = lambda v: ("%.1f" % v).rstrip("0").rstrip(".")
-    return "%s-%s%s" % (num(lo), num(hi), " %s" % unit if unit else "")
+    return "%s%s%s%s" % (num(lo), " to " if lo < 0 or hi < 0 else "-", num(hi), " %s" % unit if unit else "")

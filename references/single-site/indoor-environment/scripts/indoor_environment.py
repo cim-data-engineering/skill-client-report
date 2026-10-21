@@ -64,12 +64,12 @@ def more(ctx, work):
             out.append(zc)
         else:
             out += [c for c in _pages(zc, work.get("ie/zone-month.json"), "ie/zone-month") if not work.has(c["file"])]
-    # Levels with comfort points but no score carry no name in the counts, so chat names them from their zones
+    # the level count carries no names, so chat names unscored levels from their zones
     quiet = unscored(work)
     if quiet and not work.has("ie/levels-unscored.json"):
         out.append(io.call("ie/levels-unscored.json", "search_zones", site_ids=[sid], level_ids=sorted(quiet),
                            limit=250))
-    # A site that went live inside the quarter takes its headline score over the months after it
+    # a site that went live inside the quarter takes its headline score over the months it kept
     on = onboarding(ctx, site_months(work))
     if on and on["start"] > q0 and not work.has("ie/site-all-live.json"):
         out.append(io.call("ie/site-all-live.json", "search_indoor_environment", metric="temperature",
@@ -90,10 +90,9 @@ def site_months(work):
 
 
 def onboarding(ctx, site_m):
-    """A site whose comfort scores start inside the trend window, after its first month, went live
-    then. PEAK's comfort rows carry no reading counts to tell the day, so that month counts as
-    monitored in part: the windows keep the months after it, or that month alone when nothing
-    follows. None for a site scored from the window's first month."""
+    """For scores that start after the trend window's first month: the month they start and the
+    first month the windows keep. Comfort rows carry no counts to date the day, so the go-live
+    month is skipped unless it is the last."""
     tm = ctx["trend_months"]
     have = [m for m in tm if m[:7] in site_m]
     if not have or have[0] == tm[0]:
@@ -114,8 +113,7 @@ def months_text(ctx, months, lead=", and "):
 def floor_key(name):
     """Building order, highest first. A name with no readable floor sorts above the
     numbered ones, alphabetically, so a grouping such as NABERS IE heads the table.
-    Level numbers keep their sign, so basements written as negative levels sort below
-    ground, as do B1, Basement 2 and the like."""
+    A level number keeps its minus when a space comes before it ("Level -2")."""
     n = name.strip().lower()
     if re.match(r"^(ground|gnd|grd|gf|g|lobby)\b", n):
         return 0.0
@@ -126,8 +124,6 @@ def floor_key(name):
         return -1.0
     if n.startswith(("mezz", "mezzanine")):
         return 0.5
-    # "Level -2" is two below ground, but "Level-03" beside "Level 02" is level 3: a minus counts
-    # only with a space before it
     m = re.match(r"^(?:level|lvl|floor|fl|l)(?:\s+(-)\s*|[\s\-_]*)0*(\d+)", n) or re.match(r"^(-?)0*(\d+)", n)
     if m:
         return -float(m.group(2)) if m.group(1) else float(m.group(2))
@@ -144,13 +140,10 @@ def band(v):
 
 
 def build(ctx, work, shared):
-    site_m = site_months(work)
-    if not site_m:
-        return {"drop": [NAME], "chat": ["Indoor environment left out: PEAK returned no comfort score for the site "
-                                         "in the window."]}
     shared.setdefault("partial", [])                  # its scores show the month to date and stand as they are
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
-    # A site that went live inside the window shows the months it was monitored in full
+    # a site that went live inside the windows shows only the months it was monitored in full
+    site_m = site_months(work)
     on = onboarding(ctx, site_m)
     start = on["start"] if on else tm[0]
     kq, kt = [m for m in qm if m >= start], [m for m in tm if m >= start]
@@ -176,12 +169,11 @@ def build(ctx, work, shared):
             temps[r["level_id"]].append(r["zone_value"])
     zones = {r["level_id"]: r.get("included_point_count") or 0 for r in work.get("ie/zones-by-level.json").rows}
     shown = [l for l in by_level if any(m[:7] in by_level[l] for m in kq)]
-    one = len(kq) == 1                                # no change to show: the lowest score leads
+    one = len(kq) == 1                                # one month: the lowest score leads
 
     single = len(by_level) == 1
     if single:
-        # One row per zone, each month the mean of its points' scores; a zone's average
-        # temperature takes the place of the Zones count
+        # one row per zone, each month the mean of its points' scores
         zrows = list(work.get("ie/zone-month.json").rows) if work.has("ie/zone-month.json") else []
         s = PAGE
         while work.has("ie/zone-month-%d.json" % s):
@@ -223,17 +215,8 @@ def build(ctx, work, shared):
             "months": [io.mon(m) for m in kq], "to_date": kq[-1] == ctx["to_date"],
             "site": {"counts": site_counts if single else [shown_zones], "months": site_q}}
 
-    # the headline score: the quarter's rollup, or for a site that went live in it, the rollup over
-    # the months after
-    chat = []
-    site_all = work.get("ie/site-all.json")
-    if kq != qm:
-        if work.has("ie/site-all-live.json"):
-            site_all = work.get("ie/site-all-live.json")
-        else:
-            chat.append("The thermal comfort headline still includes %s, monitored only in part. Run python3 "
-                        "scripts/report.py next %s, make the call it prints, then bundle again."
-                        % (io.month(on["month"]), ctx.get("dir", "<dir>")))
+    live = kq != qm and work.has("ie/site-all-live.json")
+    site_all = work.get("ie/site-all-live.json" if live else "ie/site-all.json")
     score = io.pct(site_all.first()["score"], 1)
     got = [(m, v) for m, v in zip(kq, site_q) if v is not None]
     if len(got) > 1:
@@ -244,7 +227,7 @@ def build(ctx, work, shared):
                     "fig": "%.1f%%" % score, "cap": "thermal comfort maintained", "sub": sub, "row": "thermal-comfort"},
                    **({"delta": delta} if delta else {}))]
 
-    # the trend, each score over its own month; a trend needs three points
+    # a trend needs three points
     values = [io.pct(site_m[m[:7]]["score"], 1) if m[:7] in site_m else None for m in kt]
     pts = [(m, v) for m, v in zip(kt, values) if v is not None]
     trend = None
@@ -259,36 +242,27 @@ def build(ctx, work, shared):
     lo, hi = facts_site.get("thermal_comfort_min_temp"), facts_site.get("thermal_comfort_max_temp")
     band_text = ("%g–%g %s across this building" % (lo, hi, unit)) if lo is not None and hi is not None \
         else "typically 21–24.9 °C (68–79 °F)"
-    # the range held on one line: word joiners either side of the dash, a no-break space before the unit
-    in_band = "the comfort band set for the site in PEAK%s" % (
-        (", %g\u2060–\u2060%g\u00a0%s," % (lo, hi, unit)) if lo is not None and hi is not None else "")
 
     level_names = {}
     if work.has("ie/levels-unscored.json"):
         level_names = {r["level_id"]: r.get("level_name") for r in work.get("ie/levels-unscored.json").rows}
     quiet = ["%s (%d points)" % (level_names.get(l) or "level %s" % l, n) for l, n in unscored(work).items()]
+    chat = []
     if quiet:
         chat.append("Comfort points are configured on %s, but none returned a score this quarter, so they are in "
                     "neither the comfort table nor the thermal zones figure." % io.listing(quiet))
     if on:
-        chat.append("Thermal comfort scores start in %s %d, part way through the month as far as PEAK shows, so "
-                    "its figures start with %s." % (io.month(on["month"]), io.d(on["month"]).year,
-                                                    io.month_label(ctx, start))
-                    if start != on["month"] else
-                    "Thermal comfort scores start in %s %d, so its figures cover that month alone."
-                    % (io.month(on["month"]), io.d(on["month"]).year))
-    gaps = [io.month_label(ctx, m) for m, v in zip(kt, values) if v is None]
-    if gaps:
-        chat.append("Thermal comfort has no score for %s, a gap in the data rather than onboarding." % io.listing(gaps))
-    if trend is None:
-        chat.append("Thermal comfort has %d month%s of scores, too few for a trend, so the monthly thermal comfort "
-                    "section is left out." % (len(pts), "" if len(pts) == 1 else "s"))
+        chat.append("Thermal comfort went live in %s, so its figures start with %s." % (
+            io.month(on["month"]), io.month_label(ctx, start)) + ("" if trend else " Too few months for its trend."))
+    elif len(pts) < len(tm):
+        chat.append("Indoor environment has %d months of comfort history, short of the %d the trend covers."
+                    % (len(pts), len(tm)))
 
     links = {"comfort": link}
     datelines = {"Indoor environment health snapshot":
-                 "%s. Share of zone readings inside %s during working hours, by %s%s."
-                 % (months_text(ctx, kq, " and "), in_band, "zone" if single else "level",
-                    ", lowest first" if one else "" if single else ", in building order")}
+                 "%s. Share of zone readings inside the comfort band set for the site in PEAK during working "
+                 "hours, by %s, %s." % (months_text(ctx, kq, " and "), "zone" if single else "level",
+                                        "lowest first" if one else "in building order")}
     if trend:
         links["trend_comfort"] = dashboard(kt[0])
         datelines["Monthly thermal comfort"] = ("%s, the last six complete months%s."

@@ -64,7 +64,7 @@ def person(name):
     """Whether a comment's author is a person. Comments carry only the author's name, so CIM's
     system accounts are known by their names in peak_io's list, and agents by the name rule."""
     name = " ".join((name or "").split())
-    return name.lower() not in SYSTEM_NAMES and not io.system_account(None, None, name)
+    return name.lower() not in SYSTEM_NAMES and not io.system_account(None, name)
 
 
 def human(r):
@@ -388,7 +388,7 @@ def assemble(ctx, work, facts):
         body = SAVING.sub(r"<strong>\1</strong>", html.escape(w["body"], quote=False))
         titles = Counter((imp[t].get("title") or "").strip() for t in w["tickets"])
         ref = lambda t: (imp[t].get("title") or "").strip() + (
-            " (raised %s)" % io.day_short(imp[t]["created_at"]) if titles[(imp[t].get("title") or "").strip()] > 1
+            " (raised %s)" % io.day_short(io.local_day(imp[t]["created_at"], ctx["site"].get("timezone"))) if titles[(imp[t].get("title") or "").strip()] > 1
             and imp[t].get("created_at") else "")
         win = {"impact": impact, "heading": html.escape(w["heading"], quote=False), "body": body,
                "refs": [{"url": imp[t]["ticket_link"], "title": html.escape(ref(t), quote=False)} for t in w["tickets"]]}

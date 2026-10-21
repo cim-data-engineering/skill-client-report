@@ -175,7 +175,7 @@ def build(ctx, work, shared):
     for f, key in (("ar/resolved-by-assignee.json", "resolved"), ("ar/open-by-assignee.json", "open")):
         for r in work.get(f).rows:
             aid, name = r.get("assignee_id"), " ".join((r.get("assignee_name") or "").split())
-            if not aid or io.system_account(aid, None, name):     # CIM's own system accounts never rank
+            if not aid or io.system_account(aid, name):     # CIM's own system accounts never rank
                 continue
             e = board.setdefault(aid, {"name": name, "company": company.get(aid, ""), "resolved": 0, "open": 0})
             e[key] += r.get("ticket_count") or 0

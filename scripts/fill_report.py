@@ -221,7 +221,6 @@ def line_chart(d, months, to_date=False):
     for tv, tlabel in th:
         text, ty = "%s threshold" % tlabel, y(tv)
         w = 6.0 * len(text)          # the axis face is mono at 10px: 6px a character
-        # the ends of the line first; where the series covers both, the first clear place along it
         slide = [(x, yy, "start") for x in range(66, int(RIGHT - 4 - w), 22) for yy in (ty - 8, ty + 14)]
         for x, yy, anchor in [(44, ty - 8, "start"), (44, ty + 14, "start"),
                               (RIGHT - 4, ty - 8, "end"), (RIGHT - 4, ty + 14, "end")] + slide:
@@ -288,8 +287,7 @@ def grouped_bar(d, months, to_date=False):
         ta = BASELINE - (a[k] / amax) * H
         tb = BASELINE - (b[k] / bmax) * H
         xa, xb = C[k] - w / 2 - 3, C[k] + w / 2 + 3
-        # Two labels side by side at one height read as one figure ("1.97M$7.4k"), so a pair
-        # that would sit closer than a clear gap moves apart, each away from the other.
+        # two labels side by side at one height read as one figure, so a close pair moves apart
         gap = (xb - xa) - (text_w(la[k]) + text_w(lb[k])) / 2
         if gap < 6 and abs(ta - tb) < 12:
             xa, xb = xa - (6 - gap) / 2, xb + (6 - gap) / 2

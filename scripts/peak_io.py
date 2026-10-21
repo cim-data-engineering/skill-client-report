@@ -95,8 +95,7 @@ SYSTEM_TYPES = [21, 37, 69, 70, 87, 105, 114]
 
 # ── who ranks ───────────────────────────────────────────────────────────────
 # CIM's own system accounts, by PEAK user id: support, the API logins and the AI agents. Their actions
-# count wherever work is measured, but they never rank as people. PEAK has no system-account flag, so
-# the ids decide, backed by an email rule for accounts added later.
+# count wherever work is measured, but they never rank as people. PEAK has no system-account flag.
 SYSTEM_ACCOUNTS = {
     "4ddcfd76-f5f0-46f3-863a-2bf90ce22469": "CIM Support",
     "e28a4b09-a670-4954-823b-72e411e7cc2d": "CIM Engineering API",
@@ -104,20 +103,13 @@ SYSTEM_ACCOUNTS = {
     "7ba072a9-ada6-4f2b-82d3-b86cbc71558c": "Agent Hannah Escalations",
     "ceb1f491-e901-4369-8708-2a38bbc4e9ea": "Agent Hana v1.0",
 }
-CIM_DOMAINS = ("cim.io", "cimenviro.com")
 AGENT = re.compile(r"^\s*agent\b", re.I)          # the AI review agents, whatever company they sit under
 
 
-def system_account(user_id, email=None, name=None):
-    """True for an account that is CIM's system rather than a person: one of SYSTEM_ACCOUNTS, a
-    CIM-domain address whose local part is `support` or carries `+api`, or an agent by name.
-    Contractors' shared logins (a dispatch desk, a BMS controls account) are people here: they rank."""
-    if user_id and str(user_id) in SYSTEM_ACCOUNTS:
-        return True
-    local, _, domain = (email or "").strip().lower().partition("@")
-    if domain in CIM_DOMAINS and (local == "support" or "+api" in local):
-        return True
-    return bool(name and AGENT.match(name))
+def system_account(user_id, name=None):
+    """True for an account that is CIM's system rather than a person: one of SYSTEM_ACCOUNTS, or an
+    agent by name. Contractors' shared logins (a dispatch desk, a BMS controls account) rank."""
+    return bool(user_id and str(user_id) in SYSTEM_ACCOUNTS) or bool(name and AGENT.match(name))
 
 
 # ── time zones ──────────────────────────────────────────────────────────────
@@ -293,6 +285,12 @@ def span(first, last, short=False, sep=" – "):
 def day_long(s):
     x = d(s)
     return "%d %s %d" % (x.day, MONTHS[x.month - 1], x.year)
+
+
+def local_day(ts, tz):
+    """A PEAK UTC timestamp as the site's own date, 'YYYY-MM-DD'."""
+    from datetime import datetime
+    return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(zone(tz)).date().isoformat()
 
 
 def day_short(s):

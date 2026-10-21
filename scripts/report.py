@@ -154,8 +154,8 @@ READ_RULE = ("Read these where they come back and never save them: they carry wh
              "screened and compact with: python3 references/single-site/actions-and-wins/scripts/key_wins.py digest %s <that file>")
 
 
-CLOSING = ("The %s leaderboard is built on %s, the day the month closed: a site west of the first may still be "
-           "in it, and its scores may not have settled. Build it again from the 2nd before it is sent.")
+CLOSING = ("The %s leaderboard is built on %s, the day the month closed, so its scores may not have settled. "
+           "Build it again from the 2nd before it is sent.")
 
 
 PORTFOLIO_READ_RULE = ("Read these where they come back and never save them. They carry each candidate's title, "
@@ -549,8 +549,15 @@ def fill_portfolio(a, work):
     # the client logo is read now, so a logo added to or taken out of the plan shows on the next fill
     logo = ctx.get("client_logo")
     m = data["masthead"]
-    if m.get("shown") is not None:          # a site that shows only through a win still counts
-        m["sites"] = len(set(m["shown"]) | {w.get("site_id") for w in data.get("wins") or []} - {None}) or m["sites"]
+    if m.get("shown"):                      # a site that shows only through a win still counts
+        shown = set(m["shown"]) | {w.get("site_id") for w in data.get("wins") or []}
+        m["sites"] = len(shown - {None})
+        blank = [s["site_name"].strip() for s in ctx["sites"] if s["site_id"] not in shown]
+        if blank:
+            chat.append("PEAK holds no scores, actions or ratings for %s in this report's windows, so %s left out of "
+                        "the masthead's site count; %s equipment, sensors and rules still count in the scorecards."
+                        % (io.listing(blank), "it is" if len(blank) == 1 else "they are",
+                           "its" if len(blank) == 1 else "their"))
     ov, use = module("overview", "portfolio"), bool(logo and client_logo_ok(logo))
     data["masthead"]["logo"] = ov.logo(logo) if use else None
     data["masthead"]["logo_tile"] = ov.dark(logo) if use else False

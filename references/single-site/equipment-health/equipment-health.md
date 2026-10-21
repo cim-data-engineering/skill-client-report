@@ -24,7 +24,7 @@ Section link, labelled "See live equipment health dashboard", over the quarter. 
 
 ## Labor cost avoided model
 
-Each month: rules scored that month (by priority) x annual mins saved per rule x (the month's days / 365) x labor cost per minute, the month to date over its days so far. The headline is those monthly figures added up over the reporting period, so it always equals the bars Chart 2 draws for the same months. The labor rate follows the site's currency (`peak_io.currency`), and hours convert to days at a 7.5-hour working day.
+Each month: rules scored that month (by priority) x annual mins saved per rule x (the month's days / 365) x labor cost per minute. The headline adds up those monthly figures over the reporting period, so it equals Chart 2's bars for the same months. The labor rate follows the site's currency (`peak_io.currency`), and hours convert to days at a 7.5-hour working day.
 
 | Priority | Annual checks | Mins per check | Annual mins saved per rule | Labor cost per hour ($US) | Annual cost saved per rule ($US) |
 | -------- | ------------- | -------------- | -------------------------- | ------------------------- | -------------------------------- |
@@ -33,7 +33,7 @@ Each month: rules scored that month (by priority) x annual mins saved per rule x
 | P3       | 12            | 1.00           | 12.0                       | $100                      | $30.00                           |
 | P4-5     | 4             | 1.00           | 4.0                        | $100                      | $10.00                           |
 
-Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the days monitored in the period: a site that went live inside the window is priced only over the months it was monitored in full, never the days before it went live.
+Each rule replaces a manual inspection at a set frequency by priority: P1 daily at 0.5 mins per check, P2 weekly, P3 monthly, P4-5 quarterly, all at 1 min. Savings prorate that annual effort over the days monitored in the period.
 
 ## Equipment score benchmark
 
@@ -96,7 +96,7 @@ Under it, a chart note carrying the labor cost avoided notes item word for word,
 - Display values on points. Chart 1 display 1dp x.x% and Chart 2 compact number formatting
 - Add chart titles
 - Chart 1's score is the same `site` series as the snapshot site row, so the months they share must agree
-- Each value sits over its own month, so a short series never slides along the axis, and a month with no score leaves a gap in the line. The script hands each chart its months
+- Each value sits over its own month; a month with no score leaves a gap in the line
 
 **Links:**
 
@@ -105,14 +105,12 @@ Under it, a chart note carrying the labor cost avoided notes item word for word,
 
 ## Newly onboarded sites
 
-The rules are SKILL.md's, [Newly onboarded sites](../../../SKILL.md#newly-onboarded-sites); the script applies them.
+Per SKILL.md, [Newly onboarded sites](../../../SKILL.md#newly-onboarded-sites):
 
-- **Go-live**: a site whose `site` × `month` series starts after the trend window's first month went live in its first scored month. The day is read from that month's checks per rule against the next scored month's pace per rule and day; a month that ran at nine tenths of that pace or more ran from the 1st
-- **Windows**: the go-live month is dropped unless it ran from the 1st or nothing follows it, so both windows start with the first month monitored in full. The heatmap, both charts, the impact rows and the date lines all take the trimmed months, and the section hands on that first month and the go-live date for the masthead
-- **Headline score**: PEAK's quarter rollup would still hold the go-live days, so `next` asks for `site` × `all` from the first kept month (`eh/site-all-live.json`)
-- **One month**: the score with no movement ("Scored over September."), and no Chg column, the rows lowest score first
-- **Fewer than three points**: Chart 1 is left out and the section's title becomes "The trend so far"; Chart 2 stays
-- **Outage or coverage change**: a month whose rule count is under half the count of the months either side (or of the one month beside it, at either end of the window), or that scored none, is an outage, said in chat. A rule count that moves by half again or more from one month to the next and stays is a coverage change, said in chat on its own line, never as an outage
+- A `site` × `month` series that starts after the trend window's first month went live in its first scored month. Its checks per rule, against the next month's pace, date the day; at nine tenths of that pace or more it ran from the 1st
+- The go-live month is dropped unless it ran from the 1st or nothing follows it. Every figure, chart and date line takes the months kept, the headline from a follow-up `site` × `all` over them, and the section hands on the first month kept and the go-live date
+- One month: no movement and no Chg column, rows lowest score first. Under three points: no Chart 1, and the section is titled "The trend so far"
+- Chat names a month scored off under half the rules of each month beside it, or off none, as an outage; a rule count that rises or falls by half again from one month to the next is a coverage change, on its own line
 
 ## Notes band items
 
@@ -131,7 +129,7 @@ All in the main batch. Type names come from `platform.metadata_types`, selecting
 | `site`               | `all`              | quarter  | the headline score in the operational impact row |
 | `priority`           | `all`              | quarter  | the scored rules count in the checks row         |
 | `priority`           | `month`            | 6 months | Chart 2 bars, and the checks and labor cost rows, summed over the reporting period |
-| `site`               | `all`              | from the first month kept | follow-up for a site that went live inside the quarter: its headline score |
+| `site`               | `all`              | months kept | follow-up, a site that went live in the quarter: the headline score |
 
 - `local_end_date` is exclusive, so the scripts pass the first of the month after the window's last month, the month to date included, which then holds whatever exists so far. A mid-month bound is refused for scanning too many rows
 - The type rows carry rules but no equipment count, and PEAK does not group by `metadata_type` and `equipment` together, so the Equipment column counts distinct `equipment_id` per type off the `equipment` rows, which return their type

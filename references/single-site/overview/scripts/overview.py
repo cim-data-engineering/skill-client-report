@@ -41,8 +41,8 @@ def calls(ctx):
 
 
 def handed_on(ctx):
-    """The figures sections hand on, known at plan time. A plan made before plan.json listed them
-    names none, and then indoor environment, the one section that hands any on, decides."""
+    """The figures sections hand on, known at plan time. A plan.json without the list takes
+    indoor environment's, the one section that hands any on."""
     got = ctx.get("handed_on")
     if got is None:
         return ["thermal_zones"] if "indoor-environment" in ctx["sections"] else []
@@ -110,9 +110,8 @@ def build(ctx, work, shared):
 
 
 def live_since(starts):
-    """', monitoring live since 30 Jul 2026' for a site that went live inside the windows: the
-    earliest month a section's scores start in, on the day one of them dates it to, or the month
-    alone where none can."""
+    """', monitoring live since 14 Jul 2026' for a site that went live inside the windows: the
+    earliest go-live a section hands on, to the day where one is dated, else the month."""
     if not starts:
         return ""
     first = min(s["month"] for s in starts)

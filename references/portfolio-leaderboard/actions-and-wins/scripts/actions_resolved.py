@@ -113,7 +113,7 @@ def people(ctx, work):
             for a in act["assignees"]:
                 if a["id"] and not a["name"] and not a["company"]:
                     blank[a["id"]].add(act["ticket"] if mark else None)
-    ranks = lambda a: bool(a["id"]) and not io.system_account(a["id"], None, a["name"]) and a["id"] not in blank
+    ranks = lambda a: bool(a["id"]) and not io.system_account(a["id"], a["name"]) and a["id"] not in blank
     key = lambda a: a["id"] if ranks(a) else None
     p_now, p_sites = tally(now, key)
     p_then, _ = tally(then, key)
