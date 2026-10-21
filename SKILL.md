@@ -1,6 +1,6 @@
 ---
 name: client-report
-description: Generates a client-facing report from PEAK as a self-contained print-ready HTML page. For one site: a quarterly building performance review with the analytics overview, operational impact, equipment health and indoor environment snapshots, sustainability ratings, monthly trends, alerts resolved with the actions leaderboard and key wins, and equipment run hours, asking which sections to include. For a client company or several sites: a monthly portfolio leaderboard for the last complete month, with site and team leaderboards, equipment health and thermal comfort by site, actions resolved by company and by assignee, key wins and sustainability ratings, with every section that has data. Use whenever the user runs /client-report or asks for a client report, a quarterly or building performance review, a portfolio leaderboard, or a site or portfolio performance report from PEAK. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing report from PEAK as a self-contained print-ready HTML page. For one site: a quarterly building performance review with the analytics overview, operational impact, equipment health and indoor environment snapshots, sustainability ratings, monthly trends, alerts resolved with the actions leaderboard and key wins, and equipment run hours, asking which sections to include. For a client company or several sites: a monthly portfolio leaderboard for the last complete month, with site and team leaderboards, the open P1-2 actions by site and by assignee, equipment health and thermal comfort by site, key wins and sustainability ratings, with every section that has data. Use whenever the user runs /client-report or asks for a client report, a quarterly or building performance review, a portfolio leaderboard, or a site or portfolio performance report from PEAK. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
@@ -8,7 +8,7 @@ description: Generates a client-facing report from PEAK as a self-contained prin
 Two reports from one engine. [Which report](#which-report) decides which one a request gets.
 
 - **Single-site report**: a quarterly building performance review for one PEAK site, the sections below
-- **Portfolio leaderboard report**: a monthly leaderboard across a client's sites for the last complete month, sent each month. Page one holds the masthead, the portfolio scorecards and a three-board site leaderboard led by each leader's building photo, and page two a team leaderboard of the companies and people doing the work; ranked by-site detail, actions resolved by company and by assignee, key wins and sustainability ratings follow. Its sections are under `references/portfolio-leaderboard/`, per [Portfolio sections](#portfolio-sections), and its windows per [Portfolio windows](#portfolio-windows)
+- **Portfolio leaderboard report**: a monthly leaderboard across a client's sites for the last complete month, sent each month. Page one holds the masthead, the portfolio scorecards and a three-board site leaderboard led by each leader's building photo, and page two a team leaderboard of the companies and people doing the work. The open P1-2 actions follow, the sites and people holding the most, then ranked by-site detail, key wins and sustainability ratings. Its sections are under `references/portfolio-leaderboard/`, per [Portfolio sections](#portfolio-sections), and its windows per [Portfolio windows](#portfolio-windows)
 
 The single-site report is a quarterly building performance review for one PEAK site: a self-contained A4 print-first HTML page the partner hands to a facilities manager. The reader chooses which sections it carries, and that choice decides what you fetch and what the page shows. A section that is out should cost nothing.
 
@@ -85,14 +85,13 @@ The portfolio report never asks which sections to include. Every section is plan
 | Masthead and scorecard strip | `overview/` | always |
 | Site leaderboard for the leaderboard month | `site-leaderboard/` | at least one of its three boards has data |
 | Team leaderboard for the leaderboard month | `team-leaderboard/` | at least one of its two boards has data |
+| Open P1-2 actions | `actions-and-wins/`, `open-actions.md` | any priority 1 or 2 action is open now |
 | Equipment health by site | `equipment-health/` | any site returned an equipment health score in the quarter |
 | Thermal comfort by site | `indoor-environment/` | any site returned a thermal comfort score in the quarter |
-| Actions resolved by company | `actions-and-wins/`, `actions-by-company.md` | any action was resolved in the quarter or is open now |
-| Actions resolved by assignee | `actions-and-wins/`, `actions-by-assignee.md` | any action was resolved in the quarter or is open now |
 | Key wins | `actions-and-wins/`, `key-wins.md` | at least one win qualifies |
 | Sustainability ratings by site | `sustainability-ratings/` | any site holds a current rating; never mentioned in chat |
 
-Each folder holds the section's reference and a `scripts/` folder with its arithmetic. A site with no data for a section is left out of that section's table and ranking, and its script names it to say in chat.
+Each folder holds the section's reference and a `scripts/` folder with its arithmetic. A site with no data for a section is left out of that section's table and ranking, and its script names it to say in chat. `actions-and-wins/actions-resolved.md` has no part on the page: it makes the actions resolved calls and hands on the actions rankings the two leaderboards draw.
 
 ## How sections fit together
 
@@ -114,9 +113,8 @@ Each section's reference owns its section: what it shows, its rules, its calls, 
 | Figure | Handed on by | Taken by |
 | --- | --- | --- |
 | Site facts: building size, currency, state, country, building photo link | the overview, before any section builds | every section |
-| A ranking: a label, an anchor, a window (the leaderboard month or the quarter ending on it), the unit of its figure, each site's figure now and on the window last month's board ranked | equipment health, indoor environment and actions by company, in that order | the site leaderboard, one board each, its site names linking to the anchor |
-| A team ranking: a ranking over the companies or people holding the work, with its unit, each one's name, company and logo, its leader's meta line and a section link to PEAK | actions by company, then actions by assignee | the team leaderboard, one board each, its names linking to the anchor |
-| Who holds each action, with each assignee's name and company and the actions counted once, and each company's logo | actions by company | actions by assignee |
+| A ranking: a label, an anchor or each site's PEAK report, a window (the leaderboard month or the quarter ending on it), the unit of its figure, each site's figure now and on the window last month's board ranked | equipment health, indoor environment and actions resolved, in that order | the site leaderboard, one board each, its site names linking to the anchor or each to its own PEAK report |
+| A team ranking: a ranking over the companies or people holding the work, with its unit, each one's name, company, logo and PEAK report, its leader's meta line and a section link to PEAK | actions resolved, companies then assignees | the team leaderboard, one board each |
 | Thermal zones: zone points on the levels that scored, and every configured point | indoor environment | the scorecards, so the card always equals the comfort table's Zones total |
 | A size-weighted portfolio row drawn | any section | the Portfolio rows note |
 
@@ -250,7 +248,8 @@ The portfolio report is a monthly leaderboard, built early each month for the mo
 
 - **Leaderboard month**: the last complete month before the issue date. It names the report, its masthead and its file
 - **Quarter**: the three complete months ending on the leaderboard month. The heatmaps show it column for column, and actions resolved count over it
-- **Last month's board**: every ranking moves against the board the report showed a month earlier, so an arrow means the same on every board and in the company and assignee tables. A board on the leaderboard month moves against the month before; one on the quarter, against the quarter a month earlier
+- **Last month's board**: every ranking moves against the board the report showed a month earlier, so an arrow means the same on every board. A board on the leaderboard month moves against the month before; one on the quarter, against the quarter a month earlier
 - **Key wins**: the 90 days to the issue date, so the strongest win of those days can show in consecutive months
+- **Open P1-2 actions**: open as at the issue date, whenever raised, under the issue month
 - Nothing covers a part month. In the link templates, `{{quarter_start}}` is the quarter's first day, `{{quarter_end}}` the leaderboard month's last day and `{{quarter_last_month}}` the leaderboard month's first day; `{{assignee_id}}` is an assignee's PEAK user id
 - Built on the 1st, the report ranks a month that has only just closed: a site west of the first can still be in it, and its scores may not have settled. `report.py plan` says so, and the build goes again from the 2nd before it is sent

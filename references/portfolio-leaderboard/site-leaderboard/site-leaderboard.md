@@ -37,14 +37,14 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 **Display:**
 
 - Every tier shares the rank column, so the leader's name, its meta line, the climber and the pack's names all start on one line
-- Movement as the tables show it: "↑N" in green, "↓N" in red, nothing when a site holds its place
+- Movement: "↑N" in green, "↓N" in red, nothing when a site holds its place
 - Names clamp to two lines. The tiers sit level across the boards, whichever names take two lines
 - Up to three boards side by side. A board renders when its ranking holds a site, and fewer boards take the width the missing ones leave
 - The site label on a board is the name alone; the state moves to the leader's meta line
 
 **Links:**
 
-- Every site name on a board jumps to the anchor its ranking carries, in the same document and the same tab: the leader's with a chevron, the climber's and the pack's without, so the pack stays quiet. Chromium keeps these as links in the printed PDF
+- Every site name on a board links where its ranking says: to the section that explains its figure, or to its own PEAK report. The leader's has a chevron; the climber's and the pack's do not, so the pack stays quiet. Chromium keeps these as links in the printed PDF
 - No dashboard links on this section
 
 **Renders when:** at least one board does.
@@ -57,5 +57,5 @@ None.
 
 No PEAK calls of its own. The script fetches each leader's photo once from its link, crops it to the band and embeds it as a JPEG. **Takes:**
 
-- **Rankings**: each a label, an anchor, a window (month or quarter), its unit, each site's figure now and on the window last month's board ranked, and the decimals to show
+- **Rankings**: each a label, an anchor or each site's PEAK report, a window (month or quarter), its unit, each site's figure now and on the window last month's board ranked, and the decimals to show
 - **Site facts**: each leader's state, building size and building photo link

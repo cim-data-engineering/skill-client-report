@@ -4,8 +4,8 @@
     python3 scripts/fill_portfolio.py report-data.json --out report.html
 
 Draws every portfolio component from the bundle: the masthead and its client logo,
-the scorecard strip, the site and team leaderboard boards, the ranked heatmaps, the
-company and assignee tables, the win cards and the sustainability ratings table. The
+the scorecard strip, the site and team leaderboard boards, the open P1-2 lists, the
+ranked heatmaps, the win cards and the sustainability ratings table. The
 band classes, change glyphs, link escaping, logo initials and photo crops are
 fill_report.py's, imported as they are. Nothing here invents prose: the wins come in through the
 bundle, written by the model, and every other string is a section script's.
@@ -36,7 +36,6 @@ CLIMB = ('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="cu
          '<polyline points="16 7 22 7 22 13"/></svg>')
 DASHES = re.compile("[\u2013\u2014]|&ndash;|&mdash;")
 REGION = re.compile(r"[ \t]*<!-- fill: ([a-z-]+) -->\n(.*?)[ \t]*<!-- /fill: \1 -->\n?", re.S)
-SITES_LINE = 76         # characters a sites line's two lines hold: the company, site names, open counts and the rest
 
 
 def esc(s):
@@ -52,10 +51,10 @@ def site_label(r, link=None):
     return '<a href="%s">%s&nbsp;&rsaquo;</a>' % (href(link), inner) if link else inner
 
 
-def anchor(name, anchor_id, cls=None):
-    """A site name that jumps to its section in this document, in this tab."""
-    return '<a href="#%s" target="_self"%s><span class="sn">%s</span>&nbsp;<span class="chev">&rsaquo;</span></a>' % (
-        anchor_id, ' class="%s"' % cls if cls else "", esc(name))
+def jump(r, b):
+    """A board name's link: the PEAK report its ranking gives it, opening in a new tab, or the
+    anchor of the section that explains its figure, in this tab."""
+    return '"%s"' % href(r["link"]) if r.get("link") else '"#%s" target="_self"' % b["anchor"]
 
 
 def move(m):
@@ -84,7 +83,7 @@ def board(b):
     one line."""
     lead, pack = b["rows"][0], b["rows"][1:]
     logos = any("tile" in r for r in b["rows"])
-    mini = lambda r: tile(r["tile"].get("company"), r["tile"].get("logo"), "tlogo")
+    mini = lambda r: tile((r.get("tile") or {}).get("company"), (r.get("tile") or {}).get("logo"), "tlogo")
     out = ['    <div class="rkcol">',
            '      <div class="rkhead"><h3 class="rkt">%s</h3><span>%s</span></div>' % (esc(b["title"]), b["window"])]
     if "photo" in lead:
@@ -95,20 +94,21 @@ def board(b):
                '<span class="lval">%s%s</span></div>' % (
                    " co" if logos else "", TROPHY, move(lead.get("move")),
                    '<span class="who">%s</span>' % tile(lead["tile"].get("company"), lead["tile"].get("logo")) if logos else "",
-                   anchor(lead["name"], b["anchor"], "lname"), " &middot; ".join(esc(x) for x in lead.get("meta") or []),
+                   '<a href=%s class="lname"><span class="sn">%s</span>&nbsp;<span class="chev">&rsaquo;</span></a>' % (
+                       jump(lead, b), esc(lead["name"])), " &middot; ".join(esc(x) for x in lead.get("meta") or []),
                    lead["value"], "<span>%s</span>" % esc(b["unit"]) if b.get("unit") else ""))
     c = b.get("climber")
     out.append('      <div class="climb%s"><span class="rkmark">%s</span><p class="clab">Biggest climber</p>%s<p class="cwho">%s</p>%s</div>' % (
         " co" if logos else "", CLIMB, '<span class="clogo">%s</span>' % mini(c) if logos and c else "",
-        '<a href="#%s" target="_self">%s</a>' % (b["anchor"], esc(c["name"])) if c else "-",
+        '<a href=%s>%s</a>' % (jump(c, b), esc(c["name"])) if c else "-",
         '<span class="cup">&uarr;%d to %s</span>' % (c["places"], ordinal(c["rank"])) if c else ""))
     if pack:
         out += ['      <table class="rk">',
                 '        <colgroup><col class="c-rank">%s<col><col class="c-mv"><col class="c-pv"></colgroup>'
                 % ('<col class="c-logo">' if logos else ""),
                 '        <tbody>']
-        out += ['        <tr><td class="rank">%d</td>%s<td class="lv"><a href="#%s" target="_self">%s</a></td><td class="mvc">%s</td><td class="pv">%s</td></tr>'
-                % (r["rank"], '<td class="lg">%s</td>' % mini(r) if logos else "", b["anchor"], esc(r["name"]),
+        out += ['        <tr><td class="rank">%d</td>%s<td class="lv"><a href=%s>%s</a></td><td class="mvc">%s</td><td class="pv">%s</td></tr>'
+                % (r["rank"], '<td class="lg">%s</td>' % mini(r) if logos else "", jump(r, b), esc(r["name"]),
                    move(r.get("move")), r["value"]) for r in pack]
         out += ['        </tbody>', '      </table>']
     out.append('    </div>')
@@ -166,12 +166,7 @@ def heatmap(d, months):
             % ("".join(head), "\n".join(body)))
 
 
-# ── companies and assignees ─────────────────────────────────────────────────
-def scorecell(pct):
-    return ('<span class="scorecell"><span class="track"><span class="fill" style="width:%.1f%%"></span></span>'
-            '<span class="sval">%.1f%%</span></span>' % (pct, pct))
-
-
+# ── open actions ────────────────────────────────────────────────────────────
 def tile(company, logo, cls="logo"):
     """The company's logo in its square tile, its initials without one, empty for no company:
     the table's tile, or with cls "tlogo" the board's small one."""
@@ -183,54 +178,39 @@ def tile(company, logo, cls="logo"):
     return '<span class="%s none" title="%s">%s</span>' % (cls, co, esc(initials(company)))
 
 
-def sites_line(sites, lead=None):
-    """Up to two sites, each with its open count, then the count of the rest, after `lead` where
-    given. Two lines hold about SITES_LINE characters: past that, one site is named, so the count
-    of the rest shows."""
-    label = lambda s: s["name"] + (" %d open" % s["open"] if s["open"] else "")
-    rest = len(sites) - 2
-    two = (len(lead + " · ") if lead else 0) + len(" · ".join(label(s) for s in sites[:2])) \
-        + (len(" · +%d more sites" % rest) if rest > 0 else 0)
-    k = 2 if two <= SITES_LINE else 1
-    named = ['<span class="vco">%s</span>' % esc(lead)] if lead else []
-    named += ['<span class="vs">%s%s</span>' % (esc(s["name"]), " <b>%d open</b>" % s["open"] if s["open"] else "")
-              for s in sites[:k]]
-    if len(sites) > k:
-        more = len(sites) - k
-        named.append('<span class="vs more">+%d more site%s</span>' % (more, "" if more == 1 else "s"))
-    return '<span class="sep"> &middot; </span>'.join(named)
+AGE_CLASSES = ("a60", "a30", "a0")    # open 60 days or more, 30 to 60, under 30
 
 
-def holder_table(d, head, key, name_cls, lead):
-    """The company or assignee table: rank and move, the holder's tile, name and sites line,
-    then sites, resolved, completion rate and open now, closed by the total row, then the
-    section link. A name with a link opens it, with a chevron."""
-    rows = []
-    for r in d["rows"]:
-        res, op = r["resolved"], r["open"]
-        rows.append('      <tr><td class="rank">%s%s</td><td class="assignee"><span class="who">%s<span class="nm"><span class="%s">%s</span>'
-                    '<span class="vsites">%s</span></span></span></td><td class="num">%d</td><td class="num">%s</td>'
-                    '<td>%s</td><td class="num %s">%d</td></tr>'
-                    % (TROPHY if r["rank"] == 1 else r["rank"], move(r.get("move")), tile(r.get("company"), r.get("logo")),
-                       name_cls, '<a href="%s">%s&nbsp;&rsaquo;</a>' % (href(r["link"]), esc(r[key])) if r.get("link")
-                       else esc(r[key]), sites_line(r["sites"], lead(r)), len(r["sites"]), f"{res:,}",
-                       scorecell(res / (res + op) * 100 if res + op else 0), "open-zero" if op == 0 else "open-hot", op))
-    t = d["total"]
-    res, op = t["resolved"], t["open"]
-    rows.append('      <tr class="total"><td></td><td>Total</td><td class="num"></td><td class="num">%s</td><td>%s</td>'
-                '<td class="num">%s</td></tr>' % (f"{res:,}", scorecell(res / (res + op) * 100 if res + op else 0), f"{op:,}"))
-    return ('  <table class="lbt vend">\n    <thead>\n      <tr><th></th><th>%s</th><th class="num">Sites</th>'
-            '<th class="num">Resolved</th><th>Completion rate</th><th class="num">Open now</th></tr>\n    </thead>\n'
-            '    <tbody>\n%s\n    </tbody>\n  </table>\n' % (head, "\n".join(rows)) + seclinks([d.get("link")]))
-
-
-def companies(d):
-    return holder_table(d, "Company", "company", "co-name", lambda r: None)
-
-
-def assignees(d):
-    """Each person under their company's tile, the company leading their sites line."""
-    return holder_table(d, "Assignee", "name", "pn", lambda r: r.get("company"))
+def open_actions(d):
+    """The open P1-2 lists side by side: each a ranked table under its head, the name over a bar on
+    the list's own scale split by age, oldest first, and the count at the end, then the section links."""
+    out = ['  <div class="opgrid">']
+    for p in d["panels"]:
+        top = max(r["count"] for r in p["rows"])
+        logos = any(r.get("tile") is not None for r in p["rows"])
+        out += ['    <div class="oplist">',
+                '      <div class="rkhead"><h3 class="rkt">%s</h3><span>Open P1-2</span></div>' % esc(p["title"]),
+                '      <table class="op">',
+                '        <colgroup><col class="c-rank">%s<col><col class="c-ct"></colgroup>'
+                % ('<col class="c-logo">' if logos else ""),
+                '        <tbody>']
+        for r in p["rows"]:
+            if r.get("state") is not None:
+                name = site_label(r, r.get("link"))
+            elif r.get("link"):
+                name = '<a href="%s">%s&nbsp;&rsaquo;</a>%s' % (href(r["link"]), esc(r["name"]),
+                                                               ' <span class="rg">%s</span>' % esc(r["company"]) if r.get("company") else "")
+            else:
+                name = '<span class="sn none">%s</span>' % esc(r["name"])
+            bar = "".join('<span class="%s" style="width:calc(%.2f%% - 2px)"></span>' % (cls, n / top * 100)
+                          for cls, n in zip(AGE_CLASSES, r["ages"]) if n)
+            out.append('        <tr><td class="rank">%d</td>%s<td class="nm"><span class="ol">%s</span><span class="agebar">%s</span>'
+                       '</td><td class="ct">%d</td></tr>'
+                       % (r["rank"], '<td class="lg">%s</td>' % tile(r["tile"].get("company"), r["tile"].get("logo"), "tlogo")
+                          if logos else "", name, bar, r["count"]))
+        out += ['        </tbody>', '      </table>', '    </div>']
+    out.append('  </div>')
+    return "\n".join(out) + "\n" + seclinks(d.get("links") or [])
 
 
 # ── wins ────────────────────────────────────────────────────────────────────
@@ -313,8 +293,8 @@ def after_eyebrow(s, eyebrow, tag_open, tag_close, text):
     return s[:k] + tag_open + text + s[j:]
 
 
-def lead_head(s, title, head):
-    """A leaderboard's header, found by its title: the leaderboard month as its eyebrow, and its date line."""
+def dated_head(s, title, head):
+    """A section header whose eyebrow is a month, found by its title: the month, and the date line."""
     i = s.find("<h2>%s</h2>" % title)
     if i == -1:
         return s                          # the section is out of this report
@@ -345,8 +325,8 @@ def fill_slots(s, D):
         s = after_eyebrow(s, eyebrow, "<h2>", "</h2>", text)
     for eyebrow, text in D.get("datelines", {}).items():
         s = after_eyebrow(s, eyebrow, '<p class="h2note">', "</p>", text)
-    for title, head in D.get("leadheads", {}).items():
-        s = lead_head(s, title, head)
+    for title, head in D.get("dated_heads", {}).items():
+        s = dated_head(s, title, head)
     for slot, url in D.get("links", {}).items():
         if slot != "ratings":
             sys.exit("fill: unknown link slot %r" % slot)
@@ -380,8 +360,7 @@ def main():
               "team-boards": lambda: boards(D["team_boards"]),
               "eh-table": lambda: heatmap(D["equipment_health"], months),
               "cf-table": lambda: heatmap(D["comfort"], months),
-              "companies": lambda: companies(D["companies"]),
-              "assignees": lambda: assignees(D["assignees"]),
+              "open": lambda: open_actions(D["open_actions"]),
               "wins": lambda: wins(D["wins"], base, a.photos_out),
               "ratings": lambda: ratings(D["ratings"]),
               "notes": lambda: notes(D.get("notes", {}))}

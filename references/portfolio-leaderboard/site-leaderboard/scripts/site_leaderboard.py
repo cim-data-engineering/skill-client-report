@@ -58,15 +58,17 @@ def board(ctx, size, unit, ranking):
     ranked, moves = pio.standings(list(site), now, start, name)
     fmt = (lambda v: "%.*f" % (dp, v)) if dp else (lambda v: "{:,}".format(int(round(v))))
     rows = []
+    links = ranking.get("links") or {}
     for k, sid in ranked[:SHOWN]:
-        r = {"rank": k, "name": name(sid), "value": fmt(now[sid]), "move": moves[sid] or None}
+        r = {"rank": k, "name": name(sid), "value": fmt(now[sid]), "move": moves[sid] or None, "link": links.get(sid)}
         if k == 1:
             r["meta"] = [x for x in (pio.state(site[sid]), "%s %s" % (pio.num(size[sid]), unit) if size.get(sid) else None)
                          if x]
         rows.append(r)
     c = pio.climber(ranked[:SHOWN], moves)
-    return ({"title": ranking["label"], "anchor": ranking["anchor"], "window": pio.board_window(ctx, ranking["window"]),
-             "unit": ranking.get("unit"), "rows": rows, "climber": dict(c, name=name(c["key"])) if c else None},
+    return ({"title": ranking["label"], "anchor": ranking.get("anchor"), "window": pio.board_window(ctx, ranking["window"]),
+             "unit": ranking.get("unit"), "rows": rows,
+             "climber": dict(c, name=name(c["key"]), link=links.get(c["key"])) if c else None},
             ranked[0][1] if ranked else None)
 
 
@@ -91,5 +93,5 @@ def build(ctx, work, shared):
                        io.listing(bare), "its" if len(bare) == 1 else "each"))
     n = len(ctx["sites"])
     return {"boards": [b for b, _ in built], "chat": chat,
-            "leadheads": {"Site leaderboard": pio.board_head(
+            "dated_heads": {"Site leaderboard": pio.board_head(
                 ctx, "the sites on one measure", "Top %d of %d sites on each board." % (SHOWN, n) if n > SHOWN else None)}}

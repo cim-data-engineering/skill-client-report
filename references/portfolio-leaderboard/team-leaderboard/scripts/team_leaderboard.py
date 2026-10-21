@@ -27,9 +27,10 @@ def board(ctx, ranking):
     """The board for one team ranking, and how many it ranks."""
     names, now = ranking["names"], ranking["now"]
     ranked, moves = pio.standings(list(names), now, ranking["start"], names.get)
-    rows = []
+    rows, links = [], ranking.get("links") or {}
     for k, key in ranked[:SHOWN]:
-        r = {"rank": k, "name": names[key], "value": "{:,}".format(int(now[key])), "move": moves[key] or None}
+        r = {"rank": k, "name": names[key], "value": "{:,}".format(int(now[key])), "move": moves[key] or None,
+             "link": links.get(key)}
         if k == 1:
             r["meta"] = ranking["meta"].get(key) or []
         if "tiles" in ranking:
@@ -38,8 +39,9 @@ def board(ctx, ranking):
     c = pio.climber(ranked[:SHOWN], moves)
     if c and "tiles" in ranking:
         c["tile"] = ranking["tiles"].get(c["key"]) or {}
-    return {"title": ranking["label"], "anchor": ranking["anchor"], "window": pio.board_window(ctx, ranking["window"]),
-            "unit": ranking.get("unit"), "rows": rows, "noun": ranking["noun"], "climber": dict(c, name=names[c["key"]]) if c else None,
+    return {"title": ranking["label"], "anchor": ranking.get("anchor"), "window": pio.board_window(ctx, ranking["window"]),
+            "unit": ranking.get("unit"), "rows": rows, "noun": ranking["noun"],
+            "climber": dict(c, name=names[c["key"]], link=links.get(c["key"])) if c else None,
             "link": ranking.get("link")}, len(ranked)
 
 
@@ -49,5 +51,5 @@ def build(ctx, work, shared):
         return {"drop": [NAME]}
     over = ["%d %s" % (n, b["noun"]) for b, n in built if n > SHOWN]
     return {"team_boards": [b for b, _ in built],
-            "leadheads": {"Team leaderboard": pio.board_head(
+            "dated_heads": {"Team leaderboard": pio.board_head(
                 ctx, "by actions resolved", "Top %d of %s." % (SHOWN, " and ".join(over)) if over else None)}}

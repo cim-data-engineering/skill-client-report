@@ -7,9 +7,12 @@ the portfolio page carries no en or em dash.
 
 Imported by scripts/report.py and the scripts under references/portfolio-leaderboard/ only.
 """
+import base64
 import os
 import re
 import sys
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -160,6 +163,52 @@ def tickets_link(ctx, site_ids, grouping, assignee_ids=()):
     return "%s/reports/tickets?%s" % (host(ctx), "&".join(params))
 
 
+def held(rows):
+    """Who holds each action in ticket rows, Not Doing left out: [{ticket, site, assignees: [{id, name,
+    company, logo_url}]}]. Every assignee counts, agents and the client's own managing agents included."""
+    out = []
+    for r in rows:
+        if r.get("status_id") == 8:
+            continue
+        people = []
+        for a in r.get("assignees") or []:
+            ent = a.get("entity") or {}
+            people.append({"id": a.get("id"), "logo_url": ent.get("logo_url"),
+                           "name": " ".join(x for x in ((a.get("firstname") or "").strip(),
+                                                        (a.get("lastname") or "").strip()) if x),
+                           "company": (ent.get("name") or "").strip()})
+        out.append({"ticket": r["ticket_id"], "site": r["site_id"], "assignees": people})
+    return out
+
+
+def fetch_logos(urls):
+    """{company: data URI} for each company logo PEAK links, embedded so the report stays one
+    file. A logo that cannot be fetched is left out, and the company's initials stand in."""
+    def get(item):
+        name, url = item
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "client-report"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                kind, body = r.headers.get_content_type(), r.read()
+        except OSError:
+            return name, None
+        if not kind.startswith("image/"):
+            return name, None
+        return name, "data:%s;base64,%s" % (kind, base64.b64encode(body).decode())
+    with ThreadPoolExecutor(8) as pool:
+        return dict(pool.map(get, urls.items()))
+
+
+def logo_links(actions):
+    """{company: logo link} off the assignees of held actions."""
+    out = {}
+    for act in actions:
+        for a in act["assignees"]:
+            if a["company"] and a["logo_url"]:
+                out.setdefault(a["company"], a["logo_url"])
+    return out
+
+
 def unit_of(site):
     return "ft²" if (site.get("country") or "").strip().lower() in FEET else "m²"
 
@@ -274,11 +323,3 @@ def reporting_period(ctx, short=False):
 def wins_period(ctx, short=False):
     """The key wins' 90 days: '24 July - 21 October 2026'."""
     return period(ctx["wins"][0], ctx["today"], short)
-
-
-def span(first, last):
-    """'July - September', or across a year 'November 2025 - January 2026'."""
-    a, b = io.d(first), io.d(last)
-    if a.year == b.year:
-        return "%s - %s" % (io.month(first), io.month(last))
-    return "%s %d - %s %d" % (io.month(first), a.year, io.month(last), b.year)

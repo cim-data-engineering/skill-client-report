@@ -38,13 +38,13 @@ One board per team ranking, in the order the rankings come. Each is a small rank
 
 - Every name sits beside its company's logo, so the reader knows whose crew a person is in: a company's own logo, a person's company's. Only the leader's is in colour; the climber's and the pack's are grey. A company without a logo gets its initials; a person with no company, an empty space
 - Every tier shares the rank and logo columns, so the leader's name, the climber's and the pack's all start on one line
-- Movement as the tables show it: "↑N" in green, "↓N" in red, nothing when a company or person holds its place
+- Movement: "↑N" in green, "↓N" in red, nothing when a company or person holds its place
 - Names clamp to two lines. The tiers sit level across the boards, whichever names take two lines
 - The boards sit side by side. A board renders when its ranking holds anyone, and fewer boards take the width the missing ones leave
 
 **Links:**
 
-- Every name on a board jumps to the anchor its ranking carries, in the same document and the same tab: the leader's with a chevron, the climber's and the pack's without. Chromium keeps these as links in the printed PDF
+- Every name on a board links where its ranking says: to the section that explains its figure, or to its own PEAK report. The leader's has a chevron; the climber's and the pack's do not, so the pack stays quiet. Chromium keeps these as links in the printed PDF
 - Under the boards, the section links each ranking carries, in board order, each closing with a chevron: "See actions by company ›", "See actions by assignee ›"
 
 **Renders when:** at least one board does.
@@ -57,4 +57,4 @@ None.
 
 No calls of its own. **Takes:**
 
-- **Team rankings**: each a label, an anchor, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, and the section link it carries
+- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, and the section link it carries

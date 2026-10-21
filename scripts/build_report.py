@@ -45,8 +45,8 @@ PORTFOLIO = {"ref": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..
                                "team-leaderboard": ["team-leaderboard"],
                                "equipment-health": ["equipment-health"],
                                "indoor-environment": ["indoor-environment"],
-                               "actions-by-company": ["actions-by-company"],
-                               "actions-by-assignee": ["actions-by-assignee"],
+                               "actions-resolved": [],
+                               "open-actions": ["open-actions"],
                                "key-wins": ["key-wins"],
                                "sustainability-ratings": ["sustainability-ratings"]},
              "part_if": {}}
@@ -285,7 +285,7 @@ def check_portfolio(args):
         errors.append("sample %s still in the report: fill it from the bundle" % m)
     found = set()
     # Company and assignee names are left out: a sample company or person can share a name with a
-    # real one, and the sample tables' and team boards' data-sample markers already catch them unfilled.
+    # real one, and the team boards' data-sample marker already catches them unfilled.
     names = re.sub(r"<!-- fill: team-boards -->.*?<!-- /fill: team-boards -->", "", src, flags=re.S)
     for pat in (r'<span class="sn">([^<]+)</span>', r'<h3>([^<]+)</h3>',
                 r'<title>([^<]+)</title>', r'<h1>([^<]+)</h1>', r'<div class="win[^"]*"[^>]*>.*?<p>(.+?)</p>'):
@@ -312,13 +312,11 @@ def check_portfolio(args):
         widths = {len(re.findall(r'<td class="c[ "]', r)) for r in re.findall(r"<tr[^>]*>.*?</tr>", t, re.S)} - {0}
         if widths - {cols}:
             errors.append("ranked heatmap has %d month columns but rows with %s" % (cols, sorted(widths)))
-    # each section by its eyebrow, or a leaderboard, whose eyebrow is its month, by its title
-    lead = re.compile(r'<section class="lead">\s*<div class="sechead">\s*<p class="eyebrow">[^<]*</p>\s*<h2>([^<]+)</h2>')
-    leads = {m.start(): m.group(1) for m in lead.finditer(text)}
-    heads = [(m.start(), m.group(1)) for m in re.finditer(r'<p class="eyebrow">([^<]+)</p>', text)
-             if not any(0 < m.start() - k < 120 for k in leads)]
-    heads += sorted(leads.items())
-    print("sections present: %s" % ", ".join(h for _, h in sorted(heads)))
+    # each section by its eyebrow, or by its title where the eyebrow is a month
+    month = re.compile(r"[A-Z][a-z]+ \d{4}$")
+    heads = [(m.start(), m.group(2) if month.match(m.group(1)) and m.group(2) else m.group(1))
+             for m in re.finditer(r'<p class="eyebrow">([^<]+)</p>(?:\s*<h2>([^<]+)</h2>)?', text)]
+    print("sections present: %s" % ", ".join(h for _, h in heads))
     for w in warnings:
         print("warn:  %s" % w)
     for e in errors:
