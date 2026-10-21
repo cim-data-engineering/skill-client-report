@@ -1,26 +1,48 @@
 ---
 name: client-report
-description: Generates a client-facing quarterly building performance review for a PEAK site - analytics overview, operational impact metrics, equipment health and indoor environment snapshots, the site's NABERS ratings, monthly trends, alerts resolved with the actions leaderboard and key wins, and equipment run hours against working hours, as a self-contained print-ready HTML page, asking up front which sections to include and building only those. Use this whenever the user runs the /client-report slash command or asks for a client report, a quarterly or site building performance review, a site performance report from PEAK, or a report to send a facilities manager or building owner. Do not auto-trigger on general PEAK questions or ticket workflows.
+description: Generates a client-facing quarterly building performance review from PEAK as a self-contained print-ready HTML page. For one site: analytics overview, operational impact, equipment health and indoor environment snapshots, sustainability ratings, monthly trends, alerts resolved with the actions leaderboard and key wins, and equipment run hours, asking which sections to include. For a client company or several sites: a portfolio leaderboard report with site rankings, equipment health and thermal comfort by site, actions resolved by company, key wins and sustainability ratings, with every section that has data. Use whenever the user runs /client-report or asks for a client report, a quarterly or building performance review, or a site or portfolio performance report from PEAK. Do not auto-trigger on general PEAK questions or ticket workflows.
 ---
 
 # Client Report
 
+Two reports from one engine. [Which report](#which-report) decides which one a request gets.
+
+- **Single-site report**: a quarterly building performance review for one PEAK site, the sections below
+- **Portfolio leaderboard report**: one review across a client's sites. Page one holds the masthead, the portfolio scorecards and a three-board building performance leaderboard; ranked by-site detail, key wins and sustainability ratings follow. Its sections are under `references/portfolio-leaderboard/`, per [Portfolio sections](#portfolio-sections)
+
 A quarterly building performance review for one PEAK site: a self-contained A4 print-first HTML page the partner hands to a facilities manager. The reader chooses which sections it carries, and that choice decides what you fetch and what the page shows. A section that is out should cost nothing.
 
-Every figure, row, series, link, date line and methodology note comes from the section scripts. Your part is the PEAK calls and the key wins. Layout belongs to `scripts/fill_report.py`, which draws every table and chart from the bundle, so a change to how something looks is a change to that script or to `DESIGN.md`, never to a filled file.
+Every figure, row, series, link, date line and methodology note comes from the section scripts. Your part is the PEAK calls and the key wins. Layout belongs to `scripts/fill_report.py`, which draws every table and chart from the bundle, and to `scripts/fill_portfolio.py` for the portfolio report, so a change to how something looks is a change to those scripts or to `DESIGN.md`, never to a filled file.
+
+## Which report
+
+Resolve the name before anything else, and before the section question.
+
+- Call `search_sites(keyword:"<name>")` and `search_clients(client_name:"%<name>%")` together. A site matches when one comes back with a match score of 0.9 or more; a client matches when one comes back, and where several do, the one whose name is the name given, ignoring case
+- **A site matches and no client does**: the single-site report
+- **A client matches and no site does**: the portfolio report over the client's active sites, from `search_sites(client_ids:[<id>], limit:80)`, paged. A client with one active site gets the single-site report for that site instead
+- **Both match comparably**: ask once, with one `AskUserQuestion` call: the site, or the client portfolio with its active site count. Several partial client matches and no exact one: ask which client, the same way
+- **Several sites named**: the portfolio report over exactly those sites. Title it with the client they share: read each site's client ids with `platform.sites` selecting `site_id` and `clients`, keep the ids every site carries, and where several remain, take the one with the fewest active sites, from `search_sites(client_ids:[<id>], limit:1)` and its `pagination.total`. Its name comes off `search_clients(client_name:"%", limit:200)`, paged. Where the sites share no client, use the name the user gave the group, else "Portfolio"
+- The words "portfolio", "client" or "all sites for" point to the portfolio report
+- A logo file the user supplies, as an attachment or a path, goes to `--client-logo`. Never search PEAK for a client logo and never ask for one
+- More than about 100 active sites: say the report may run long and offer to narrow it by state before fetching
+- State the resolved report and its scope in one line in chat, "Portfolio report: 12 sites for <Client>", then go on
 
 ## Build order
 
 Work in one directory, `report/` below.
 
-1. **Resolve the site and the sections**: [Section selection](#section-selection). Call `search_sites(keyword:"<site>", include_working_hours:true)` and `who_am_i` together, and save the `search_sites` response as `report/site.json`. Nothing else is fetched before the sections settle.
+1. **Resolve the site and the sections**: [Section selection](#section-selection-single-site). Call `search_sites(keyword:"<site>", include_working_hours:true)` and `who_am_i` together, and save the `search_sites` response as `report/site.json`. Nothing else is fetched before the sections settle.
+   - **Portfolio**: save the client's `search_sites` pages as `report/sites.json`, then `report/sites-2.json` and on as it pages, or the one `search_sites(site_ids:[...])` response for sites named one by one, and call `who_am_i`. There is no section question
 2. **Plan**: `python3 scripts/report.py plan report --site report/site.json --author "<who_am_i user_name>" --sections <names>`. It fixes the quarter from today in site time and prints every call the sections need, each with the file under `report/peak/` its response is saved as.
+   - **Portfolio**: `python3 scripts/report.py plan report --sites report/sites.json [report/sites-2.json ...] --client "<name>" --author "<who_am_i user_name>"`, adding `--client-logo <file>` for a supplied logo and `--site-ids <id> ...` to keep only some of the saved sites. It fixes the quarter from today in the first site's time and splits each call across the sites a tool takes at once. Every PEAK date filter reads in each site's own time zone, so each site is bounded on its own calendar
 3. **Fetch**: make every printed call in one parallel batch, exactly as printed. Save each response the plan lists to save as its file: an offloaded one by copying the file you were handed, an inline one by writing it to its file exactly as returned, one file per response. Those responses hold counts, scores, ids and type, level or company names only. The plan lists the key win candidate pulls apart: read those where they come back and never save them, since they carry what people wrote on the tickets. Then `python3 scripts/report.py next report`, and make whatever it prints the same way until it says there are no more calls.
 4. **Bundle**: `python3 scripts/report.py bundle report` writes every figure into `report/data.json`, and prints anything to say in chat at hand-over, then the next step.
 5. **Write**: with Actions and key wins in, choose the wins from the two candidate pulls by `references/single-site/actions-and-wins/key-wins.md` and [Writing the narrative](#writing-the-narrative), and write `report/wins.json`; `next` then prints the impact and photo calls for them, and once those are saved, the level call. Make those, run `python3 references/single-site/actions-and-wins/scripts/key_wins.py photos report`, look at the one numbered contact sheet it makes per win, and add your picks to `wins.json`. Every other reference is what its script already did; read it only to answer a question it raises.
+   - **Portfolio**: choose the wins by `references/portfolio-leaderboard/actions-and-wins/key-wins.md`, and run `python3 references/portfolio-leaderboard/actions-and-wins/scripts/key_wins.py photos report`
 6. **Fill and check**: `python3 scripts/report.py fill report` fills the report, saves every photo tile as it prints, and runs the check. Look at the tiles. Then say in chat whatever it lists, name the sections left out, and hand over the file.
 
-## Section selection
+## Section selection (single-site)
 
 Ask before fetching anything. The masthead and [Analytics overview](#analytics-overview) always render. The four sections below are the reader's choice, and each owns a set of parts that come and go together: its operational impact rows, its own section, its monthly trend, their links and its notes-band items.
 
@@ -52,6 +74,22 @@ Each folder holds the section's reference and a `scripts/` folder with its arith
 
 Never offered in the prompt and never asked about. `report.py plan` adds it to every report, so its one call is always in the main batch, and its script leaves it out when PEAK holds no current rating for the site. Say nothing about it in chat, whether it is in or out.
 
+### Portfolio sections
+
+The portfolio report never asks which sections to include. Every section is planned and fetched, and each renders when PEAK returns data for it and is left out otherwise. Report order runs down this table, after the masthead and scorecard strip, and the notes band closes it.
+
+| Section | Folder under `references/portfolio-leaderboard/` | Renders when |
+| --- | --- | --- |
+| Masthead and scorecard strip | `overview/` | always |
+| Site rankings: the building performance leaderboard | `site-leaderboard/` | at least one of its three boards has data |
+| Equipment health by site | `equipment-health/` | any site returned an equipment health score this quarter |
+| Thermal comfort by site | `indoor-environment/` | any site returned a thermal comfort score this quarter |
+| Actions resolved by company | `actions-and-wins/`, `actions-by-company.md` | any action was resolved this quarter or is open now |
+| Key wins | `actions-and-wins/`, `key-wins.md` | at least one win qualifies |
+| Sustainability ratings by site | `sustainability-ratings/` | any site holds a current rating; never mentioned in chat |
+
+Each folder holds the section's reference and a `scripts/` folder with its arithmetic. A site with no data for a section is left out of that section's table and board, and its script names it to say in chat.
+
 ## Writing the narrative
 
 Every sentence on the page is written by the partner's engineer to the building's facility manager: the statement under each section name, the key wins, the methodology notes. Write like a building performance engineer, not a marketer.
@@ -65,6 +103,8 @@ Every sentence on the page is written by the partner's engineer to the building'
 - Never describe the report itself or how it was made. The reader wants the building, not the method
 
 ## What always renders
+
+Single-site report. The portfolio's masthead and scorecard strip are in `references/portfolio-leaderboard/overview/overview.md`.
 
 The overview script fills every slot below; these are the rules it follows.
 
@@ -99,6 +139,8 @@ All five render whatever the selection, including thermal zones when indoor envi
 
 ## Operational impact
 
+Single-site report. The portfolio report carries no operational impact section.
+
 What that monitoring delivered this quarter  
 Date: the quarter
 
@@ -128,6 +170,8 @@ A follow-up on a report that already exists is not a rebuild. Match the reading 
 - **A rebrand**: `BRAND.md` and the logo assets it names, per [Output & theming](#output--theming). Both files stay at the repo root. The tokens sit in one `:root` block and the masthead logo is one inlined SVG, so this is a handful of edits on the file you already have
 
 ## Newly onboarded sites
+
+Single-site report. In the portfolio report a site's months with no score show as dashes in its row, and the leaderboard marks it "New" where it has nothing to move from, per the portfolio references.
 
 A site can have less history than the window asks for, and `report.py bundle` says so when a section's six-month series comes back short. The site went live inside the window, and the report covers what exists.
 
