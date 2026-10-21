@@ -312,7 +312,7 @@ def fill_slots(s, D):
     s = sub_one(s, r"<title>[^<]*</title>", "<title>%s</title>" % esc(m["title"]), "title")
     s = sub_one(s, r"<h1>[^<]*</h1>", "<h1>%s</h1>" % esc(m["h1"]), "h1")
     s = sub_one(s, r'<p class="prepared">.*?</p>', '<p class="prepared">%s</p>' % m["prepared"], "prepared by")
-    for label, key in (("Month", "month"), ("Sites", "sites"), ("Author", "author"), ("Issued", "issued")):
+    for label, key in (("Sites", "sites"), ("Author", "author"), ("Issued", "issued")):
         s = sub_one(s, r"<dt>%s</dt><dd>[^<]*</dd>" % label, "<dt>%s</dt><dd>%s</dd>" % (label, esc(str(m[key]))), label)
     logo = ('<div class="clientlogo%s"><img src="%s" alt="%s"></div>' % (" tile" if m.get("logo_tile") else "",
                                                                        m["logo"], esc(m["client"]))

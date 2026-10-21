@@ -249,7 +249,7 @@ A response too large to return inline comes back as a file: copy it under its na
 The portfolio report is a monthly leaderboard, built early each month for the month just ended and sent to the ops leaders, site teams and vendors it ranks.
 
 - **Issue date**: the earliest local date across the sites, so the leaderboard month has closed at every one
-- **Leaderboard month**: the last complete month before the issue date. It names the report, its masthead and its file
+- **Leaderboard month**: the last complete month before the issue date. It names the report and its file
 - **Quarter**: the three complete months ending on the leaderboard month. The heatmaps show it column for column, and actions resolved count over it
 - **Last month's board**: every ranking moves against the board the report showed a month earlier, so an arrow means the same on every board. A board on the leaderboard month moves against the month before; one on the quarter, against the quarter a month earlier
 - **Key wins**: the 90 days to the issue date, so the strongest win of those days can show in consecutive months

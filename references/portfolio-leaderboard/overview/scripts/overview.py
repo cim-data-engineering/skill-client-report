@@ -120,7 +120,6 @@ def build(ctx, work, shared):
             "h1": "%s portfolio" % ctx["client"],
             "prepared": "Prepared by <strong>%s - %s</strong> · Powered by PEAK" % (brand.get("name", "CIM"),
                                                                                  brand.get("service", "Data Driven Operations")),
-            "month": pio.month_name(ctx),
             "sites": len(shown) or len(ctx["sites"]),     # the sites with data somewhere in the report
             "shown": sorted(shown),
             "author": ctx["author"],

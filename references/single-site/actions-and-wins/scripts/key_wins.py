@@ -130,7 +130,9 @@ def digest(args):
               "and currency.")
     for r in sorted(keep, key=lambda r: -len(human(r))):
         state = ("closed %s" % day(r.get("resolved_at"))) if r.get("resolved_at") else "open"
-        saved = (" · savings %s%s" % (sym, "{:,}".format(round(r["savings"])))) if round(r.get("savings") or 0) >= io.MIN_SAVING else ""
+        amount = round(r.get("savings") or 0)
+        saved = (" · savings %s%s" % (sym, "{:,}".format(amount)) if amount >= io.MIN_SAVING
+                 else " · savings under %s%d" % (sym, io.MIN_SAVING) if amount else "")
         print("\n[%s] %s, raised %s%s · %s" % (r["ticket_id"], state, day(r.get("created_at")), saved,
                                               (r.get("summary") or "").strip()))
         for k in ("description", "solution"):
@@ -381,9 +383,11 @@ def assemble(ctx, work, facts):
                 raise SystemExit("wins.json: photo %r is not on disk — run key_wins.py photos first" % pick)
             pics.append(dict(p, src=os.path.join("kw", "photos", hit[0])))
         saved = round(sum(imp[t].get("savings") or 0 for t in w["tickets"]))
-        if saved >= io.MIN_SAVING and not SAVING.search(w["body"]):
-            chat.append("The tickets behind \"%s\" record %s%s in savings, which its text does not mention."
-                        % (w["heading"], sym, "{:,}".format(saved)))
+        # a saving from MIN_SAVING is stated as a bold figure, a smaller one in words alone
+        if saved and not (SAVING.search(w["body"]) if saved >= io.MIN_SAVING else re.search(r"\bsaving", w["body"], re.I)):
+            chat.append("The tickets behind \"%s\" record %s%s in savings, which its text does not mention%s."
+                        % (w["heading"], sym, "{:,}".format(saved),
+                           "" if saved >= io.MIN_SAVING else "; state it without the figure"))
         if any(io.small_saving(f) for f in SAVING.findall(w["body"])):
             raise SystemExit("wins.json: %r states a saving under %s%d; leave the figure out" % (w["heading"], sym, io.MIN_SAVING))
         # the model's words go in as text, with a saving it marked ** set bold

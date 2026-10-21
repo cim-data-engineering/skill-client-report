@@ -167,7 +167,9 @@ def digest(root, paths, top=TOP):
         sid = r.get("site_id")
         state = ("closed %s" % day(r.get("resolved_at"), sid)) if r.get("resolved_at") else "open"
         sym = io.currency(facts.get(sid) or {})[2]
-        saved = (" · savings %s%s" % (sym, "{:,}".format(round(r["savings"])))) if round(r.get("savings") or 0) >= io.MIN_SAVING else ""
+        amount = round(r.get("savings") or 0)
+        saved = (" · savings %s%s" % (sym, "{:,}".format(amount)) if amount >= io.MIN_SAVING
+                 else " · savings under %s%d" % (sym, io.MIN_SAVING) if amount else "")
         people = len({c.get("author_full_name") for c in human(r)})
         pr = r.get("priority_id")
         print("\n[%s] %s · %s · P%s · %d comment%s by %d %s%s · %s" % (
@@ -419,9 +421,11 @@ def assemble(ctx, work, facts):
             pics.append(dict(p, src=os.path.join("kw", "photos", hit[0])))
         sym = io.currency(facts.get(sid) or {})[2]
         saved = round(sum(imp[t].get("savings") or 0 for t in w["tickets"]))
-        if saved >= io.MIN_SAVING and not SAVING.search(w["body"]):
-            chat.append("The tickets behind \"%s\" record %s%s in savings, which its text does not mention."
-                        % (w["heading"], sym, "{:,}".format(saved)))
+        # a saving from MIN_SAVING is stated as a bold figure, a smaller one in words alone
+        if saved and not (SAVING.search(w["body"]) if saved >= io.MIN_SAVING else re.search(r"\bsaving", w["body"], re.I)):
+            chat.append("The tickets behind \"%s\" record %s%s in savings, which its text does not mention%s."
+                        % (w["heading"], sym, "{:,}".format(saved),
+                           "" if saved >= io.MIN_SAVING else "; state it without the figure"))
         if any(io.small_saving(f) for f in SAVING.findall(w["body"])):
             raise SystemExit("wins.json: %r states a saving under %s%d; leave the figure out" % (w["heading"], sym, io.MIN_SAVING))
         body = SAVING.sub(r"<strong>\1</strong>", html.escape(w["body"], quote=False))

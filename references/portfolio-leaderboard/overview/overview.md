@@ -11,8 +11,7 @@ Nothing on the page. In chat, say what the script prints: any site with no data 
 - Eyebrow: Monthly performance leaderboard
 - Title: {Client} portfolio. The HTML title is "{Client} {Leaderboard month} Performance Leaderboard": "Northwind Estates September 2026 Performance Leaderboard"
 - Prepared by: {Company name} - {Company service name} · Powered by PEAK. The company name is `name` in `BRAND.md`, CIM by default; the service name is `service-name`, Data Driven Operations by default. Powered by PEAK stays in every brand
-- Metadata row: Month, Sites, Author, Issued
-  - **Month**: the leaderboard month: "September 2026"
+- Metadata row: Sites, Author, Issued
   - **Sites**: the sites with data somewhere in the report: a score, an action resolved, an open P1-2 action, a rating or a key win. A site with none is left out of the count and named in chat; its equipment, sensors and rules still count in the scorecards
   - **Author**: the full name of the logged-in PEAK MCP user, from `who_am_i`
   - **Issued**: the issue date, the earliest local date across the sites, so the leaderboard month has closed at every one
