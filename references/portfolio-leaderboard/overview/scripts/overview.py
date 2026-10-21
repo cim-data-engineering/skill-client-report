@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""The parts every portfolio report carries: the masthead, the scorecard strip and
+the notes band frame. See references/portfolio-leaderboard/overview/overview.md.
+
+Imported by scripts/report.py through the same three hooks every section has:
+calls() before the fetch, more() for any follow-up round, build() to turn the saved
+responses into the bundle. facts() hands the sites' building sizes to every section
+before any of them builds. This one builds last, so it can take the thermal zones
+figure off the indoor environment section and the notes frame off whichever
+sections drew a portfolio row.
+"""
+import base64
+import io as bytes_io
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
+import peak_io as io  # noqa: E402
+import portfolio_io as pio  # noqa: E402
+
+NAME = "overview"
+SYSTEM_TYPES = [21, 37, 69, 70, 87, 105, 114]     # the platform checking itself, not plant
+CHUNK = 100
+LOGO_PX = 288                                     # the slot is 72px tall: four times that keeps it sharp in print
+
+
+def calls(ctx):
+    count = lambda name, tool, **kw: pio.split(ctx, name, CHUNK, lambda f, ids: io.call(f, tool, site_ids=ids, **kw))
+    return (pio.split(ctx, "overview/sites.json", CHUNK,
+                      lambda f, ids: io.gql(f, "platform.sites", {"site_ids": ids, "limit": CHUNK},
+                                            ["site_id", "site_name", "building_size", "monetary_currency", "state",
+                                             "country"]))
+            + count("overview/rules.json", "search_rules", task_state="running", limit=1)
+            + count("overview/sensors.json", "search_favourites", limit=1)
+            + count("overview/equipment.json", "search_equipment", limit=1)
+            + count("overview/equipment-system.json", "search_equipment", metadata_type_ids=SYSTEM_TYPES, limit=1))
+
+
+def more(ctx, work):
+    return []
+
+
+def facts(ctx, work):
+    """{site_id: platform.sites row}: building size, currency, state and country."""
+    return {r["site_id"]: r for r in pio.rows(work, "overview/sites.json")}
+
+
+def logo(path):
+    """The supplied client logo as a data URI: a raster one trimmed of its transparent
+    margins and scaled to the slot, its colours kept; an SVG as it is."""
+    raw = open(path, "rb").read()
+    if path.lower().endswith(".svg"):
+        return "data:image/svg+xml;base64," + base64.b64encode(raw).decode()
+    try:
+        from PIL import Image
+    except ImportError:
+        raise SystemExit("the client logo needs Pillow: pip install pillow")
+    im = Image.open(path)
+    if "A" in im.getbands() or im.mode == "P":
+        im = im.convert("RGBA")
+        box = im.getchannel("A").getbbox()
+        if box:
+            im = im.crop(box)
+    if im.height > LOGO_PX:
+        im = im.resize((round(im.width * LOGO_PX / im.height), LOGO_PX), Image.LANCZOS)
+    buf = bytes_io.BytesIO()
+    im.save(buf, "PNG", optimize=True)
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
+
+def build(ctx, work, shared):
+    size, unit, moved = pio.sizes(ctx, shared["facts"])
+    known = [v for v in size.values() if v]
+    brand = ctx.get("brand") or {}
+    zones = shared.get("thermal_zones")
+    if zones is None:
+        zones = shared.get("zones_configured", 0)
+    eq = pio.total(work, "overview/equipment.json") - pio.total(work, "overview/equipment-system.json")
+
+    chat = []
+    unsized = [s["site_name"].strip() for s in ctx["sites"] if not size[s["site_id"]]]
+    if unsized:
+        chat.append("No building size in PEAK for %s: left out of the portfolio size and of every size-weighted "
+                    "portfolio row." % io.listing(unsized))
+    if moved:
+        chat.append("Building sizes for %s were converted to %s, the unit most of the portfolio's floor area is "
+                    "recorded in." % (io.listing(moved), unit))
+
+    notes = {}
+    if shared.get("weighted"):
+        notes["Portfolio rows"] = {"order": 1, "html": "<strong>Portfolio rows.</strong> Scores are weighted by "
+                                                      "building size; counts are summed."}
+    window = reporting_window(ctx, shared.get("actions_shown"))
+    if window:
+        notes["The reporting window"] = {"order": 9, "html": "<strong>The reporting window.</strong> " + window}
+    return {
+        "masthead": {
+            "client": ctx["client"],
+            "title": "%s Portfolio Quarterly Building Performance Review" % ctx["client"],
+            "h1": "%s portfolio" % ctx["client"],
+            "prepared": "Prepared by <strong>%s - %s</strong> · Powered by PEAK" % (brand.get("name", "CIM"),
+                                                                                 brand.get("service", "Data Driven Operations")),
+            "period": pio.reporting_period(ctx, short=True),
+            "sites": len(ctx["sites"]),
+            "author": ctx["author"],
+            "issued": io.day_short(ctx["today"]),
+            "logo": logo(ctx["client_logo"]) if ctx.get("client_logo") else None,
+        },
+        "overview": {
+            "label": "What we monitor across the %s portfolio, as at %s" % (ctx["client"], io.day_long(ctx["today"])),
+            "stats": {
+                "Portfolio size": (pio.num(sum(known)) + " <span>%s</span>" % unit) if known else "-",
+                "Equipment": "{:,}".format(eq),
+                "Sensors": "{:,}".format(pio.total(work, "overview/sensors.json")),
+                "Rules running": "{:,}".format(pio.total(work, "overview/rules.json")),
+                "Thermal zones": "{:,}".format(zones),
+            },
+        },
+        "notes": notes,
+        "chat": chat,
+    }
+
+
+def reporting_window(ctx, actions):
+    m = ctx["to_date"]
+    if not m:
+        return ""
+    full = (io.add_months(io.d(m), 1) - io.d(m)).days
+    text = "%s %d covers %d of %d days, to the issue date. " % (io.month(m), io.d(m).year, io.days_in(ctx, m), full)
+    if actions:
+        return text + "Actions resolved this quarter include those days; scores are unaffected."
+    return text + "Scores are unaffected."
