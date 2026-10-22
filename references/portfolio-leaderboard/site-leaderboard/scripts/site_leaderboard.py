@@ -94,7 +94,7 @@ def build(ctx, work, shared):
         chat.append("No building photo in PEAK%s for %s, so %s leader panel shows a plain building mark."
                     % ("" if not any(links[sid] for b, sid in built if not photos[sid]) else ", or none that could be fetched,",
                        io.listing(bare), "its" if len(bare) == 1 else "each"))
-    more = []
+    more = list(dict.fromkeys(r["note"] for r in shared["rankings"] if r.get("note")))   # each note once
     if counts[-1] > SHOWN:
         more.append("Top %d of %s sites on each board." % (
             SHOWN, "%d" % counts[-1] if len(counts) == 1 else "%d to %d" % (max(counts[0], SHOWN), counts[-1])))

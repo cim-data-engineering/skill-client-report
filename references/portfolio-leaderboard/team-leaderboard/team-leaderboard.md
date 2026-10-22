@@ -10,7 +10,7 @@ Nothing, on the page or in chat.
 
 Eyebrow: the leaderboard month, "September 2026"  
 Statement: Team leaderboard  
-Date line: "Each board ranks by actions resolved, with moves since {the month before}.", then, when a board ranks more than 10, how many it ranks: "Top 10 of 24 assignees.", or with both boards over 10, "Top 10 of 12 companies and 24 assignees."
+Date line: "Each board ranks by actions resolved, with moves since {the month before}.", then each ranking's note once, then, when a board ranks more than 10, how many it ranks: "Top 10 of 24 assignees.", or with both boards over 10, "Top 10 of 12 companies and 24 assignees."
 
 ## Boards
 
@@ -61,4 +61,4 @@ A button beside the title, "Send Mara a shoutout", thanking the leader of the fi
 
 No calls of its own. **Takes:**
 
-- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, and for people the leader's first name, email and busiest site for the shoutout
+- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, any note, and for people the leader's first name, email and busiest site for the shoutout

@@ -75,7 +75,8 @@ IMPACT_ORDER = ["equipment-health-score", "thermal-comfort", "automated-checks",
 #   thermal_zones       zone points on the levels that scored (zones_configured: every configured point)
 #   rankings            [{label, anchor | links, window: "month" | "quarter", now, start, dp, unit}], one board
 #                       each: now on the leaderboard month or the quarter ending on it, start on the window
-#                       last month's leaderboard ranked; each name jumps to the anchor, or opens its own link
+#                       last month's leaderboard ranked; each name jumps to the anchor, or opens its own link;
+#                       an optional note joins the date line
 #   team_rankings       [{label, links, window, noun, unit, names, meta, tiles, now, start, shoutouts}], one
 #                       board each, as rankings but over the companies or people holding the work, keyed by
 #                       company or person; tiles each one's company and its logo, shoutouts each person's

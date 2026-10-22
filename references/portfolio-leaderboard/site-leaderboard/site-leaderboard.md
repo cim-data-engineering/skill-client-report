@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: any leader with no bui
 
 Eyebrow: the leaderboard month, "September 2026"  
 Statement: Site leaderboard  
-Date line: "Each board ranks the sites on one measure, with moves since {the month before}.", then, where a board ranks more than 10, "Top 10 of {N} sites on each board.", N being the sites the boards rank, a range "12 to 14" where the boards differ.
+Date line: "Each board ranks the sites on one measure, with moves since {the month before}.", then each ranking's note once, then, where a board ranks more than 10, "Top 10 of {N} sites on each board.", N being the sites the boards rank, a range "12 to 14" where the boards differ.
 
 ## Boards
 
@@ -53,5 +53,5 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 
 No PEAK calls of its own. The script fetches each leader's photo once from its link, crops it to the band and embeds it as a JPEG. **Takes:**
 
-- **Rankings**: each a label, an anchor or each site's PEAK report, a window (month or quarter), its unit, each site's figure now and on the window last month's board ranked, and the decimals to show
+- **Rankings**: each a label, an anchor or each site's PEAK report, a window (month or quarter), its unit, each site's figure now and on the window last month's board ranked, the decimals to show, and any note
 - **Site facts**: each leader's state, country, building size and building photo link

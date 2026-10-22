@@ -68,6 +68,7 @@ def build(ctx, work, shared):
     over = ["%d %s" % (n, b["noun"]) for b, n, _ in built if n > SHOWN]
     # one shoutout only: the first board's leader that carries one
     shout = next((s for _, _, s in built if s), None)
+    more = list(dict.fromkeys(r["note"] for r in shared["team_rankings"] if r.get("note")))   # each note once
+    more += ["Top %d of %s." % (SHOWN, " and ".join(over))] if over else []
     return {"team_boards": [b for b, _, _ in built], "shoutout": shout,
-            "dated_heads": {"Team leaderboard": pio.board_head(
-                ctx, "by actions resolved", "Top %d of %s." % (SHOWN, " and ".join(over)) if over else None)}}
+            "dated_heads": {"Team leaderboard": pio.board_head(ctx, "by actions resolved", " ".join(more))}}

@@ -188,8 +188,8 @@ def tickets_link(ctx, site_ids, grouping, assignee_ids=()):
 
 def held(rows):
     """Who holds each action in ticket rows, Not Doing left out: [{ticket, site, assignees: [{id, name,
-    first, email, company, logo_url}]}]. Every assignee counts, agents and the client's own managing agents
-    included. Email is empty where the pull does not select it."""
+    first, email, company, company_id, logo_url}]}]. Every assignee counts, agents and the client's own
+    managing agents included. Email is empty where the pull does not select it."""
     out = []
     for r in rows:
         if r.get("status_id") == 8:
@@ -201,7 +201,7 @@ def held(rows):
             people.append({"id": a.get("id"), "logo_url": ent.get("logo_url"), "first": first,
                            "name": " ".join(x for x in (first, (a.get("lastname") or "").strip()) if x),
                            "email": (a.get("email") or "").strip(),
-                           "company": (ent.get("name") or "").strip()})
+                           "company": (ent.get("name") or "").strip(), "company_id": ent.get("id")})
         out.append({"ticket": r["ticket_id"], "site": r["site_id"], "assignees": people})
     return out
 
