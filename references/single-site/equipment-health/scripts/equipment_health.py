@@ -18,6 +18,8 @@ ANNUAL_MINS = {1: 365 * 0.5, 2: 52 * 1.0, 3: 12 * 1.0, 4: 4 * 1.0, 5: 4 * 1.0}
 LABOUR_RATES = {"AUD": 150, "USD": 100, "NZD": 150, "GBP": 75, "CAD": 150, "EUR": 100, "SGD": 120, "CHF": 120,
                 "SEK": 900, "BRL": 250, "CNY": 300, "IDR": 500000}
 WORKING_DAY = 7.5
+MONEY = {"AUD": "dollars", "USD": "dollars", "NZD": "dollars", "CAD": "dollars", "SGD": "dollars", "GBP": "pounds",
+         "EUR": "euros", "CHF": "francs", "SEK": "kronor", "BRL": "reais", "CNY": "yuan", "IDR": "rupiah"}
 
 
 def calls(ctx):
@@ -140,21 +142,20 @@ def by_month(ctx, work, kt, per_hr):
     return checks_m, mins_m, cost_m, rules_m
 
 
-def checks_chart(ctx, kt, checks_m, cost_m, sym, note):
+def checks_chart(ctx, kt, checks_m, cost_m, code, sym, note):
     """Chart 2: checks and labour cost by month. A month with no checks scored, an outage or before
     go-live, is a gap, not a zero."""
     a = [checks_m[m] or None for m in kt]
     b = [cost_m[m] if checks_m[m] else None for m in kt]
-    money = "dollars" if sym == "$" else ("pounds" if sym == "£" else "euros")
     alt = lambda v, f: "no data" if v is None else f % v
     return {"a": a, "b": b, "labels_a": [compact(v) if v else "" for v in a],
-            "labels_b": ["%s%.1fk" % (sym, v / 1000) if v is not None else "" for v in b],
+            "labels_b": ["%s%s" % (sym, compact(v)) if v is not None else "" for v in b],
             "months": [io.mon(m) for m in kt], "to_date": kt[-1] == ctx["to_date"],
             "note_after": "Automated health checks",
             "note": note,
-            "alt": "Grouped bar chart, %s. Automated checks: %s and %s million. Labour cost avoided: %s and %s thousand %s."
-                   % (io.span(kt[0], kt[-1], sep=" to "), ", ".join(alt(v and v / 1e6, "%.2f") for v in a[:-1]), alt(a[-1] and a[-1] / 1e6, "%.2f"),
-                      ", ".join(alt(v if v is None else v / 1e3, "%.1f") for v in b[:-1]), alt(b[-1] if b[-1] is None else b[-1] / 1e3, "%.1f"), money)
+            "alt": "Grouped bar chart, %s. Automated checks: %s million. Labour cost avoided: %s thousand %s."
+                   % (io.span(kt[0], kt[-1], sep=" to "), io.listing(alt(v and v / 1e6, "%.2f") for v in a),
+                      io.listing(alt(v if v is None else v / 1e3, "%.1f") for v in b), MONEY.get(code, code))
                    + io.to_date_note(ctx, kt)}
 
 
@@ -213,6 +214,7 @@ def build(ctx, work, shared):
     # operational impact rows
     live = kq != ctx["quarter_months"] and work.has("eh/site-all-live.json")
     score = io.pct(work.get("eh/site-all-live.json" if live else "eh/site-all.json").first()["score"], 1)
+    named = ((shared.get("site_facts") or {}).get("monetary_currency") or "").strip()
     code, sym = io.currency(shared.get("site_facts") or {})
     per_hr = LABOUR_RATES.get(code, 100)
     checks_m, mins_m, cost_m, rules_m = by_month(ctx, work, kt, per_hr)
@@ -241,7 +243,7 @@ def build(ctx, work, shared):
         "<strong>Labour cost avoided.</strong> Assumes each rule replaces one manual check: P1 daily at "
         "30 seconds; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Prorated over %s at %s %d/hr "
         "(regional rate) and a %g-hour working day." % (window, code, per_hr, WORKING_DAY))
-    trend_checks = checks_chart(ctx, kt, checks_m, cost_m, sym,
+    trend_checks = checks_chart(ctx, kt, checks_m, cost_m, code, sym,
                                 method("each month's days" + (" (%s to date)" % io.month(ctx["to_date"])
                                                               if ctx["to_date"] else "")))
 
@@ -251,6 +253,10 @@ def build(ctx, work, shared):
             "on about %s" % io.day_long(on["day"]) if on["day"] else "in %s" % io.month(on["month"]),
             io.month_label(ctx, start)) + ("" if trend_eh else " Too few months for its trend chart."))
     chat += coverage_chat(ctx, kt, rules_m)
+    if named.lower() not in io.CURRENCIES:
+        chat.append("%s, so labour cost avoided is priced at the US rate in dollars." % (
+            "PEAK's currency for the site, %s, is not one the report prices" % named if named
+            else "PEAK holds no currency for the site"))
 
     links = {"equipment_health": link}
     if trend_eh:

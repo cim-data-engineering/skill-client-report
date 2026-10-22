@@ -93,9 +93,12 @@ def build(ctx, work, shared):
         chat.append("No building photo in PEAK%s for %s, so %s leader panel shows a plain building mark."
                     % ("" if not any(links[sid] for b, sid in built if not photos[sid]) else ", or none that could be fetched,",
                        io.listing(bare), "its" if len(bare) == 1 else "each"))
-    more = list(dict.fromkeys(r["note"] for r in shared["rankings"] if r.get("note")))   # each note once
-    if counts[-1] > SHOWN:
-        more.append("Top %d of %s sites on each board." % (
-            SHOWN, "%d" % counts[-1] if len(counts) == 1 else "%d to %d" % (max(counts[0], SHOWN), counts[-1])))
+    drawn = [r for r, (b, _, _) in zip(shared["rankings"], made) if b["rows"]]
+    more = list(dict.fromkeys(r["note"] for r in drawn if r.get("note")))   # each note once
+    cut = [n for n in counts if n > SHOWN]
+    if cut:
+        more.append("Top %d of %s sites on %s." % (
+            SHOWN, "%d" % cut[0] if len(cut) == 1 else "%d to %d" % (cut[0], cut[-1]),
+            "each board" if len(cut) == len(counts) else "the boards that rank more"))
     return {"boards": [b for b, _ in built], "chat": chat,
             "dated_heads": {"Site leaderboard": pio.board_head(ctx, "the sites on one measure", " ".join(more) or None)}}

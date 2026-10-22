@@ -276,6 +276,8 @@ def both_signals(sp, sr, ap, ar):
         return Row(ap, ar, sp)
     if ar["stuck"] and not sr["stuck"]:
         return Row(sp, sr, ap)
+    if sp.get("state") and held_running(sp, sr):       # a speed state held running beside a held speed: two settings
+        return Row(nodata=f"{sp['name']} held one state all week, so run time is unknown", held=sp)
     if (sr["hours"] > 0) == (ar["hours"] > 0):          # both held, and they agree
         return Row(sp, sr, ap)
     return Row(nodata=f"{sp['name']} and {ap['name']} each held one value all week and disagree, "

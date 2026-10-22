@@ -42,6 +42,8 @@ MAX_PHOTOS = 4
 # by the link text that follows them. Each one is built by its section's script;
 # see the Links block in its reference. Row links ride on their rows and ticket links
 # on their wins, so neither is a slot here.
+# Every external link opens in a new tab on its own, since some viewers drop the page's <base target>.
+EXTERNAL = re.compile(r'<a\b(?![^>]*\btarget=)([^>]*\bhref="https?://[^>]*)>')
 LINK_SLOTS = {"equipment_health": "See live equipment health dashboard",
               "comfort": "See live indoor environment dashboard",
               "leaderboard": "See live actions leaderboard",
@@ -137,7 +139,8 @@ def heatmap(d):
                         for v in r.get("counts", []))
         mo = r["months"]
         cells += "".join(cell(v, i == len(mo) - 1) for i, v in enumerate(mo))
-        link = ('<a href="%s">%s &rsaquo;</a>' % (href(r["link"]), r["name"])) if r.get("link") else r["name"]
+        name = html.escape(r["name"], quote=False)
+        link = ('<a href="%s">%s &rsaquo;</a>' % (href(r["link"]), name)) if r.get("link") else name
         body.append('      <tr><td class="lv">%s</td>%s%s</tr>' % (link, cells, delta(mo)))
     sr = d["site"]
     cells = "".join('<td class="ct">%s</td>' % (f"{v:,}" if isinstance(v, int) else v) for v in sr.get("counts", []))
@@ -245,7 +248,7 @@ def line_chart(d):
             for x, m in zip(C, months)]
     band, sub = to_date_marks(months, to_date)
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n      </svg>'
-            % (d["alt"], "\n".join(band + out + sub)))
+            % (html.escape(d["alt"]), "\n".join(band + out + sub)))
 
 
 def grouped_bar(d):
@@ -294,7 +297,7 @@ def grouped_bar(d):
             for x, m in zip(xs(len(months)), months)]
     band, sub = to_date_marks(months, to_date)
     return ('<svg viewBox="0 0 682 236" role="img" aria-label="%s">\n%s\n    </svg>'
-            % (d["alt"], "\n".join(band + out + sub)))
+            % (html.escape(d["alt"]), "\n".join(band + out + sub)))
 
 
 def drop_chart(s, title):
@@ -466,13 +469,13 @@ def after_eyebrow(s, eyebrow, tag_open, tag_close, text):
 def fill_slots(s, D):
     m = D.get("masthead")
     if m:
-        site = m["site_name"]
+        site = html.escape(m["site_name"], quote=False)
         s = sub_one(s, r"<title>[^<]*</title>", lambda _: "<title>%s Quarterly Building Performance Review</title>" % site, "title")
         s = sub_one(s, r"<h1>[^<]*</h1>", lambda _: "<h1>%s</h1>" % site, "h1")
         if m.get("photo_url"):
             s = sub_one(s, r'\s*<!-- Site photo slot:.*?-->\s*<div class="sitephoto"[^>]*>.*?</div>',
-                        lambda _: '\n    <div class="sitephoto"><img src="%s" alt="%s"></div>' % (m["photo_url"], site),
-                        "site photo slot")
+                        lambda _: '\n    <div class="sitephoto"><img src="%s" alt="%s"></div>'
+                        % (html.escape(m["photo_url"]), html.escape(m["site_name"])), "site photo slot")
         if m.get("prepared"):
             s = sub_one(s, r'<p class="prepared">.*?</p>', lambda _: '<p class="prepared">%s</p>' % m["prepared"], "prepared by")
         for label, key in (("Reporting period", "period"), ("Author", "author"), ("Issued", "issued")):
@@ -522,13 +525,26 @@ CHARTS = (("trend_eh", "Site equipment health score", "line"),
           ("alerts", "Faults triaged and resolved", "bar"))
 
 
-def scaffold(sections):
-    tmp = tempfile.mktemp(suffix=".html")
-    subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "scaffold",
-                    "--sections", sections, "--out", tmp], check=True, capture_output=True)
-    s = open(tmp, encoding="utf-8").read()
-    os.unlink(tmp)
-    return s
+def scaffold(sections, mode="single-site"):
+    """The scaffold for these sections, from build_report; its own message where it stops."""
+    fd, tmp = tempfile.mkstemp(suffix=".html")
+    os.close(fd)
+    try:
+        r = subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "scaffold", "--mode", mode,
+                            "--sections", sections, "--out", tmp], capture_output=True, text=True)
+        if r.returncode:
+            sys.exit("fill: the scaffold stopped: %s" % (r.stderr or r.stdout).strip())
+        return open(tmp, encoding="utf-8").read()
+    finally:
+        os.unlink(tmp)
+
+
+def drop_section(s, anchor):
+    """Delete the section that holds `anchor`, and the blank line it leaves."""
+    i = s.index(anchor)
+    start = s.rindex("\n", 0, s.rindex("<section", 0, i)) + 1
+    stop = s.index("</section>", i) + len("</section>")
+    return s[:start] + s[stop:].lstrip("\n")
 
 
 def fill_impact(s, impact):
@@ -589,7 +605,7 @@ def fill_leaderboard(s, entries):
                     '<td class="num">%s</td><td><span class="scorecell"><span class="track">'
                     '<span class="fill" style="width:%.1f%%"></span></span><span class="sval">%.0f%%</span>'
                     '</span></td><td class="num %s">%d</td></tr>'
-                    % (TROPHY if k == 1 else k, tile, e["name"], e["company"], f"{res:,}", pct, pct,
+                    % (TROPHY if k == 1 else k, tile, html.escape(e["name"], quote=False), co, f"{res:,}", pct, pct,
                        "open-zero" if op == 0 else "open-hot", op))
     tp = tr / (tr + to) * 100 if tr + to else 0
     rows.append('      <tr class="total"><td></td><td>Total</td><td></td><td class="num">%s</td>'
@@ -620,7 +636,7 @@ def win_block(w, base, photos_out):
     if w.get("level"):
         lv = w["level"] if isinstance(w["level"], list) else [w["level"]]
         b += pad + '<p class="where"><span class="k">%s</span>%s</p>\n' % (
-            "Levels" if len(lv) > 1 else "Level", ", ".join(lv))
+            "Levels" if len(lv) > 1 else "Level", html.escape(", ".join(lv), quote=False))
     if photos and not side:
         b += pad + photo_row(photos, base, photos_out, name=None) + "\n"
     b += pad + '<p>%s</p>\n' % w["body"]
@@ -665,11 +681,14 @@ def main():
     s = fill_charts(s, D)
     if "ratings" in D:
         s = fill_ratings(s, D["ratings"])
-    if "leaderboard" in D:
+    if D.get("leaderboard"):
         s = fill_leaderboard(s, D["leaderboard"])
+    elif "leaderboard" in D:              # nobody to rank: the board goes, the chart above it stays
+        s = drop_section(s, "Who closed the work")
     if "wins" in D:
         # photo paths are relative to the bundle
         s = fill_wins(s, D["wins"], os.path.dirname(os.path.abspath(a.data)), a.photos_out)
+    s = EXTERNAL.sub(r'<a\1 target="_blank" rel="noopener">', s)
     open(a.out, "w", encoding="utf-8").write(s)
     n = s.count("<figure>")
     print("wrote %s" % a.out + (", %d KB with %d photos embedded" % (len(s) // 1024, n) if n else ""))

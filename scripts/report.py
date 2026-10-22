@@ -369,12 +369,19 @@ def client_logo_ok(path):
 
 
 def brand():
-    """BRAND.md's identity: name / service-name replace the masthead's CIM defaults."""
+    """BRAND.md's identity: name / service-name replace the masthead's CIM defaults. A value may be quoted
+    and carry a trailing # comment; the file may have CRLF line ends or a byte-order mark."""
     path = os.path.join(ROOT, "BRAND.md")
-    text = open(path, encoding="utf-8").read() if os.path.isfile(path) else ""
+    text = open(path, encoding="utf-8-sig").read().replace("\r\n", "\n") if os.path.isfile(path) else ""
     m = re.match(r"---\n(.*?)\n---", text, re.S)
     head = m.group(1) if m else ""
-    get = lambda k: (re.search(r"^%s:\s*(\S.*?)\s*$" % k, head, re.M) or [None, None])[1]
+
+    def get(key):
+        found = re.search(r"^%s:\s*(\S.*?)\s*$" % key, head, re.M)
+        if not found:
+            return None
+        value = re.sub(r"\s+#.*$", "", found.group(1)).strip()
+        return value[1:-1].strip() if len(value) > 1 and value[0] == value[-1] and value[0] in "\"'" else value
     return {"name": get("name") or "CIM", "service": get("service-name") or "Data Driven Operations"}
 
 
@@ -540,9 +547,6 @@ def cmd_bundle(a):
                       if r["section"] not in data.get("drop", [])]
     if not data["impact"]:
         data.pop("impact")                 # no row-owning section is in, so neither is the frame
-    data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]],
-                      "trend": [io.mon(m) for m in ctx["trend_months"]],
-                      "to_date": bool(ctx["to_date"])}
     with open(os.path.join(work.root, "data.json"), "w") as fh:
         json.dump(data, fh, indent=1, ensure_ascii=False)
     print("Wrote %s/data.json." % a.dir)

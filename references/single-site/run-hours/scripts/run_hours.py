@@ -12,7 +12,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from html import escape
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -115,9 +115,13 @@ def more(ctx, work):
     when = stopped(ctx, work, DIR)
     if isinstance(when, dict):
         return [when]
-    # The latest full week before the data stopped is the one before the week it stopped in,
-    # and it is shown only where it falls inside the reporting period.
-    monday = when.date() - timedelta(days=when.weekday() + 7) if isinstance(when, datetime) else None
+    # The latest full week before the data stopped: the week it stopped in where that week's lost tail is
+    # shorter than a feed gap, else the week before. It is shown only where it falls inside the period.
+    monday = None
+    if isinstance(when, datetime):
+        monday = when.date() - timedelta(days=when.weekday())
+        if datetime.combine(monday + timedelta(days=7), time()) > when + timedelta(hours=rb.FEED_GAP_HOURS):
+            monday -= timedelta(days=7)
     outside = when is not None and (monday is None or monday < io.d(ctx["quarter"][0]))
     with open(os.path.join(work.path(DIR), "earlier.json"), "w") as fh:
         json.dump({"stopped": when.isoformat() if isinstance(when, datetime) else when,
@@ -250,12 +254,14 @@ def build(ctx, work, shared):
                        else "they last reported %s" % stop))
         return {"drop": True, "chat": ["Run hours is left out, with nothing to draw: " + why]}
     agg = rb.run(work.path(rel))
+    whole = rel != EARLIER or not agg.get("feed_gap")       # the earlier week is checked as the latest one was
     later = [u for u in plan["units"] if u.get("pass") == 2 and u.get("pull")]
     chat = ["Run hours: " + " ".join(agg["notes"])] if agg["notes"] else []
     latest = load(work, DIR, "window.json")["label"]
     if rel == EARLIER:
         chat.append("Run hours shows %s, the latest full week before the site's data stopped at %s, rather than "
-                    "%s, the latest full week." % (window["label"], stop, latest))
+                    "%s, the latest full week.%s" % (window["label"], stop, latest, "" if whole else
+                    " That week's data is not whole either, so its gaps are hatched."))
     elif stop == "never":
         chat.append("Run hours draws %s with its gap hatched: the site's run points hold no history before it, so "
                     "there is no earlier full week to show." % latest)
@@ -270,7 +276,7 @@ def build(ctx, work, shared):
         "run_hours": {"html": render(agg)},
         "datelines": {"Equipment run hours":
                       "%s, the latest full week%s, against the site's working hours. Bars are exact to 15 minutes."
-                      % (window["label"], " with complete data" if rel == EARLIER else "")},
+                      % (window["label"], " with complete data" if rel == EARLIER and whole else "")},
         "notes": {"Run hours":
                   "<strong>Run hours.</strong> Drawn from run status or a speed, current or power reading. Enables "
                   "and schedules are not used, as they show commanded state only. Where signals disagree, the lower "

@@ -203,7 +203,11 @@ def assemble(ctx, work):
     sites = {s["site_id"]: s for s in ctx["sites"]}
     chat, out = [], []
     for w in load_wins(work):
-        sid = (imp.get(w["tickets"][0]) or {}).get("site_id")
+        at = {(imp.get(t) or {}).get("site_id") for t in w["tickets"]}
+        if len(at) > 1:
+            raise SystemExit("wins.json: the win %r spans sites %s: a win's tickets are all at one site"
+                             % (w["heading"], ", ".join(str(s) for s in sorted(at, key=str))))
+        sid = at.pop()
         site = sites.get(sid)
         if not site:
             raise SystemExit("the win %r is on site %s, which is not in this report" % (w["heading"], sid))

@@ -17,14 +17,12 @@ import html
 import json
 import os
 import re
-import subprocess
 import sys
-import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from fill_report import (IMPACTS, LEFT, MAX_PHOTOS, RIGHT, band, chg, href, initials,  # noqa: E402
-                         photo_row)
+from fill_report import (EXTERNAL, IMPACTS, LEFT, MAX_PHOTOS, RIGHT, band, chg, href, initials,  # noqa: E402
+                         photo_row, scaffold)
 
 TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
           'stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place">'
@@ -39,7 +37,6 @@ CLAP = '<span class="clap" aria-hidden="true">&#x1F44F;</span>'
 DASHES = re.compile("[\u2013\u2014]|&ndash;|&mdash;")
 REGION = re.compile(r"[ \t]*<!-- fill: ([a-z-]+) -->\n(.*?)[ \t]*<!-- /fill: \1 -->\n?", re.S)
 # A link out of the report, to PEAK or the shoutout form, that does not already name its target
-EXTERNAL = re.compile(r'<a\b(?![^>]*\btarget=)([^>]*\bhref="https?://[^>]*)>')
 
 
 def esc(s):
@@ -402,12 +399,7 @@ def main():
     D = json.load(open(a.data, encoding="utf-8"))
     sections = D.get("sections", "")
 
-    fd, tmp = tempfile.mkstemp(suffix=".html")
-    os.close(fd)
-    subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "scaffold", "--mode", "portfolio",
-                    "--sections", sections, "--out", tmp], check=True, capture_output=True)
-    s = open(tmp, encoding="utf-8").read()
-    os.unlink(tmp)
+    s = scaffold(sections, "portfolio")
 
     months = D["months"]["quarter"]
     base = os.path.dirname(os.path.abspath(a.data))       # photo paths are relative to the bundle

@@ -341,7 +341,8 @@ def parse_hours(spec):
         first, last = ends[0], ends[-1]
         for i in range((last - first) % 7 + 1):
             key = DAY_KEYS[(first + i) % 7]
-            hours.update({f"{key}Enabled": True, f"{key}Start": m["start"], f"{key}End": m["end"]})
+            end = "24:00" if _slot(m["end"]) == 0 else m["end"]          # an end of 00:00 is midnight
+            hours.update({f"{key}Enabled": True, f"{key}Start": m["start"], f"{key}End": end})
     for key in DAY_KEYS:
         start, end = _slot(hours[f"{key}Start"]), _slot(hours[f"{key}End"])
         if hours[f"{key}Enabled"] and end and end <= start:
@@ -388,7 +389,7 @@ def make_window(site_path, workdir, site_id=None, today=None, week_of=None, hour
                  'assess against and run window again with them, e.g. --hours "Mon-Fri 08:00-18:00, '
                  'Sat 09:00-13:00"; a day not named is closed.')
 
-    names = sorted({datetime.combine(d, time(12), tzinfo=tz).tzname() for d in dates})
+    names = list(dict.fromkeys(datetime.combine(d, time(12), tzinfo=tz).tzname() for d in dates))   # in date order
     include = [c.strip() for c in (include or "").split(",") if c.strip()]
     window = {
         "site_id": site["site_id"], "site_name": site["site_name"],

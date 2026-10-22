@@ -125,8 +125,10 @@ def median_text(res_rows, q0, q1, tz):
     """The median time to resolve over the actions resolved in the quarter: in days, or hours under a day."""
     in_q = [r for r in res_rows if r.get("status_id") != 8 and r.get("age") is not None and r.get("resolved_at")
             and q0 <= io.local_day(r["resolved_at"], tz) < q1]
-    med = median(r["age"] for r in in_q) / 86400000 if in_q else None
-    return ("%d days" % round(med) if med >= 1 else "%.1f hours" % (med * 24)) if med is not None else "–"
+    if not in_q:
+        return None
+    med = median(r["age"] for r in in_q) / 86400000
+    return io.plural(round(med), "day") if med >= 1 else "%.1f hours" % (med * 24)
 
 
 def build(ctx, work, shared):
@@ -147,17 +149,19 @@ def build(ctx, work, shared):
     leaderboard, unlogged = board(work, res_rows + io.rows(work, "ar/open-rows.json"))
     pct_rec = recovered / faults * 100
     chip = io.band(pct_rec, BANDS)
+    med = median_text(res_rows, q0, q1, tz)
     impact = [{"chip": chip, "chip_class": "pos" if chip in ("Excellent", "Good") else "warn",
                "fig": "{:,}".format(faults), "cap": "faults resolved with %d%% verified recovery" % round(pct_rec),
-               "sub": "Median time to resolve of %s, measured from linked action creation to resolution."
-                      % median_text(res_rows, q0, q1, tz),
+               "sub": ("Median time to resolve of %s, measured from linked action creation to resolution." % med
+                       if med else "No action was resolved in the quarter to time."),
                "row": "faults-resolved"}]
 
     # a run of closures minutes apart is a bulk close-out, not a run of repairs
     bulk = sittings(sorted(r["resolved_at"] for r in res_rows if r.get("resolved_at") and r.get("status_id") != 8))
     site = ctx["site"]
     host = io.host(site)
-    # the chart starts where the site's monitoring does, as the other trends do
+    # the leaderboard counts the whole six months; the chart starts where the site's monitoring does
+    six = io.span(tm[0], io.whole(ctx, tm)[-1])
     first = max(tm[0], min(shared.get("trend_start") or [tm[0]]))
     keep = [i for i, m in enumerate(tm) if m >= first]
     window = "the last six complete months" if len(keep) == len(tm) else "the complete months monitored"
@@ -174,22 +178,26 @@ def build(ctx, work, shared):
     if unlogged:
         chat.append("Leaderboard initials stand in for %s, with no logo in PEAK or none that could be fetched."
                     % io.listing(unlogged))
+    if not leaderboard:
+        chat.append("No one outside CIM's system accounts resolved or holds an action, so the actions leaderboard "
+                    "is left out.")
+    links = {"leaderboard": "%s/reports/tickets?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
+                            "&grouping=assignee" % (host, site["site_id"], t0, ctx["through"])} if leaderboard else {}
     return {
         "impact": impact,
         "alerts": {"a": raised, "b": resolved, "scale": "shared",
                    "months": [io.mon(m) for m in tm], "to_date": tm[-1] == ctx["to_date"],
-                   "alt": "Grouped bar chart of actions raised and resolved each month, %s. Raised %s and %d. "
-                          "Resolved %s and %d." % (io.span(tm[0], tm[-1], sep=" to "), ", ".join(map(str, raised[:-1])), raised[-1],
-                                                   ", ".join(map(str, resolved[:-1])), resolved[-1])
+                   "alt": "Grouped bar chart of actions raised and resolved each month, %s. Raised %s. Resolved %s."
+                          % (io.span(tm[0], tm[-1], sep=" to "), io.listing(map(str, raised)),
+                             io.listing(map(str, resolved)))
                           + io.to_date_note(ctx, tm)},
         "leaderboard": leaderboard,
-        "links": {"leaderboard": "%s/reports/tickets?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
-                                 "&grouping=assignee" % (host, site["site_id"], t0, ctx["through"])},
+        "links": links,
         "datelines": {
             EYEBROW: chart_line,
             "Actions leaderboard":
                 "Actions resolved %s%s, ranked by resolved. Completion rate is resolved ÷ (resolved + currently "
-                "open); open now as at %s." % (span6, io.and_to_date(ctx, " and "), io.day_long(ctx["today"]))},
+                "open); open now as at %s." % (six, io.and_to_date(ctx, " and "), io.day_long(ctx["today"]))},
         "notes": {
             "Verified recovery": "<strong>Verified recovery.</strong> Share of alerts closed in the period with the "
                                  "fault recovered. Includes only alerts on active rules.",

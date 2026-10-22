@@ -9,6 +9,7 @@ of them builds. It takes the thermal zones figure from `shared`, so it builds af
 the section that hands it on.
 """
 import base64
+import html
 import io as bytes_io
 import os
 import re
@@ -117,8 +118,9 @@ def build(ctx, work, shared):
             "client": ctx["client"],
             "title": "%s %s Performance Leaderboard" % (ctx["client"], pio.month_name(ctx)),
             "h1": "%s portfolio" % ctx["client"],
-            "prepared": "Prepared by <strong>%s - %s</strong> · Powered by PEAK" % (brand.get("name", "CIM"),
-                                                                                 brand.get("service", "Data Driven Operations")),
+            "prepared": "Prepared by <strong>%s - %s</strong> · Powered by PEAK" % (
+                html.escape(brand.get("name", "CIM"), quote=False),
+                html.escape(brand.get("service", "Data Driven Operations"), quote=False)),
             "sites": len(shown) or len(ctx["sites"]),     # the sites with data somewhere in the report
             "shown": sorted(shown),
             "author": ctx["author"],

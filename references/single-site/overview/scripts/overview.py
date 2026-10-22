@@ -9,6 +9,7 @@ when a section hands one on, and for a site that went live inside the windows th
 first month the sections kept and when their scores start, so it builds after the
 sections.
 """
+import html
 import os
 import sys
 
@@ -81,8 +82,9 @@ def build(ctx, work, shared):
             "period": io.period(q0, qlast, short=True) + live_since(shared.get("live_since")),
             "author": ctx["author"],
             "issued": io.day_short(ctx["today"]),
-            "prepared": "Prepared by <strong>%s — %s</strong> · Powered by PEAK" % (brand.get("name", "CIM"),
-                                                                                  brand.get("service", "Data Driven Operations")),
+            "prepared": "Prepared by <strong>%s — %s</strong> · Powered by PEAK" % (
+                html.escape(brand.get("name", "CIM"), quote=False),
+                html.escape(brand.get("service", "Data Driven Operations"), quote=False)),
         },
         "overview": {
             "as_at": "As at %s" % io.day_long(ctx["today"]),
