@@ -111,7 +111,7 @@ def digest(args):
 
 # ── the chosen wins ─────────────────────────────────────────────────────────
 def load_wins(work):
-    return kw.load_wins(work)
+    return kw.load_wins(work, states=True)
 
 
 def more(ctx, work):
@@ -124,15 +124,16 @@ def build(ctx, work, shared):
 
 
 def assemble(ctx, work):
-    """wins.json -> the bundle's wins, plus the Key wins statement and date line and
-    anything to say in chat."""
+    """wins.json -> the bundle's wins, each with where it stands, plus the Key wins statement and
+    date line and anything to say in chat."""
     imp, level_of = kw.impacts(work), kw.levels(work)
     chat, out = [], []
     for w in load_wins(work):
         got, said = kw.win(work, w, imp, level_of, ctx["site"].get("timezone"), escape_titles=True)
-        out.append(got)
+        out.append(dict(got, state=w.get("state", "fixed")))
         chat += said
-    out.sort(key=lambda w: 0 if len(w.get("photos", [])) >= 2 else 1 if w.get("photos") else 2)
+    # finished repairs, then work in flight; within each, wins with a photo row, then one photo, then the rest
+    out.sort(key=lambda w: (w["state"] != "fixed", 0 if len(w.get("photos", [])) >= 2 else 1 if w.get("photos") else 2))
     qw = io.whole(ctx, ctx["quarter_months"])
     return {"wins": out,
             "statements": {"Key wins": "Key wins this quarter"},

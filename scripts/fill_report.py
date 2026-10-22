@@ -33,6 +33,8 @@ TODATE_TOP = 30           # the month to date's tinted column runs from here to 
 # for how a win's impact is chosen from its action tickets.
 IMPACTS = {"energy": "Energy", "comfort": "Comfort", "reliability": "Reliability",
            "water": "Water", "safety": "Safety", "other": "Other"}
+# Where a win stands, its label's chip and its words, in page order
+WIN_GROUPS = (("fixed", "pos", "Fixed"), ("in_flight", "warn", "In progress"))
 # Win photos embed at this height in pixels, about twice their printed size, so
 # they stay sharp on paper without carrying a phone camera's megabytes.
 PHOTO_PX = 480
@@ -648,13 +650,24 @@ def win_block(w, base, photos_out):
     return '  <div class="win">\n' + b + '  </div>'
 
 
+def win_groups(wins, blocks):
+    """The win cards under their labels, Fixed then In progress, each label ahead of the first card
+    at that status, and shown even where every win is one kind. blocks are the cards, in the wins' order."""
+    out = []
+    for state, chip, label in WIN_GROUPS:
+        group = [b for w, b in zip(wins, blocks) if w.get("state", "fixed") == state]
+        if group:
+            out += ['  <h3 class="wgroup"><span class="chip %s">%s</span></h3>' % (chip, label)] + group
+    return "\n\n".join(out)
+
+
 def fill_wins(s, wins, base, photos_out):
-    m = re.search(r'  <div class="win[ "]', s)
+    m = re.search(r'  <(?:h3 class="wgroup"|div class="win[ "])', s)
     if not m:
         sys.exit("fill: the bundle carries wins but key-wins is not in its sections")
     i = m.start()
     j = s.rindex("</div>", i, s.index("</section>", i)) + len("</div>")
-    return s[:i] + "\n\n".join(win_block(w, base, photos_out) for w in wins) + s[j:]
+    return s[:i] + win_groups(wins, [win_block(w, base, photos_out) for w in wins]) + s[j:]
 
 
 # ── main ────────────────────────────────────────────────────────────────────

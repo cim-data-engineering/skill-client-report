@@ -10,11 +10,11 @@ The choosing and the words. Everything else is the script's: the candidates, the
 2. Choose by **Selection** below, and write `report/wins.json`, best first:
 
 ```json
-[{"tickets": ["00000000-0000-4000-8000-000000000001"], "heading": "...", "body": "..."},
- {"tickets": ["00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003"], "heading": "...", "body": "..."}]
+[{"tickets": ["00000000-0000-4000-8000-000000000001"], "state": "fixed", "heading": "...", "body": "..."},
+ {"tickets": ["00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003"], "state": "in_flight", "heading": "...", "body": "..."}]
 ```
 
-   `tickets` are full ticket ids, every ticket the win stands on. Where the tickets reference a saving, the body states it, per **Display**
+   `tickets` are full ticket ids, every ticket the win stands on. `state` is `fixed` or `in_flight`. Where the tickets reference a saving, the body states it, per **Display**
 3. `report.py next` prints the impact and photo calls for those tickets. Once they are saved, run `key_wins.py photos report` straight away, since the photo links lapse twenty minutes after the call, then `report.py next` again: it prints the level call, or says there is none, whether or not any win carried a photo
 4. Look at the one numbered contact sheet per win, choose by **Photos** below, and add the picks to each win: `"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]`. A win with nothing worth showing gets none
 5. After `report.py fill`, look at every tile in `report/tiles/`: a crop can cut off the very detail that earned the photo its place. Adjust `focus` and `zoom` and fill again
@@ -58,6 +58,7 @@ Either way it needs a comment history showing a person engaged with it. Exclude 
 - Where a win links several tickets whose impacts differ, take the most severe: `safety`, then `reliability`, `comfort`, `energy`, `water`, `other`. Never merge two into a compound tag, and never show two tags on one win
 - Where the tickets carry no impact at all, or carry `other`, tag it `Other` rather than picking the one that would look best. Then say so in chat — name the ticket and its title — so the user can set the impact in PEAK and re-run. Fixing the ticket fixes every report that reads it; guessing here fixes nothing and puts a claim on the page the ticket does not support
 - Say where it stands. A win in flight is written as in flight: what was found, who has it, what happens next
+- Finished repairs sit under a Fixed label and work in flight under an In progress label after them, each label shown even where every win is one kind. The script sets both from each win's `state`
 - Two to three sentences: what was wrong, what was changed, why it matters
 - Where any of the win's tickets reference a saving, in the savings field, the description, the solution or a comment, state it, and wrap the figure in `**` to set it bold: "…closed by 24 June, with an estimated saving of **$6,800**." Give it in the site's currency, rounded sensibly and summed across the win's tickets, with a period only where the ticket gives one. On a win in flight it is the expected saving.
 - Under 200 in the site's currency, state the saving without its figure: "…with an expected saving." The fill drops any figure under 200
@@ -77,7 +78,7 @@ Engineers often attach photos to an action ticket as they work it, screenshots a
 - Leave out anything irrelevant or inappropriate for a client report: cartoons and mascots, memes, email signature logos, a person's face, anything that is not this site's plant or its data. Use judgement: a photo that would puzzle or embarrass the reader stays off
 - Up to four, in the order the story runs: the unit or the fault, the finding, the fix
 - No captions. The win's text explains its photos, and a caption is one more claim to get wrong
-- Wins with photos lead: those with a row, then those with one, then the rest, with the ranking above ordering each group. The layout follows the count and is not yours to set: one photo sits beside the text, two to four run in a row under the heading
+- Within Fixed and within In progress, wins with photos lead: those with a row, then those with one, then the rest, with the ranking above ordering each group. The layout follows the count and is not yours to set: one photo sits beside the text, two to four run in a row under the heading
 - Photos never decide whether a win qualifies. They change how a win is shown and where it sits, nothing else
 
 **When nothing qualifies:**

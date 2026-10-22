@@ -196,7 +196,7 @@ def build(ctx, work, shared):
 
 
 def assemble(ctx, work):
-    """wins.json -> the bundle's wins, each with its site, plus the Key wins date line and
+    """wins.json -> the bundle's wins, each with its site and where it stands, plus the Key wins date line and
     anything to say in chat. Finished repairs lead work in flight; within each, the order
     is wins.json's."""
     imp, level_of = kw.impacts(work), kw.levels(work)
@@ -214,8 +214,8 @@ def assemble(ctx, work):
         got, said = kw.win(work, w, imp, level_of, site.get("timezone"), escape_titles=False)
         chat += said
         out.append((0 if w.get("state", "fixed") == "fixed" else 1,
-                    dict({"site": {"name": site["site_name"].strip(), "state": pio.region(ctx, site)}, "site_id": sid},
-                         **got)))
+                    dict({"site": {"name": site["site_name"].strip(), "state": pio.region(ctx, site)}, "site_id": sid,
+                          "state": w.get("state", "fixed")}, **got)))
     out.sort(key=lambda x: x[0])
     return {"wins": [w for _, w in out], "datelines": {"Key wins": "%s." % pio.wins_period(ctx)}, "chat": chat}
 

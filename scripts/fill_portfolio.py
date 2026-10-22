@@ -22,7 +22,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from fill_report import (EXTERNAL, IMPACTS, LEFT, MAX_PHOTOS, RIGHT, band, chg, href, initials,  # noqa: E402
-                         photo_row, scaffold)
+                         photo_row, scaffold, win_groups)
 
 TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
           'stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place">'
@@ -307,7 +307,7 @@ def wins(ws, base, photos_out):
         else:
             b = '  <div class="win">\n' + b + '  </div>'
         blocks.append(b)
-    return "\n\n".join(blocks) + "\n"
+    return win_groups(ws, blocks) + "\n"
 
 
 # ── sustainability ratings ──────────────────────────────────────────────────
