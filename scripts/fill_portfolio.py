@@ -329,11 +329,23 @@ def sub_one(s, pattern, repl, what):
     return s2
 
 
+def reference():
+    with open(os.path.join(HERE, "..", "assets", "portfolio-report.html"), encoding="utf-8") as fh:
+        return fh.read()
+
+
 def after_eyebrow(s, eyebrow, tag_open, tag_close, text):
+    """Rewrite the first `tag_open...tag_close` in the section an eyebrow heads. A section out of this
+    report is passed over; an eyebrow the portfolio scaffold does not carry names no slot, and stops."""
     i = s.find('<p class="eyebrow">%s</p>' % eyebrow)
     if i == -1:
+        if '<p class="eyebrow">%s</p>' % eyebrow not in reference():
+            sys.exit("fill: no section headed %r in the portfolio scaffold: a section script names a slot that "
+                     "does not exist" % eyebrow)
         return s                          # the section is out of this report
-    k = s.index(tag_open, i)
+    k = s.find(tag_open, i, s.index("</section>", i))
+    if k == -1:
+        sys.exit("fill: the section headed %r has no %s to fill" % (eyebrow, tag_open))
     j = s.index(tag_close, k)
     return s[:k] + tag_open + text + s[j:]
 
@@ -342,6 +354,8 @@ def dated_head(s, title, head):
     """A section header whose eyebrow is a month, found by its title: the month, and the date line."""
     i = s.find("<h2>%s</h2>" % title)
     if i == -1:
+        if "<h2>%s</h2>" % title not in reference():
+            sys.exit("fill: no section titled %r in the portfolio scaffold" % title)
         return s                          # the section is out of this report
     j = s.rfind('<p class="eyebrow">', 0, i)
     s = s[:j] + '<p class="eyebrow">%s</p>' % esc(head["date"]) + s[s.index("</p>", j) + len("</p>"):]

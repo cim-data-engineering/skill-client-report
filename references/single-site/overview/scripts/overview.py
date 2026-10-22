@@ -40,12 +40,8 @@ def calls(ctx):
 
 
 def handed_on(ctx):
-    """The figures sections hand on, known at plan time. A plan.json without the list takes
-    indoor environment's, the one section that hands any on."""
-    got = ctx.get("handed_on")
-    if got is None:
-        return ["thermal_zones"] if "indoor-environment" in ctx["sections"] else []
-    return got
+    """The figures sections hand on, known at plan time."""
+    return ctx["handed_on"]
 
 
 def more(ctx, work):

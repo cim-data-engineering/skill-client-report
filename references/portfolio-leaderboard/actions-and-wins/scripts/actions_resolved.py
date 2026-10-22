@@ -55,9 +55,9 @@ def more(ctx, work):
     # the Assignees leader's first name and email, for the shoutout: one ticket of theirs whose assignees
     # all have names, since one without fails the pull
     p = people(ctx, work)
-    if not p["now"]:
-        return []
     ranked, _ = pio.standings(list(p["every"]), p["now"], p["then"], p["label"])
+    if not ranked:
+        return []                         # no one resolved an action that counts: no leader to thank
     lead = ranked[0][1]
     named = [act for act in p["acts"] if lead in {a["id"] for a in act["assignees"]}
              and all(p["names"].get(a["id"]) for a in act["holders"] if a["id"])]

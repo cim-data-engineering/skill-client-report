@@ -13,6 +13,13 @@ import argparse, base64, html, io, json, os, re, subprocess, sys, tempfile
 from datetime import date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+REFERENCE = os.path.join(HERE, "..", "assets", "reference-report.html")
+
+
+def eyebrows():
+    """Every section eyebrow the reference report carries, whichever sections a report keeps."""
+    with open(REFERENCE, encoding="utf-8") as fh:
+        return set(re.findall(r'<p class="eyebrow">([^<]+)</p>', fh.read()))
 def xs(n):
     """Month column centres, spread evenly over the plot width; a single month sits in the middle."""
     if n == 1:
@@ -441,11 +448,17 @@ def sub_one(s, pattern, repl, what):
 
 
 def after_eyebrow(s, eyebrow, tag_open, tag_close, text):
-    """Rewrite the first `tag_open...tag_close` after a section eyebrow."""
+    """Rewrite the first `tag_open...tag_close` in the section an eyebrow heads. A section out of this
+    report is passed over; an eyebrow the reference report does not carry names no slot, and stops."""
     i = s.find('<p class="eyebrow">%s</p>' % eyebrow)
     if i == -1:
+        if eyebrow not in eyebrows():
+            sys.exit("fill: no section headed %r in the reference report: a section script names a slot that "
+                     "does not exist" % eyebrow)
         return s                          # the section is out of this report
-    k = s.index(tag_open, i)
+    k = s.find(tag_open, i, s.index("</section>", i))
+    if k == -1:
+        sys.exit("fill: the section headed %r has no %s to fill" % (eyebrow, tag_open))
     j = s.index(tag_close, k)
     return s[:k] + tag_open + text + s[j:]
 
@@ -482,10 +495,12 @@ def fill_slots(s, D):
         if i != -1:
             j = s.index("</li>", i)
             s = s[:i] + "<li>" + inner + s[j:]
-        elif '<section class="notes">' in s:
+        elif key == "The reporting window" and '<section class="notes">' in s:
             # the reporting window has no slot: it shows only with a month to date, last in the band
             k = s.index("</ol>", s.index('<section class="notes">'))
             s = s[:k] + "  <li>" + inner + "</li>\n  " + s[k:]
+        else:
+            sys.exit("fill: no notes item %r in the scaffold for a section in the report" % key)
     rh = D.get("run_hours")
     if rh:
         i = s.index('<div class="rh">')
@@ -531,7 +546,9 @@ def fill_impact(s, impact):
                     '      <div class="isub">%s</div>\n    </div>\n  </div>'
                     % (r.get("chip_class", "neu"), r["chip"], r["fig"], r["cap"], sub))
     i = s.index('  <div class="irow">')
-    j = s.rindex("</div>", i, s.index('<div class="seclinks">', i)) + len("</div>")
+    end = s.index("</section>", i)                 # the rows end before the section's link row, or the section
+    links = s.find('<div class="seclinks">', i, end)
+    j = s.rindex("</div>", i, links if links != -1 else end) + len("</div>")
     return s[:i] + "\n\n".join(rows) + "\n\n" + s[j:].lstrip("\n")
 
 

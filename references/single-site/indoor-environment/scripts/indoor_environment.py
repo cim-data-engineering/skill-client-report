@@ -157,6 +157,10 @@ def unscored_chat(work):
 
 
 def build(ctx, work, shared):
+    if not work.get("ie/site-all.json").first():
+        shared["thermal_zones"] = 0                   # zone points on the levels that scored: none did
+        return {"drop": True, "chat": ["Indoor environment is left out: PEAK holds no thermal comfort score for the "
+                                       "site in the quarter."]}
     shared.setdefault("partial", [])                  # its scores show the month to date and stand as they are
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
     # a site that went live inside the windows shows only the months it was monitored in full

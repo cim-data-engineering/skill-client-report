@@ -29,15 +29,17 @@ fill    Merges <dir>/wins.json into the bundle, fills the report and runs the
 
 Each section is a folder under references/<mode>/ holding its reference and its
 scripts; the registry below names each report's sections, their folders and order. A module exposes
-calls(ctx), more(ctx, work) and build(ctx, work, shared). plan.json names the mode,
-and one without a mode is single-site.
+calls(ctx), more(ctx, work) and build(ctx, work, shared). plan.json names the mode, and holds its
+paths relative to the report folder, so a folder can be moved or copied whole.
 """
 import argparse
+import glob
 import importlib
 import importlib.util
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -113,7 +115,7 @@ MODES = {"single-site": {"modules": MODULES}, "portfolio": {"modules": PORTFOLIO
 
 
 def mode_of(ctx):
-    return ctx.get("mode", "single-site")
+    return ctx["mode"]
 
 
 def module(section, mode="single-site"):
@@ -219,17 +221,12 @@ def cmd_plan(a):
     today = io.d(a.today) if a.today else datetime.now(io.zone(site.get("timezone"))).date()
     root = os.path.abspath(a.dir)
     os.makedirs(os.path.join(root, "peak"), exist_ok=True)
-    ctx = dict(io.windows(today), site=site, author=a.author, sections=[s for s in ORDER if s in sections],
-               dir=root, site_file=os.path.abspath(a.site), hours=a.hours,
-               brand=brand())
+    ctx = dict(io.windows(today), mode="single-site", site=site, author=a.author,
+               sections=[s for s in ORDER if s in sections], dir=root,
+               site_file=os.path.relpath(os.path.abspath(a.site), root), hours=a.hours, brand=brand())
     ctx["handed_on"] = sorted({f for s in ctx["sections"] for f in getattr(module(s), "HANDS_ON", [])})
-    with open(os.path.join(root, "plan.json"), "w") as fh:
-        json.dump(ctx, fh, indent=1)
-    calls = [c for s in active(ctx) for c in module(s).calls(ctx)]
-    with open(os.path.join(root, "calls.json"), "w") as fh:
-        json.dump(calls, fh, indent=1)
-    folders(root, calls)
-    save = [c for c in calls if not c.get("read")]
+    calls = write_plan(root, ctx, [c for s in active(ctx) for c in module(s).calls(ctx)])
+    save = [c for c in calls if not c.get("read") and not os.path.isfile(os.path.join(root, "peak", c["file"]))]
     read = [c for c in calls if c.get("read")]
     print("%s: quarter %s, trends %s, issued %s%s." % (
         site["site_name"], io.period(ctx["quarter"][0], ctx["through"], True),
@@ -278,15 +275,11 @@ def plan_portfolio(a):
     today = io.d(a.today) if a.today else pio.today(sites)
     root = os.path.abspath(a.dir)
     os.makedirs(os.path.join(root, "peak"), exist_ok=True)
-    ctx = dict(pio.windows(today), mode="portfolio", sites=sites, client=a.client.strip(), client_logo=logo,
+    ctx = dict(pio.windows(today), mode="portfolio", sites=sites, client=a.client.strip(),
+               client_logo=os.path.relpath(logo, root) if logo else None,
                author=a.author, sections=list(PORTFOLIO_ORDER), dir=root, brand=brand())
-    with open(os.path.join(root, "plan.json"), "w") as fh:
-        json.dump(ctx, fh, indent=1)
-    calls = [c for s in active(ctx) for c in module(s, "portfolio").calls(ctx)]
-    with open(os.path.join(root, "calls.json"), "w") as fh:
-        json.dump(calls, fh, indent=1)
-    folders(root, calls)
-    save = [c for c in calls if not c.get("read")]
+    calls = write_plan(root, ctx, [c for s in active(ctx) for c in module(s, "portfolio").calls(ctx)])
+    save = [c for c in calls if not c.get("read") and not os.path.isfile(os.path.join(root, "peak", c["file"]))]
     read = [c for c in calls if c.get("read")]
     print("%s portfolio: %d sites, the %s leaderboard. Scores and actions resolved %s, key wins %s, issued %s."
           % (ctx["client"], len(sites), pio.month_name(ctx), pio.reporting_period(ctx, True),
@@ -301,6 +294,57 @@ def plan_portfolio(a):
     if read:
         print("\nAlongside them, %d to read: the key win candidates. %s\n" % (len(read), PORTFOLIO_READ_RULE % a.dir))
         show(read, len(save) + 1)
+
+
+def write_plan(root, ctx, calls):
+    """Write plan.json and calls.json, clearing first what an earlier plan in this folder left that no
+    longer holds. Returns the calls the folder now plans."""
+    calls, cleared = replan(root, calls, ctx["today"])
+    if cleared:
+        print("Cleared %s an earlier plan in this folder left that no longer hold: %s."
+              % (io.plural(len(cleared), "file"), ", ".join(cleared[:12]) + (" ..." if len(cleared) > 12 else "")))
+    with open(os.path.join(root, "plan.json"), "w") as fh:
+        json.dump(dict(ctx, dir="."), fh, indent=1)
+    with open(os.path.join(root, "calls.json"), "w") as fh:
+        json.dump(calls, fh, indent=1)
+    folders(root, calls)
+    return calls
+
+
+# Built from the saved responses, so a changed plan clears them: the bundle, the filled report and
+# its tiles, and run hours' plan and aggregate.
+DERIVED = ["data.json", "report-data.json", "tiles", "*.html", "peak/runhours/plan.json", "peak/runhours/agg.json",
+           "peak/runhours/earlier.json", "peak/runhours/last.json", "peak/runhours/earlier"]
+# Chosen from the key win candidates, so new candidates clear them.
+CHOSEN = ["wins.json", "shortlist.json", "kw"]
+
+
+def replan(root, calls, today):
+    """(the calls the folder plans, the files cleared). Planning a folder again on the same issue date
+    with the same calls keeps every saved response and follow-up. Otherwise each saved response whose
+    call changed or is no longer planned goes, follow-ups included, with everything built from them; and
+    where the key win candidates changed, so do the wins chosen from them. A new issue date clears every
+    response, since a count as at the issue date answers differently on another day with the same call."""
+    path = os.path.join(root, "calls.json")
+    if not os.path.isfile(path):
+        return calls, []
+    with open(path, encoding="utf-8") as fh:
+        old = json.load(fh)
+    with open(os.path.join(root, "plan.json"), encoding="utf-8") as fh:
+        same_day = json.load(fh).get("today") == today
+    was = {c["file"]: c for c in old}
+    if same_day and all(was.get(c["file"]) == c for c in calls):
+        return old, []
+    planned = {c["file"]: c for c in calls}
+    gone = [c for c in old if not same_day or planned.get(c["file"]) != c]
+    cleared = [c["file"] for c in gone if not c.get("read") and os.path.isfile(os.path.join(root, "peak", c["file"]))]
+    for f in cleared:
+        os.remove(os.path.join(root, "peak", f))
+    for pattern in DERIVED + (CHOSEN if any(c.get("read") for c in gone) else []):
+        for p in glob.glob(os.path.join(root, pattern)):
+            shutil.rmtree(p) if os.path.isdir(p) else os.remove(p)
+            cleared.append(os.path.relpath(p, root))
+    return calls, cleared
 
 
 def folders(root, calls):
@@ -339,10 +383,12 @@ def cmd_next(a):
     work = io.Work(a.dir)
     with open(os.path.join(work.root, "calls.json")) as fh:
         calls = json.load(fh)
-    missing = [c["file"] for c in calls if not c.get("read") and not work.has(c["file"])]
+    missing = [c for c in calls if not c.get("read") and not work.has(c["file"])]
     if missing:
-        sys.exit("Not saved yet: %s. %s" % (", ".join(missing), PORTFOLIO_SAVE % a.dir if mode_of(work.ctx) == "portfolio"
-                                                                 else save_rule(a.dir)))
+        print("Not saved yet, so make these again exactly as printed: %s\n" % (
+            PORTFOLIO_SAVE % a.dir if mode_of(work.ctx) == "portfolio" else save_rule(a.dir)))
+        show(missing, 1)
+        sys.exit(1)
     problems = verify(work, calls)
     if problems:
         sys.exit("Saved, but not as PEAK returned it:\n  %s\nSave each again from the tool's output: copy an offloaded "
@@ -350,22 +396,13 @@ def cmd_next(a):
     mode = mode_of(work.ctx)
     new = [c for s in active(work.ctx) for c in module(s, mode).more(work.ctx, work)]
     if not new:
-        folder = "portfolio-leaderboard" if mode == "portfolio" else "single-site"
-        if not os.path.isfile(os.path.join(work.root, "data.json")):
-            print("No more calls. Next: python3 scripts/report.py bundle %s" % a.dir)
-        elif not os.path.isfile(os.path.join(work.root, "wins.json")):
-            print("No more calls. Next: python3 scripts/report.py bundle %s, unless it has run since the last "
-                  "calls were saved; then choose the key wins and write %s/wins.json." % (a.dir, a.dir))
-        elif os.path.isdir(os.path.join(work.root, "kw", "photos")) or no_wins(work.root):
-            print("No more calls. Next: python3 scripts/report.py fill %s" % a.dir)
-        else:
-            print("No more calls. Next, if any win could carry photos: python3 "
-                  "references/%s/actions-and-wins/scripts/key_wins.py photos %s; then fill." % (folder, a.dir))
+        print("No more calls. Next: " + next_step(work, a.dir))
         return
     have = {c["file"] for c in calls}
     calls += [c for c in new if c["file"] not in have]
     with open(os.path.join(work.root, "calls.json"), "w") as fh:
         json.dump(calls, fh, indent=1)
+    folders(work.root, new)
     read = [c for c in new if c.get("read")]
     new = [c for c in new if not c.get("read")]
     if new:
@@ -378,6 +415,30 @@ def cmd_next(a):
               "key_wins.py digest %s <that file> --top 0. Choose the wins from it and write %s/wins.json, then run "
               "next again.\n" % ("\n" if new else "", len(read), a.dir, a.dir))
         show(read, len(new) + 1)
+
+
+def next_step(work, d):
+    """What follows once no call is due: bundle until it has run, then the key wins where the bundle
+    kept them, then fill."""
+    path = os.path.join(work.root, "data.json")
+    if not os.path.isfile(path):
+        return "python3 scripts/report.py bundle %s" % d
+    with open(path, encoding="utf-8") as fh:
+        sections = json.load(fh)["sections"].split(",")
+    folder = "portfolio-leaderboard" if mode_of(work.ctx) == "portfolio" else "single-site"
+    has = lambda f: os.path.isfile(os.path.join(work.root, f))
+    if "key-wins" not in sections or no_wins(work.root):
+        return "python3 scripts/report.py fill %s" % d
+    if not has("wins.json"):
+        if folder == "portfolio-leaderboard" and not has("shortlist.json"):
+            return ("shortlist the key win candidates and write %s/shortlist.json, by references/%s/actions-and-wins/"
+                    "key-wins.md, then run python3 scripts/report.py next %s" % (d, folder, d))
+        return ("choose the key wins and write %s/wins.json, by references/%s/actions-and-wins/key-wins.md, then run "
+                "python3 scripts/report.py next %s" % (d, folder, d))
+    if os.path.isdir(os.path.join(work.root, "kw", "photos")):
+        return "python3 scripts/report.py fill %s" % d
+    return ("if any win could carry photos, python3 references/%s/actions-and-wins/scripts/key_wins.py photos %s; "
+            "then fill." % (folder, d))
 
 
 def no_wins(root):
@@ -487,11 +548,7 @@ def cmd_bundle(a):
     print("Wrote %s/data.json." % a.dir)
     for c in data.get("chat", []):
         print("Say in chat at hand-over: " + c)
-    if "key-wins" in ctx["sections"] and "key-wins" not in data.get("drop", []):
-        print("Next: choose the key wins from the two candidate pulls and write %s/wins.json, both by "
-              "references/single-site/actions-and-wins/key-wins.md. Then run: python3 scripts/report.py next %s" % (a.dir, a.dir))
-    else:
-        print("Next: python3 scripts/report.py fill %s" % a.dir)
+    print("Next: " + next_step(work, a.dir))
 
 
 def bundle_portfolio(a, work):
@@ -510,17 +567,11 @@ def bundle_portfolio(a, work):
     print("Wrote %s/data.json." % a.dir)
     for c in data.get("chat", []):
         print("Say in chat at hand-over: " + c)
-    if os.path.isfile(os.path.join(work.root, "wins.json")):
-        print("Next: python3 scripts/report.py next %s, then fill once it has no more calls." % a.dir)
-    elif os.path.isfile(os.path.join(work.root, "shortlist.json")):
+    if os.path.isfile(os.path.join(work.root, "shortlist.json")) and not os.path.isfile(os.path.join(work.root, "wins.json")):
         print("Next: python3 scripts/report.py next %s for the shortlist in full, then choose the wins from it and "
               "write %s/wins.json." % (a.dir, a.dir))
-    elif "key-wins" not in data.get("drop", []):
-        print("Next: shortlist the key win candidates and write %s/shortlist.json, by "
-              "references/portfolio-leaderboard/actions-and-wins/key-wins.md. Then run: python3 scripts/report.py "
-              "next %s" % (a.dir, a.dir))
     else:
-        print("Next: python3 scripts/report.py fill %s" % a.dir)
+        print("Next: " + next_step(work, a.dir))
 
 
 # ── fill ────────────────────────────────────────────────────────────────────
@@ -535,7 +586,7 @@ def cmd_fill(a):
     chat = []
     if "key-wins" in sections:
         kw = module("key-wins")
-        got = kw.load_wins(work)
+        got = need_wins(kw.load_wins(work), a.dir)
         if not got:
             sections.remove("key-wins")
             chat.append("Key wins left out: no win qualified. Say what you read and rejected, per key-wins.md.")
@@ -550,7 +601,7 @@ def cmd_fill(a):
     name = re.sub(r"[^a-z0-9]+", "-", ctx["site"]["site_name"].lower()).strip("-")
     last = io.d(io.whole(ctx, ctx["quarter_months"])[-1])     # the quarter's last complete month names the file
     out = a.out or os.path.join(work.root, "%s-q%d-%d.html" % (name, (last.month - 1) // 3 + 1, last.year))
-    tiles = os.path.join(work.root, "tiles")
+    tiles = fresh_tiles(work.root)
     r = subprocess.run([sys.executable, os.path.join(HERE, "fill_report.py"), final, "--out", out,
                         "--photos-out", tiles], capture_output=True, text=True)
     print((r.stdout + r.stderr).strip())
@@ -567,6 +618,19 @@ def cmd_fill(a):
         sys.exit(r.returncode)
 
 
+def need_wins(wins, d):
+    if wins is None:
+        sys.exit("No %s/wins.json yet: write the chosen wins, or [] when none qualified, then fill." % d)
+    return wins
+
+
+def fresh_tiles(root):
+    """The tiles folder, emptied, so it holds exactly the tiles this fill prints."""
+    tiles = os.path.join(root, "tiles")
+    shutil.rmtree(tiles, ignore_errors=True)
+    return tiles
+
+
 def fill_portfolio(a, work):
     ctx = work.ctx
     with open(os.path.join(work.root, "data.json"), encoding="utf-8") as fh:
@@ -575,7 +639,7 @@ def fill_portfolio(a, work):
     chat = []
     if "key-wins" in sections:
         kw = module("key-wins", "portfolio")
-        got = kw.load_wins(work)
+        got = need_wins(kw.load_wins(work), a.dir)
         if not got:
             sections.remove("key-wins")
             chat.append("Key wins left out: no win qualified. Say what you read and rejected, per key-wins.md.")
@@ -583,7 +647,7 @@ def fill_portfolio(a, work):
             merge(data, kw.assemble(ctx, work))
     data["sections"] = ",".join(sections)
     # the client logo is read now, so a logo added to or taken out of the plan shows on the next fill
-    logo = ctx.get("client_logo")
+    logo = os.path.join(work.root, ctx["client_logo"]) if ctx.get("client_logo") else None
     m = data["masthead"]
     if m.get("shown"):                      # a site that shows only through a win still counts
         shown = set(m["shown"]) | {w.get("site_id") for w in data.get("wins") or []}
@@ -604,7 +668,7 @@ def fill_portfolio(a, work):
         json.dump(data, fh, indent=1, ensure_ascii=False)
     name = re.sub(r"[^a-z0-9]+", "-", ctx["client"].replace("'", "").replace("\u2019", "").lower()).strip("-") or "portfolio"
     out = a.out or os.path.join(work.root, "%s-portfolio-%s.html" % (name, ctx["month"][:7]))   # the leaderboard month
-    tiles = os.path.join(work.root, "tiles")
+    tiles = fresh_tiles(work.root)
     r = subprocess.run([sys.executable, os.path.join(HERE, "fill_portfolio.py"), final, "--out", out,
                         "--photos-out", tiles], capture_output=True, text=True)
     print((r.stdout + r.stderr).strip())

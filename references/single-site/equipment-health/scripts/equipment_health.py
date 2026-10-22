@@ -193,6 +193,9 @@ def datelines(ctx, kq, kt):
 
 
 def build(ctx, work, shared):
+    if not work.get("eh/site-all.json").first():
+        return {"drop": True, "chat": ["Equipment health is left out: PEAK holds no equipment health score for the "
+                                       "site in the quarter."]}
     shared.setdefault("partial", []).extend(["automated checks", "labour cost avoided"])
     # a site that went live inside the windows shows only the months it was monitored in full
     site_m = site_months(work)

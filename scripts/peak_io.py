@@ -89,6 +89,7 @@ class Work:
         self._calls = None
         with open(os.path.join(root, "plan.json"), encoding="utf-8") as fh:
             self.ctx = json.load(fh)
+        self.ctx["dir"] = os.path.abspath(root)     # plan.json's paths are relative to the folder it is in
 
     @property
     def calls(self):
