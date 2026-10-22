@@ -49,9 +49,9 @@ def more(ctx, work):
             out += io.pages_due(work, [zc])
     # the level count carries no names, so chat names unscored levels from their zones
     quiet = unscored(work)
-    if quiet and not work.has("ie/levels-unscored.json"):
-        out.append(io.call("ie/levels-unscored.json", "search_zones", site_ids=[sid], level_ids=sorted(quiet),
-                           limit=250))
+    if quiet:
+        zn = io.call("ie/levels-unscored.json", "search_zones", site_ids=[sid], level_ids=sorted(quiet), limit=250)
+        out += io.pages_due(work, [zn]) if work.has(zn["file"]) else [zn]
     # a site that went live inside the quarter takes its headline score over the months it kept
     on = onboarding(ctx, site_months(work))
     if on and on["start"] > q0 and not work.has("ie/site-all-live.json"):
@@ -148,7 +148,7 @@ def level_table(by_level, names, zones, shown, kq, link):
 def unscored_chat(work):
     level_names = {}
     if work.has("ie/levels-unscored.json"):
-        level_names = {r["level_id"]: r.get("level_name") for r in work.get("ie/levels-unscored.json").rows}
+        level_names = {r["level_id"]: r.get("level_name") for r in io.rows(work, "ie/levels-unscored.json")}
     quiet = ["%s (%d points)" % (level_names.get(l) or "level %s" % l, n) for l, n in unscored(work).items()]
     if not quiet:
         return []

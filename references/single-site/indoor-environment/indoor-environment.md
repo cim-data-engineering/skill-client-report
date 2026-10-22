@@ -93,7 +93,7 @@ All in the main batch: `search_indoor_environment(metric:"temperature")` at thre
 | `site` × `month` | 6 months | the snapshot closing row (the quarter's months) and the trend |
 | `site` × `all` | quarter | the headline score |
 | `count_indoor_environment_zones`, `aggregate_entity:"level"` | current configuration | the Zones column and the thermal zones figure |
-| `search_zones` for levels with points but no score, `limit:250`, a follow-up | current configuration | their names, for chat |
+| `search_zones` for levels with points but no score, `limit:250`, a follow-up paged by `report.py next` | current configuration | their names, for chat |
 | `site` × `all`, a follow-up for a site that went live in the quarter | months kept | the headline score |
 
 - The Zones column joins the count's `included_point_count` to the level rows on `level_id`, and a level the count does not return counts 0. Summed over the levels shown, it is the site row and the thermal zones figure. Never page zone rows to count them, and never substitute `search_zones`, `platform.levels` or `platform.zones`: they list zone objects, not zone temperature points
