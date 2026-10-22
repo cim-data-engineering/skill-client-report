@@ -38,6 +38,8 @@ CLIMB = ('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="cu
 CLAP = '<span class="clap" aria-hidden="true">&#x1F44F;</span>'
 DASHES = re.compile("[\u2013\u2014]|&ndash;|&mdash;")
 REGION = re.compile(r"[ \t]*<!-- fill: ([a-z-]+) -->\n(.*?)[ \t]*<!-- /fill: \1 -->\n?", re.S)
+# A link out of the report, to PEAK or the shoutout form, that does not already name its target
+EXTERNAL = re.compile(r'<a\b(?![^>]*\btarget=)([^>]*\bhref="https?://[^>]*)>')
 
 
 def esc(s):
@@ -411,6 +413,8 @@ def main():
         return render[name]()
     s = REGION.sub(region, s)
     s = fill_slots(s, D)
+    # every external link opens in a new tab on its own, since some viewers drop the page's <base target>
+    s = EXTERNAL.sub(r'<a\1 target="_blank" rel="noopener">', s)
 
     hits = DASHES.findall(s)
     if hits:
