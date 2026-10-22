@@ -2,17 +2,14 @@
 """Helpers the portfolio report's section scripts share: the report's windows, calls
 split across the sites a tool takes at once, their saved chunks and pages read back
 as one, each site's region label and building size, the ranking, the portfolio rows
-(a plain average of the sites, or for ratings one weighted by building size), and
-dates printed with a spaced hyphen, since the portfolio page carries no en or em dash.
+(a plain average of the sites scored), and dates printed with a spaced hyphen, since the
+portfolio page carries no en or em dash.
 
 Imported by scripts/report.py and the scripts under references/portfolio-leaderboard/ only.
 """
-import base64
 import os
 import re
 import sys
-import urllib.request
-from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -94,44 +91,16 @@ def split(ctx, name, size, make):
 
 
 def chunk_files(work, name):
-    base, k, out = name[:-len(".json")], 1, []
-    while work.has("%s-%d.json" % (base, k)):
-        out.append("%s-%d.json" % (base, k))
-        k += 1
-    return out
+    """The chunks a split call was planned as, in order, from calls.json: never whatever sits on disk."""
+    pat = re.compile(re.escape(name[:-len(".json")]) + r"-(\d+)\.json")
+    got = [(int(pat.fullmatch(c["file"]).group(1)), c["file"]) for c in work.calls
+           if pat.fullmatch(c["file"]) and not io.start_of(c)]
+    return [f for _, f in sorted(got)]
 
 
-def pages_due(work, calls, step, nested=False):
-    """The follow-up pages a saved chunk asks for: <chunk>-<offset>.json from its
-    pagination total, `step` rows a page. A GraphQL call (nested) carries its paging
-    inside its own args."""
-    out = []
-    for c in calls:
-        if not work.has(c["file"]):
-            continue
-        first = work.get(c["file"])
-        if not first.has_more:
-            continue
-        for s in range(step, first.total or 0, step):
-            f = c["file"].replace(".json", "-%d.json" % s)
-            if work.has(f):
-                continue
-            args = (dict(c["args"], args=dict(c["args"]["args"], start_index=s)) if nested
-                    else dict(c["args"], start_index=s))
-            out.append(dict(c, file=f, args=args))
-    return out
-
-
-def rows(work, name, step=None):
-    """Every row of a split call: each chunk, then each page of it."""
-    out = []
-    for f in chunk_files(work, name):
-        out += work.get(f).rows
-        s = step
-        while s and work.has(f.replace(".json", "-%d.json" % s)):
-            out += work.get(f.replace(".json", "-%d.json" % s)).rows
-            s += step
-    return out
+def rows(work, name):
+    """Every row of a split call: each chunk across its pages."""
+    return [r for f in chunk_files(work, name) for r in io.rows(work, f)]
 
 
 def total(work, name):
@@ -158,32 +127,9 @@ def region(ctx, site):
     return state(site) or None
 
 
-def host(ctx):
-    for s in ctx["sites"]:
-        m = re.match(r"https?://[^/]+", s.get("site_link") or "")
-        if m:
-            return m.group(0)
-    return "https://ace.cimenviro.com"
-
-
 def shown(shared, site_ids):
     """Mark sites as carrying data somewhere in the report: the masthead counts only these."""
     shared.setdefault("shown_sites", set()).update(s for s in site_ids if s is not None)
-
-
-def site_count(n):
-    """'1 site', '4 sites'."""
-    return "%d site%s" % (n, "" if n == 1 else "s")
-
-
-def tickets_link(ctx, site_ids, grouping, assignee_ids=()):
-    """PEAK's ticket report over the quarter at these sites, grouped by "site", "user_entity" (the
-    assignee's company) or "assignee", and narrowed to these assignees where any are given."""
-    params = (["site_ids=%s" % i for i in site_ids]
-              + ["start_date=%sT00:00:00.000" % ctx["quarter"][0], "end_date=%sT00:00:00.000" % ctx["through"],
-                 "grouping=%s" % grouping]
-              + ["assignee_ids=%s" % a for a in assignee_ids])
-    return "%s/reports/tickets?%s" % (host(ctx), "&".join(params))
 
 
 def held(rows):
@@ -204,24 +150,6 @@ def held(rows):
                            "company": (ent.get("name") or "").strip(), "company_id": ent.get("id")})
         out.append({"ticket": r["ticket_id"], "site": r["site_id"], "assignees": people})
     return out
-
-
-def fetch_logos(urls):
-    """{company: data URI} for each company logo PEAK links, embedded so the report stays one
-    file. A logo that cannot be fetched is left out, and the company's initials stand in."""
-    def get(item):
-        name, url = item
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "client-report"})
-            with urllib.request.urlopen(req, timeout=15) as r:
-                kind, body = r.headers.get_content_type(), r.read()
-        except OSError:
-            return name, None
-        if not kind.startswith("image/"):
-            return name, None
-        return name, "data:%s;base64,%s" % (kind, base64.b64encode(body).decode())
-    with ThreadPoolExecutor(8) as pool:
-        return dict(pool.map(get, urls.items()))
 
 
 def logo_links(actions):
@@ -251,11 +179,6 @@ def sizes(ctx, facts):
     out = {s["site_id"]: io.area(raw[s["site_id"]] or None, unit == "ft²") for s in ctx["sites"]}
     moved = [s["site_name"].strip() for s in ctx["sites"] if raw[s["site_id"]] and unit_of(s) != unit]
     return out, unit, moved
-
-
-def by_size(ctx, size):
-    """The sites, largest building first, then by name."""
-    return sorted(ctx["sites"], key=lambda s: (-(size.get(s["site_id"]) or 0), name_key(s)))
 
 
 def name_key(site):
@@ -342,22 +265,10 @@ def portfolio_months(scores, months, dp=1):
     return row, change, left
 
 
-def weighted(values, size):
-    """The building-size-weighted mean of {site_id: value} over the sites that have both. Sustainability
-    ratings only; every other portfolio row is a plain average."""
-    pairs = [(v, size.get(sid)) for sid, v in values.items() if v is not None and size.get(sid)]
-    w = sum(s for _, s in pairs)
-    return sum(v * s for v, s in pairs) / w if w else None
-
-
 # ── dates without a dash ────────────────────────────────────────────────────
 def period(first, last_incl, short=False):
     """'1 July - 30 September 2026' (short: '1 Jul - 30 Sep 2026')."""
-    a, b = io.d(first), io.d(last_incl)
-    n = (lambda m: io.MONTHS[m - 1][:3]) if short else (lambda m: io.MONTHS[m - 1])
-    if a.year == b.year:
-        return "%d %s - %d %s %d" % (a.day, n(a.month), b.day, n(b.month), b.year)
-    return "%d %s %d - %d %s %d" % (a.day, n(a.month), a.year, b.day, n(b.month), b.year)
+    return io.period(first, last_incl, short, dash="-")
 
 
 def reporting_period(ctx, short=False):

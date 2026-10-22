@@ -9,18 +9,33 @@ verbatim. The payload can arrive wrapped in an MCP text block, bare
 all three. Standard library only, so the scripts run wherever the skill is
 unpacked.
 """
+import base64
+import http.client
 import json
 import os
 import re
-from datetime import date
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date, datetime
 
 MONTHS = ["January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December"]
 
 
 # ── saved responses ─────────────────────────────────────────────────────────
+class PeakRefusal(ValueError):
+    """A saved response that is PEAK's error rather than data."""
+
+
+def text_block(obj):
+    """True for an MCP text block, {"type": "text", "text": "..."}, as against a row that holds a text field."""
+    return isinstance(obj, dict) and isinstance(obj.get("text"), str) and (
+        obj.get("type") == "text" or set(obj) == {"text"})
+
+
 class Response:
-    """One saved call: its rows, pagination total, platform_link and has_more."""
+    """One saved call: its rows, pagination total, platform_link and has_more. Raises PeakRefusal
+    for an error saved as data, and ValueError for text that does not parse."""
 
     def __init__(self, payload):
         self.raw = payload
@@ -28,16 +43,16 @@ class Response:
         self.has_more = False
         obj = payload
         for _ in range(4):                       # shapes nest at most twice
-            if isinstance(obj, list) and obj and isinstance(obj[0], dict) and "text" in obj[0]:
+            if isinstance(obj, list) and obj and text_block(obj[0]):
                 obj = json.loads(obj[0]["text"])
                 continue
-            if isinstance(obj, dict) and "text" in obj and "results" not in obj:
+            if text_block(obj):
                 obj = json.loads(obj["text"])
                 continue
             break
         if isinstance(obj, dict):
             if obj.get("errors") or obj.get("status") == "error":
-                raise ValueError("the saved response is an error, not data: %.200s" % json.dumps(obj))
+                raise PeakRefusal("the saved response is an error, not data: %.200s" % json.dumps(obj))
             pg = obj.get("pagination") or {}
             self.total, self.has_more = pg.get("total"), bool(pg.get("has_more"))
             self.link = obj.get("platform_link") or None
@@ -48,7 +63,8 @@ class Response:
         return self.rows[0] if self.rows else None
 
 
-def read(path):
+def read(path, optional=False):
+    """The saved response at path. An optional call PEAK refused reads as None."""
     try:
         with open(path, encoding="utf-8") as fh:
             text = fh.read()
@@ -56,18 +72,31 @@ def read(path):
         raise SystemExit("missing response %s: make its call and save the response there (%s)" % (path, e))
     try:
         return Response(json.loads(text))
+    except PeakRefusal as e:
+        if optional:
+            return None
+        raise SystemExit("%s is not a saved PEAK response: %s" % (path, e))
     except ValueError as e:
         raise SystemExit("%s is not a saved PEAK response: %s" % (path, e))
 
 
 class Work:
-    """The report's working directory: plan.json, and the responses under peak/."""
+    """The report's working directory: plan.json, calls.json, and the responses under peak/."""
 
     def __init__(self, root):
         self.root = root
         self.peak = os.path.join(root, "peak")
+        self._calls = None
         with open(os.path.join(root, "plan.json"), encoding="utf-8") as fh:
             self.ctx = json.load(fh)
+
+    @property
+    def calls(self):
+        """Every call planned so far, follow-up pages included: the record of which files a pull spans."""
+        if self._calls is None:
+            path = os.path.join(self.root, "calls.json")
+            self._calls = json.load(open(path, encoding="utf-8")) if os.path.isfile(path) else []
+        return self._calls
 
     def path(self, name):
         return os.path.join(self.peak, name)
@@ -75,8 +104,55 @@ class Work:
     def has(self, name):
         return os.path.isfile(self.path(name))
 
-    def get(self, name):
-        return read(self.path(name))
+    def get(self, name, optional=False):
+        return read(self.path(name), optional)
+
+
+# ── paging ──────────────────────────────────────────────────────────────────
+def call_args(c):
+    """A call's own arguments: a GraphQL call carries them inside its args."""
+    return c["args"]["args"] if isinstance(c["args"].get("args"), dict) else c["args"]
+
+
+def start_of(c):
+    return call_args(c).get("start_index") or 0
+
+
+def at_offset(c, file, start):
+    args = c["args"]
+    nested = isinstance(args.get("args"), dict)
+    return dict(c, file=file, args=dict(args, args=dict(args["args"], start_index=start)) if nested
+                else dict(args, start_index=start))
+
+
+def pages_due(work, calls):
+    """The follow-up pages the saved calls ask for, from each first page's total, a page every `limit`
+    rows: <file>-<offset>.json. Pages already saved are left out."""
+    out = []
+    for c in calls:
+        step = call_args(c).get("limit")
+        if not step or step < 2 or not work.has(c["file"]):
+            continue
+        first = work.get(c["file"])
+        if not first.has_more:
+            continue
+        for s in range(step, first.total or 0, step):
+            f = c["file"].replace(".json", "-%d.json" % s)
+            if not work.has(f):
+                out.append(at_offset(c, f, s))
+    return out
+
+
+def pages(work, file):
+    """A call's file, then the follow-up pages calls.json lists for it, in offset order."""
+    pat = re.compile(re.escape(file[:-len(".json")]) + r"-(\d+)\.json")
+    more = sorted((start_of(c), c["file"]) for c in work.calls if pat.fullmatch(c["file"]) and start_of(c))
+    return [file] + [f for _, f in more]
+
+
+def rows(work, file):
+    """Every row of a call across its pages."""
+    return [r for f in pages(work, file) for r in work.get(f).rows]
 
 
 def drop_repeats(plan, files):
@@ -225,21 +301,20 @@ def and_to_date(ctx, lead=", and "):
 
 
 # ── formats ─────────────────────────────────────────────────────────────────
-# the site's currency as PEAK names it (every MonetaryCurrencyEnum value): (code, labour rate per hour
-# for the region, symbol). The symbol prints straight before the figure, so a code that reads as a word
-# carries its own space.
-CURRENCIES = {"australian dollar": ("AUD", 150, "$"), "us dollar": ("USD", 100, "$"),
-              "united states dollar": ("USD", 100, "$"), "new zealand dollar": ("NZD", 150, "$"),
-              "british pound": ("GBP", 75, "£"), "pound sterling": ("GBP", 75, "£"),
-              "canadian dollar": ("CAD", 150, "$"), "euro": ("EUR", 100, "€"),
-              "singapore dollar": ("SGD", 120, "S$"), "swiss franc": ("CHF", 120, "CHF "),
-              "swedish krona": ("SEK", 900, "SEK "), "brazilian real": ("BRL", 250, "R$"),
-              "chinese yuan": ("CNY", 300, "¥"), "indonesian rupiah": ("IDR", 500000, "Rp ")}
+# the site's currency as PEAK names it (every MonetaryCurrencyEnum value): (code, symbol). The symbol
+# prints straight before the figure, so a code that reads as a word carries its own space.
+CURRENCIES = {"australian dollar": ("AUD", "$"), "us dollar": ("USD", "$"),
+              "united states dollar": ("USD", "$"), "new zealand dollar": ("NZD", "$"),
+              "british pound": ("GBP", "£"), "pound sterling": ("GBP", "£"),
+              "canadian dollar": ("CAD", "$"), "euro": ("EUR", "€"),
+              "singapore dollar": ("SGD", "S$"), "swiss franc": ("CHF", "CHF "),
+              "swedish krona": ("SEK", "SEK "), "brazilian real": ("BRL", "R$"),
+              "chinese yuan": ("CNY", "¥"), "indonesian rupiah": ("IDR", "Rp ")}
 
 
 def currency(facts):
-    """(code, labour rate per hour, symbol) for a site, from its site facts."""
-    return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", 100, "$"))
+    """(code, symbol) for a site, from its site facts."""
+    return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", "$"))
 
 
 MIN_SAVING = 200           # a key win states a saving only from this much, in the site's currency
@@ -252,7 +327,44 @@ def small_saving(text):
     return bool(m) and float(m.group(1).replace(",", "")) * scale < MIN_SAVING
 
 
-WORKING_DAY = 7.5          # hours in the working day the labour model counts, every region
+def plural(n, noun):
+    """'1 call', '3 calls'."""
+    return "%d %s%s" % (n, noun, "" if n == 1 else "s")
+
+
+def band(v, bands):
+    """The benchmark label a score falls in: bands is [(threshold, label)], highest first; below them all, Poor."""
+    for t, label in bands:
+        if v >= t:
+            return label
+    return "Poor"
+
+
+def host(*sites):
+    """The PEAK host links are built on: the first of the sites with a site_link."""
+    for s in sites:
+        m = re.match(r"https?://[^/]+", s.get("site_link") or "")
+        if m:
+            return m.group(0)
+    return "https://ace.cimenviro.com"
+
+
+def fetch_logos(urls):
+    """{company: data URI} for each company logo PEAK links, embedded so the report stays one
+    file. A logo that cannot be fetched is left out, and the company's initials stand in."""
+    def get(item):
+        name, url = item
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "client-report"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                kind, body = r.headers.get_content_type(), r.read()
+        except (OSError, ValueError, http.client.HTTPException):
+            return name, None
+        if not kind.startswith("image/"):
+            return name, None
+        return name, "data:%s;base64,%s" % (kind, base64.b64encode(body).decode())
+    with ThreadPoolExecutor(8) as pool:
+        return dict(pool.map(get, urls.items()))
 
 
 # ── building size ───────────────────────────────────────────────────────────
@@ -300,10 +412,14 @@ def day_long(s):
     return "%d %s %d" % (x.day, MONTHS[x.month - 1], x.year)
 
 
+def utc(ts):
+    """A PEAK timestamp, '2026-10-12T03:15:00Z', as a datetime."""
+    return datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+
+
 def local_day(ts, tz):
     """A PEAK UTC timestamp as the site's own date, 'YYYY-MM-DD'."""
-    from datetime import datetime
-    return datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(zone(tz)).date().isoformat()
+    return utc(ts).astimezone(zone(tz)).date().isoformat()
 
 
 def day_short(s):
@@ -311,29 +427,13 @@ def day_short(s):
     return "%d %s %d" % (x.day, MONTHS[x.month - 1][:3], x.year)
 
 
-def period(first, last_incl, short=False):
+def period(first, last_incl, short=False, dash="–"):
     """'1 July – 30 September 2026' (short: '1 Jul – 30 Sep 2026')."""
     a, b = d(first), d(last_incl)
     n = (lambda m: MONTHS[m - 1][:3]) if short else (lambda m: MONTHS[m - 1])
     if a.year == b.year:
-        return "%d %s – %d %s %d" % (a.day, n(a.month), b.day, n(b.month), b.year)
-    return "%d %s %d – %d %s %d" % (a.day, n(a.month), a.year, b.day, n(b.month), b.year)
-
-
-def compact(n, dp=2):
-    """1834812 -> '1.83M', 7340 -> '7.3k'."""
-    if n >= 1e6:
-        return "%.*fM" % (dp, n / 1e6)
-    if n >= 1e3:
-        return "%.1fk" % (n / 1e3)
-    return "%d" % n
-
-
-def words(n, dp=2):
-    """1834812 -> '1.83 million', for running text."""
-    if n >= 1e6:
-        return "%.*f million" % (dp, n / 1e6)
-    return "{:,}".format(int(round(n)))
+        return "%d %s %s %d %s %d" % (a.day, n(a.month), dash, b.day, n(b.month), b.year)
+    return "%d %s %d %s %d %s %d" % (a.day, n(a.month), a.year, dash, b.day, n(b.month), b.year)
 
 
 def listing(items):
@@ -347,6 +447,16 @@ def listing(items):
 def pct(score, dp):
     """A PEAK 0-1 score as a percentage rounded for display."""
     return round(score * 100, dp)
+
+
+def months_text(ctx, months, lead=", and "):
+    """'August – September 2026, and October to date', 'September 2026' or 'October 2026 to date'."""
+    whole_months = whole(ctx, months)
+    if not whole_months:
+        return "%s %d to date" % (month(months[0]), d(months[0]).year)
+    head = (span(whole_months[0], whole_months[-1]) if len(whole_months) > 1
+            else "%s %d" % (month(whole_months[0]), d(whole_months[0]).year))
+    return head + (and_to_date(ctx, lead) if months[-1] == ctx.get("to_date") else "")
 
 
 # ── charts and rows shared by the sections ──────────────────────────────────

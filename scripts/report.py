@@ -205,7 +205,7 @@ def cmd_plan(a):
         io.and_to_date(ctx, "; both windows close on ")))
     print("Sections: %s." % ", ".join(OPTIONS[o][0] if o in OPTIONS else o for o in picked))
     print("\n%s to save. Make them all in one parallel batch, each exactly as printed: the tool, then its "
-          "arguments. %s Then run: python3 scripts/report.py next %s\n" % (plural(len(save), "call"), save_rule(a.dir),
+          "arguments. %s Then run: python3 scripts/report.py next %s\n" % (io.plural(len(save), "call"), save_rule(a.dir),
                                                                            a.dir))
     show(save, 1)
     if read:
@@ -263,16 +263,11 @@ def plan_portfolio(a):
     print("Sections: every one with data. Each site's dates are its own local calendar.")
     print("\n%s to save. Make them in parallel batches of about twenty, each exactly as printed: the tool, "
           "then its arguments. %s Then run: python3 scripts/report.py next %s\n"
-          % (plural(len(save), "call"), PORTFOLIO_SAVE % a.dir, a.dir))
+          % (io.plural(len(save), "call"), PORTFOLIO_SAVE % a.dir, a.dir))
     show(save, 1)
     if read:
         print("\nAlongside them, %d to read: the key win candidates. %s\n" % (len(read), PORTFOLIO_READ_RULE % a.dir))
         show(read, len(save) + 1)
-
-
-def plural(n, noun):
-    """'1 call', '3 calls'."""
-    return "%d %s%s" % (n, noun, "" if n == 1 else "s")
 
 
 def folders(root, calls):
@@ -342,7 +337,7 @@ def cmd_next(a):
     new = [c for c in new if not c.get("read")]
     if new:
         print("%s more, in one parallel batch, each exactly as printed. %s Then run next again.\n"
-              % (plural(len(new), "call"), PORTFOLIO_SAVE % a.dir if mode == "portfolio" else save_rule(a.dir)))
+              % (io.plural(len(new), "call"), PORTFOLIO_SAVE % a.dir if mode == "portfolio" else save_rule(a.dir)))
         show(new, 1)
     if read:
         print("%s%d to read, never saved: the shortlist in full. Read it where it comes back; one that comes back "
@@ -365,7 +360,7 @@ def no_wins(root):
 def verify(work, calls):
     """Problems with the saved responses: one that is not a PEAK response, an error saved as data, a
     page holding fewer or more rows than its pagination says, or a row for a site outside the report.
-    A pull PEAK refused outright is the section's to handle, so only a malformed file stops here."""
+    An optional call PEAK refused is the section's to handle; every other refusal is made again."""
     ctx = work.ctx
     sites = {s["site_id"] for s in ctx["sites"]} if mode_of(ctx) == "portfolio" else {ctx["site"]["site_id"]}
     out = []
@@ -381,9 +376,14 @@ def verify(work, calls):
             continue
         try:
             r = io.Response(payload)
-        except ValueError:
-            continue                          # PEAK's own refusal, saved as returned
-        args = c["args"].get("args", c["args"]) if isinstance(c["args"].get("args"), dict) else c["args"]
+        except io.PeakRefusal as e:
+            if not c.get("optional"):
+                out.append("%s is PEAK's error, not data: make the call again (%s)" % (c["file"], e))
+            continue
+        except ValueError as e:
+            out.append("%s does not read as a PEAK response (%s)" % (c["file"], e))
+            continue
+        args = io.call_args(c)
         limit, start = args.get("limit"), args.get("start_index") or 0
         if r.total is not None and limit and limit > 1:
             want = max(0, min(limit, r.total - start))

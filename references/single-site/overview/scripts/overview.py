@@ -49,12 +49,9 @@ def handed_on(ctx):
 
 
 def more(ctx, work):
-    if "thermal_zones" not in handed_on(ctx) and work.has("overview/levels-scored.json"):
-        r = work.get("overview/levels-scored.json")
-        if r.has_more:
-            return [dict(c, file="overview/levels-scored-80.json", args=dict(c["args"], start_index=80))
-                    for c in calls(ctx) if c["file"] == "overview/levels-scored.json"]
-    return []
+    if "thermal_zones" in handed_on(ctx):
+        return []
+    return io.pages_due(work, [c for c in calls(ctx) if c["file"] == "overview/levels-scored.json"])
 
 
 def facts_site(work):
@@ -73,8 +70,7 @@ def build(ctx, work, shared):
     else:
         counts = {r["level_id"]: r.get("included_point_count") or 0
                   for r in work.get("overview/zones-by-level.json").rows}
-        scored = {r["level_id"] for f in ("overview/levels-scored.json", "overview/levels-scored-80.json")
-                  if work.has(f) for r in work.get(f).rows}
+        scored = {r["level_id"] for r in io.rows(work, "overview/levels-scored.json")}
         zones = sum(counts.get(l, 0) for l in scored)
 
     # PEAK stores building size in m² for every site; a US site shows it in ft², converted

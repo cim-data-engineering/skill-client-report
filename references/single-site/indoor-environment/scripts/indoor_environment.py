@@ -29,28 +29,12 @@ def calls(ctx):
     ]
 
 
-def _pages(base_call, first, prefix):
-    """Every further page of a paged call, from the first page's total."""
-    total = first.total or 0
-    return [dict(base_call, file="%s-%d.json" % (prefix, s), args=dict(base_call["args"], start_index=s))
-            for s in range(PAGE, total, PAGE)]
-
-
 def level_rows(work):
-    rows = list(work.get("ie/level-month.json").rows)
-    s = PAGE
-    while work.has("ie/level-month-%d.json" % s):
-        rows += work.get("ie/level-month-%d.json" % s).rows
-        s += PAGE
-    return rows
+    return io.rows(work, "ie/level-month.json")
 
 
 def more(ctx, work):
-    base = {c["file"]: c for c in calls(ctx)}
-    out = []
-    first = work.get("ie/level-month.json")
-    if first.has_more:
-        out += [c for c in _pages(base["ie/level-month.json"], first, "ie/level-month") if not work.has(c["file"])]
+    out = io.pages_due(work, [c for c in calls(ctx) if c["file"] == "ie/level-month.json"])
     if out:
         return out
     sid, (q0, q1) = ctx["site"]["site_id"], ctx["quarter"]
@@ -62,7 +46,7 @@ def more(ctx, work):
         if not work.has("ie/zone-month.json"):
             out.append(zc)
         else:
-            out += [c for c in _pages(zc, work.get("ie/zone-month.json"), "ie/zone-month") if not work.has(c["file"])]
+            out += io.pages_due(work, [zc])
     # the level count carries no names, so chat names unscored levels from their zones
     quiet = unscored(work)
     if quiet and not work.has("ie/levels-unscored.json"):
@@ -100,15 +84,6 @@ def onboarding(ctx, site_m):
     return {"month": have[0], "day": None, "start": tm[i + 1] if i + 1 < len(tm) else have[0]}
 
 
-def months_text(ctx, months, lead=", and "):
-    """'August – September 2026, and October to date', 'September 2026' or 'October 2026 to date'."""
-    whole = io.whole(ctx, months)
-    if not whole:
-        return "%s %d to date" % (io.month(months[0]), io.d(months[0]).year)
-    head = io.span(whole[0], whole[-1]) if len(whole) > 1 else "%s %d" % (io.month(whole[0]), io.d(whole[0]).year)
-    return head + (io.and_to_date(ctx, lead) if months[-1] == ctx.get("to_date") else "")
-
-
 def floor_key(name):
     """Building order, highest first. A name with no readable floor sorts above the
     numbered ones, alphabetically, so a grouping such as NABERS IE heads the table.
@@ -131,13 +106,6 @@ def floor_key(name):
     return None
 
 
-def band(v):
-    for t, label in BANDS:
-        if v >= t:
-            return label
-    return "Poor"
-
-
 def build(ctx, work, shared):
     shared.setdefault("partial", [])                  # its scores show the month to date and stand as they are
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
@@ -153,8 +121,7 @@ def build(ctx, work, shared):
         shared.setdefault("live_since", []).append({"month": on["month"], "day": None})
     month_of = lambda r: (r.get("date") or "")[:7]
     sid = ctx["site"]["site_id"]
-    host = re.match(r"https?://[^/]+", ctx["site"].get("site_link") or "")
-    host = host.group(0) if host else "https://ace.cimenviro.com"
+    host = io.host(ctx["site"])
     dashboard = lambda start: ("%s/indoor-environment/thermal-comfort?summary_site_id=%s&summary_ts=%s&site_ids=%s"
                                "&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
                                % (host, sid, qm[-1], sid, start, ctx["through"]))
@@ -174,11 +141,7 @@ def build(ctx, work, shared):
     single = len(by_level) == 1
     if single:
         # one row per zone, each month the mean of its points' scores
-        zrows = list(work.get("ie/zone-month.json").rows) if work.has("ie/zone-month.json") else []
-        s = PAGE
-        while work.has("ie/zone-month-%d.json" % s):
-            zrows += work.get("ie/zone-month-%d.json" % s).rows
-            s += PAGE
+        zrows = io.rows(work, "ie/zone-month.json") if work.has("ie/zone-month.json") else []
         zs, ztemp, znames = defaultdict(lambda: defaultdict(list)), defaultdict(list), {}
         for r in zrows:
             if month_of(r) not in keep:
@@ -223,7 +186,7 @@ def build(ctx, work, shared):
         delta, sub = io.movement(got[0][1], got[-1][1], 1, io.month(got[0][0]), io.month_label(ctx, got[-1][0]))
     else:
         delta, sub = None, "Scored over %s." % io.month_label(ctx, kq[0])   # a movement needs two months
-    impact = [dict({"chip": band(score), "chip_class": "pos" if band(score) in ("Excellent", "Good") else "warn",
+    impact = [dict({"chip": io.band(score, BANDS), "chip_class": "pos" if io.band(score, BANDS) in ("Excellent", "Good") else "warn",
                     "fig": "%.1f%%" % score, "cap": "thermal comfort maintained", "sub": sub, "row": "thermal-comfort"},
                    **({"delta": delta} if delta else {}))]
 
@@ -261,13 +224,13 @@ def build(ctx, work, shared):
     links = {"comfort": link}
     datelines = {"Indoor environment health snapshot":
                  "%s. Share of zone readings inside the comfort band set for the site during working "
-                 "hours, by %s, %s." % (months_text(ctx, kq, " and "), "zone" if single else "level",
+                 "hours, by %s, %s." % (io.months_text(ctx, kq, " and "), "zone" if single else "level",
                                         "lowest first" if one else "in building order")}
     if trend:
         links["trend_comfort"] = dashboard(kt[0])
         datelines["Monthly thermal comfort"] = ("%s, the last six complete months%s."
                                                 % (io.span(kt[0], io.whole(ctx, kt)[-1]), io.and_to_date(ctx))
-                                                if kt == tm else "%s." % months_text(ctx, kt))
+                                                if kt == tm else "%s." % io.months_text(ctx, kt))
     out = {
         "impact": impact,
         "comfort": heat,

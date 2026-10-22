@@ -118,7 +118,7 @@ def digest(args):
         work = io.Work(root)
         tz = io.zone(work.ctx["site"]["timezone"])
         facts = (work.get("overview/site.json").first() or {}) if work.has("overview/site.json") else {}
-        sym = io.currency(facts)[2] if facts.get("monetary_currency") else ""
+        sym = io.currency(facts)[1] if facts.get("monetary_currency") else ""
     rows = [r for p in paths for r in io.read(p).rows]
     keep, why = screen(rows)
     day = lambda ts: (when(ts).astimezone(tz).date().isoformat() if tz else ts[:10]) if ts else "?"

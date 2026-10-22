@@ -5,7 +5,6 @@ references/single-site/equipment-health/equipment-health.md for what each figure
 this module is that reference's arithmetic.
 """
 import os
-import re
 import sys
 from collections import defaultdict
 
@@ -13,8 +12,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 
 BANDS = [(99.0, "Excellent"), (97.0, "Good"), (90.0, "Average")]
-# Labour model: annual minutes saved per scored rule, by priority id.
+# Labour model: annual minutes saved per scored rule, by priority id, priced at the region's hourly rate
+# by currency code over a 7.5-hour working day.
 ANNUAL_MINS = {1: 365 * 0.5, 2: 52 * 1.0, 3: 12 * 1.0, 4: 4 * 1.0, 5: 4 * 1.0}
+LABOUR_RATES = {"AUD": 150, "USD": 100, "NZD": 150, "GBP": 75, "CAD": 150, "EUR": 100, "SGD": 120, "CHF": 120,
+                "SEK": 900, "BRL": 250, "CNY": 300, "IDR": 500000}
+WORKING_DAY = 7.5
 
 
 def calls(ctx):
@@ -44,13 +47,6 @@ def more(ctx, work):
     return []
 
 
-def band(v):
-    for t, label in BANDS:
-        if v >= t:
-            return label
-    return "Poor"
-
-
 def site_months(work):
     return {(r.get("date") or "")[:7]: r for r in work.get("eh/site-month.json").rows}
 
@@ -75,13 +71,20 @@ def onboarding(ctx, site_m):
             "start": first if day == 1 or i + 1 == len(tm) else tm[i + 1]}
 
 
-def months_text(ctx, months):
-    """'August – September 2026, and October to date', 'September 2026' or 'October 2026 to date'."""
-    whole = io.whole(ctx, months)
-    if not whole:
-        return "%s %d to date" % (io.month(months[0]), io.d(months[0]).year)
-    head = io.span(whole[0], whole[-1]) if len(whole) > 1 else "%s %d" % (io.month(whole[0]), io.d(whole[0]).year)
-    return head + (io.and_to_date(ctx) if months[-1] == ctx.get("to_date") else "")
+def compact(n, dp=2):
+    """1834812 -> '1.83M', 7340 -> '7.3k'."""
+    if n >= 1e6:
+        return "%.*fM" % (dp, n / 1e6)
+    if n >= 1e3:
+        return "%.1fk" % (n / 1e3)
+    return "%d" % n
+
+
+def words(n, dp=2):
+    """1834812 -> '1.83 million', for running text."""
+    if n >= 1e6:
+        return "%.*f million" % (dp, n / 1e6)
+    return "{:,}".format(int(round(n)))
 
 
 def build(ctx, work, shared):
@@ -108,8 +111,7 @@ def build(ctx, work, shared):
     for r in work.get("eh/equipment-all.json").rows:
         equip[r["metadata_type_id"]].add(r["equipment_id"])
     type_all = work.get("eh/type-all.json")
-    host = re.match(r"https?://[^/]+", ctx["site"].get("site_link") or "")
-    host = host.group(0) if host else "https://ace.cimenviro.com"
+    host = io.host(ctx["site"])
     dashboard = lambda start: ("%s/dashboard/equipment-health?site_ids=%s&start_date=%sT00:00:00.000"
                                "&end_date=%sT00:00:00.000" % (host, ctx["site"]["site_id"], start,
                                                               ctx["through"]))
@@ -148,7 +150,8 @@ def build(ctx, work, shared):
         delta, sub = None, "Scored over %s." % io.month_label(ctx, kq[0])   # a movement needs two months
 
     # checks and labour cost by month, each priced over its own days; the rows add up the quarter's
-    code, per_hr, sym = io.currency(shared.get("site_facts") or {})
+    code, sym = io.currency(shared.get("site_facts") or {})
+    per_hr = LABOUR_RATES.get(code, 100)
     by_month = defaultdict(list)
     for r in work.get("eh/priority-month.json").rows:
         by_month[month_of(r)].append(r)
@@ -166,18 +169,18 @@ def build(ctx, work, shared):
     rules = sum(r.get("task_count") or 0 for r in work.get("eh/priority-all.json").rows)
     mins, cost, days = sum(mins_m[m] for m in kq), sum(cost_m[m] for m in kq), sum(io.days_in(ctx, m) for m in kq)
     impact = [
-        dict({"chip": band(score), "chip_class": "pos" if band(score) in ("Excellent", "Good") else "warn",
+        dict({"chip": io.band(score, BANDS), "chip_class": "pos" if io.band(score, BANDS) in ("Excellent", "Good") else "warn",
               "fig": "%.1f%%" % score, "cap": "equipment health maintained", "sub": sub,
               "row": "equipment-health-score"}, **({"delta": delta} if delta else {})),
         {"chip": "Continuous", "chip_class": "neu", "fig": "{:,}".format(checks),
          "cap": "automated equipment health checks ran 24/7",
          "sub": "Averaging %s monthly checks across %s scored rules." % (
-             io.words(checks / sum(io.days_in(ctx, m) / full(m) for m in kq)), "{:,}".format(rules)),
+             words(checks / sum(io.days_in(ctx, m) / full(m) for m in kq)), "{:,}".format(rules)),
          "row": "automated-checks"},
         {"chip": "Modelled", "chip_class": "neu", "fig": "%s%s" % (sym, "{:,}".format(cost)),
          "cap": "labour cost avoided",
          "sub": "%.1f hours and %.1f working days of inspection time, valued at %s %d/hr."
-                % (mins / 60, mins / 60 / io.WORKING_DAY, code, per_hr),
+                % (mins / 60, mins / 60 / WORKING_DAY, code, per_hr),
          "row": "labour-cost-avoided"},
     ]
 
@@ -196,7 +199,7 @@ def build(ctx, work, shared):
     method = lambda window: (
         "<strong>Labour cost avoided.</strong> Assumes each rule replaces one manual check: P1 daily at "
         "30 seconds; P2 weekly, P3 monthly and P4–5 quarterly at 1 minute. Prorated over %s at %s %d/hr "
-        "(regional rate) and a %g-hour working day." % (window, code, per_hr, io.WORKING_DAY))
+        "(regional rate) and a %g-hour working day." % (window, code, per_hr, WORKING_DAY))
 
     # Chart 2: checks and labour cost by month
     # a month with no checks scored, an outage or before go-live, is a gap, not a zero
@@ -204,7 +207,7 @@ def build(ctx, work, shared):
     b = [cost_m[m] if checks_m[m] else None for m in kt]
     money = "dollars" if sym == "$" else ("pounds" if sym == "£" else "euros")
     alt = lambda v, f: "no data" if v is None else f % v
-    trend_checks = {"a": a, "b": b, "labels_a": [io.compact(v) if v else "" for v in a],
+    trend_checks = {"a": a, "b": b, "labels_a": [compact(v) if v else "" for v in a],
                     "labels_b": ["%s%.1fk" % (sym, v / 1000) if v is not None else "" for v in b],
                     "months": [io.mon(m) for m in kt], "to_date": kt[-1] == ctx["to_date"],
                     "note_after": "Automated health checks",
@@ -254,10 +257,10 @@ def build(ctx, work, shared):
                       % (io.span(kq[0], io.whole(ctx, kq)[-1]), io.and_to_date(ctx), "period" if ctx["to_date"] else "quarter")
                       if full_window else
                       "%s. Share of rule executions returning no fault, by equipment type, %s."
-                      % (months_text(ctx, kq), "sorted by change across the period" if len(kq) > 1 else "lowest first"),
+                      % (io.months_text(ctx, kq), "sorted by change across the period" if len(kq) > 1 else "lowest first"),
                       "Monthly equipment health": "%s, the last six complete months%s."
                                                   % (io.span(kt[0], io.whole(ctx, kt)[-1]), io.and_to_date(ctx))
-                                                  if kt == tm else "%s." % months_text(ctx, kt)},
+                                                  if kt == tm else "%s." % io.months_text(ctx, kt)},
         "notes": {"Labour cost avoided": method("the %d-day period" % days)},
         "chat": chat,
     }, **({} if kt == tm else {"statements": {"Monthly equipment health": "The trend so far"}}))

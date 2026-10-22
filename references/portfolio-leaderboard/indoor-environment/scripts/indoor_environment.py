@@ -33,7 +33,7 @@ def calls(ctx):
 
 
 def more(ctx, work):
-    return pio.pages_due(work, paged(ctx), PAGE)
+    return io.pages_due(work, paged(ctx))
 
 
 def build(ctx, work, shared):
@@ -42,10 +42,10 @@ def build(ctx, work, shared):
     month_of = lambda r: (r.get("date") or "")[:7]
 
     scores = defaultdict(dict)
-    for r in pio.rows(work, "ie/site-month.json", PAGE):
+    for r in pio.rows(work, "ie/site-month.json"):
         scores[r["site_id"]][month_of(r)] = r["score"] * 100
     levels, units = defaultdict(set), {}
-    for r in pio.rows(work, "ie/level-all.json", PAGE):
+    for r in pio.rows(work, "ie/level-all.json"):
         levels[r["site_id"]].add(r["level_id"])
         units.setdefault(r["site_id"], r.get("unit"))
     points = {}
@@ -69,7 +69,7 @@ def build(ctx, work, shared):
     tail = sorted((s for s in scored if now[s["site_id"]] is None), key=pio.name_key)
     order = ranked + [(len(ranked) + k, s) for k, s in enumerate(tail, 1)]
 
-    host = pio.host(ctx)
+    host = io.host(*ctx["sites"])
     link = lambda sid: ("%s/indoor-environment/thermal-comfort?summary_site_id=%s&summary_ts=%s&site_ids=%s"
                         "&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
                         % (host, sid, qm[-1], sid, ctx["quarter"][0], ctx["through"]))
@@ -102,7 +102,7 @@ def build(ctx, work, shared):
             % pio.reporting_period(ctx))
     if left and len(sids) - len(left) > 0:
         note += " Its Chg compares the %s scored in both %s and %s." % (
-            pio.site_count(len(sids) - len(left)), io.month(qm[0]), io.month(qm[-1]))
+            io.plural(len(sids) - len(left), "site"), io.month(qm[0]), io.month(qm[-1]))
     return {
         "comfort": heat,
         "datelines": {"Indoor environment health snapshot": note},

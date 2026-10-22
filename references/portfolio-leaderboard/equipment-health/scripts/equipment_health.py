@@ -64,7 +64,7 @@ def build(ctx, work, shared):
     tail = sorted((s for s in scored if now[s["site_id"]] is None), key=pio.name_key)
     order = ranked + [(len(ranked) + k, s) for k, s in enumerate(tail, 1)]
 
-    host = pio.host(ctx)
+    host = io.host(*ctx["sites"])
     link = lambda sid: ("%s/dashboard/equipment-health?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
                         % (host, sid, ctx["quarter"][0], ctx["through"]))
     rows = [{"rank": k, "name": s["site_name"].strip(), "state": pio.region(ctx, s), "link": link(s["site_id"]),
@@ -101,7 +101,7 @@ def build(ctx, work, shared):
     note = "%s. Share of automated checks that found no fault." % pio.reporting_period(ctx)
     if left and len(sids) - len(left) > 0:
         note += " Its Chg compares the %s scored in both %s and %s." % (
-            pio.site_count(len(sids) - len(left)), io.month(qm[0]), io.month(qm[-1]))
+            io.plural(len(sids) - len(left), "site"), io.month(qm[0]), io.month(qm[-1]))
     return {
         "equipment_health": heat,
         "datelines": {"Equipment health snapshot": note},

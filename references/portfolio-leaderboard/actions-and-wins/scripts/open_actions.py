@@ -62,7 +62,7 @@ def calls(ctx):
 
 
 def more(ctx, work):
-    return pio.pages_due(work, pulls(ctx) + closed_pulls(ctx), PAGE, nested=True)
+    return io.pages_due(work, pulls(ctx) + closed_pulls(ctx))
 
 
 def backlog(ctx, work, open_rows):
@@ -72,7 +72,7 @@ def backlog(ctx, work, open_rows):
     tz = {s["site_id"]: s.get("timezone") for s in ctx["sites"]}
     day = lambda r, k: io.d(io.local_day(r[k], tz.get(r["site_id"]) or "UTC"))
     rows = [(day(r, "created_at"), None) for r in open_rows if r.get("created_at")]
-    rows += [(day(r, "created_at"), day(r, "resolved_at")) for r in pio.rows(work, "op/closed.json", PAGE)
+    rows += [(day(r, "created_at"), day(r, "resolved_at")) for r in pio.rows(work, "op/closed.json")
              if r.get("created_at") and r.get("resolved_at")]
     today = io.d(ctx["today"])
     ends = [end for _, end in month_ends(ctx)] + [today + timedelta(days=1)]
@@ -100,7 +100,7 @@ def link(ctx, since, site_ids, grouping, assignee_ids=()):
               + ["start_date=%sT00:00:00.000" % since, "end_date=%sT23:59:59.999" % end.isoformat(),
                  "grouping=%s" % grouping]
               + ["priority_ids=%d" % p for p in PRIORITIES] + ["assignee_ids=%s" % a for a in assignee_ids])
-    return "%s/reports/tickets?%s" % (pio.host(ctx), "&".join(params))
+    return "%s/reports/tickets?%s" % (io.host(*ctx["sites"]), "&".join(params))
 
 
 def raised(ctx, age_ms):
@@ -120,7 +120,7 @@ def most_first(counts, name):
 
 
 def build(ctx, work, shared):
-    raw = pio.rows(work, "op/rows.json", PAGE)
+    raw = pio.rows(work, "op/rows.json")
     age = {r["ticket_id"]: bucket(r.get("age")) for r in raw}
     since = {r["ticket_id"]: raised(ctx, r.get("age")) for r in raw}
     names = {r["assignee_id"]: (r.get("assignee_name") or "").strip()
@@ -154,7 +154,7 @@ def build(ctx, work, shared):
     label = lambda p: NOBODY if p == NOBODY else (who[p]["name"] or UNNAMED)
     ranked_people = most_first(people, label)
     shown = {who[p]["company"] for _, p in ranked_people[:SHOWN] if p != NOBODY}
-    logos = pio.fetch_logos({c: u for c, u in pio.logo_links(actions).items() if c in shown})
+    logos = io.fetch_logos({c: u for c, u in pio.logo_links(actions).items() if c in shown})
 
     # every site with data, those holding none at 0
     pio.shown(shared, on_sites)

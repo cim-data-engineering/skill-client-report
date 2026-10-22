@@ -34,7 +34,19 @@ def calls(ctx):
 
 
 def more(ctx, work):
-    return pio.pages_due(work, pulls(ctx), PAGE, nested=True)
+    return io.pages_due(work, pulls(ctx))
+
+
+def by_size(ctx, size):
+    """The sites, largest building first, then by name."""
+    return sorted(ctx["sites"], key=lambda s: (-(size.get(s["site_id"]) or 0), pio.name_key(s)))
+
+
+def weighted(values, size):
+    """The building-size-weighted mean of {site_id: value} over the sites that have both."""
+    pairs = [(v, size.get(sid)) for sid, v in values.items() if v is not None and size.get(sid)]
+    w = sum(s for _, s in pairs)
+    return sum(v * s for v, s in pairs) / w if w else None
 
 
 def measures(t):
@@ -55,7 +67,7 @@ def build(ctx, work, shared):
     today = io.d(ctx["today"])
     size, unit, _ = pio.sizes(ctx, shared["facts"])
     types, by = {}, defaultdict(lambda: defaultdict(list))     # site -> measure -> ratings
-    for r in pio.rows(work, "ratings/ratings.json", PAGE):
+    for r in pio.rows(work, "ratings/ratings.json"):
         t = r.get("sustainability_rating_type") or {}
         if r.get("score") is None or not r.get("period_end_date"):
             continue
@@ -101,11 +113,11 @@ def build(ctx, work, shared):
             c["move"] = "up" if score > prev else "down"     # an expired rating says how it stood, not where it is going
         return c
 
-    host = pio.host(ctx)
+    host = io.host(*ctx["sites"])
     link = lambda ids: "%s/dashboard/ratings?%s&ratings_type_id_or_filter=all_ratings" % (
         host, "&".join("site_ids=%s" % i for i in ids))
     rows, shown = [], []
-    for s in pio.by_size(ctx, size):
+    for s in by_size(ctx, size):
         sid = s["site_id"]
         cells = []
         for m in columns:
@@ -132,15 +144,15 @@ def build(ctx, work, shared):
             portfolio.append(None)
             continue
         tid = kinds.pop()
-        now = pio.weighted({sid: c["score"] for sid, (c, _) in cur.items()}, size)
+        now = weighted({sid: c["score"] for sid, (c, _) in cur.items()}, size)
         if now is None:
             portfolio.append(None)
             continue
         both = {sid: (c, p) for sid, (c, p) in cur.items() if p and size.get(sid)}
         before = after = None
         if both:
-            after = pio.weighted({sid: c["score"] for sid, (c, _) in both.items()}, size)
-            before = pio.weighted({sid: p["score"] for sid, (_, p) in both.items()}, size)
+            after = weighted({sid: c["score"] for sid, (c, _) in both.items()}, size)
+            before = weighted({sid: p["score"] for sid, (_, p) in both.items()}, size)
         c = cell(now, tid)
         if before is not None and show(after, tid) != show(before, tid):
             c["move"] = "up" if after > before else "down"

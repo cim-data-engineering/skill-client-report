@@ -164,7 +164,7 @@ def digest(root, paths, top=TOP):
         site = sites.get(r.get("site_id")) or {"site_name": "site %s" % r.get("site_id")}
         sid = r.get("site_id")
         state = ("closed %s" % day(r.get("resolved_at"), sid)) if r.get("resolved_at") else "open"
-        sym = io.currency(facts.get(sid) or {})[2]
+        sym = io.currency(facts.get(sid) or {})[1]
         amount = round(r.get("savings") or 0)
         saved = (" · savings %s%s" % (sym, "{:,}".format(amount)) if amount >= io.MIN_SAVING
                  else " · savings under %s%d" % (sym, io.MIN_SAVING) if amount else "")

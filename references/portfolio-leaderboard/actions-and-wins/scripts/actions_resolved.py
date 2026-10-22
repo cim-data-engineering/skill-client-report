@@ -7,7 +7,6 @@ and for its site when any of them did: the ticket rows say who holds each action
 so every figure is counted from them, and a count by assignee names them. See
 references/portfolio-leaderboard/actions-and-wins/actions-resolved.md.
 """
-import json
 import os
 import sys
 from collections import defaultdict
@@ -50,7 +49,7 @@ def calls(ctx):
 
 
 def more(ctx, work):
-    due = pio.pages_due(work, pulls(ctx), PAGE, nested=True)
+    due = io.pages_due(work, pulls(ctx))
     if due or work.has("ar/leader.json"):
         return due
     # the Assignees leader's first name and email, for the shoutout: one ticket of theirs whose assignees
@@ -65,9 +64,9 @@ def more(ctx, work):
     if not named:
         return []
     act = named[0]
-    return [io.gql("ar/leader.json", "tickets.tickets", {"type": "escalated", "site_ids": [act["site"]],
-                                                         "ticket_ids": [act["ticket"]], "ticket_archived": False,
-                                                         "limit": 1}, LEADER)]
+    return [dict(io.gql("ar/leader.json", "tickets.tickets", {"type": "escalated", "site_ids": [act["site"]],
+                                                              "ticket_ids": [act["ticket"]], "ticket_archived": False,
+                                                              "limit": 1}, LEADER), optional=True)]
 
 
 def commented(rows, nm):
@@ -118,8 +117,8 @@ def people(ctx, work):
     """Who resolved what, the quarter and last month's board: each person's commented actions, sites and
     company, CIM and accounts PEAK holds no name or company for left out of the ranking."""
     nm = names(work)
-    now = commented(pio.rows(work, "ar/resolved-rows.json", PAGE), nm)
-    then = commented(pio.rows(work, "ar/resolved-prev-rows.json", PAGE), nm)
+    now = commented(pio.rows(work, "ar/resolved-rows.json"), nm)
+    then = commented(pio.rows(work, "ar/resolved-prev-rows.json"), nm)
     who, blank = {}, defaultdict(set)
     for act in then + now:                # each person's name and company as the quarter shows them
         for a in act["assignees"]:
@@ -143,23 +142,27 @@ def people(ctx, work):
             "label": lambda p: who[p]["name"] or UNNAMED}
 
 
+def tickets_link(ctx, site_ids, grouping, assignee_ids=()):
+    """PEAK's ticket report over the quarter at these sites, grouped by "site", "user_entity" (the
+    assignee's company) or "assignee", and narrowed to these assignees where any are given."""
+    params = (["site_ids=%s" % i for i in site_ids]
+              + ["start_date=%sT00:00:00.000" % ctx["quarter"][0], "end_date=%sT00:00:00.000" % ctx["through"],
+                 "grouping=%s" % grouping]
+              + ["assignee_ids=%s" % a for a in assignee_ids])
+    return "%s/reports/tickets?%s" % (io.host(*ctx["sites"]), "&".join(params))
+
+
 def where(at, site_name):
     """A leader's meta: the site they resolved the most at, ties alphabetical, then '+ N sites' for the rest."""
     top = min(at, key=lambda s: (-at[s], site_name[s].lower()))
-    return site_name[top] + (" + %s" % pio.site_count(len(at) - 1) if len(at) > 1 else "")
+    return site_name[top] + (" + %s" % io.plural(len(at) - 1, "site") if len(at) > 1 else "")
 
 
 def leader_contact(work):
     """{id: (first name, email)} off the leader pull, empty when it was not made or PEAK refused it."""
-    if not work.has("ar/leader.json"):
-        return {}
-    try:
-        with open(work.path("ar/leader.json"), encoding="utf-8") as fh:
-            rows = io.Response(json.load(fh)).rows
-    except ValueError:
-        return {}
+    got = work.get("ar/leader.json", optional=True) if work.has("ar/leader.json") else None
     return {a.get("id"): ((a.get("firstname") or "").strip(), (a.get("email") or "").strip())
-            for r in rows for a in r.get("assignees") or [] if a.get("id")}
+            for r in (got.rows if got else []) for a in r.get("assignees") or [] if a.get("id")}
 
 
 def build(ctx, work, shared):
@@ -174,9 +177,9 @@ def build(ctx, work, shared):
     shared.setdefault("rankings", []).append({
         "label": "Actions resolved", "window": "quarter", "dp": 0, "unit": "actions", "note": NOTE,
         "now": {s: resolved[s] or None for s in sids}, "start": {s: prev[s] or None for s in sids},
-        "links": {s: pio.tickets_link(ctx, [s], "assignee") for s in sids}})
+        "links": {s: tickets_link(ctx, [s], "assignee") for s in sids}})
 
-    logos = pio.fetch_logos(pio.logo_links(now))
+    logos = io.fetch_logos(pio.logo_links(now))
     site_name = {s["site_id"]: s["site_name"].strip() for s in ctx["sites"]}
 
     # companies: each company's actions resolved by its people who commented, CIM left out, its sites,
@@ -196,7 +199,7 @@ def build(ctx, work, shared):
         "start": {c: len(co_then.get(c, ())) or None for c in every},
         "meta": {c: [where(co_sites[c], site_name)] for c in co_now},
         "tiles": {c: {"company": c, "logo": logos.get(c)} for c in co_now},
-        "links": {c: pio.tickets_link(ctx, sorted(co_sites[c]), "site", sorted(co_people[c])) for c in co_now}})
+        "links": {c: tickets_link(ctx, sorted(co_sites[c]), "site", sorted(co_people[c])) for c in co_now}})
 
     # people: each assignee's actions resolved and their sites
     contact = leader_contact(work)
@@ -206,7 +209,7 @@ def build(ctx, work, shared):
         "names": {k: p["label"](k) for k in p["every"]}, "now": p["now"], "start": p["then"],
         "meta": {k: [x for x in (who[k]["company"], where(p["sites"][k], site_name)) if x] for k in p_now},
         "tiles": {k: {"company": who[k]["company"], "logo": logos.get(who[k]["company"])} for k in p_now},
-        "links": {k: pio.tickets_link(ctx, sorted(p["sites"][k]), "user_entity", [k]) for k in p_now},
+        "links": {k: tickets_link(ctx, sorted(p["sites"][k]), "user_entity", [k]) for k in p_now},
         "shoutouts": {k: {"first": contact[k][0], "email": contact[k][1],
                           "site": site_name[min(p["sites"][k], key=lambda s: (-p["sites"][k][s], site_name[s].lower()))]}
                       for k in p_now if k in contact and all(contact[k])}})

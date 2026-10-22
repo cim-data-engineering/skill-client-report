@@ -5,13 +5,8 @@ count from count_tickets or a pagination.total; rows only add what a count
 cannot, the median and company names and logos. See
 references/single-site/actions-and-wins/alerts-resolved.md.
 """
-import base64
 import os
-import re
 import sys
-import urllib.request
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
 from statistics import median
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
@@ -26,24 +21,6 @@ GAP = 600                  # seconds
 
 def esc(ctx):
     return {"type": "escalated", "site_ids": [ctx["site"]["site_id"]], "ticket_archived": False}
-
-
-def fetch_logos(urls):
-    """{company: data URI} for each company logo PEAK links, embedded so the report stays
-    one file. A logo that cannot be fetched is left out, and the company's initials stand in."""
-    def get(item):
-        name, url = item
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "client-report"})
-            with urllib.request.urlopen(req, timeout=15) as r:
-                kind, body = r.headers.get_content_type(), r.read()
-        except OSError:
-            return name, None
-        if not kind.startswith("image/"):
-            return name, None
-        return name, "data:%s;base64,%s" % (kind, base64.b64encode(body).decode())
-    with ThreadPoolExecutor(8) as pool:
-        return dict(pool.map(get, urls.items()))
 
 
 # Open now carries only what the leaderboard needs, the company of anyone holding open
@@ -83,47 +60,14 @@ def calls(ctx):
 
 
 def more(ctx, work):
-    out = []
-    for f in ("ar/resolved-rows.json", "ar/open-rows.json"):
-        r = work.get(f)
-        if r.has_more:
-            base = next(c for c in calls(ctx) if c["file"] == f)
-            out += [dict(base, file=f.replace(".json", "-%d.json" % s),
-                         args=dict(base["args"], args=dict(base["args"]["args"], start_index=s)))
-                    for s in range(1000, r.total or 0, 1000) if not work.has(f.replace(".json", "-%d.json" % s))]
-    return out
-
-
-def rows(work, f):
-    out, s = list(work.get(f).rows), 1000
-    while work.has(f.replace(".json", "-%d.json" % s)):
-        out += work.get(f.replace(".json", "-%d.json" % s)).rows
-        s += 1000
-    return out
-
-
-def band(v):
-    for t, label in BANDS:
-        if v >= t:
-            return label
-    return "Poor"
-
-
-def local_day(ts, tz):
-    t = datetime.fromisoformat(ts.replace("Z", "+00:00")).astimezone(io.zone(tz))
-    return t.date()
-
-
-def plural(n, word):
-    return "%d %s%s" % (n, word, "" if n == 1 else "s")
+    return io.pages_due(work, [c for c in calls(ctx) if c["file"] in ("ar/resolved-rows.json", "ar/open-rows.json")])
 
 
 def sittings(stamps):
     """(first timestamp, count) for each run of at least BULK closures, each within GAP of the last."""
     out, run = [], []
-    when = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))
     for s in stamps + [None]:
-        if s and run and (when(s) - when(run[-1])).total_seconds() <= GAP:
+        if s and run and (io.utc(s) - io.utc(run[-1])).total_seconds() <= GAP:
             run.append(s)
             continue
         if len(run) >= BULK:
@@ -149,15 +93,15 @@ def build(ctx, work, shared):
         elif not faults:
             why = ("no alert on a running rule was closed in the quarter, so the faults resolved row has no "
                    "recovery rate. The %s resolved over the six months and the %d open now are not shown."
-                   % (plural(sum(resolved), "action"), open_now))
+                   % (io.plural(sum(resolved), "action"), open_now))
         else:
             why = ("no action was resolved in the six months, so there is no one to rank. The %s closed in the "
-                   "quarter and the %s open now are not shown." % (plural(faults, "alert"), plural(open_now, "action")))
+                   "quarter and the %s open now are not shown." % (io.plural(faults, "alert"), io.plural(open_now, "action")))
         return {"drop": ["alerts-resolved", "key-wins"], "chat": ["Actions and key wins are left out: " + why]}
     shared.setdefault("partial", []).append("action counts")      # only once the section stays
 
-    res_rows = rows(work, "ar/resolved-rows.json")
-    open_rows = rows(work, "ar/open-rows.json")
+    res_rows = io.rows(work, "ar/resolved-rows.json")
+    open_rows = io.rows(work, "ar/open-rows.json")
     company, logo_url = {}, {}
     for r in res_rows + open_rows:
         for a in r.get("assignees") or []:
@@ -178,18 +122,18 @@ def build(ctx, work, shared):
     rate = lambda e: e["resolved"] / (e["resolved"] + e["open"]) if e["resolved"] + e["open"] else 0
     leaderboard = sorted(board.values(), key=lambda e: (-e["resolved"], -rate(e), e["name"]))
     names = list(dict.fromkeys(e["company"] for e in leaderboard if e["company"]))
-    logos = fetch_logos({n: logo_url[n] for n in names if n in logo_url})
+    logos = io.fetch_logos({n: logo_url[n] for n in names if n in logo_url})
     for e in leaderboard:
         if logos.get(e["company"]):
             e["logo"] = logos[e["company"]]
     unlogged = [n for n in names if not logos.get(n)]
 
     in_q = [r for r in res_rows if r.get("status_id") != 8 and r.get("age") is not None and r.get("resolved_at")
-            and q0 <= local_day(r["resolved_at"], tz).isoformat() < q1]
+            and q0 <= io.local_day(r["resolved_at"], tz) < q1]
     med = median(r["age"] for r in in_q) / 86400000 if in_q else None
     med_text = ("%d days" % round(med) if med >= 1 else "%.1f hours" % (med * 24)) if med is not None else "–"
     pct_rec = recovered / faults * 100
-    impact = [{"chip": band(pct_rec), "chip_class": "pos" if band(pct_rec) in ("Excellent", "Good") else "warn",
+    impact = [{"chip": io.band(pct_rec, BANDS), "chip_class": "pos" if io.band(pct_rec, BANDS) in ("Excellent", "Good") else "warn",
                "fig": "{:,}".format(faults), "cap": "faults resolved with %d%% verified recovery" % round(pct_rec),
                "sub": "Median time to resolve of %s, measured from linked action creation to resolution." % med_text,
                "row": "faults-resolved"}]
@@ -197,8 +141,7 @@ def build(ctx, work, shared):
     # a run of closures minutes apart is a bulk close-out, not a run of repairs
     bulk = sittings(sorted(r["resolved_at"] for r in res_rows if r.get("resolved_at") and r.get("status_id") != 8))
     site = ctx["site"]
-    host = re.match(r"https?://[^/]+", site.get("site_link") or "")
-    host = host.group(0) if host else "https://ace.cimenviro.com"
+    host = io.host(site)
     # the chart starts where the site's monitoring does, as the other trends do
     first = max(tm[0], min(shared.get("trend_start") or [tm[0]]))
     keep = [i for i, m in enumerate(tm) if m >= first]
@@ -212,7 +155,7 @@ def build(ctx, work, shared):
     chat = []
     if bulk:
         chat.append("Resolved counts include bulk close-outs, %d or more actions closed minutes apart: %s."
-                    % (BULK, io.listing("%d on %s" % (n, io.day_short(local_day(t, tz).isoformat())) for t, n in bulk)))
+                    % (BULK, io.listing("%d on %s" % (n, io.day_short(io.local_day(t, tz))) for t, n in bulk)))
     if unlogged:
         chat.append("Leaderboard initials stand in for %s, with no logo in PEAK or none that could be fetched."
                     % io.listing(unlogged))

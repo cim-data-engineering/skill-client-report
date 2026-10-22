@@ -6,7 +6,6 @@ Not one of the section choices. report.py adds it to every report, and build()
 drops it when PEAK holds no current rating for the site.
 """
 import os
-import re
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
@@ -97,8 +96,7 @@ def build(ctx, work, shared):
                                                    ", ".join("%.1f for the period to %s" % (r["score"], mon_year(r["end"]))
                                                              for r in rows))})
 
-    host = re.match(r"https?://[^/]+", ctx["site"].get("site_link") or "")
-    host = host.group(0) if host else "https://ace.cimenviro.com"
+    host = io.host(ctx["site"])
     link = "%s/dashboard/ratings?site_ids=%s&ratings_type_id_or_filter=all_ratings" % (host, ctx["site"]["site_id"])
 
     return {"ratings": {"cards": cards, "charts": charts},
