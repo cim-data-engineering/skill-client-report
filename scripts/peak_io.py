@@ -16,7 +16,7 @@ import os
 import re
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 
 MONTHS = ["January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December"]
@@ -153,21 +153,6 @@ def pages(work, file):
 def rows(work, file):
     """Every row of a call across its pages."""
     return [r for f in pages(work, file) for r in work.get(f).rows]
-
-
-def drop_repeats(plan, files):
-    """{pick: path} for each win's downloaded photos, less any whose bytes repeat an earlier one in the same
-    win, deleted: one image uploaded to two tickets is one photo. plan is {win: [picks]}."""
-    import hashlib
-    for picks in plan.values():
-        seen = set()
-        for p in [p for p in picks if p in files]:
-            with open(files[p], "rb") as fh:
-                digest = hashlib.sha1(fh.read()).hexdigest()
-            if digest in seen:
-                os.remove(files.pop(p))
-            seen.add(digest)
-    return files
 
 
 def call(file, tool, **args):
@@ -317,16 +302,6 @@ def currency(facts):
     return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", "$"))
 
 
-MIN_SAVING = 200           # a key win states a saving only from this much, in the site's currency
-
-
-def small_saving(text):
-    """True when a figure a win sets bold, "$67" or "$1.2k", is under MIN_SAVING."""
-    m = re.search(r"(\d[\d,]*(?:\.\d+)?)\s*(k|thousand|m|million)?\b", text, re.I)
-    scale = {"k": 1e3, "thousand": 1e3, "m": 1e6, "million": 1e6}.get((m.group(2) or "").lower(), 1) if m else 1
-    return bool(m) and float(m.group(1).replace(",", "")) * scale < MIN_SAVING
-
-
 def plural(n, noun):
     """'1 call', '3 calls'."""
     return "%d %s%s" % (n, noun, "" if n == 1 else "s")
@@ -413,8 +388,9 @@ def day_long(s):
 
 
 def utc(ts):
-    """A PEAK timestamp, '2026-10-12T03:15:00Z', as a datetime."""
-    return datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    """A PEAK timestamp, '2026-10-12T03:15:00Z', as an aware datetime; one with no offset is UTC."""
+    t = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
 
 
 def local_day(ts, tz):
