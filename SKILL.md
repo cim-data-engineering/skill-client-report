@@ -87,7 +87,7 @@ Never asks which sections to include. Every section is planned and fetched, and 
 
 ## Wiring
 
-Each reference owns its section: what it shows, its rules, calls, notes band items, anchor and chat lines. It names what it hands on and takes by the figure, never by the section at the other end, and cites only `DESIGN.md` component names. Placement, figure flow and build order live here and in the registry at the top of `scripts/report.py`; a section builds after every section whose figures it takes. Every equipment count leaves out the system types 21, 37, 69, 70, 87, 105 and 114, the platform checking itself rather than building plant.
+Each reference owns its section: what it shows, its rules, calls, notes band items, anchor and chat lines. It names what it hands on and takes by the figure, never by the section at the other end, and cites only `DESIGN.md` component names. Placement, figure flow and build order live here and in the registry at the top of `scripts/report.py`; a section builds after every section whose figures it takes. Every equipment and rule count and every equipment health score leaves out the BACER, equipment type 105 (`SYS-BACER`), the device that reads the building's BMS into PEAK rather than building plant. Every other type counts, the system ones such as the meters included.
 
 **Single-site page:** page one holds the masthead, the analytics overview and operational impact; then sustainability ratings, the equipment health and indoor environment snapshots, their monthly trends, equipment run hours, monthly alerts and the actions leaderboard, key wins, and the notes band. A section that is out leaves no gap. Impact rows run equipment health score, thermal comfort, automated checks, labour cost avoided, faults resolved; notes run in page order, the reporting window last.
 
@@ -106,8 +106,8 @@ Each reference owns its section: what it shows, its rules, calls, notes band ite
 | Figure | Handed on by | Taken by |
 | --- | --- | --- |
 | Site facts: building size, currency, state, country, photo link, comfort band | the overview, before any section builds | every section |
-| A ranking: each site's figure now and on last month's board, with its label, link, window, unit and note | equipment health, indoor environment, actions resolved, in that order | the site leaderboard, a board each |
-| A team ranking: the same over companies or people, with logos, the leader's meta line and shoutout | actions resolved, companies then assignees | the team leaderboard, a board each |
+| A ranking: each site's figure now and on last month's board, with its label, link, window, unit and note, and the sites too small to lead | equipment health, indoor environment, actions resolved, in that order | the site leaderboard, a board each |
+| A team ranking: the same over companies or people, with logos, each one's site line, the leader's meta line and shoutout | actions resolved, companies then assignees | the team leaderboard, a board each |
 | Thermal zones on the levels that scored, and every configured point | indoor environment | the scorecards |
 | Sites with data | equipment health, indoor environment, actions resolved, sustainability ratings, open P1-2 actions, then each key win's site at fill | the masthead's Sites count; open P1-2 actions, for the sites holding none |
 

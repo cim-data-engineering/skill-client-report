@@ -4,7 +4,7 @@ Owns the thermal comfort by site table and its portfolio row, and hands on the s
 
 ## What you write
 
-Nothing on the page. In chat, say what the script prints: any site with no comfort score in the quarter, which is left out of the table and the ranking.
+Nothing on the page. In chat, say what the script prints: any site with no comfort score in the quarter, which is left out of the table and the ranking, and any site with too few zones to lead, starred and ranked after the rest.
 
 ## Section header
 
@@ -40,6 +40,7 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 
 - Best first on the score rounded to 2 decimal places, one more than the table prints. Equal scores split alphabetically by site name, ignoring case, so no two sites share a place, and no note explains a tie
 - A site with scores in the quarter but none in the leaderboard month ranks after every site that has one, alphabetically
+- **Too few zones to lead**: a site with fewer than 20 zones, and at or under 30% of the median across the sites in the table, ranks after every other site with a score, by its score, here and on last month's board. An asterisk follows its name, and under the table: "* Low zone count, ranked after the other sites." No site is starred where every site has fewer than 20, so a portfolio of small sites keeps its order
 
 **Portfolio row:**
 
@@ -66,7 +67,7 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 
 **Hands on:**
 
-- **A ranking** labelled Thermal comfort, under the anchor `cf-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%"
+- **A ranking** labelled Thermal comfort, under the anchor `cf-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%", and the sites with too few zones to lead, for the reason "Low zone count"
 - **Thermal zones**: the Zones total, and every zone temperature point configured across the sites for a quarter in which no site scored
 - **Sites with data**: each site with a comfort score in the quarter
 

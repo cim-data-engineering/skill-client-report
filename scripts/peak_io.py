@@ -166,8 +166,28 @@ def gql(file, query, args, fields):
     return call(file, "execute_graphql_query", query_name=query, args=args, fields=fields)
 
 
-# The system equipment types: the platform checking itself, not plant. Every equipment and rule count leaves them out.
-SYSTEM_TYPES = [21, 37, 69, 70, 87, 105, 114]
+# The BACER's equipment type, SYS-BACER: the device that reads the building's BMS into PEAK. Its rules check
+# the platform's own link to the building, not plant, so every equipment and rule count and every equipment
+# health score leaves it out. Every other type counts, system ones such as the meters included.
+BACER = 105
+
+
+def rollup(rows, *keys):
+    """Equipment health rows grouped by equipment type, rolled up over `keys` as PEAK rolls up a site, the
+    BACER left out: each score the mean of its types' weighted by their rules, the checks and rules summed."""
+    out = {}
+    for r in rows:
+        n = r.get("task_count") or 0
+        if r.get("metadata_type_id") == BACER or not n:
+            continue
+        k = tuple(r.get(x) for x in keys)
+        o = out.setdefault(k, dict(zip(keys, k), score=0.0, total_executions=0, task_count=0))
+        o["score"] += (r.get("score") or 0) * n
+        o["total_executions"] += r.get("total_executions") or 0
+        o["task_count"] += n
+    for o in out.values():
+        o["score"] /= o["task_count"]
+    return list(out.values())
 
 
 # ── who ranks ───────────────────────────────────────────────────────────────

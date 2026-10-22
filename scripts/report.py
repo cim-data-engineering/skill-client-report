@@ -75,14 +75,15 @@ IMPACT_ORDER = ["equipment-health-score", "thermal-comfort", "automated-checks",
 # names another, and each builds after every section whose figures it takes.
 #   site_facts / facts  the site's, or each site's, platform row, seeded before any section builds
 #   thermal_zones       zone points on the levels that scored (zones_configured: every configured point)
-#   rankings            [{label, anchor | links, window: "month" | "quarter", now, start, dp, unit}], one board
-#                       each: now on the leaderboard month or the quarter ending on it, start on the window
-#                       last month's leaderboard ranked; each name jumps to the anchor, or opens its own link;
-#                       an optional note joins the date line
-#   team_rankings       [{label, links, window, noun, unit, names, meta, tiles, now, start, shoutouts}], one
-#                       board each, as rankings but over the companies or people holding the work, keyed by
-#                       company or person; tiles each one's company and its logo, shoutouts each person's
-#                       {first, email, site} for the leader's shoutout
+#   rankings            [{label, anchor | links, window: "month" | "quarter", now, start, dp, unit, low,
+#                       low_note}], one board each: now on the leaderboard month or the quarter ending on it,
+#                       start on the window last month's leaderboard ranked; each name jumps to the anchor, or
+#                       opens its own link; an optional note joins the date line; low the sites too small to
+#                       lead, ranked last and starred, low_note why
+#   team_rankings       [{label, links, window, noun, unit, names, meta, sites, tiles, now, start, shoutouts}],
+#                       one board each, as rankings but over the companies or people holding the work, keyed by
+#                       company or person; sites each one's site line, tiles each one's company and its logo,
+#                       shoutouts each person's {first, email, site} for the leader's shoutout
 #   partial             names of the volume figures shown that run short over a month to date, present
 #                       once any section shows the month to date; single-site only
 #   trend_start         [first month kept], each score section's, for a site that went live inside the

@@ -135,7 +135,7 @@ def build(ctx, work, shared):
 
     # open actions by age at each site and with each person, the actions no one holds as one more
     site_ages, person_ages = defaultdict(lambda: [0, 0, 0]), defaultdict(lambda: [0, 0, 0])
-    sites, who, oldest = defaultdict(set), {}, {}
+    sites, who, oldest = defaultdict(lambda: defaultdict(int)), {}, {}
     for act in actions:
         b = age[act["ticket"]]
         site_ages[act["site"]][b] += 1
@@ -145,9 +145,9 @@ def build(ctx, work, shared):
         for a in act["assignees"]:
             if a["id"]:
                 who[a["id"]] = a
-                sites[a["id"]].add(act["site"])
         for p in holders or {NOBODY}:
             person_ages[p][b] += 1
+            sites[p][act["site"]] += 1
     on_sites = {s: sum(v) for s, v in site_ages.items()}
     people = {p: sum(v) for p, v in person_ages.items()}
     label = lambda p: NOBODY if p == NOBODY else (who[p]["name"] or UNNAMED)
@@ -162,9 +162,11 @@ def build(ctx, work, shared):
                   "count": listed[s], "ages": site_ages[s],
                   "link": link(ctx, oldest[s], [s], "assignee") if listed[s] else None}
                  for k, s in most_first(listed, lambda s: site[s]["site_name"])[:SHOWN]]
+    site_name = {s: site[s]["site_name"].strip() for s in site}
     person_rows = []
     for k, p in ranked_people[:SHOWN]:
-        row = {"rank": k, "name": label(p), "count": people[p], "ages": person_ages[p], "tile": {}}
+        row = {"rank": k, "name": label(p), "count": people[p], "ages": person_ages[p], "tile": {},
+               "site": pio.busiest(sites[p], site_name)}
         if p != NOBODY:
             co = who[p]["company"]
             row.update(company=co or None, tile={"company": co, "logo": logos.get(co)},

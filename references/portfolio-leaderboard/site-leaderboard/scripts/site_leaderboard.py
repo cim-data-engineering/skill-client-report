@@ -54,12 +54,14 @@ def board(ctx, size, unit, ranking):
     now, start, dp = ranking["now"], ranking["start"], ranking["dp"]
     site = {s["site_id"]: s for s in ctx["sites"]}
     name = lambda sid: site[sid]["site_name"].strip()
-    ranked, moves = pio.standings(list(site), now, start, name)
+    low = set(ranking.get("low") or ())
+    ranked, moves = pio.standings(list(site), now, start, name, low)
     fmt = (lambda v: "%.*f" % (dp, v)) if dp else (lambda v: "{:,}".format(int(round(v))))
     rows = []
     links = ranking.get("links") or {}
     for k, sid in ranked[:SHOWN]:
-        r = {"rank": k, "name": name(sid), "value": fmt(now[sid]), "move": moves[sid] or None, "link": links.get(sid)}
+        r = {"rank": k, "name": name(sid), "value": fmt(now[sid]), "move": moves[sid] or None, "link": links.get(sid),
+             "low": sid in low}
         if k == 1:
             r["meta"] = [x for x in (pio.region(ctx, site[sid]),
                                      "%s %s" % (pio.num(size[sid]), unit) if size.get(sid) else None) if x]
@@ -68,7 +70,7 @@ def board(ctx, size, unit, ranking):
          "unit": ranking.get("unit"), "rows": rows}
     if pio.climbers(ctx):                 # a portfolio of three sites or fewer shows no climber tier
         c = pio.climber(ranked[:SHOWN], moves)
-        b["climber"] = dict(c, name=name(c["key"]), link=links.get(c["key"])) if c else None
+        b["climber"] = dict(c, name=name(c["key"]), link=links.get(c["key"]), low=c["key"] in low) if c else None
     return b, (ranked[0][1] if ranked else None), len(ranked)
 
 
@@ -94,11 +96,15 @@ def build(ctx, work, shared):
                     % ("" if not any(links[sid] for b, sid in built if not photos[sid]) else ", or none that could be fetched,",
                        io.listing(bare), "its" if len(bare) == 1 else "each"))
     drawn = [r for r, (b, _, _) in zip(shared["rankings"], made) if b["rows"]]
+    # the boards showing a site too small to lead, starred and ranked after the rest, each named once under them
+    starred = [r["low_note"] for r, (b, _, _) in zip(shared["rankings"], made) if any(x["low"] for x in b["rows"])]
+    note = ("* %s, ranked after the other sites." % " or ".join(starred[:1] + [n.lower() for n in starred[1:]])
+            if starred else None)
     more = list(dict.fromkeys(r["note"] for r in drawn if r.get("note")))   # each note once
     cut = [n for n in counts if n > SHOWN]
     if cut:
         more.append("Top %d of %s sites on %s." % (
             SHOWN, "%d" % cut[0] if len(cut) == 1 else "%d to %d" % (cut[0], cut[-1]),
             "each board" if len(cut) == len(counts) else "the boards that rank more"))
-    return {"boards": [b for b, _ in built], "chat": chat,
+    return {"boards": [b for b, _ in built], "boards_note": note, "chat": chat,
             "dated_heads": {"Site leaderboard": pio.board_head(ctx, "the sites on one measure", " ".join(more) or None)}}

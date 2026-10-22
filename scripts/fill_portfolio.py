@@ -46,10 +46,23 @@ def esc(s):
 
 
 def site_label(r, link=None):
-    """'88 Example St (NSW)': the state in muted brackets, linked with a chevron when the row has a link."""
-    inner = '<span class="sn">%s</span>%s' % (esc(r["name"]), ' <span class="rg">(%s)</span>' % esc(r["state"])
+    """'88 Example St (NSW)': the state in muted brackets, linked with a chevron when the row has a link, and
+    an asterisk after the name of a site too small to lead."""
+    inner = '<span class="sn">%s</span>%s' % (star(r), ' <span class="rg">(%s)</span>' % esc(r["state"])
                                               if r.get("state") else "")
     return '<a href="%s">%s&nbsp;&rsaquo;</a>' % (href(link), inner) if link else inner
+
+
+def star(r):
+    """A board or table name, an asterisk after it where the site is too small to lead."""
+    return esc(r["name"]) + ("*" if r.get("low") else "")
+
+
+def site_line(lead, site, more):
+    """The muted line under a name: who it is with, where there is one, then its busiest site and '+ N sites',
+    the site cut short before the count is."""
+    return '<span class="sub"><span class="s">%s</span>%s</span>' % (
+        " &middot; ".join(esc(x) for x in (lead, site) if x), '<span class="n"> %s</span>' % more if more else "")
 
 
 def jump(r, b):
@@ -96,22 +109,22 @@ def board(b):
                    " co" if logos else "", TROPHY, move(lead.get("move")),
                    '<span class="who">%s</span>' % tile(lead["tile"].get("company"), lead["tile"].get("logo")) if logos else "",
                    '<a href=%s class="lname"><span class="sn">%s</span>&nbsp;<span class="chev">&rsaquo;</span></a>' % (
-                       jump(lead, b), esc(lead["name"])), " &middot; ".join(esc(x) for x in lead.get("meta") or []),
+                       jump(lead, b), star(lead)), " &middot; ".join(esc(x) for x in lead.get("meta") or []),
                    lead["value"], "<span>%s</span>" % esc(b["unit"]) if b.get("unit") else ""))
     if "climber" in b:
         c = b["climber"]
         out.append('      <div class="climb%s"><span class="rkmark">%s</span><p class="clab">Biggest climber</p>%s<p class="cwho%s">%s</p>%s</div>' % (
             " co" if logos else "", CLIMB, '<span class="clogo">%s</span>' % mini(c) if logos and c else "",
-            "" if c else " none", '<a href=%s>%s</a>' % (jump(c, b), esc(c["name"])) if c else "None",
+            "" if c else " none", '<a href=%s>%s</a>' % (jump(c, b), star(c)) if c else "None",
             '<span class="cup">&uarr;%d to %s</span>' % (c["places"], ordinal(c["rank"])) if c else ""))
     if pack:
-        out += ['      <table class="rk">',
+        out += ['      <table class="rk%s">' % (" two" if any(r.get("site") for r in pack) else ""),
                 '        <colgroup><col class="c-rank">%s<col><col class="c-mv"><col class="c-pv"></colgroup>'
                 % ('<col class="c-logo">' if logos else ""),
                 '        <tbody>']
-        out += ['        <tr><td class="rank">%d</td>%s<td class="lv"><a href=%s>%s</a></td><td class="mvc">%s</td><td class="pv">%s</td></tr>'
-                % (r["rank"], '<td class="lg">%s</td>' % mini(r) if logos else "", jump(r, b), esc(r["name"]),
-                   move(r.get("move")), r["value"]) for r in pack]
+        out += ['        <tr><td class="rank">%d</td>%s<td class="lv"><a href=%s>%s</a>%s</td><td class="mvc">%s</td><td class="pv">%s</td></tr>'
+                % (r["rank"], '<td class="lg">%s</td>' % mini(r) if logos else "", jump(r, b), star(r),
+                   site_line(None, *r["site"]) if r.get("site") else "", move(r.get("move")), r["value"]) for r in pack]
         out += ['        </tbody>', '      </table>']
     out.append('    </div>')
     return "\n".join(out)
@@ -122,11 +135,12 @@ def shoutout(s):
     return '    <a class="shout" href="%s">%s%s</a>\n' % (href(s["url"]), CLAP, esc(s["text"])) if s else ""
 
 
-def boards(bs):
-    """The boards side by side."""
+def boards(bs, note=None):
+    """The boards side by side, and the note under them where a board stars a site."""
     n = len(bs)
     return ('  <div class="rkgrid%s">\n' % ("" if n == 3 else " n%d" % n)
-            + "\n".join(board(b) for b in bs) + "\n  </div>\n")
+            + "\n".join(board(b) for b in bs) + "\n  </div>\n"
+            + ('  <p class="chartsource">%s</p>\n' % esc(note) if note else ""))
 
 
 # ── ranked heatmaps ─────────────────────────────────────────────────────────
@@ -170,7 +184,8 @@ def heatmap(d, months):
                    "".join(cell(v, t, dp, i == len(p["months"]) - 1) for i, v in enumerate(p["months"])),
                    change(p["months"], dp, "change" in p, p.get("change"))))
     return ('  <table class="hm wide">\n    <thead>\n      <tr>%s</tr>\n    </thead>\n    <tbody>\n%s\n    </tbody>\n  </table>\n'
-            % ("".join(head), "\n".join(body)))
+            % ("".join(head), "\n".join(body))
+            + ('  <p class="chartsource">%s</p>\n' % esc(d["note"]) if d.get("note") else ""))
 
 
 # ── open actions ────────────────────────────────────────────────────────────
@@ -209,16 +224,16 @@ def open_actions(d):
             if r.get("state") is not None:
                 name = site_label(r, r.get("link"))
             elif r.get("link"):
-                name = '<a href="%s">%s&nbsp;&rsaquo;</a>%s' % (href(r["link"]), esc(r["name"]),
-                                                               ' <span class="rg">%s</span>' % esc(r["company"]) if r.get("company") else "")
+                name = '<a href="%s">%s&nbsp;&rsaquo;</a>' % (href(r["link"]), esc(r["name"]))
             else:
                 name = '<span class="sn none">%s</span>' % esc(r["name"])
+            sub = site_line(r.get("company"), *r["site"]) if r.get("site") else ""
             bar = "".join('<span class="%s" style="width:calc(%.2f%% - 2px)"></span>' % (cls, n / top * 100)
                           for cls, n in zip(AGE_CLASSES, r["ages"]) if n)
-            out.append('        <tr><td class="rank">%d</td>%s<td class="nm"><span class="ol">%s</span><span class="agebar">%s</span>'
+            out.append('        <tr><td class="rank">%d</td>%s<td class="nm"><span class="ol">%s</span>%s<span class="agebar">%s</span>'
                        '</td><td class="ct">%d</td></tr>'
                        % (r["rank"], '<td class="lg">%s</td>' % tile(r["tile"].get("company"), r["tile"].get("logo"), "tlogo")
-                          if logos else "", name, bar, r["count"]))
+                          if logos else "", name, sub, bar, r["count"]))
         out += ['        </tbody>', '      </table>', '    </div>']
     out.append('  </div>')
     return "\n".join(out) + "\n"
@@ -403,7 +418,7 @@ def main():
 
     months = D["months"]["quarter"]
     base = os.path.dirname(os.path.abspath(a.data))       # photo paths are relative to the bundle
-    render = {"boards": lambda: boards(D["boards"]),
+    render = {"boards": lambda: boards(D["boards"], D.get("boards_note")),
               "team-boards": lambda: boards(D["team_boards"]),
               "shoutout": lambda: shoutout(D.get("shoutout")),
               "eh-table": lambda: heatmap(D["equipment_health"], months),

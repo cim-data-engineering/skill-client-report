@@ -32,9 +32,12 @@ def calls(ctx):
                                              "country", "photo_url", "thermal_comfort_min_temp",
                                              "thermal_comfort_max_temp", "thermal_comfort_margin"]))
             + count("overview/rules.json", "search_rules", task_state="running", limit=1)
+            + pio.split(ctx, "overview/rules-bacer.json", COUNT_CHUNK, lambda f, ids: io.gql(
+                f, "tasks.tasks", {"site_ids": ids, "primary_metadata_type_ids": [io.BACER], "task_state": True,
+                                   "limit": 1}, ["task_id"]))
             + count("overview/sensors.json", "search_favourites", limit=1)
             + count("overview/equipment.json", "search_equipment", limit=1)
-            + count("overview/equipment-system.json", "search_equipment", metadata_type_ids=io.SYSTEM_TYPES, limit=1))
+            + count("overview/equipment-bacer.json", "search_equipment", metadata_type_ids=[io.BACER], limit=1))
 
 
 def more(ctx, work):
@@ -102,7 +105,7 @@ def build(ctx, work, shared):
     zones = shared.get("thermal_zones")
     if zones is None:
         zones = shared.get("zones_configured", 0)
-    eq = pio.total(work, "overview/equipment.json") - pio.total(work, "overview/equipment-system.json")
+    eq = pio.total(work, "overview/equipment.json") - pio.total(work, "overview/equipment-bacer.json")
 
     chat = []
     shown = shared.get("shown_sites") or set()
@@ -133,7 +136,8 @@ def build(ctx, work, shared):
                 "Portfolio size": (pio.num(sum(known)) + " <span>%s</span>" % unit) if known else "-",
                 "Equipment": "{:,}".format(eq),
                 "Sensors": "{:,}".format(pio.total(work, "overview/sensors.json")),
-                "Rules running": "{:,}".format(pio.total(work, "overview/rules.json")),
+                "Rules running": "{:,}".format(pio.total(work, "overview/rules.json")
+                                               - pio.total(work, "overview/rules-bacer.json")),
                 "Thermal zones": "{:,}".format(zones),
             },
         },

@@ -47,6 +47,8 @@ def board(ctx, ranking):
              "link": links.get(key)}
         if k == 1:
             r["meta"] = ranking["meta"].get(key) or []
+        elif key in (ranking.get("sites") or {}):
+            r["site"] = ranking["sites"][key]          # the pack's site line, where the leader has its meta
         if "tiles" in ranking:
             r["tile"] = ranking["tiles"].get(key) or {}
         rows.append(r)

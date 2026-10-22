@@ -32,14 +32,14 @@ One board per team ranking, in the order the rankings come. Each is a small rank
 
 1. **Leader**: rank 1, its row set large. The trophy and the movement in the rank column, the company's logo in its tile and in its own colours, the name, then the meta line the ranking gives its leader with the value and unit: "Site A + 3 sites" for a company, "Company A · Site A" for a person: the busiest site, and "+ {N} sites" where there are more. The meta line clamps to two lines
 2. **Biggest climber**: the one challenger, the row under the leader: "Biggest climber", the company logo, the name and "↑{places} to {place now}", "↑2 to 10th". It is the largest climb among ranks 2 to 10, so it is never the leader and always on the board. Those tied on the climb go to the one placed highest. Where no one below the leader climbed, the row reads "None", muted
-3. **Chasing pack**: ranks 2 to 10, each with rank, company logo, name, movement and value, a step smaller
+3. **Chasing pack**: ranks 2 to 10, each with rank, company logo, name, movement and value, a step smaller, and under each name its site line in muted text: the busiest site, then "+ {N} sites", "Site A + 2 sites". A long site name is cut short and the count kept. Every board's pack carries one, so the rows sit level across the boards
 
 **Display:**
 
 - Every name sits beside its company's logo, so the reader knows whose crew a person is in: a company's own logo, a person's company's. Only the leader's is in colour; the climber's and the pack's are grey. A company without a logo gets its initials; a person with no company, an empty space
 - Every tier shares the rank and logo columns, so the leader's name, the climber's and the pack's all start on one line
 - Movement: "↑N" in green, "↓N" muted, nothing when a company or person holds its place
-- Names clamp to two lines. The tiers sit level across the boards, whichever names take two lines
+- Names clamp to two lines, the pack's to one over its site line. The tiers sit level across the boards, whichever names take two lines
 - The boards sit side by side. A board renders when its ranking holds anyone, and fewer boards take the width the missing ones leave
 
 **Links:**
@@ -61,4 +61,4 @@ A button beside the title, "Send Mara a shoutout", thanking the leader of the fi
 
 No calls of its own. **Takes:**
 
-- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, any note, and for people the leader's first name, email and busiest site for the shoutout
+- **Team rankings**: each a label, each name's PEAK report, a window (month or quarter), what it ranks ("companies", "assignees"), its unit, each company's or person's name, their figure now and on the window last month's board ranked, each one's company and its logo, the meta line for whoever leads, each one's site line, any note, and for people the leader's first name, email and busiest site for the shoutout

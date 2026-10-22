@@ -27,8 +27,11 @@ def calls(ctx):
         io.call("overview/rules.json", "search_rules", site_ids=[sid], task_state="running", limit=1),
         io.call("overview/sensors.json", "search_favourites", site_ids=[sid], limit=1),
         io.call("overview/equipment.json", "search_equipment", site_ids=[sid], limit=1),
-        io.call("overview/equipment-system.json", "search_equipment", site_ids=[sid],
-                metadata_type_ids=io.SYSTEM_TYPES, limit=1),
+        io.gql("overview/rules-bacer.json", "tasks.tasks",
+               {"site_ids": [sid], "primary_metadata_type_ids": [io.BACER], "task_state": True, "limit": 1},
+               ["task_id"]),
+        io.call("overview/equipment-bacer.json", "search_equipment", site_ids=[sid],
+                metadata_type_ids=[io.BACER], limit=1),
     ]
     if "thermal_zones" not in handed_on(ctx):
         # With no section handing thermal zones on, the overview counts them: points on the levels that scored.
@@ -90,9 +93,9 @@ def build(ctx, work, shared):
             "as_at": "As at %s" % io.day_long(ctx["today"]),
             "stats": {
                 "Building size": ("{:,}".format(int(round(size))) + " <span>%s</span>" % unit) if size else "&ndash;",
-                "Equipment": "{:,}".format(total("overview/equipment.json") - total("overview/equipment-system.json")),
+                "Equipment": "{:,}".format(total("overview/equipment.json") - total("overview/equipment-bacer.json")),
                 "Sensors": "{:,}".format(total("overview/sensors.json")),
-                "Rules running": "{:,}".format(total("overview/rules.json")),
+                "Rules running": "{:,}".format(total("overview/rules.json") - total("overview/rules-bacer.json")),
                 "Thermal zones": "{:,}".format(zones),
             },
         },

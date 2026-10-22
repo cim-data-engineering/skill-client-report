@@ -26,9 +26,9 @@ The analytics overview's stat cards, as a scorecard strip with no section header
 | Card | Figure |
 | --- | --- |
 | Portfolio size | The sites' building sizes summed, in the portfolio's unit |
-| Equipment | Equipment at every site, less the system types |
+| Equipment | Equipment at every site, less the BACERs |
 | Sensors | Sensors at every site |
-| Rules running | Rules with status running at every site |
+| Rules running | Rules with status running at every site, less the BACERs' |
 | Thermal zones | The thermal zones figure it takes: zone temperature points on the levels that scored in the quarter, or every configured point where no site scored |
 
 **Sizes and units:**
@@ -45,9 +45,9 @@ All in the main batch, the site facts 100 sites a call and each count 10, since 
 | Need | Call |
 | --- | --- |
 | Building size, currency, state, country, building photo link, default comfort band | `platform.sites` with `site_ids`, the band as `thermal_comfort_min_temp`, `thermal_comfort_max_temp` and `thermal_comfort_margin`, in the site's own unit |
-| Rules running | `search_rules(task_state:"running", limit:1)` with `site_ids`, its `pagination.total` |
+| Rules running | `search_rules(task_state:"running", limit:1)` with `site_ids`, its `pagination.total`, less that of `tasks.tasks` (`primary_metadata_type_ids:[105]`, `task_state:true`, `limit:1`) with `site_ids`, the BACERs' running rules: `search_rules` has no type filter |
 | Sensors | `search_favourites(limit:1)` with `site_ids`, its `pagination.total` |
-| Equipment | `search_equipment(limit:1)` with `site_ids` twice, plain and filtered to the system types 21, 37, 69, 70, 87, 105 and 114, the second total subtracted from the first |
+| Equipment | `search_equipment(limit:1)` with `site_ids` twice, plain and filtered to the BACER, type 105, the second total subtracted from the first |
 
 - The totals of a split call add across its chunks
 - The client name comes from `--client`, the author from `who_am_i` passed as `--author`, and the company and service names from `BRAND.md`

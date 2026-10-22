@@ -9,6 +9,7 @@ Imported by scripts/report.py and the scripts under references/portfolio-leaderb
 """
 import os
 import re
+import statistics
 import sys
 from datetime import date, timedelta
 
@@ -191,25 +192,37 @@ def num(v):
 
 # ── ranks and portfolio rows ────────────────────────────────────────────────
 RANK_DP = 2            # scores rank to two places, one more than the page prints
+LOW_SHARE = 0.3        # a site under a board's cap keeps its place above this share of the sites' median
 
 
-def rank(sites, value):
-    """[(rank, site)] best first on the value to RANK_DP places, ties split alphabetically by site
-    name, so no two sites share a place. Sites with no value are left out."""
+def low_coverage(counts, cap):
+    """The sites too small to lead on their score: under `cap` rules or zones and at or under LOW_SHARE of
+    the median across the sites, so a portfolio of small sites keeps its order. None where every site is
+    under the cap. counts is {site_id: rules or zones}."""
+    if not counts or all(v < cap for v in counts.values()):
+        return set()
+    floor = LOW_SHARE * statistics.median(counts.values())
+    return {k for k, v in counts.items() if v < cap and v <= floor}
+
+
+def rank(sites, value, low=()):
+    """[(rank, site)] best first on the value to RANK_DP places, the sites in `low` after every other,
+    ties split alphabetically by site name, so no two sites share a place. Sites with no value are left
+    out."""
     have = [s for s in sites if value(s) is not None]
-    have.sort(key=lambda s: (-round(value(s), RANK_DP), name_key(s)))
+    have.sort(key=lambda s: (s["site_id"] in low, -round(value(s), RANK_DP), name_key(s)))
     return [(k, s) for k, s in enumerate(have, 1)]
 
 
-def standings(keys, now, then, name):
-    """A leaderboard board: ([(rank, key)] best first on the figures `now` to RANK_DP places, {key:
-    move}). Last month's board ranks every key with a figure in `then`, on the board now or not, and a
-    move is the place there less the place now, "new" with no figure there. Ties split
-    alphabetically by name(key), ignoring case, so no two share a place; keys with no figure are left
-    out."""
+def standings(keys, now, then, name, low=()):
+    """A leaderboard board: ([(rank, key)] best first on the figures `now` to RANK_DP places, the keys in
+    `low` after every other, {key: move}). Last month's board ranks every key with a figure in `then`, on
+    the board now or not, the same keys after the rest, and a move is the place there less the place now,
+    "new" with no figure there. Ties split alphabetically by name(key), ignoring case, so no two share a
+    place; keys with no figure are left out."""
     def order(v):
         have = [k for k in keys if v.get(k) is not None]
-        return sorted(have, key=lambda k: (-round(v[k], RANK_DP), name(k).strip().lower(), str(k)))
+        return sorted(have, key=lambda k: (k in low, -round(v[k], RANK_DP), name(k).strip().lower(), str(k)))
     ranked = list(enumerate(order(now), 1))
     before = {k: i for i, k in enumerate(order(then), 1)}
     return ranked, {k: before[k] - i if k in before else "new" for i, k in ranked}
@@ -230,6 +243,13 @@ def climber(ranked, moves):
         return None
     places, rank, key = max(climbs)
     return {"key": key, "places": places, "rank": -rank}
+
+
+def busiest(at, site_name):
+    """A name's site line: (the site with the most, ties alphabetical, "+ N sites" for the rest or "").
+    at is {site_id: count}."""
+    top = min(at, key=lambda s: (-at[s], site_name[s].lower()))
+    return site_name[top], "+ %s" % io.plural(len(at) - 1, "site") if len(at) > 1 else ""
 
 
 def board_window(ctx, window):
@@ -255,10 +275,10 @@ def quarter_scores(ctx, scores):
     return months, scored, [s["site_name"].strip() for s in ctx["sites"] if s not in scored]
 
 
-def board_order(scored, now):
-    """[(rank, site)] for a ranked heatmap: ranked on the leaderboard month, then each site with no score
-    that month, alphabetically."""
-    ranked = rank(scored, lambda s: now[s["site_id"]])
+def board_order(scored, now, low=()):
+    """[(rank, site)] for a ranked heatmap: ranked on the leaderboard month, the sites in `low` after every
+    other, then each site with no score that month, alphabetically."""
+    ranked = rank(scored, lambda s: now[s["site_id"]], low)
     tail = sorted((s for s in scored if now[s["site_id"]] is None), key=name_key)
     return ranked + [(len(ranked) + k, s) for k, s in enumerate(tail, 1)]
 

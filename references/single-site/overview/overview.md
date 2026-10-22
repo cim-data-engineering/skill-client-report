@@ -25,9 +25,9 @@ Date: As at {issue date}
 | Display metric | Reference |
 | --- | --- |
 | Building size | m² as PEAK stores it; ft² for US sites, converted |
-| Equipment | Total equipment, less the system types |
+| Equipment | Total equipment, less the BACER |
 | Sensors | Total sensors |
-| Rules | Total rules status running |
+| Rules | Total rules status running, less the BACER's |
 | Thermal zones | Zone temperature points on the levels that scored in the quarter |
 
 All five render whatever sections are chosen. This is the monitoring footprint, not a summary of the sections below it.
@@ -64,9 +64,9 @@ All in the main batch:
 | Need | Call |
 | --- | --- |
 | Name, photo, building size, currency, comfort band | `platform.sites` with those fields; the currency sets the labour rate |
-| Rules running | `search_rules(task_state:"running", limit:1)`, its `pagination.total`, system types included: `search_rules` has no type filter |
+| Rules running | `search_rules(task_state:"running", limit:1)`, its `pagination.total`, less that of `tasks.tasks` (`primary_metadata_type_ids:[105]`, `task_state:true`, `limit:1`), the BACER's running rules: `search_rules` has no type filter |
 | Sensors | `search_favourites(limit:1)`, its `pagination.total` |
-| Equipment | `search_equipment(limit:1)` twice, plain and filtered to the system types 21, 37, 69, 70, 87, 105 and 114, the second total subtracted from the first |
+| Equipment | `search_equipment(limit:1)` twice, plain and filtered to the BACER, type 105, the second total subtracted from the first |
 | Thermal zones, only when none is handed on | `count_indoor_environment_zones` by level and `search_indoor_environment` level × all over the quarter: points on the levels that scored |
 
 The author comes from `who_am_i`, passed to `report.py plan` as `--author`, and the company and service names from `BRAND.md`.

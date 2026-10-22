@@ -26,7 +26,7 @@ Under the legend, chart title "Backlog at month end": a stacked bar for each of 
 - **Month end**: every action open as the month closed, on the definition above: raised before the first of the next month, and not closed before it. Its age is counted to the month's last day
 - **The issue month**: the backlog as at the issue date, the count the lists add up to, labelled by its month alone
 - PEAK keeps no priority or status history, so a month end is rebuilt from today's records: an action raised as P3 and later raised to P1 counts at P1 in every month it was open
-- It is shorter than the monthly charts, so it and both lists hold one page
+- It is shorter than the monthly charts, so it and both lists hold one page. Both lists' rows are as tall as an assignee's three lines, so the two sit level
 - It is left out with fewer than two bars
 
 ## Lists
@@ -37,7 +37,7 @@ Two lists side by side, Sites then Assignees, each under a board head with "Open
 | --- | --- |
 | Rank | Position by open P1-2 actions, most first |
 | Logo | Assignees only: the person's company logo, grey; empty for no company |
-| Name | The site name with its region label in brackets, or the person's name with their company after it, each a link with a chevron; under it a bar on the list's own scale, the most open filling it, split by age open with the oldest first |
+| Name | The site name with its region label in brackets, or the person's name, each a link with a chevron. Under a person's name, in muted text, their company and the site holding the most of their open P1-2 actions, ties alphabetical, then "+ {N} sites": "Company A · Site A + 1 site", the site cut short before the count is; under "No assignee", the site holding the most unassigned. Under it all a bar on the list's own scale, the most open filling it, split by age open with the oldest first |
 | Count | Open P1-2 actions |
 
 **Rows and ranking:**

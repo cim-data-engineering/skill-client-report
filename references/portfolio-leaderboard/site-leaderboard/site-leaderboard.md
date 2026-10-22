@@ -26,6 +26,7 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 
 - Best first on the value rounded to 2 decimal places, one more than the board prints. Equal values split alphabetically by site name, ignoring case, so no two sites share a place, and no note explains a tie. A climb that comes from that order stands
 - A site with no figure now is not on that board
+- A site its ranking marks too small to lead ranks after every other site, here and on last month's board, with an asterisk after its name wherever it shows. Under the boards, "* Low rules count, ranked after the other sites." names each starred board's reason once, two joined by "or": "* Low rules count or low zone count, ranked after the other sites."
 - Last month's board ranks every site with a figure on the window it ranked, whether or not the site is on the board now. Movement is the site's place there less its place now. A site with no figure there shows "New"
 
 **Each board** reads in three steps, the leader first. In a portfolio of three sites or fewer, where a climb is mostly two sites swapping places, no board carries the climber:
@@ -53,5 +54,5 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 
 No PEAK calls of its own. The script fetches each leader's photo once from its link, crops it to the band and embeds it as a JPEG. **Takes:**
 
-- **Rankings**: each a label, an anchor or each site's PEAK report, a window (month or quarter), its unit, each site's figure now and on the window last month's board ranked, the decimals to show, and any note
+- **Rankings**: each a label, an anchor or each site's PEAK report, a window (month or quarter), its unit, each site's figure now and on the window last month's board ranked, the decimals to show, any note, and any sites too small to lead with the reason, "Low rules count"
 - **Site facts**: each leader's state, country, building size and building photo link

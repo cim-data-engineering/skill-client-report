@@ -14,6 +14,7 @@ import portfolio_io as pio  # noqa: E402
 
 ANCHOR = "cf-by-site"
 BANDS = [92, 85, 75]
+LOW_ZONES, LOW_NOTE = 20, "Low zone count"      # too few zones to lead: ranked after the other sites
 CHUNK, PAGE = 100, 80
 ZONE_CHUNK = 10              # the zone count returns a row per level and refuses a response over 40,000 characters
 
@@ -62,7 +63,8 @@ def build(ctx, work, shared):
     shared["thermal_zones"] = sum(zones(sid) for sid in sids)
     now = {sid: months[sid][-1] for sid in sids}           # the leaderboard month
     start = {sid: months[sid][-2] for sid in sids}         # the month last month's board ranked
-    order = pio.board_order(scored, now)
+    low = pio.low_coverage({sid: zones(sid) for sid in sids}, LOW_ZONES)
+    order = pio.board_order(scored, now, low)
 
     host = io.host(*ctx["sites"])
     link = lambda sid: ("%s/indoor-environment/thermal-comfort?summary_site_id=%s&summary_ts=%s&site_ids=%s"
@@ -75,7 +77,7 @@ def build(ctx, work, shared):
              "size": pio.num(size[s["site_id"]]),
              "counts": ["{:,}".format(len(levels[s["site_id"]])), "{:,}".format(zones(s["site_id"]))],
              "band": band_text(shared["facts"].get(s["site_id"]) or {}, unit_t(s["site_id"]) if len(t_units) > 1 else None),
-             "months": months[s["site_id"]]} for k, s in order]
+             "months": months[s["site_id"]], "low": s["site_id"] in low} for k, s in order]
     portfolio, change, left = pio.portfolio_months({sid: scores[sid] for sid in sids}, [m[:7] for m in qm])
     heat = {"unit": unit, "dp": 1, "bands": BANDS, "counts": ["Levels", "Zones"], "rows": rows,
             "band_unit": t_units.pop() if len(t_units) == 1 else "",
@@ -85,10 +87,18 @@ def build(ctx, work, shared):
                           "months": portfolio, "change": change}}
     if not any(r["band"] for r in rows):
         heat.pop("band_unit")
+    if low:
+        heat["note"] = "* %s, ranked after the other sites." % LOW_NOTE
     shared.setdefault("rankings", []).append({"label": "Thermal comfort", "anchor": ANCHOR, "window": "month",
-                                              "now": now, "start": start, "dp": 1, "unit": "%"})
+                                              "now": now, "start": start, "dp": 1, "unit": "%",
+                                              "low": sorted(low), "low_note": LOW_NOTE})
 
     chat = []
+    if low:
+        starred = ["%s (%s)" % (s["site_name"].strip(), io.plural(zones(s["site_id"]), "zone")) for _, s in order
+                   if s["site_id"] in low]
+        chat.append("Too few thermal zones to lead, so ranked after the other sites on the thermal comfort board "
+                    "and table, starred: %s." % io.listing(starred))
     if missing:
         chat.append("No thermal comfort score from %s to %s for %s: left out of the thermal comfort table and "
                     "ranking." % (io.month(qm[0]), io.month(qm[-1]), io.listing(missing)))

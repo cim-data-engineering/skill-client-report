@@ -154,8 +154,7 @@ def tickets_link(ctx, site_ids, grouping, assignee_ids=()):
 
 def where(at, site_name):
     """A leader's meta: the site they resolved the most at, ties alphabetical, then '+ N sites' for the rest."""
-    top = min(at, key=lambda s: (-at[s], site_name[s].lower()))
-    return site_name[top] + (" + %s" % io.plural(len(at) - 1, "site") if len(at) > 1 else "")
+    return " ".join(x for x in pio.busiest(at, site_name) if x)
 
 
 def leader_contact(work):
@@ -198,6 +197,7 @@ def build(ctx, work, shared):
         "names": {c: c for c in every}, "now": {c: len(co_now.get(c, ())) or None for c in every},
         "start": {c: len(co_then.get(c, ())) or None for c in every},
         "meta": {c: [where(co_sites[c], site_name)] for c in co_now},
+        "sites": {c: pio.busiest(co_sites[c], site_name) for c in co_now},
         "tiles": {c: {"company": c, "logo": logos.get(c)} for c in co_now},
         "links": {c: tickets_link(ctx, sorted(co_sites[c]), "site", sorted(co_people[c])) for c in co_now}})
 
@@ -208,10 +208,11 @@ def build(ctx, work, shared):
         "label": "Assignees", "noun": "assignees", "window": "quarter", "unit": "actions", "note": NOTE,
         "names": {k: p["label"](k) for k in p["every"]}, "now": p["now"], "start": p["then"],
         "meta": {k: [x for x in (who[k]["company"], where(p["sites"][k], site_name)) if x] for k in p_now},
+        "sites": {k: pio.busiest(p["sites"][k], site_name) for k in p_now},
         "tiles": {k: {"company": who[k]["company"], "logo": logos.get(who[k]["company"])} for k in p_now},
         "links": {k: tickets_link(ctx, sorted(p["sites"][k]), "user_entity", [k]) for k in p_now},
         "shoutouts": {k: {"first": contact[k][0], "email": contact[k][1],
-                          "site": site_name[min(p["sites"][k], key=lambda s: (-p["sites"][k][s], site_name[s].lower()))]}
+                          "site": pio.busiest(p["sites"][k], site_name)[0]}
                       for k in p_now if k in contact and all(contact[k])}})
 
     chat = []
