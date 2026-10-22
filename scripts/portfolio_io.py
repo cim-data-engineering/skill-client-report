@@ -246,6 +246,38 @@ def board_head(ctx, ranks, more=None):
     return {"date": month_name(ctx), "note": " ".join(x for x in (line, more) if x)}
 
 
+def quarter_scores(ctx, scores):
+    """Each site's score for each month of the quarter, None where it has none: ({site_id: [scores]},
+    the sites with any, the names of the sites with none). scores is {site_id: {"YYYY-MM": score}}."""
+    qm = ctx["quarter_months"]
+    months = {s["site_id"]: [scores[s["site_id"]].get(m[:7]) for m in qm] for s in ctx["sites"]}
+    scored = [s for s in ctx["sites"] if any(v is not None for v in months[s["site_id"]])]
+    return months, scored, [s["site_name"].strip() for s in ctx["sites"] if s not in scored]
+
+
+def board_order(scored, now):
+    """[(rank, site)] for a ranked heatmap: ranked on the leaderboard month, then each site with no score
+    that month, alphabetically."""
+    ranked = rank(scored, lambda s: now[s["site_id"]])
+    tail = sorted((s for s in scored if now[s["site_id"]] is None), key=name_key)
+    return ranked + [(len(ranked) + k, s) for k, s in enumerate(tail, 1)]
+
+
+def size_total(size, site_ids):
+    shown = [size[sid] for sid in site_ids if size[sid]]
+    return num(sum(shown)) if shown else "-"
+
+
+def chg_note(ctx, site_ids, left):
+    """' Its Chg compares the 9 sites scored in both July and September.' where sites going live or
+    dropping out leave the portfolio row's change on fewer sites than the table."""
+    qm = ctx["quarter_months"]
+    if not left or len(site_ids) - len(left) <= 0:
+        return ""
+    return " Its Chg compares the %s scored in both %s and %s." % (
+        io.plural(len(site_ids) - len(left), "site"), io.month(qm[0]), io.month(qm[-1]))
+
+
 def mean(values):
     """The plain average of {site_id: value} over the sites with a value: a portfolio row's score."""
     have = [v for v in values.values() if v is not None]

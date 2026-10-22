@@ -436,6 +436,51 @@ def months_text(ctx, months, lead=", and "):
 
 
 # ── charts and rows shared by the sections ──────────────────────────────────
+def kept_months(ctx, on):
+    """(first month kept, the quarter's months from it, the trend's months from it). A site that went
+    live inside the windows keeps the months it was monitored in full; any other keeps them all."""
+    start = on["start"] if on else ctx["trend_months"][0]
+    return start, [m for m in ctx["quarter_months"] if m >= start], [m for m in ctx["trend_months"] if m >= start]
+
+
+def hand_on_start(shared, start, kq, on):
+    """Hand on where a section's months start: the trend window, the reporting period, and the go-live."""
+    shared.setdefault("trend_start", []).append(start)
+    shared.setdefault("period_start", []).append(kq[0])
+    if on:
+        shared.setdefault("live_since", []).append({"month": on["month"], "day": on["day"]})
+
+
+def site_scores(site_m, months):
+    """The site score for each month, as a percentage to 1dp, None for a month with none."""
+    return [pct(site_m[m[:7]]["score"], 1) if m[:7] in site_m else None for m in months]
+
+
+def score_row(ctx, score, bands, kq, site_q, cap, row):
+    """An operational impact score row: its benchmark chip, the score, and the move from the period's
+    first scored month to its last. A movement needs two months."""
+    got = [(m, v) for m, v in zip(kq, site_q) if v is not None]
+    if len(got) > 1:
+        delta, sub = movement(got[0][1], got[-1][1], 1, month(got[0][0]), month_label(ctx, got[-1][0]))
+    else:
+        delta, sub = None, "Scored over %s." % month_label(ctx, kq[0])
+    chip = band(score, bands)
+    return dict({"chip": chip, "chip_class": "pos" if chip in ("Excellent", "Good") else "warn",
+                 "fig": "%.1f%%" % score, "cap": cap, "sub": sub, "row": row}, **({"delta": delta} if delta else {}))
+
+
+def trend_line(ctx, kt, site_m, bands, what):
+    """(the monthly site score chart, the months that scored). A trend needs three points, so with
+    fewer there is no chart."""
+    values = site_scores(site_m, kt)
+    pts = [(m, v) for m, v in zip(kt, values) if v is not None]
+    if len(pts) < 3:
+        return None, pts
+    th = thresholds([v for _, v in pts], bands)
+    return {"values": values, "months": [mon(m) for m in kt], "to_date": kt[-1] == ctx["to_date"],
+            "thresholds": th, "dp": 1,
+            "alt": line_alt(ctx, what, [m for m, _ in pts], [v for _, v in pts], th, 1)}, pts
+
 def thresholds(values, bands):
     """The two benchmark lines Chart 1 draws: one either side where the series sits
     inside a band, otherwise the threshold it crosses plus the next one out."""

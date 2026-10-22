@@ -106,20 +106,65 @@ def floor_key(name):
     return None
 
 
+def month_of(r):
+    return (r.get("date") or "")[:7]
+
+
+def zone_rows(work, keep, kq, shown, temps, unit):
+    """One level means the level row and the site row are the same figure, so the rows are its zones,
+    each month the mean of its points' scores, each with its average temperature where the zone
+    count would go. Returns (rows, label, count heading, site row counts)."""
+    zrows = io.rows(work, "ie/zone-month.json") if work.has("ie/zone-month.json") else []
+    zs, ztemp, znames = defaultdict(lambda: defaultdict(list)), defaultdict(list), {}
+    for r in zrows:
+        if month_of(r) not in keep:
+            continue
+        key = r.get("zone_id") or r.get("fav_id")
+        if r.get("score") is not None:
+            zs[key][month_of(r)].append(r["score"])
+        if r.get("zone_value") is not None:
+            ztemp[key].append(r["zone_value"])
+        znames[key] = r.get("zone_name") or str(key)
+    dup = defaultdict(int)
+    for k in znames:
+        dup[znames[k]] += 1
+    avg = lambda xs: "%.1f %s" % (sum(xs) / len(xs), unit) if xs else "&ndash;"
+    rows = [{"name": znames[k] + ((" " + str(k)[-2:]) if dup[znames[k]] > 1 else ""),
+             "counts": [avg(ztemp[k])],
+             "months": [io.pct(sum(zs[k][m[:7]]) / len(zs[k][m[:7]]), 1) if zs[k][m[:7]] else None for m in kq]}
+            for k in sorted(znames, key=lambda k: znames[k])]
+    return rows, "Zone", ["Avg temp"], [avg([t for l in shown for t in temps[l]])]
+
+
+def level_table(by_level, names, zones, shown, kq, link):
+    """A row per level that scored, in building order: highest first, then ground, then basements."""
+    order = sorted(shown, key=lambda l: (floor_key(names[l]) is not None, -(floor_key(names[l]) or 0), names[l]))
+    return [{"name": names[l], "link": link + "&level_ids=%s" % l,
+             "counts": [zones.get(l, 0)],
+             "months": [io.pct(by_level[l][m[:7]], 1) if m[:7] in by_level[l] else None for m in kq]}
+            for l in order]
+
+
+def unscored_chat(work):
+    level_names = {}
+    if work.has("ie/levels-unscored.json"):
+        level_names = {r["level_id"]: r.get("level_name") for r in work.get("ie/levels-unscored.json").rows}
+    quiet = ["%s (%d points)" % (level_names.get(l) or "level %s" % l, n) for l, n in unscored(work).items()]
+    if not quiet:
+        return []
+    return ["Comfort points are configured on %s, but none returned a score this quarter, so they are in "
+            "neither the comfort table nor the thermal zones figure." % io.listing(quiet)]
+
+
 def build(ctx, work, shared):
     shared.setdefault("partial", [])                  # its scores show the month to date and stand as they are
     qm, tm = ctx["quarter_months"], ctx["trend_months"]
     # a site that went live inside the windows shows only the months it was monitored in full
     site_m = site_months(work)
     on = onboarding(ctx, site_m)
-    start = on["start"] if on else tm[0]
-    kq, kt = [m for m in qm if m >= start], [m for m in tm if m >= start]
-    shared.setdefault("trend_start", []).append(start)
+    start, kq, kt = io.kept_months(ctx, on)
     keep = {m[:7] for m in kq}
-    shared.setdefault("period_start", []).append(kq[0])
-    if on:
-        shared.setdefault("live_since", []).append({"month": on["month"], "day": None})
-    month_of = lambda r: (r.get("date") or "")[:7]
+    io.hand_on_start(shared, start, kq, on)
     sid = ctx["site"]["site_id"]
     host = io.host(ctx["site"])
     dashboard = lambda start: ("%s/indoor-environment/thermal-comfort?summary_site_id=%s&summary_ts=%s&site_ids=%s"
@@ -137,41 +182,15 @@ def build(ctx, work, shared):
     zones = {r["level_id"]: r.get("included_point_count") or 0 for r in work.get("ie/zones-by-level.json").rows}
     shown = [l for l in by_level if any(m[:7] in by_level[l] for m in kq)]
     one = len(kq) == 1                                # one month: the lowest score leads
-
     single = len(by_level) == 1
     if single:
-        # one row per zone, each month the mean of its points' scores
-        zrows = io.rows(work, "ie/zone-month.json") if work.has("ie/zone-month.json") else []
-        zs, ztemp, znames = defaultdict(lambda: defaultdict(list)), defaultdict(list), {}
-        for r in zrows:
-            if month_of(r) not in keep:
-                continue
-            key = r.get("zone_id") or r.get("fav_id")
-            if r.get("score") is not None:
-                zs[key][month_of(r)].append(r["score"])
-            if r.get("zone_value") is not None:
-                ztemp[key].append(r["zone_value"])
-            znames[key] = r.get("zone_name") or str(key)
-        dup = defaultdict(int)
-        for k in znames:
-            dup[znames[k]] += 1
-        avg = lambda xs: "%.1f %s" % (sum(xs) / len(xs), unit) if xs else "&ndash;"
-        rows = [{"name": znames[k] + ((" " + str(k)[-2:]) if dup[znames[k]] > 1 else ""),
-                 "counts": [avg(ztemp[k])],
-                 "months": [io.pct(sum(zs[k][m[:7]]) / len(zs[k][m[:7]]), 1) if zs[k][m[:7]] else None for m in kq]}
-                for k in sorted(znames, key=lambda k: znames[k])]
-        label, counts_head, site_counts = "Zone", ["Avg temp"], [avg([t for l in shown for t in temps[l]])]
+        rows, label, counts_head, site_counts = zone_rows(work, keep, kq, shown, temps, unit)
     else:
-        order = sorted(shown, key=lambda l: (floor_key(names[l]) is not None, -(floor_key(names[l]) or 0), names[l]))
-        rows = [{"name": names[l], "link": link + "&level_ids=%s" % l,
-                 "counts": [zones.get(l, 0)],
-                 "months": [io.pct(by_level[l][m[:7]], 1) if m[:7] in by_level[l] else None for m in kq]}
-                for l in order]
-        label, counts_head = "Level", ["Zones"]
+        rows, label, counts_head = level_table(by_level, names, zones, shown, kq, link), "Level", ["Zones"]
     if one:
         rows.sort(key=lambda r: (r["months"][0] is None, r["months"][0] or 0))
 
-    site_q = [io.pct(site_m[m[:7]]["score"], 1) if m[:7] in site_m else None for m in kq]
+    site_q = io.site_scores(site_m, kq)
     shown_zones = sum(zones.get(l, 0) for l in shown)
     shared["thermal_zones"] = shown_zones
     heat = {"label": label, "dp": 1, "bands": [92, 85, 75], "counts": counts_head, "rows": rows,
@@ -179,41 +198,16 @@ def build(ctx, work, shared):
             "site": {"counts": site_counts if single else [shown_zones], "months": site_q}}
 
     live = kq != qm and work.has("ie/site-all-live.json")
-    site_all = work.get("ie/site-all-live.json" if live else "ie/site-all.json")
-    score = io.pct(site_all.first()["score"], 1)
-    got = [(m, v) for m, v in zip(kq, site_q) if v is not None]
-    if len(got) > 1:
-        delta, sub = io.movement(got[0][1], got[-1][1], 1, io.month(got[0][0]), io.month_label(ctx, got[-1][0]))
-    else:
-        delta, sub = None, "Scored over %s." % io.month_label(ctx, kq[0])   # a movement needs two months
-    impact = [dict({"chip": io.band(score, BANDS), "chip_class": "pos" if io.band(score, BANDS) in ("Excellent", "Good") else "warn",
-                    "fig": "%.1f%%" % score, "cap": "thermal comfort maintained", "sub": sub, "row": "thermal-comfort"},
-                   **({"delta": delta} if delta else {}))]
-
-    # a trend needs three points
-    values = [io.pct(site_m[m[:7]]["score"], 1) if m[:7] in site_m else None for m in kt]
-    pts = [(m, v) for m, v in zip(kt, values) if v is not None]
-    trend = None
-    if len(pts) >= 3:
-        th = io.thresholds([v for _, v in pts], BANDS)
-        trend = {"values": values, "months": [io.mon(m) for m in kt], "to_date": kt[-1] == ctx["to_date"],
-                 "thresholds": th, "dp": 1,
-                 "alt": io.line_alt(ctx, "site thermal comfort score", [m for m, _ in pts], [v for _, v in pts],
-                                    th, 1)}
+    score = io.pct(work.get("ie/site-all-live.json" if live else "ie/site-all.json").first()["score"], 1)
+    impact = [io.score_row(ctx, score, BANDS, kq, site_q, "thermal comfort maintained", "thermal-comfort")]
+    trend, pts = io.trend_line(ctx, kt, site_m, BANDS, "site thermal comfort score")
 
     facts_site = shared.get("site_facts") or {}
     lo, hi = facts_site.get("thermal_comfort_min_temp"), facts_site.get("thermal_comfort_max_temp")
     band_text = ("%g–%g %s across this building" % (lo, hi, unit)) if lo is not None and hi is not None \
         else "typically 21–24.9 °C (68–79 °F)"
 
-    level_names = {}
-    if work.has("ie/levels-unscored.json"):
-        level_names = {r["level_id"]: r.get("level_name") for r in work.get("ie/levels-unscored.json").rows}
-    quiet = ["%s (%d points)" % (level_names.get(l) or "level %s" % l, n) for l, n in unscored(work).items()]
-    chat = []
-    if quiet:
-        chat.append("Comfort points are configured on %s, but none returned a score this quarter, so they are in "
-                    "neither the comfort table nor the thermal zones figure." % io.listing(quiet))
+    chat = unscored_chat(work)
     if on:
         chat.append("Thermal comfort went live in %s, so its figures start with %s." % (
             io.month(on["month"]), io.month_label(ctx, start)) + ("" if trend else " Too few months for its trend."))

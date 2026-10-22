@@ -76,6 +76,59 @@ def sittings(stamps):
     return out
 
 
+def drop_reason(faults, resolved, open_now):
+    """Why the section is out, when nothing was resolved: no alert closed in the quarter leaves the
+    recovery rate no denominator, and no action resolved leaves no one to rank. None when it stays."""
+    if faults and sum(resolved):
+        return None
+    if not faults and not sum(resolved):
+        return ("nothing was resolved, with no alert closed in the quarter and no action resolved in the six "
+                "months. %s open now." % ("1 action is" if open_now == 1 else "%d actions are" % open_now))
+    if not faults:
+        return ("no alert on a running rule was closed in the quarter, so the faults resolved row has no "
+                "recovery rate. The %s resolved over the six months and the %d open now are not shown."
+                % (io.plural(sum(resolved), "action"), open_now))
+    return ("no action was resolved in the six months, so there is no one to rank. The %s closed in the "
+            "quarter and the %s open now are not shown." % (io.plural(faults, "alert"), io.plural(open_now, "action")))
+
+
+def board(work, rows):
+    """(leaderboard, companies with no logo): each assignee's actions resolved and open now, CIM's own
+    system accounts left out, ranked by resolved then completion rate, each beside their company's logo."""
+    company, logo_url = {}, {}
+    for r in rows:
+        for a in r.get("assignees") or []:
+            ent = a.get("entity") or {}
+            if a.get("id") and ent.get("name"):
+                company.setdefault(a["id"], ent["name"])
+                if ent.get("logo_url"):
+                    logo_url.setdefault(ent["name"], ent["logo_url"])
+    entries = {}
+    for f, key in (("ar/resolved-by-assignee.json", "resolved"), ("ar/open-by-assignee.json", "open")):
+        for r in work.get(f).rows:
+            aid, name = r.get("assignee_id"), " ".join((r.get("assignee_name") or "").split())
+            if not aid or io.system_account(aid, name):     # CIM's own system accounts never rank
+                continue
+            e = entries.setdefault(aid, {"name": name, "company": company.get(aid, ""), "resolved": 0, "open": 0})
+            e[key] += r.get("ticket_count") or 0
+    rate = lambda e: e["resolved"] / (e["resolved"] + e["open"]) if e["resolved"] + e["open"] else 0
+    leaderboard = sorted(entries.values(), key=lambda e: (-e["resolved"], -rate(e), e["name"]))
+    names = list(dict.fromkeys(e["company"] for e in leaderboard if e["company"]))
+    logos = io.fetch_logos({n: logo_url[n] for n in names if n in logo_url})
+    for e in leaderboard:
+        if logos.get(e["company"]):
+            e["logo"] = logos[e["company"]]
+    return leaderboard, [n for n in names if not logos.get(n)]
+
+
+def median_text(res_rows, q0, q1, tz):
+    """The median time to resolve over the actions resolved in the quarter: in days, or hours under a day."""
+    in_q = [r for r in res_rows if r.get("status_id") != 8 and r.get("age") is not None and r.get("resolved_at")
+            and q0 <= io.local_day(r["resolved_at"], tz) < q1]
+    med = median(r["age"] for r in in_q) / 86400000 if in_q else None
+    return ("%d days" % round(med) if med >= 1 else "%.1f hours" % (med * 24)) if med is not None else "–"
+
+
 def build(ctx, work, shared):
     tm, (q0, q1), (t0, _) = ctx["trend_months"], ctx["quarter"], ctx["trend"]
     tz = ctx["site"]["timezone"]
@@ -84,58 +137,19 @@ def build(ctx, work, shared):
     resolved = [count("ar/resolved-%s.json" % m[:7]) for m in tm]
     faults = work.get("ar/alerts-closed.json").total or 0
     recovered = work.get("ar/alerts-recovered.json").total or 0
-
-    open_now = work.get("ar/open-rows.json").total or 0
-    if not faults or not sum(resolved):
-        if not faults and not sum(resolved):
-            why = ("nothing was resolved, with no alert closed in the quarter and no action resolved in the six "
-                   "months. %s open now." % ("1 action is" if open_now == 1 else "%d actions are" % open_now))
-        elif not faults:
-            why = ("no alert on a running rule was closed in the quarter, so the faults resolved row has no "
-                   "recovery rate. The %s resolved over the six months and the %d open now are not shown."
-                   % (io.plural(sum(resolved), "action"), open_now))
-        else:
-            why = ("no action was resolved in the six months, so there is no one to rank. The %s closed in the "
-                   "quarter and the %s open now are not shown." % (io.plural(faults, "alert"), io.plural(open_now, "action")))
+    why = drop_reason(faults, resolved, work.get("ar/open-rows.json").total or 0)
+    if why:
         return {"drop": ["alerts-resolved", "key-wins"], "chat": ["Actions and key wins are left out: " + why]}
     shared.setdefault("partial", []).append("action counts")      # only once the section stays
 
     res_rows = io.rows(work, "ar/resolved-rows.json")
-    open_rows = io.rows(work, "ar/open-rows.json")
-    company, logo_url = {}, {}
-    for r in res_rows + open_rows:
-        for a in r.get("assignees") or []:
-            ent = a.get("entity") or {}
-            if a.get("id") and ent.get("name"):
-                company.setdefault(a["id"], ent["name"])
-                if ent.get("logo_url"):
-                    logo_url.setdefault(ent["name"], ent["logo_url"])
-
-    board = {}
-    for f, key in (("ar/resolved-by-assignee.json", "resolved"), ("ar/open-by-assignee.json", "open")):
-        for r in work.get(f).rows:
-            aid, name = r.get("assignee_id"), " ".join((r.get("assignee_name") or "").split())
-            if not aid or io.system_account(aid, name):     # CIM's own system accounts never rank
-                continue
-            e = board.setdefault(aid, {"name": name, "company": company.get(aid, ""), "resolved": 0, "open": 0})
-            e[key] += r.get("ticket_count") or 0
-    rate = lambda e: e["resolved"] / (e["resolved"] + e["open"]) if e["resolved"] + e["open"] else 0
-    leaderboard = sorted(board.values(), key=lambda e: (-e["resolved"], -rate(e), e["name"]))
-    names = list(dict.fromkeys(e["company"] for e in leaderboard if e["company"]))
-    logos = io.fetch_logos({n: logo_url[n] for n in names if n in logo_url})
-    for e in leaderboard:
-        if logos.get(e["company"]):
-            e["logo"] = logos[e["company"]]
-    unlogged = [n for n in names if not logos.get(n)]
-
-    in_q = [r for r in res_rows if r.get("status_id") != 8 and r.get("age") is not None and r.get("resolved_at")
-            and q0 <= io.local_day(r["resolved_at"], tz) < q1]
-    med = median(r["age"] for r in in_q) / 86400000 if in_q else None
-    med_text = ("%d days" % round(med) if med >= 1 else "%.1f hours" % (med * 24)) if med is not None else "–"
+    leaderboard, unlogged = board(work, res_rows + io.rows(work, "ar/open-rows.json"))
     pct_rec = recovered / faults * 100
-    impact = [{"chip": io.band(pct_rec, BANDS), "chip_class": "pos" if io.band(pct_rec, BANDS) in ("Excellent", "Good") else "warn",
+    chip = io.band(pct_rec, BANDS)
+    impact = [{"chip": chip, "chip_class": "pos" if chip in ("Excellent", "Good") else "warn",
                "fig": "{:,}".format(faults), "cap": "faults resolved with %d%% verified recovery" % round(pct_rec),
-               "sub": "Median time to resolve of %s, measured from linked action creation to resolution." % med_text,
+               "sub": "Median time to resolve of %s, measured from linked action creation to resolution."
+                      % median_text(res_rows, q0, q1, tz),
                "row": "faults-resolved"}]
 
     # a run of closures minutes apart is a bulk close-out, not a run of repairs

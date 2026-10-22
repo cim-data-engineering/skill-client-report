@@ -63,30 +63,22 @@ def column_key(name):
     return (FIRST.index(n), "") if n in FIRST else (len(FIRST), n)
 
 
-def build(ctx, work, shared):
-    today = io.d(ctx["today"])
-    size, unit, _ = pio.sizes(ctx, shared["facts"])
-    types, by = {}, defaultdict(lambda: defaultdict(list))     # site -> measure -> ratings
+def ratings_by_site(work):
+    """(rating types by id, {site: {measure: [ratings]}}) for every scored rating with a period end."""
+    types, by = {}, defaultdict(lambda: defaultdict(list))
     for r in pio.rows(work, "ratings/ratings.json"):
         t = r.get("sustainability_rating_type") or {}
         if r.get("score") is None or not r.get("period_end_date"):
             continue
-        tid = r["sustainability_rating_type_id"]
-        types[tid] = t
+        types[r["sustainability_rating_type_id"]] = t
         for m in measures(t):
             by[r["site_id"]][m].append(r)
+    return types, by
 
-    # A type's precision: halves on a scale of ten points or fewer, or any fractional score, print to 1dp.
-    frac = defaultdict(bool)
-    for site in by.values():
-        for rows in site.values():
-            for r in rows:
-                t = types[r["sustainability_rating_type_id"]]
-                frac[r["sustainability_rating_type_id"]] |= (r["score"] != int(r["score"])
-                                                             or (t.get("max_score") or 0) - (t.get("min_score") or 0) <= 10)
-    live = lambda r: bool(r.get("expiry_date")) and io.d(r["expiry_date"]) >= today
 
-    # Per site and measure, the latest rating decides the type; its history keeps to that type.
+def latest_ratings(by):
+    """{(site, measure): (latest rating, the one before of the same type)}. The latest rating decides the
+    type; its history keeps to that type."""
     latest = {}
     for sid, site in by.items():
         for m, rows in site.items():
@@ -94,24 +86,69 @@ def build(ctx, work, shared):
             kind = rows[-1]["sustainability_rating_type_id"]
             same = [r for r in rows if r["sustainability_rating_type_id"] == kind]
             latest[(sid, m)] = (same[-1], same[-2] if len(same) > 1 else None)
+    return latest
+
+
+class Cells:
+    """A rating type's scale and precision, and the table cell a score takes on it. A type rated in
+    fractions, or on a scale of ten points or fewer, prints to 1dp."""
+
+    def __init__(self, types, by):
+        self.types, self.frac = types, defaultdict(bool)
+        for site in by.values():
+            for rows in site.values():
+                for r in rows:
+                    t = types[r["sustainability_rating_type_id"]]
+                    self.frac[r["sustainability_rating_type_id"]] |= (
+                        r["score"] != int(r["score"]) or (t.get("max_score") or 0) - (t.get("min_score") or 0) <= 10)
+
+    def show(self, score, tid):
+        return "%.1f" % score if self.frac[tid] else "%d" % round(score)
+
+    def cell(self, score, tid, expired=False, prev=None):
+        t = self.types[tid]
+        lo, hi = t.get("min_score") or 0.0, t.get("max_score") or 6.0
+        c = {"value": self.show(score, tid),
+             "pct": max(0.0, min(100.0, (score - lo) / (hi - lo) * 100 if hi > lo else 0)), "expired": expired}
+        if prev is not None and not expired and self.show(prev, tid) != self.show(score, tid):
+            c["move"] = "up" if score > prev else "down"     # an expired rating says how it stood, not where it is going
+        return c
+
+
+def portfolio_cell(cells, latest, size, m, live):
+    """The portfolio row's cell for a measure: current ratings only, weighted by building size, and only
+    where one rating type fills the column, since scales differ between types, and two or more sites
+    hold one, since a single site's rating is not the portfolio's. Its arrow compares the same sites'
+    previous ratings, weighted the same way."""
+    cur = {sid: latest[(sid, mm)] for (sid, mm) in latest if mm == m and live(latest[(sid, mm)][0])}
+    kinds = {c["sustainability_rating_type_id"] for c, _ in cur.values()}
+    if len(kinds) != 1 or sum(1 for sid in cur if size.get(sid)) < 2:
+        return None
+    tid = kinds.pop()
+    now = weighted({sid: c["score"] for sid, (c, _) in cur.items()}, size)
+    if now is None:
+        return None
+    both = {sid: (c, p) for sid, (c, p) in cur.items() if p and size.get(sid)}
+    before = after = None
+    if both:
+        after = weighted({sid: c["score"] for sid, (c, _) in both.items()}, size)
+        before = weighted({sid: p["score"] for sid, (_, p) in both.items()}, size)
+    c = cells.cell(now, tid)
+    if before is not None and cells.show(after, tid) != cells.show(before, tid):
+        c["move"] = "up" if after > before else "down"
+    return c
+
+
+def build(ctx, work, shared):
+    today = io.d(ctx["today"])
+    size, unit, _ = pio.sizes(ctx, shared["facts"])
+    types, by = ratings_by_site(work)
+    cells = Cells(types, by)
+    live = lambda r: bool(r.get("expiry_date")) and io.d(r["expiry_date"]) >= today
+    latest = latest_ratings(by)
     columns = sorted({m for (sid, m), (cur, _) in latest.items() if live(cur)}, key=column_key)
     if not columns:
         return {"drop": [NAME]}
-
-    def scale(tid):
-        t = types[tid]
-        return t.get("min_score") or 0.0, t.get("max_score") or 6.0
-
-    def show(score, tid):
-        return "%.1f" % score if frac[tid] else "%d" % round(score)
-
-    def cell(score, tid, expired=False, prev=None):
-        lo, hi = scale(tid)
-        c = {"value": show(score, tid), "pct": max(0.0, min(100.0, (score - lo) / (hi - lo) * 100 if hi > lo else 0)),
-             "expired": expired}
-        if prev is not None and not expired and show(prev, tid) != show(score, tid):
-            c["move"] = "up" if score > prev else "down"     # an expired rating says how it stood, not where it is going
-        return c
 
     host = io.host(*ctx["sites"])
     link = lambda ids: "%s/dashboard/ratings?%s&ratings_type_id_or_filter=all_ratings" % (
@@ -119,44 +156,19 @@ def build(ctx, work, shared):
     rows, shown = [], []
     for s in by_size(ctx, size):
         sid = s["site_id"]
-        cells = []
+        row = []
         for m in columns:
             if (sid, m) not in latest:
-                cells.append(None)
+                row.append(None)
                 continue
             cur, prev = latest[(sid, m)]
-            cells.append(cell(cur["score"], cur["sustainability_rating_type_id"], not live(cur),
-                              prev["score"] if prev else None))
-        if any(cells):
+            row.append(cells.cell(cur["score"], cur["sustainability_rating_type_id"], not live(cur),
+                                  prev["score"] if prev else None))
+        if any(row):
             shown.append(sid)
             rows.append({"name": s["site_name"].strip(), "state": pio.region(ctx, s), "link": link([sid]),
-                         "size": pio.num(size[sid]), "cells": cells})
-
-    # The portfolio row: current ratings only, weighted by building size, and only where one rating
-    # type fills the column, since scales differ between types, and two or more sites hold one, since a
-    # single site's rating is not the portfolio's. Its arrow compares the same sites' previous ratings,
-    # weighted the same way.
-    portfolio = []
-    for m in columns:
-        cur = {sid: latest[(sid, mm)] for (sid, mm) in latest if mm == m and live(latest[(sid, mm)][0])}
-        kinds = {c["sustainability_rating_type_id"] for c, _ in cur.values()}
-        if len(kinds) != 1 or sum(1 for sid in cur if size.get(sid)) < 2:
-            portfolio.append(None)
-            continue
-        tid = kinds.pop()
-        now = weighted({sid: c["score"] for sid, (c, _) in cur.items()}, size)
-        if now is None:
-            portfolio.append(None)
-            continue
-        both = {sid: (c, p) for sid, (c, p) in cur.items() if p and size.get(sid)}
-        before = after = None
-        if both:
-            after = weighted({sid: c["score"] for sid, (c, _) in both.items()}, size)
-            before = weighted({sid: p["score"] for sid, (_, p) in both.items()}, size)
-        c = cell(now, tid)
-        if before is not None and show(after, tid) != show(before, tid):
-            c["move"] = "up" if after > before else "down"
-        portfolio.append(c)
+                         "size": pio.num(size[sid]), "cells": row})
+    portfolio = [portfolio_cell(cells, latest, size, m, live) for m in columns]
     pio.shown(shared, shown)
     sized = [size[sid] for sid in shown if size[sid]]
     return {

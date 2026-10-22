@@ -51,18 +51,14 @@ def build(ctx, work, shared):
         if r.get("metadata_type_id") not in io.SYSTEM_TYPES:
             equip[r["site_id"]].add(r["equipment_id"])
 
-    months = lambda sid: [scores[sid].get(m[:7]) for m in qm]
-    scored = [s for s in ctx["sites"] if any(v is not None for v in months(s["site_id"]))]
-    missing = [s["site_name"].strip() for s in ctx["sites"] if s not in scored]
+    months, scored, missing = pio.quarter_scores(ctx, scores)
     if not scored:
         return {"drop": [NAME]}
 
     pio.shown(shared, [s["site_id"] for s in scored])
-    now = {s["site_id"]: months(s["site_id"])[-1] for s in scored}         # the leaderboard month
-    start = {s["site_id"]: months(s["site_id"])[-2] for s in scored}       # the month last month's board ranked
-    ranked = pio.rank(scored, lambda s: now[s["site_id"]])
-    tail = sorted((s for s in scored if now[s["site_id"]] is None), key=pio.name_key)
-    order = ranked + [(len(ranked) + k, s) for k, s in enumerate(tail, 1)]
+    now = {s["site_id"]: months[s["site_id"]][-1] for s in scored}         # the leaderboard month
+    start = {s["site_id"]: months[s["site_id"]][-2] for s in scored}       # the month last month's board ranked
+    order = pio.board_order(scored, now)
 
     host = io.host(*ctx["sites"])
     link = lambda sid: ("%s/dashboard/equipment-health?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
@@ -70,12 +66,11 @@ def build(ctx, work, shared):
     rows = [{"rank": k, "name": s["site_name"].strip(), "state": pio.region(ctx, s), "link": link(s["site_id"]),
              "size": pio.num(size[s["site_id"]]),
              "counts": ["{:,}".format(len(equip[s["site_id"]])), "{:,}".format(rules[s["site_id"]])],
-             "months": months(s["site_id"])} for k, s in order]
+             "months": months[s["site_id"]]} for k, s in order]
     sids = [s["site_id"] for s in scored]
     portfolio, change, left = pio.portfolio_months({sid: scores[sid] for sid in sids}, [m[:7] for m in qm])
-    shown_size = [size[sid] for sid in sids if size[sid]]
     heat = {"unit": unit, "dp": 1, "bands": BANDS, "counts": ["Equip", "Rules"], "rows": rows,
-            "portfolio": {"size": pio.num(sum(shown_size)) if shown_size else "-",
+            "portfolio": {"size": pio.size_total(size, sids),
                           "counts": ["{:,}".format(sum(len(equip[sid]) for sid in sids)),
                                      "{:,}".format(sum(rules[sid] for sid in sids))],
                           "months": portfolio, "change": change}}
@@ -98,10 +93,8 @@ def build(ctx, work, shared):
                         "busiest. Those months cover part of the plant, from an outage or rules still going live, so "
                         "its change and its place on the board are not the plant's alone."
                         % (s["site_name"].strip(), io.listing(low), "{:,}".format(most)))
-    note = "%s. Share of automated checks that found no fault." % pio.reporting_period(ctx)
-    if left and len(sids) - len(left) > 0:
-        note += " Its Chg compares the %s scored in both %s and %s." % (
-            io.plural(len(sids) - len(left), "site"), io.month(qm[0]), io.month(qm[-1]))
+    note = "%s. Share of automated checks that found no fault.%s" % (pio.reporting_period(ctx),
+                                                                      pio.chg_note(ctx, sids, left))
     return {
         "equipment_health": heat,
         "datelines": {"Equipment health snapshot": note},

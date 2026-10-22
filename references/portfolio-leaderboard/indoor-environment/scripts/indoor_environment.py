@@ -54,20 +54,16 @@ def build(ctx, work, shared):
     zones = lambda sid: sum(points.get(l, (sid, 0))[1] for l in levels[sid])
     shared["zones_configured"] = sum(n for _, n in points.values())
 
-    months = lambda sid: [scores[sid].get(m[:7]) for m in qm]
-    scored = [s for s in ctx["sites"] if any(v is not None for v in months(s["site_id"]))]
-    missing = [s["site_name"].strip() for s in ctx["sites"] if s not in scored]
+    months, scored, missing = pio.quarter_scores(ctx, scores)
     if not scored:
         return {"drop": [NAME]}
 
     sids = [s["site_id"] for s in scored]
     pio.shown(shared, sids)
     shared["thermal_zones"] = sum(zones(sid) for sid in sids)
-    now = {sid: months(sid)[-1] for sid in sids}           # the leaderboard month
-    start = {sid: months(sid)[-2] for sid in sids}         # the month last month's board ranked
-    ranked = pio.rank(scored, lambda s: now[s["site_id"]])
-    tail = sorted((s for s in scored if now[s["site_id"]] is None), key=pio.name_key)
-    order = ranked + [(len(ranked) + k, s) for k, s in enumerate(tail, 1)]
+    now = {sid: months[sid][-1] for sid in sids}           # the leaderboard month
+    start = {sid: months[sid][-2] for sid in sids}         # the month last month's board ranked
+    order = pio.board_order(scored, now)
 
     host = io.host(*ctx["sites"])
     link = lambda sid: ("%s/indoor-environment/thermal-comfort?summary_site_id=%s&summary_ts=%s&site_ids=%s"
@@ -80,12 +76,11 @@ def build(ctx, work, shared):
              "size": pio.num(size[s["site_id"]]),
              "counts": ["{:,}".format(len(levels[s["site_id"]])), "{:,}".format(zones(s["site_id"]))],
              "band": band_text(shared["facts"].get(s["site_id"]) or {}, unit_t(s["site_id"]) if len(t_units) > 1 else None),
-             "months": months(s["site_id"])} for k, s in order]
+             "months": months[s["site_id"]]} for k, s in order]
     portfolio, change, left = pio.portfolio_months({sid: scores[sid] for sid in sids}, [m[:7] for m in qm])
-    shown_size = [size[sid] for sid in sids if size[sid]]
     heat = {"unit": unit, "dp": 1, "bands": BANDS, "counts": ["Levels", "Zones"], "rows": rows,
             "band_unit": t_units.pop() if len(t_units) == 1 else "",
-            "portfolio": {"size": pio.num(sum(shown_size)) if shown_size else "-",
+            "portfolio": {"size": pio.size_total(size, sids),
                           "counts": ["{:,}".format(sum(len(levels[sid]) for sid in sids)),
                                      "{:,}".format(shared["thermal_zones"])],
                           "months": portfolio, "change": change}}
@@ -98,11 +93,8 @@ def build(ctx, work, shared):
     if missing:
         chat.append("No thermal comfort score from %s to %s for %s: left out of the thermal comfort table and "
                     "ranking." % (io.month(qm[0]), io.month(qm[-1]), io.listing(missing)))
-    note = ("%s. Share of zone readings inside the site's comfort band during working hours."
-            % pio.reporting_period(ctx))
-    if left and len(sids) - len(left) > 0:
-        note += " Its Chg compares the %s scored in both %s and %s." % (
-            io.plural(len(sids) - len(left), "site"), io.month(qm[0]), io.month(qm[-1]))
+    note = ("%s. Share of zone readings inside the site's comfort band during working hours.%s"
+            % (pio.reporting_period(ctx), pio.chg_note(ctx, sids, left)))
     return {
         "comfort": heat,
         "datelines": {"Indoor environment health snapshot": note},

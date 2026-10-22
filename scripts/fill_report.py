@@ -187,9 +187,10 @@ def line_chart(d):
     # Value labels sit above or below each point; a threshold label takes the first of
     # four places (left or right end, above or below its line) that no value label, point
     # or stretch of the line covers, else the first such place further along its line.
+    label_y = lambda val: y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10   # under the point, or over it near the baseline
     boxes = []
     for x, val, _ in pts:
-        ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
+        ly = label_y(val)
         w = 6.2 * len("%.*f%%" % (dp, val))
         boxes.append((x - w / 2 - 3, ly - 10, x + w / 2 + 3, ly + 3))
         boxes.append((x - 6, y(val) - 6, x + 6, y(val) + 6))
@@ -232,8 +233,7 @@ def line_chart(d):
     out += ['        <circle cx="%d" cy="%.1f" r="4.5" class="%s"/>'
             % (x, y(val), "pt todate-pt" if part and i == last else "pt") for x, val, i in pts]
     for x, val, _ in pts:
-        ly = y(val) + 18 if y(val) + 22 < BASELINE else y(val) - 10
-        out.append('        <text class="val" x="%d" y="%.1f" text-anchor="middle">%.*f%%</text>' % (x, ly, dp, val))
+        out.append('        <text class="val" x="%d" y="%.1f" text-anchor="middle">%.*f%%</text>' % (x, label_y(val), dp, val))
     out += ['        <text class="axis" x="%d" y="216" text-anchor="middle">%s</text>' % (x, m)
             for x, m in zip(C, months)]
     band, sub = to_date_marks(months, to_date)
@@ -494,6 +494,136 @@ def fill_slots(s, D):
     return s
 
 
+# ── the parts the sections fill ─────────────────────────────────────────────
+TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+          'stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" '
+          'aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>'
+          '<path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>'
+          '<path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>'
+          '<path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>')
+CHARTS = (("trend_eh", "Site equipment health score", "line"),
+          ("trend_checks", "Automated health checks", "bar"),
+          ("trend_comfort", "Site thermal comfort score", "line"),
+          ("alerts", "Faults triaged and resolved", "bar"))
+
+
+def scaffold(sections):
+    tmp = tempfile.mktemp(suffix=".html")
+    subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "scaffold",
+                    "--sections", sections, "--out", tmp], check=True, capture_output=True)
+    s = open(tmp, encoding="utf-8").read()
+    os.unlink(tmp)
+    return s
+
+
+def fill_impact(s, impact):
+    """The operational impact rows, in the order the skill fixes."""
+    rows = []
+    for r in impact:
+        sub = r["sub"]
+        if r.get("delta"):
+            d = r["delta"]
+            glyph = "&uarr; Up" if d["dir"] == "up" else "&darr; Down"
+            cls = "pos" if d["dir"] == "up" else "neu"
+            sub = '<span class="delta %s">%s %s</span> %s' % (cls, glyph, d["amount"], sub)
+        rows.append('  <div class="irow">\n    <span class="chip %s">%s</span>\n    <div>\n'
+                    '      <span class="fig">%s</span> <span class="figcap">%s</span>\n'
+                    '      <div class="isub">%s</div>\n    </div>\n  </div>'
+                    % (r.get("chip_class", "neu"), r["chip"], r["fig"], r["cap"], sub))
+    i = s.index('  <div class="irow">')
+    j = s.rindex("</div>", i, s.index('<div class="seclinks">', i)) + len("</div>")
+    return s[:i] + "\n\n".join(rows) + "\n\n" + s[j:].lstrip("\n")
+
+
+def fill_charts(s, D):
+    for key, anchor, kind in CHARTS:
+        if key not in D:
+            continue
+        c = D[key]
+        if c is None:                     # a trend too short to draw: the section left it out
+            s = drop_chart(s, anchor)
+            continue
+        s = swap_svg(s, anchor, line_chart(c) if kind == "line" else grouped_bar(c))
+        if c.get("note"):
+            s = note(s, c["note_after"], c["note"])
+    return s
+
+
+def fill_ratings(s, ratings):
+    """The scaffold's sample cards and charts swapped for the site's own."""
+    i = s.index('<div class="ratings"')
+    j = s.index("<!-- /ratings -->", i) + len("<!-- /ratings -->")
+    body = [rating_cards(ratings["cards"])] + [rating_chart(c) for c in ratings["charts"]]
+    return s[:i] + '<div class="ratings">\n' + "\n".join(body) + "\n  </div>" + s[j:]
+
+
+def fill_leaderboard(s, entries):
+    rows, tr, to = [], 0, 0
+    for k, e in enumerate(entries, 1):
+        res, op = e["resolved"], e["open"]
+        tr += res; to += op
+        pct = res / (res + op) * 100 if res + op else 0
+        # the company logo in a square tile beside the name, as PEAK shows it; its initials without one
+        co = html.escape(e["company"])
+        tile = ('<span class="logo"><img src="%s" alt="%s" title="%s"></span>' % (e["logo"], co, co) if e.get("logo")
+                else '<span class="logo none" title="%s">%s</span>' % (co, initials(e["company"])))
+        rows.append('      <tr><td class="rank">%s</td><td class="assignee"><span class="who">%s<span class="nm">%s</span>'
+                    '</span></td><td class="co">%s</td>'
+                    '<td class="num">%s</td><td><span class="scorecell"><span class="track">'
+                    '<span class="fill" style="width:%.1f%%"></span></span><span class="sval">%.0f%%</span>'
+                    '</span></td><td class="num %s">%d</td></tr>'
+                    % (TROPHY if k == 1 else k, tile, e["name"], e["company"], f"{res:,}", pct, pct,
+                       "open-zero" if op == 0 else "open-hot", op))
+    tp = tr / (tr + to) * 100 if tr + to else 0
+    rows.append('      <tr class="total"><td></td><td>Total</td><td></td><td class="num">%s</td>'
+                '<td><span class="scorecell"><span class="track"><span class="fill" style="width:%.1f%%">'
+                '</span></span><span class="sval">%.0f%%</span></span></td><td class="num">%d</td></tr>'
+                % (f"{tr:,}", tp, tp, to))
+    i = s.index("Who closed the work")
+    t0 = s.index("<tbody>", i) + len("<tbody>")
+    return s[:t0] + "\n" + "\n".join(rows) + "\n    " + s[s.index("</tbody>", t0):]
+
+
+def win_block(w, base, photos_out):
+    """One win card. One photo sits beside the text; two to four run in a row under the heading."""
+    photos = w.get("photos") or []
+    if len(photos) > MAX_PHOTOS:
+        sys.exit("fill: %d photos on %r — %d at most (references/single-site/actions-and-wins/key-wins.md)"
+                 % (len(photos), w["heading"], MAX_PHOTOS))
+    side = len(photos) == 1
+    pad = "      " if side else "    "
+    b = ""
+    # A win without an impact prints no tag, never one its action tickets did not carry.
+    if w.get("impact"):
+        k = w["impact"]
+        if k not in IMPACTS:
+            sys.exit("fill: unknown win impact %r — one of %s" % (k, ", ".join(IMPACTS)))
+        b += pad + '<p class="impact %s"><i></i>%s</p>\n' % (k, IMPACTS[k])
+    b += pad + '<h3>%s</h3>\n' % w["heading"]
+    if w.get("level"):
+        lv = w["level"] if isinstance(w["level"], list) else [w["level"]]
+        b += pad + '<p class="where"><span class="k">%s</span>%s</p>\n' % (
+            "Levels" if len(lv) > 1 else "Level", ", ".join(lv))
+    if photos and not side:
+        b += pad + photo_row(photos, base, photos_out, name=None) + "\n"
+    b += pad + '<p>%s</p>\n' % w["body"]
+    b += pad + '<p class="refs">' + " &middot; ".join(
+        '<a href="%s">%s</a>' % (href(r["url"]), r["title"]) for r in w["refs"]) + '</p>\n'
+    if side:
+        return ('  <div class="win compact">\n    %s\n    <div class="wtext">\n%s    </div>\n  </div>'
+                % (photo_row(photos, base, photos_out, name=None), b))
+    return '  <div class="win">\n' + b + '  </div>'
+
+
+def fill_wins(s, wins, base, photos_out):
+    m = re.search(r'  <div class="win[ "]', s)
+    if not m:
+        sys.exit("fill: the bundle carries wins but key-wins is not in its sections")
+    i = m.start()
+    j = s.rindex("</div>", i, s.index("</section>", i)) + len("</div>")
+    return s[:i] + "\n\n".join(win_block(w, base, photos_out) for w in wins) + s[j:]
+
+
 # ── main ────────────────────────────────────────────────────────────────────
 def main():
     ap = argparse.ArgumentParser()
@@ -504,144 +634,25 @@ def main():
     if a.photos_out:
         os.makedirs(a.photos_out, exist_ok=True)
     D = json.load(open(a.data, encoding="utf-8"))
-    sections = D.get("sections", "all")     # empty when every section dropped itself: the frame alone
-
-    tmp = tempfile.mktemp(suffix=".html")
-    subprocess.run([sys.executable, os.path.join(HERE, "build_report.py"), "scaffold",
-                    "--sections", sections, "--out", tmp], check=True, capture_output=True)
-    s = open(tmp, encoding="utf-8").read()
-    os.unlink(tmp)
-
-    # named slots: masthead, overview, statements, date lines, notes, run hours
-    s = fill_slots(s, D)
-
-    # section and chart-source links, by slot
+    # empty when every section dropped itself: the frame alone
+    s = scaffold(D.get("sections", "all"))
+    s = fill_slots(s, D)                  # masthead, overview, statements, date lines, notes, run hours
     if "links" in D:
         s = set_links(s, D["links"])
-
-    # operational impact rows, in the order the skill fixes
     if D.get("impact"):
-        rows = []
-        for r in D["impact"]:
-            sub = r["sub"]
-            if r.get("delta"):
-                d = r["delta"]
-                glyph = "&uarr; Up" if d["dir"] == "up" else "&darr; Down"
-                cls = "pos" if d["dir"] == "up" else "neu"
-                sub = '<span class="delta %s">%s %s</span> %s' % (cls, glyph, d["amount"], sub)
-            rows.append('  <div class="irow">\n    <span class="chip %s">%s</span>\n    <div>\n'
-                        '      <span class="fig">%s</span> <span class="figcap">%s</span>\n'
-                        '      <div class="isub">%s</div>\n    </div>\n  </div>'
-                        % (r.get("chip_class", "neu"), r["chip"], r["fig"], r["cap"], sub))
-        i = s.index('  <div class="irow">')
-        j = s.rindex("</div>", i, s.index('<div class="seclinks">', i)) + len("</div>")
-        s = s[:i] + "\n\n".join(rows) + "\n\n" + s[j:].lstrip("\n")
-
-    # heatmaps
+        s = fill_impact(s, D["impact"])
     if "equipment_health" in D:
         s = swap(s, '<th class="ct">Equip</th>', heatmap(D["equipment_health"]))
     if "comfort" in D:
         s = swap(s, '<th class="lv">Level</th>', heatmap(D["comfort"]))
-
-    # charts
-    for key, anchor, kind in (("trend_eh", "Site equipment health score", "line"),
-                              ("trend_checks", "Automated health checks", "bar"),
-                              ("trend_comfort", "Site thermal comfort score", "line"),
-                              ("alerts", "Faults triaged and resolved", "bar")):
-        if key not in D:
-            continue
-        c = D[key]
-        if c is None:                     # a trend too short to draw: the section left it out
-            s = drop_chart(s, anchor)
-            continue
-        svg = line_chart(c) if kind == "line" else grouped_bar(c)
-        s = swap_svg(s, anchor, svg)
-        if c.get("note"):
-            s = note(s, c["note_after"], c["note"])
-
-    # sustainability ratings: the scaffold's sample cards and charts swapped for the site's own
+    s = fill_charts(s, D)
     if "ratings" in D:
-        i = s.index('<div class="ratings"')
-        j = s.index("<!-- /ratings -->", i) + len("<!-- /ratings -->")
-        body = [rating_cards(D["ratings"]["cards"])] + [rating_chart(c) for c in D["ratings"]["charts"]]
-        s = s[:i] + '<div class="ratings">\n' + "\n".join(body) + "\n  </div>" + s[j:]
-
-    # leaderboard
+        s = fill_ratings(s, D["ratings"])
     if "leaderboard" in D:
-        TR = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-              'stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" '
-              'aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>'
-              '<path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>'
-              '<path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>'
-              '<path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>')
-        rows, tr, to = [], 0, 0
-        for k, e in enumerate(D["leaderboard"], 1):
-            res, op = e["resolved"], e["open"]
-            tr += res; to += op
-            pct = res / (res + op) * 100 if res + op else 0
-            # the company logo in a square tile beside the name, as PEAK shows it; its initials without one
-            co = html.escape(e["company"])
-            tile = ('<span class="logo"><img src="%s" alt="%s" title="%s"></span>' % (e["logo"], co, co) if e.get("logo")
-                    else '<span class="logo none" title="%s">%s</span>' % (co, initials(e["company"])))
-            rows.append('      <tr><td class="rank">%s</td><td class="assignee"><span class="who">%s<span class="nm">%s</span>'
-                        '</span></td><td class="co">%s</td>'
-                        '<td class="num">%s</td><td><span class="scorecell"><span class="track">'
-                        '<span class="fill" style="width:%.1f%%"></span></span><span class="sval">%.0f%%</span>'
-                        '</span></td><td class="num %s">%d</td></tr>'
-                        % (TR if k == 1 else k, tile, e["name"], e["company"], f"{res:,}", pct, pct,
-                           "open-zero" if op == 0 else "open-hot", op))
-        tp = tr / (tr + to) * 100 if tr + to else 0
-        rows.append('      <tr class="total"><td></td><td>Total</td><td></td><td class="num">%s</td>'
-                    '<td><span class="scorecell"><span class="track"><span class="fill" style="width:%.1f%%">'
-                    '</span></span><span class="sval">%.0f%%</span></span></td><td class="num">%d</td></tr>'
-                    % (f"{tr:,}", tp, tp, to))
-        i = s.index("Who closed the work")
-        t0 = s.index("<tbody>", i) + len("<tbody>")
-        s = s[:t0] + "\n" + "\n".join(rows) + "\n    " + s[s.index("</tbody>", t0):]
-
-    # key wins
+        s = fill_leaderboard(s, D["leaderboard"])
     if "wins" in D:
-        base = os.path.dirname(os.path.abspath(a.data))   # photo paths are relative to the bundle
-        blocks = []
-        for w in D["wins"]:
-            photos = w.get("photos") or []
-            if len(photos) > MAX_PHOTOS:
-                sys.exit("fill: %d photos on %r — %d at most (references/single-site/actions-and-wins/key-wins.md)"
-                         % (len(photos), w["heading"], MAX_PHOTOS))
-            # One photo sits beside the text; two to four run in a row under the heading.
-            side = len(photos) == 1
-            pad = "      " if side else "    "
-            b = ""
-            # A win without an impact prints no tag, never one its action
-            # tickets did not carry.
-            if w.get("impact"):
-                k = w["impact"]
-                if k not in IMPACTS:
-                    sys.exit("fill: unknown win impact %r — one of %s" % (k, ", ".join(IMPACTS)))
-                b += pad + '<p class="impact %s"><i></i>%s</p>\n' % (k, IMPACTS[k])
-            b += pad + '<h3>%s</h3>\n' % w["heading"]
-            if w.get("level"):
-                lv = w["level"] if isinstance(w["level"], list) else [w["level"]]
-                b += pad + '<p class="where"><span class="k">%s</span>%s</p>\n' % (
-                    "Levels" if len(lv) > 1 else "Level", ", ".join(lv))
-            if photos and not side:
-                b += pad + photo_row(photos, base, a.photos_out, name=None) + "\n"
-            b += pad + '<p>%s</p>\n' % w["body"]
-            b += pad + '<p class="refs">' + " &middot; ".join(
-                '<a href="%s">%s</a>' % (href(r["url"]), r["title"]) for r in w["refs"]) + '</p>\n'
-            if side:
-                b = ('  <div class="win compact">\n    %s\n    <div class="wtext">\n%s    </div>\n  </div>'
-                     % (photo_row(photos, base, a.photos_out, name=None), b))
-            else:
-                b = '  <div class="win">\n' + b + '  </div>'
-            blocks.append(b)
-        m = re.search(r'  <div class="win[ "]', s)
-        if not m:
-            sys.exit("fill: the bundle carries wins but key-wins is not in its sections")
-        i = m.start()
-        j = s.rindex("</div>", i, s.index("</section>", i)) + len("</div>")
-        s = s[:i] + "\n\n".join(blocks) + s[j:]
-
+        # photo paths are relative to the bundle
+        s = fill_wins(s, D["wins"], os.path.dirname(os.path.abspath(a.data)), a.photos_out)
     open(a.out, "w", encoding="utf-8").write(s)
     n = s.count("<figure>")
     print("wrote %s" % a.out + (", %d KB with %d photos embedded" % (len(s) // 1024, n) if n else ""))
