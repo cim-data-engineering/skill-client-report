@@ -75,6 +75,7 @@ Every win is written by the partner's engineer to the owner. Write like a buildi
 - Where a win links several tickets whose impacts differ, take the most severe: `safety`, then `reliability`, `comfort`, `energy`, `water`, `other`. Never a compound tag, and never two tags on one win
 - Where the tickets carry no impact at all, or carry `other`, the tag is `Other`. The script names each such ticket in chat, so the impact can be set in PEAK and the report re-run
 - Say where it stands. A win in flight is written as in flight: what was found, who has it, what happens next
+- Finished repairs sit under a Fixed label and work in flight under an In progress label after them, each label shown even where every win is one kind. The script sets both from each win's `state`
 - Two to three sentences: what was wrong, what was changed, why it matters
 - Where any of the win's tickets reference a saving, in the savings field, the description, the solution or a comment, state it, and wrap the figure in `**` to set it bold: "…closed by 24 June, with an estimated saving of **$6,800**." Give it in the site's currency, rounded sensibly and summed across the win's tickets. On a win in flight it is the expected saving.
 - Under 200 in the site's currency, state the saving without its figure: "…with an expected saving." The fill drops any figure under 200

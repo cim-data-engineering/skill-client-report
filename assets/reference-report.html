@@ -228,6 +228,10 @@ table.hm{table-layout:fixed}
 /* Key wins */
 .win{border:1px solid var(--outline);border-radius:14px;padding:20px 24px}
 .win + .win{margin-top:16px}
+/* Win group: where the wins under it stand, Fixed then In progress */
+.wgroup{display:flex;align-items:center;gap:12px;margin:32px 0 14px}
+.wgroup:first-of-type{margin-top:0}
+.wgroup::after{content:"";flex:1;height:1px;background:var(--outline)}
 .win h3{font-family:var(--display);font-size:1.0625rem;font-weight:600;line-height:1.35;color:var(--text-heading);margin:0 0 8px}
 .win p{margin:0;font-size:.9375rem}
 /* Savings — the figure the win's tickets record, the one emphasis in its text */
@@ -278,7 +282,7 @@ section.notes{background:var(--surface-dim)}
   /* Never split across pages */
   .mast,.sechead,.statgrid,.nbgrid,.irow,.chartblock,.chart,.win,.notes,.notes li,table,tr{break-inside:avoid}
   /* A heading or key stays with what it introduces */
-  .sechead,.charttitle,.legend,.bandkey,.rh-g{break-after:avoid}
+  .sechead,.charttitle,.legend,.bandkey,.rh-g,.wgroup{break-after:avoid}
   /* and a link, source line, total or closing strip stays with what it follows */
   .seclinks,.chartsource,.chartnote,tr.total,.rh-end{break-before:avoid}
   /* A table under about half a page moves to the next page whole. A longer one would
@@ -856,6 +860,8 @@ L06</title>AC-07 &rsaquo;</text></a><text class="rh-where" x="162" y="15.0" text
     <h2>What changed in the building this quarter</h2>
     <p class="h2note">Faults found by continuous monitoring and fixed on the floor, with recovery verified in PEAK.</p>
   </div>
+
+  <h3 class="wgroup"><span class="chip pos">Fixed</span></h3>
 
   <div class="win">
     <p class="impact reliability"><i></i>Reliability</p>
