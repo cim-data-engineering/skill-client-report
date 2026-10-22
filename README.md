@@ -2,6 +2,10 @@
 
 A PEAK skill that builds a client-facing building performance report as a print-ready HTML page: a quarterly review for one site, or a monthly performance leaderboard across a client's portfolio.
 
+| Site quarterly review | Portfolio leaderboard |
+| --- | --- |
+| [![Site quarterly review sample](docs/site-report.png)](docs/site-report.pdf) | [![Portfolio leaderboard sample](docs/portfolio.png)](docs/portfolio.pdf) |
+
 ## Install
 
 1. Connect PEAK to your AI assistant, which the skill needs: [PEAK AI Connector (MCP)](https://support.cim.io/en/articles/14883828-peak-ai-connector-mcp)
