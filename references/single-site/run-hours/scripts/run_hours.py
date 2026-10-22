@@ -2,25 +2,27 @@
 """Equipment run hours as a report section: when each unit ran across the latest
 full Monday-to-Sunday week, against the site's working hours.
 
-runhours_plan.py fixes the week and picks every unit's points, and
-runhours_build.py turns the history into the aggregate. This module drives them through the
-report's hooks and draws the aggregate as static SVG in the report's design, since
-the report carries no script. Where the site's data is missing from that week, it
-moves to the latest full week before the data stopped. See references/single-site/run-hours/run-hours.md.
+runhours_plan.py fixes the week and picks every unit's points, and runhours_build.py
+turns the history into the aggregate. This module drives them through the report's
+hooks and draws the aggregate as static SVG in the report's design, since the report
+carries no script. Where the site's data is missing from that week, it moves to the
+latest full week before the data stopped. See references/single-site/run-hours/run-hours.md.
 """
 import json
 import os
 import re
-import subprocess
 import sys
 from datetime import datetime, timedelta
 from html import escape
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
+import runhours_build as rb  # noqa: E402
+import runhours_plan as rp  # noqa: E402
 
-DIR = "runhours"                     # under peak/, where the runhours_*.py scripts keep their files
+DIR = "runhours"                     # under peak/, where the run hours files are kept
 EARLIER = DIR + "/earlier"           # the latest full week with data, when the latest week lacks it
 
 # Layout, in the report's chart units (the sheet draws every chart 682 wide).
@@ -28,26 +30,6 @@ W, LABEL, RIGHT_PAD = 682, 168, 4
 HEAD, GROUP_H, ROW_H, BAR_H, LEVEL_GAP, BOTTOM = 34, 20, 15, 8, 4, 6
 FS_NAME, FS_SMALL = 10, 8.5
 CHAR = 0.56                          # average glyph width as a share of the font size, for cutting labels
-
-
-def script(name, *args):
-    p = subprocess.run([sys.executable, os.path.join(HERE, name)] + list(args), capture_output=True, text=True)
-    if p.returncode:
-        raise SystemExit("run hours: %s stopped: %s" % (name, (p.stderr or p.stdout).strip()))
-    return p.stdout
-
-
-def printed_calls(text):
-    """The calls runhours_plan.py prints: a label line naming the file, then the call as JSON."""
-    out, name = [], None
-    for line in text.splitlines():
-        m = re.search(r"->\s*(\S+?\.json)", line)
-        if m:
-            name = m.group(1)
-        elif line.startswith("{") and name:
-            out.append(dict(json.loads(line), file=name))
-            name = None
-    return out
 
 
 def as_call(rel, c):
@@ -64,62 +46,42 @@ def load(work, rel, name):
 
 
 def window(ctx, peak, rel, monday=None):
-    """Fix one week in <peak>/<rel>/ and return its discovery and census calls, kept beside it
-    for paging. The latest full week unless `monday` names an earlier one."""
-    rh = os.path.join(peak, rel)
-    os.makedirs(rh, exist_ok=True)
-    args = ["window", ctx["site_file"], rh, "--site-id", str(ctx["site"]["site_id"]), "--today", ctx["today"]]
-    if monday:
-        args += ["--week-of", monday]
-    if ctx.get("hours"):
-        args += ["--hours", ctx["hours"]]
-    out = [as_call(rel, c) for c in printed_calls(script("runhours_plan.py", *args))]
-    with open(os.path.join(rh, "calls.json"), "w") as fh:
-        json.dump(out, fh, indent=1)
-    return out
+    """Fix one week in <peak>/<rel>/ and return its discovery and census calls. The latest full
+    week unless `monday` names an earlier one."""
+    site_file = os.path.join(ctx["dir"], ctx["site_file"])
+    _, calls = rp.make_window(site_file, os.path.join(peak, rel), ctx["site"]["site_id"], ctx["today"], monday,
+                              ctx.get("hours"))
+    return [as_call(rel, c) for c in calls]
 
 
 def calls(ctx):
     return window(ctx, os.path.join(ctx["dir"], "peak"), DIR)
 
 
+def discoveries(work, rel):
+    """The week's discovery call and its pages, as calls.json lists them."""
+    pat = re.compile(re.escape(rel) + r"/discovery-\d+\.json")
+    return [c for c in work.calls if pat.fullmatch(c["file"])]
+
+
 def week_calls(ctx, work, rel):
     """What one week's pull still needs: discovery pages, then its plan and history."""
-    rh = work.path(rel)
-    disc = work.get("%s/discovery-0.json" % rel)
-    if disc.total and disc.total > 1000:
-        base = next(c for c in load(work, rel, "calls.json") if c["file"].endswith("discovery-0.json"))
-        pages = [dict(base, file="%s/discovery-%d.json" % (rel, s),
-                      args=dict(base["args"], args=dict(base["args"]["args"], start_index=s)))
-                 for s in range(1000, disc.total, 1000)]
+    first = next(c for c in discoveries(work, rel) if c["file"] == "%s/discovery-0.json" % rel)
+    disc, step = work.get(first["file"]), io.call_args(first)["limit"]
+    if disc.total and disc.total > step:
+        pages = [io.at_offset(first, "%s/discovery-%d.json" % (rel, s), s) for s in range(step, disc.total, step)]
         missing = [p for p in pages if not work.has(p["file"])]
         if missing:
             return missing
+    rh = work.path(rel)
     if not os.path.isfile(os.path.join(rh, "plan.json")):
-        discs = sorted(os.path.join(rh, f) for f in os.listdir(rh) if re.match(r"discovery-\d+\.json$", f))
         census = work.path(DIR)
-        out = script("runhours_plan.py", "plan", rh, *discs, "--census",
-                     os.path.join(census, "census-all.json"), os.path.join(census, "census-known.json"))
-        with open(os.path.join(rh, "plan.out"), "w") as fh:
-            fh.write(out)
+        rp.make_plan(rh, [work.path(c["file"]) for c in discoveries(work, rel)],
+                     [os.path.join(census, "census-all.json"), os.path.join(census, "census-known.json")])
     plan, win = load(work, rel, "plan.json"), load(work, rel, "window.json")
     chunks = [c for c in plan["chunks"] if c["pass"] == 1]
-    return [{"file": "%s/history-1-%d.json" % (rel, i), "tool": "execute_graphql_query",
-             "args": {"query_name": "platform.history",
-                      "args": {"fav_ids": c["fav_ids"], "start": win["start"], "end": win["end"],
-                               "end_exclusive": True},
-                      "fields": ["fav_id", "ts", "data"]}}
+    return [as_call(rel, dict(rp.week_call(win, c["fav_ids"]), file="history-1-%d.json" % i))
             for i, c in enumerate(chunks, 1) if not work.has("%s/history-1-%d.json" % (rel, i))]
-
-
-def history(work, rel):
-    rh = work.path(rel)
-    return sorted(os.path.join(rh, f) for f in os.listdir(rh) if re.match(r"history-1-\d+[ab]?\.json$", f))
-
-
-def aggregate(work, rel):
-    """Build the week's aggregate; returns the build's notes."""
-    return script("runhours_build.py", work.path(rel), *history(work, rel))
 
 
 def stopped(ctx, work, rel):
@@ -128,8 +90,7 @@ def stopped(ctx, work, rel):
     the week can say, else the local time, or "never" when no point has reported at all."""
     plan, win = load(work, rel, "plan.json"), load(work, rel, "window.json")
     if any(c["pass"] == 1 for c in plan["chunks"]):
-        aggregate(work, rel)
-        gap = load(work, rel, "agg.json").get("feed_gap")
+        gap = rb.run(work.path(rel)).get("feed_gap")
         if not gap:
             return None
         if gap[0] > 0:                 # quiet from inside the week: the week before that point is whole
@@ -138,13 +99,8 @@ def stopped(ctx, work, rel):
         return None
     probe = "%s/last-reading.json" % rel
     if not work.has(probe):
-        return {"file": probe, "tool": "execute_graphql_query",
-                "args": {"query_name": "platform.history",
-                         "args": {"fav_ids": [p["fav_id"] for p in plan["probe"]], "latest": True,
-                                  "end": win["start"], "end_exclusive": True},
-                         "fields": ["fav_id", "ts", "data"]}}
-    script("runhours_plan.py", "last", work.path(rel), work.path(probe))
-    last = load(work, rel, "last.json")["local"]
+        return as_call(rel, dict(rp.probe_call(win, plan), file="last-reading.json"))
+    last = rp.last_reading(work.path(rel), work.path(probe))["local"]
     return datetime.fromisoformat(last).replace(tzinfo=None) if last else "never"
 
 
@@ -282,22 +238,20 @@ def build(ctx, work, shared):
     rel = EARLIER if load(work, EARLIER, "plan.json") else DIR
     plan, window = load(work, rel, "plan.json"), load(work, rel, "window.json")
     stop = moved.get("stopped")
-    stop = "never" if stop == "never" else (datetime.fromisoformat(stop).strftime("%a %-d %b %Y %H:%M")
-                                            if stop else None)
+    if stop and stop != "never":
+        t = datetime.fromisoformat(stop)
+        stop = "%s %d %s" % (t.strftime("%a"), t.day, t.strftime("%b %Y %H:%M"))
     if not any(c["pass"] == 1 for c in plan["chunks"]):
-        with open(os.path.join(work.path(rel), "plan.out")) as fh:
-            why = " ".join(l for l in fh.read().splitlines() if not l.startswith("{"))
+        why = "%s %s" % (rp.nothing_to_draw(plan), " ".join(rp.summary_lines(plan)))
         if plan.get("outage") and stop:
             why = ("None of the units with a run point logged any history in %s, and %s, so no full week in "
                    "the reporting period has data. The site's data feed looks down." % (
                        window["label"], "they have never reported" if stop == "never"
                        else "they last reported %s" % stop))
-        return {"drop": ["run-hours"], "chat": ["Run hours is left out, with nothing to draw. " + " ".join(why.split())]}
-    notes = aggregate(work, rel)
-    agg = load(work, rel, "agg.json")
+        return {"drop": ["run-hours"], "chat": ["Run hours is left out, with nothing to draw: " + why]}
+    agg = rb.run(work.path(rel))
     later = [u for u in plan["units"] if u.get("pass") == 2 and u.get("pull")]
-    built = [l[2:] for l in notes.splitlines() if l.startswith("- ")]
-    chat = ["Run hours: " + " ".join(built)] if built else []
+    chat = ["Run hours: " + " ".join(agg["notes"])] if agg["notes"] else []
     latest = load(work, DIR, "window.json")["label"]
     if rel == EARLIER:
         chat.append("Run hours shows %s, the latest full week before the site's data stopped at %s, rather than "
@@ -310,8 +264,8 @@ def build(ctx, work, shared):
                     "before that falls outside the reporting period." % (latest, stop))
     if later:
         drawn = sum(len(g["rows"]) for p in agg["pages"] for g in p["groups"])
-        chat.append("Run hours draws %d units. Its first pass holds up to 100 and takes each type whole, so the %d "
-                    "beyond it are not drawn; the report makes no later pass." % (drawn, len(later)))
+        chat.append("Run hours draws %d units. Its first pass holds up to %d and takes each type whole, so the %d "
+                    "beyond it are not drawn; the report makes no later pass." % (drawn, rp.CAP_UNITS, len(later)))
     return {
         "run_hours": {"html": render(agg)},
         "datelines": {"Equipment run hours":

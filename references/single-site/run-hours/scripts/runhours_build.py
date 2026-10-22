@@ -1,35 +1,27 @@
 #!/usr/bin/env python3
-"""Turn a run-hours plan and its history pulls into the view's aggregate.
+"""Turn a run-hours plan and its history pulls into the view's aggregate. run_hours.py calls
+run(); the command line does the same and prints the notes.
 
-Usage:
-    python3 runhours_build.py <workdir> <history.json> [more.json ...] [--pass 2]
+    python3 runhours_build.py <workdir>
 
-Reads <workdir>/window.json and plan.json, loads the pulled history, decides
-each unit's row — status or analog, whichever shows less running — and writes
-<workdir>/agg.json (the renderer's only input) and <workdir>/days.csv (per unit
-per day, for follow-ups). Prints the notes to state with the view.
-
---pass 2 adds the later pass once its history has been pulled; pass every
-history file from both passes.
-
-Standard library only — no third-party dependencies, by design, so the script
-runs wherever the skill is unpacked.
+Reads <workdir>/window.json and plan.json and the first pass's history, history-1-<n>.json
+for each of the plan's chunks, decides each unit's row (status or analog, whichever shows
+less running) and writes <workdir>/agg.json, the renderer's only input, with the notes to
+state with the view.
 """
 import argparse
-import csv
 import json
 import math
 import re
 import sys
 from collections import Counter
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
-sys.dont_write_bytecode = True             # leave no __pycache__ beside the skill
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.append(str(Path(__file__).resolve().parents[4] / "scripts"))
-from runhours_history import load_rows  # noqa: E402
 import peak_io as io  # noqa: E402
+import runhours_plan as rules  # noqa: E402
 
 # ---- Tunables ----------------------------------------------------------------
 SLOTS_PER_DAY   = 96     # 15-minute slots
@@ -49,7 +41,6 @@ SHARED_GAP_UNITS = 3     # a data gap this many units share is named once, with 
 FEED_GAP_HOURS  = 12     # every periodic point silent this long at once: the site's feed, so the week is not whole
 NAMES_IN_NOTE   = 8      # list names in a note up to this many, then just count
 GENERIC_ZONE    = re.compile(r"(zone|area|default|all|general|none|n/?a|unassigned|site|building)\s*\d*", re.I)
-PAGE_ORDER      = ["Central plant", "Field units", "Other"]
 SIGNAL_WORDS    = {"status": "run status", "state": "speed state", "analog": "speed or other analog",
                    "compressor": "compressor status"}
 
@@ -57,8 +48,7 @@ SIGNAL_WORDS    = {"status": "run status", "state": "speed state", "analog": "sp
 # ---- Slots -------------------------------------------------------------------
 def parse_readings(rows):
     """(fav_id, UTC time, value) for every reading that carries a value."""
-    return [(str(row["fav_id"]), datetime.fromisoformat(str(row["ts"]).replace("Z", "+00:00")),
-             float(row["data"]))
+    return [(str(row["fav_id"]), io.utc(row["ts"]), float(row["data"]))
             for row in rows if row.get("data") is not None]
 
 
@@ -326,13 +316,8 @@ def working_hours_note(window):
     return f"Working hours from {source}: {', '.join(parts)} ({window['tz_label']})."
 
 
-def plural(n, word):
-    """'1 unit', '2 units'; 'history call' becomes 'history calls'."""
-    return f"{n} {word}" + ("" if n == 1 else "s")
-
-
 def units_text(n):
-    return plural(n, "unit")
+    return io.plural(n, "unit")
 
 
 def held_text(point, reading):
@@ -407,15 +392,33 @@ def where(unit):
 
 
 # ---- Build -------------------------------------------------------------------
-def build(window, plan, rows, max_pass):
-    units = [u for u in plan["units"] if u["pass"] <= max_pass]
+def load_history(work, plan):
+    """The first pass's history rows, one history-1-<n>.json per chunk of the plan, de-duplicated on
+    (point, time). A file holding points outside its own chunk was saved from another call's
+    response, which would silently hatch units, so it stops the build."""
+    kept = {}
+    for n, chunk in enumerate((c for c in plan["chunks"] if c["pass"] == 1), 1):
+        name = f"history-1-{n}.json"
+        want = {str(f) for f in chunk["fav_ids"]}
+        rows = [r for r in io.read(str(work / name)).rows if isinstance(r, dict)]
+        foreign = {str(r.get("fav_id")) for r in rows} - want
+        if foreign:
+            raise SystemExit(f"run hours: {name} holds history for {io.plural(len(foreign), 'point')} outside its "
+                             "own call, so it was saved from another call's response. Save it again from its own.")
+        for r in rows:
+            kept[(str(r.get("fav_id")), r.get("ts"))] = r
+    return list(kept.values())
+
+
+def build(window, plan, rows):
+    units = [u for u in plan["units"] if u["pass"] == 1]
     readings, resets = slot_readings(rows, window)
     points = {str(p["fav_id"]): read_point(readings.get(str(p["fav_id"])), p)
               for u in units for p in u["pull"]}
 
     notes = {"split": [], "held_other": [], "unverified": [], "clock": [], "off": [], "compressor": [],
              "held": [], "on_change": [], "sparse": [], "nodata": [], "gaps": [], "drawn": Counter()}
-    pages, csv_rows, prev = {}, [], None
+    pages, prev = {}, None
     for u in (u for u in units if u["pull"]):
         d = decide(u, points)
         row = {"name": u["name"], "runs": [], "gaps": [], "nodata": d.nodata, "point": None,
@@ -451,7 +454,6 @@ def build(window, plan, rows, max_pass):
                 notes["sparse"].append((u["name"], d.reading["sparse"]))
             if row["gaps"]:
                 notes["gaps"].append((u["name"], row["gaps"]))
-            csv_rows += day_rows(window, u, d.point, d.reading)
         elif d.held:
             notes["held"].append(u["name"])
         else:
@@ -460,41 +462,16 @@ def build(window, plan, rows, max_pass):
         page = pages.setdefault(u["page"], {})
         page.setdefault(u["type_name"], []).append(row)
 
-    agg = {
-        "site_name": window["site_name"], "window_label": window["label"],
-        "tz_label": window["tz_label"],
+    return {
         "days": [{"label": d["label"], "wh": d["wh"]} for d in window["days"]],
         "pages": [{"title": title, "groups": [{"name": g, "rows": rs} for g, rs in pages[title].items()]}
-                  for title in PAGE_ORDER if title in pages],
-        "footer": ("Each row is drawn from a sensor: the unit's run status or a speed, current or power "
-                   "reading, whichever shows less running when both report. Units with only an enable or "
-                   "schedule are left out. Click a unit name to open its PEAK chart for the same week with "
-                   "the points that decided the row. Hover a bar for exact on and off times. Source: PEAK "
-                   "point history at 15-minute resolution, times in site local time "
-                   f"({window['tz_label']})."),
+                  for title in rules.PAGE_ORDER if title in pages],
+        "notes": note_lines(window, plan, units, notes, resets),
+        "feed_gap": feed_gap(list(points.values())),
     }
-    agg["notes"] = note_lines(window, plan, units, notes, resets, max_pass)
-    agg["feed_gap"] = feed_gap(list(points.values()))
-    return agg, csv_rows
 
 
-def day_rows(window, unit, chosen, reading):
-    out = []
-    for i, day in enumerate(window["days"]):
-        on = reading["on"][i * SLOTS_PER_DAY:(i + 1) * SLOTS_PER_DAY]
-        wh = day["wh"] or [0, 0]
-        lit = [s for s, x in enumerate(on) if x]
-        out.append({"name": unit["name"], "type": unit["type_name"], "level": unit.get("level") or "",
-                    "zone": unit.get("zone") or "", "date": day["date"],
-                    "run_h": len(lit) / 4,
-                    "first_on": hhmm(lit[0]) if lit else "",
-                    "last_off": hhmm(lit[-1] + 1) if lit else "",
-                    "ooh_h": sum(1 for s in lit if not wh[0] <= s < wh[1]) / 4,
-                    "signal": signal_kind(chosen), "point": chosen["name"]})
-    return out
-
-
-def note_lines(window, plan, units, notes, resets, max_pass):
+def note_lines(window, plan, units, notes, resets):
     lines = [working_hours_note(window)]
     drawn, hatched = notes["drawn"], len(notes["held"]) + len(notes["nodata"])
     kinds = ", ".join(f"{SIGNAL_WORDS[r]} {drawn[r]}" for r in SIGNAL_WORDS if drawn[r])
@@ -538,52 +515,22 @@ def note_lines(window, plan, units, notes, resets, max_pass):
     if resets:
         lines.append("A data collector restarting, not the plant, so left out: every point in one reading "
                      "read 0, between normal readings either side, at "
-                     + ", ".join(f"{moment(window, when)} ({plural(n, 'point')})"
+                     + ", ".join(f"{moment(window, when)} ({io.plural(n, 'point')})"
                                  for when, n in sorted(resets.items())) + ".")
     lines += gap_lines(window, notes["gaps"])
     regrouped = [u for u in units if u.get("regrouped_from") and u["pull"]]
     for (was, name), n in Counter((u["regrouped_from"], u["type_name"]) for u in regrouped).items():
         lines.append(f"{units_text(n)} typed {was} in PEAK, grouped with {name} as their names say.")
-    # Every pass: why a unit is not drawn is known before any history is pulled.
+    # Why a unit is not drawn is known before any history is pulled, for every unit the plan read.
     skipped = [u for u in plan["units"] if not u["pull"]]
-    hit = {why: [u for u in skipped if u["why"] == why]
-           for why in ("command only", "alarms only", "no history this week", "pair point, members charted",
-                       "no points", "shared record", "sensors or setpoints only")}
-    if hit["command only"]:
-        lines.append("Only an enable, command or schedule, with no sensor to show the unit ran, not drawn: "
-                     f"{listing(u['name'] for u in hit['command only'])} ({by_type(hit['command only'])}).")
-    if hit["alarms only"]:
-        lines.append(f"Plant with alarms but no run point, not drawn: {listing(u['name'] for u in hit['alarms only'])} "
-                     f"({by_type(hit['alarms only'])}).")
-    if hit["no history this week"]:
-        lines.append(f"No history this week, not drawn: {listing(u['name'] for u in hit['no history this week'])}.")
-    if hit["pair point, members charted"]:
-        lines.append("Left out because their member units are shown: "
-                     f"{listing(u['name'] for u in hit['pair point, members charted'])}.")
-    if hit["no points"]:
-        lines.append(f"No points in PEAK, not drawn: {listing(u['name'] for u in hit['no points'])} "
-                     f"({by_type(hit['no points'])}).")
-    if hit["shared record"]:
-        n = len(hit["shared record"])
-        lines.append(f"{n} shared COMMON record{'s carry' if n != 1 else ' carries'} no sensor of "
-                     f"{'their' if n != 1 else 'its'} own, not drawn ({by_type(hit['shared record'])}).")
-    if hit["sensors or setpoints only"]:
-        records = hit["sensors or setpoints only"]
-        n = len(records)
-        lines.append(f"{n} record{'s carry' if n != 1 else ' carries'} only sensors, setpoints or dampers, "
-                     f"not drawn ({by_type(records)}), e.g. {', '.join(u['name'] for u in records[:3])}.")
-    if plan.get("unclassified"):
-        lines.append("Equipment types the run-hours reference does not cover yet, not drawn: "
-                     + ", ".join(f"{u['type']} ({u['units']})" for u in plan["unclassified"]) + ".")
+    for why, _, note in rules.REASONS:
+        hit = [u for u in skipped if u["why"] == why]
+        if hit:
+            lines.append(note(hit, listing, by_type))
     if plan.get("unknown_units"):
         lines.append(f"{units_text(plan['unknown_units'])} at the site are of a type the run-hours reference "
                      "does not cover yet, not drawn: PEAK has added a type. List the site's equipment "
                      "types to name it, and add it to references/single-site/run-hours/run-hours-signals.md.")
-    later = [u for u in plan["units"] if u["pull"] and u["pass"] > max_pass]
-    if later:
-        types = Counter(u["type_name"] for u in later)
-        lines.append(f"Beyond the first pass, not drawn: {units_text(len(later))} in {plural(len(types), 'type')} ("
-                     + ", ".join(f"{t} {n}" for t, n in types.items()) + ").")
     return lines
 
 
@@ -609,32 +556,24 @@ def interval_text(slots):
     return f"{minutes} min" if minutes < 60 else f"{minutes / 60:g} h"
 
 
+def run(workdir):
+    """Build the week's aggregate from <workdir>'s plan and history, write agg.json and return it."""
+    work = Path(workdir)
+    window = json.loads((work / "window.json").read_text())
+    plan = json.loads((work / "plan.json").read_text())
+    agg = build(window, plan, load_history(work, plan))
+    (work / "agg.json").write_text(json.dumps(agg, indent=1))
+    return agg
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("workdir")
-    parser.add_argument("history", nargs="+", help="saved platform.history results")
-    parser.add_argument("--pass", dest="max_pass", type=int, default=1,
-                        help="include the later pass (2) once it has been pulled")
     args = parser.parse_args(argv[1:])
-    work = Path(args.workdir)
     try:
-        window = json.loads((work / "window.json").read_text())
-        plan = json.loads((work / "plan.json").read_text())
-        fav_ids = [p["fav_id"] for u in plan["units"] if u["pass"] <= args.max_pass
-                   for p in u["pull"]]
-        rows = load_rows(args.history, fav_ids)
-        agg, days = build(window, plan, rows, args.max_pass)
+        agg = run(args.workdir)
     except (OSError, ValueError, KeyError) as exc:
         sys.exit(f"runhours_build: {exc}")
-    (work / "agg.json").write_text(json.dumps(agg, indent=1))
-    with open(work / "days.csv", "w", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=["name", "type", "level", "zone", "date", "run_h",
-                                                "first_on", "last_off", "ooh_h", "signal", "point"])
-        writer.writeheader()
-        writer.writerows(days)
-    drawn = sum(len(g["rows"]) for p in agg["pages"] for g in p["groups"])
-    print(f"{window['site_name']}: {drawn} rows from {len(rows)} history rows. "
-          f"Wrote {work / 'agg.json'} and {work / 'days.csv'}.")
     print("Notes:")
     for line in agg["notes"]:
         print(f"- {line}")
