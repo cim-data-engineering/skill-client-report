@@ -70,7 +70,7 @@ with working logo files beside it).
 | Partner-owned (edit freely)      | Upstream-owned (never edit)        |
 | :------------------------------- | :--------------------------------- |
 | `BRAND.md`                       | `DESIGN.md`                        |
-| `assets/brand/*`                 | `SKILL.md`                         |
+| `assets/brand/*`                 | `SKILL.md`, `AGENTS.md`            |
 | `assets/fonts/*` (licensed)      | `references/`, `scripts/`          |
 |                                  | `assets/reference-report.html`, `assets/portfolio-report.html` |
 |                                  | `assets/logo.svg`, `assets/logo-white.svg`, `assets/trophy.svg` |
