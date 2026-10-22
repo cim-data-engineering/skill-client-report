@@ -14,7 +14,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
-NAME = "sustainability-ratings"
 PAGE = 200
 FIRST = ["energy", "indoor environment", "water"]   # column order; any other measure follows alphabetically
 UNMEASURED = "Other"                                # PEAK's catch-all measure, and the column for a type naming none
@@ -148,7 +147,7 @@ def build(ctx, work, shared):
     latest = latest_ratings(by)
     columns = sorted({m for (sid, m), (cur, _) in latest.items() if live(cur)}, key=column_key)
     if not columns:
-        return {"drop": [NAME]}
+        return {"drop": True}
 
     host = io.host(*ctx["sites"])
     link = lambda ids: "%s/dashboard/ratings?%s&ratings_type_id_or_filter=all_ratings" % (

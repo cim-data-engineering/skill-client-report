@@ -248,7 +248,7 @@ def build(ctx, work, shared):
                    "the reporting period has data. The site's data feed looks down." % (
                        window["label"], "they have never reported" if stop == "never"
                        else "they last reported %s" % stop))
-        return {"drop": ["run-hours"], "chat": ["Run hours is left out, with nothing to draw: " + why]}
+        return {"drop": True, "chat": ["Run hours is left out, with nothing to draw: " + why]}
     agg = rb.run(work.path(rel))
     later = [u for u in plan["units"] if u.get("pass") == 2 and u.get("pull")]
     chat = ["Run hours: " + " ".join(agg["notes"])] if agg["notes"] else []

@@ -12,7 +12,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
-NAME = "equipment-health"
 ANCHOR = "eh-by-site"
 BANDS = [99, 97, 90]
 # Each call scans every rule's month rows for its sites, and PEAK refuses a call over 200,000 rows:
@@ -53,7 +52,7 @@ def build(ctx, work, shared):
 
     months, scored, missing = pio.quarter_scores(ctx, scores)
     if not scored:
-        return {"drop": [NAME]}
+        return {"drop": True}
 
     pio.shown(shared, [s["site_id"] for s in scored])
     now = {s["site_id"]: months[s["site_id"]][-1] for s in scored}         # the leaderboard month

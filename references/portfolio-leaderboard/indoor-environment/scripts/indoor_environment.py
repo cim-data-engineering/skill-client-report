@@ -12,7 +12,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
-NAME = "indoor-environment"
 ANCHOR = "cf-by-site"
 BANDS = [92, 85, 75]
 CHUNK, PAGE = 100, 80
@@ -56,7 +55,7 @@ def build(ctx, work, shared):
 
     months, scored, missing = pio.quarter_scores(ctx, scores)
     if not scored:
-        return {"drop": [NAME]}
+        return {"drop": True}
 
     sids = [s["site_id"] for s in scored]
     pio.shown(shared, sids)

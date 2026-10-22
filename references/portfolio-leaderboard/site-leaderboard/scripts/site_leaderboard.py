@@ -16,7 +16,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
-NAME = "site-leaderboard"
 SHOWN = 10
 PHOTO_W = 560           # the leader's photo band, 2:1, at about twice its printed width
 
@@ -78,7 +77,7 @@ def build(ctx, work, shared):
     made = [board(ctx, size, unit, r) for r in shared.get("rankings") or []]
     built = [(b, sid) for b, sid, _ in made if b["rows"]]
     if not built:
-        return {"drop": [NAME]}
+        return {"drop": True}
     counts = sorted({n for b, _, n in made if b["rows"]})
     # each leader's building photo, fetched once however many boards it leads
     links, photos = {}, {}

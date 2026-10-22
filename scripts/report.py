@@ -83,6 +83,15 @@ IMPACT_ORDER = ["equipment-health-score", "thermal-comfort", "automated-checks",
 #                       {first, email, site} for the leader's shoutout
 #   partial             names of the volume figures shown that run short over a month to date, present
 #                       once any section shows the month to date; single-site only
+#   trend_start         [first month kept], each score section's, for a site that went live inside the
+#                       windows: the actions chart starts where the earliest of them does; single-site only
+#   period_start        [first month kept], each score section's: the masthead's reporting period starts at
+#                       the earliest; single-site only
+#   live_since          [{month, day}], each score section's go-live, for the masthead; single-site only
+#   nothing_resolved    True when the actions section dropped for want of anything resolved, so key wins
+#                       drops too; single-site only
+#   shown_sites         {site ids} each section shows data for: the masthead's Sites count; portfolio only
+# A section that has nothing to show returns {"drop": True}; the report drops it under its registry name.
 # A figure the plan needs, before anything is fetched, a module names in HANDS_ON: plan.json
 # lists them as handed_on.
 
@@ -121,6 +130,28 @@ def module(section, mode="single-site"):
     if path not in sys.path:
         sys.path.insert(0, path)
     return importlib.import_module(name)
+
+
+def check_registry(mode):
+    """Stop where the registry and the scaffold disagree on a section's name: each section built has its
+    parts in build_report, and every conditional block in the scaffold names a section the report knows."""
+    import build_report as br
+    if mode == "portfolio":
+        order, modules, parts, ref = PORTFOLIO_ORDER, PORTFOLIO_MODULES, br.PORTFOLIO["section_parts"], br.PORTFOLIO["ref"]
+        named = set()
+    else:
+        order, modules, parts, ref = ["overview"] + ORDER, MODULES, br.SECTION_PARTS, br.REF
+        named = {s for owners in br.PART_IF.values() for s in owners} | set(AUTO) | {
+            s for _, sections in OPTIONS.values() for s in sections}
+    built = set(order) - {"overview"}
+    with open(ref, encoding="utf-8") as fh:
+        named |= {n.strip() for line in fh for m in [br.IF_RE.match(line)] if m for n in m.group(1).split(",")}
+    problems = (["%s is in the order but not the modules, or the reverse" % s for s in set(order) ^ set(modules)]
+                + ["%s has no parts in build_report" % s for s in built - set(parts)]
+                + ["build_report has parts for %s, which the report does not build" % s for s in set(parts) - built]
+                + ["%s is named in the scaffold or the section options but is not a section" % s for s in named - built])
+    if problems:
+        sys.exit("The %s registry disagrees with itself: %s." % (mode, "; ".join(sorted(problems))))
 
 
 def active(ctx):
@@ -169,6 +200,7 @@ PORTFOLIO_READ_RULE = ("Read these where they come back and never save them. The
 def cmd_plan(a):
     if a.sites:
         return plan_portfolio(a)
+    check_registry("single-site")
     site_rows = io.read(a.site).rows
     if a.site_id:
         site_rows = [r for r in site_rows if r.get("site_id") == a.site_id]
@@ -215,6 +247,7 @@ def cmd_plan(a):
 
 def plan_portfolio(a):
     import portfolio_io as pio
+    check_registry("portfolio")
     sites, seen, saved = [], set(), set()
     for r in [r for f in a.sites for r in io.read(f).rows]:
         sid = r.get("site_id")
@@ -409,7 +442,9 @@ def cmd_verify(a):
 
 
 # ── bundle ──────────────────────────────────────────────────────────────────
-def merge(into, part):
+def merge(into, part, section=None):
+    if part.get("drop") is True:
+        part = dict(part, drop=[section])
     for k, v in part.items():
         if k in ("impact", "drop", "chat"):
             into.setdefault(k, []).extend(v)
@@ -434,8 +469,10 @@ def cmd_bundle(a):
     for s in [s for s in ORDER if s in ctx["sections"]] + ["overview"]:
         part = module(s).build(ctx, work, shared)
         for r in part.get("impact", []):
+            if r["row"] not in IMPACT_ORDER:
+                sys.exit("%s hands on an impact row %r that IMPACT_ORDER does not place" % (s, r["row"]))
             r["section"] = s
-        merge(data, part)
+        merge(data, part, s)
     data["sections"] = ",".join(s for s in ctx["sections"] if s not in data.get("drop", []))
     data["impact"] = [{k: v for k, v in r.items() if k not in ("row", "section")}
                       for r in sorted(data.get("impact", []), key=lambda r: IMPACT_ORDER.index(r["row"]))
@@ -463,7 +500,7 @@ def bundle_portfolio(a, work):
     shared = {"facts": module("overview", "portfolio").facts(ctx, work)}       # each site's platform row
     data = {}
     for s in PORTFOLIO_ORDER:
-        merge(data, module(s, "portfolio").build(ctx, work, shared))
+        merge(data, module(s, "portfolio").build(ctx, work, shared), s)
     data["sections"] = ",".join(s for s in PORTFOLIO_ORDER if s != "overview" and s not in data.get("drop", []))
     data["months"] = {"quarter": [io.mon(m) for m in ctx["quarter_months"]]}
     if pio.closing(ctx):

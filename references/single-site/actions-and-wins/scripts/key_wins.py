@@ -120,7 +120,7 @@ def more(ctx, work):
 
 
 def build(ctx, work, shared):
-    return {}
+    return {"drop": True} if shared.get("nothing_resolved") else {}
 
 
 def assemble(ctx, work):

@@ -139,7 +139,8 @@ def build(ctx, work, shared):
     recovered = work.get("ar/alerts-recovered.json").total or 0
     why = drop_reason(faults, resolved, work.get("ar/open-rows.json").total or 0)
     if why:
-        return {"drop": ["alerts-resolved", "key-wins"], "chat": ["Actions and key wins are left out: " + why]}
+        shared["nothing_resolved"] = True        # with nothing resolved, no win has anything to stand on
+        return {"drop": True, "chat": ["Actions and key wins are left out: " + why]}
     shared.setdefault("partial", []).append("action counts")      # only once the section stays
 
     res_rows = io.rows(work, "ar/resolved-rows.json")

@@ -11,7 +11,6 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
-NAME = "sustainability-ratings"
 # The measures the section shows, in card and chart order, each found by a word in the
 # PEAK rating type name. Waste and every non-NABERS type stay out.
 MEASURES = [("Energy", "energy"), ("Indoor environment", "indoor"), ("Water", "water")]
@@ -68,7 +67,7 @@ def build(ctx, work, shared):
     live = lambda rows: bool(rows[-1].get("expiry_date")) and io.d(rows[-1]["expiry_date"]) >= today
     shown = [label for label, _ in MEASURES if label in by]
     if not any(live(by[label]) for label in shown):
-        return {"drop": [NAME]}
+        return {"drop": True}
 
     cards, charts = [], []
     for label in shown:

@@ -12,7 +12,6 @@ from urllib.parse import quote, urlencode
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import portfolio_io as pio  # noqa: E402
 
-NAME = "team-leaderboard"
 SHOWN = 10
 # The shoutout form: whom it thanks (their email), their site and the comment come prefilled;
 # the sender fills in their own email.
@@ -64,7 +63,7 @@ def board(ctx, ranking):
 def build(ctx, work, shared):
     built = [x for x in (board(ctx, r) for r in shared.get("team_rankings") or []) if x[0]["rows"]]
     if not built:
-        return {"drop": [NAME]}
+        return {"drop": True}
     over = ["%d %s" % (n, b["noun"]) for b, n, _ in built if n > SHOWN]
     # one shoutout only: the first board's leader that carries one
     shout = next((s for _, _, s in built if s), None)

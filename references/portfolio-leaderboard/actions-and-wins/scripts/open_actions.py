@@ -13,7 +13,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
-NAME = "open-actions"
 PRIORITIES = [1, 2]
 PAGE = 1000
 SHOWN = 10                             # a list, so the backlog chart and both lists hold one page
@@ -131,7 +130,7 @@ def build(ctx, work, shared):
         for a in act["assignees"]:
             a["name"] = names.get(a["id"]) or ""
     if not actions:
-        return {"drop": [NAME], "chat": ["No priority 1 or 2 action is open across the portfolio, so the open "
+        return {"drop": True, "chat": ["No priority 1 or 2 action is open across the portfolio, so the open "
                                          "P1-2 actions section is left out."]}
 
     # open actions by age at each site and with each person, the actions no one holds as one more
