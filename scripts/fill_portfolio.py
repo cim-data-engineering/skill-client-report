@@ -113,10 +113,11 @@ def board(b):
                    lead["value"], "<span>%s</span>" % esc(b["unit"]) if b.get("unit") else ""))
     if "climber" in b:
         c = b["climber"]
-        out.append('      <div class="climb%s"><span class="rkmark">%s</span><p class="clab">Biggest climber</p>%s<p class="cwho%s">%s</p>%s</div>' % (
+        out.append('      <div class="climb%s"><span class="rkmark">%s</span><p class="clab">Biggest climber</p>%s<p class="cwho%s">%s</p>%s%s</div>' % (
             " co" if logos else "", CLIMB, '<span class="clogo">%s</span>' % mini(c) if logos and c else "",
             "" if c else " none", '<a href=%s>%s</a>' % (jump(c, b), star(c)) if c else "None",
-            '<span class="cup">&uarr;%d to %s</span>' % (c["places"], ordinal(c["rank"])) if c else ""))
+            '<span class="cup">&uarr;%d to %s</span>' % (c["places"], ordinal(c["rank"])) if c else "",
+            site_line(None, *c["site"]) if c and c.get("site") else ""))
     if pack:
         out += ['      <table class="rk%s">' % (" two" if any(r.get("site") for r in pack) else ""),
                 '        <colgroup><col class="c-rank">%s<col><col class="c-mv"><col class="c-pv"></colgroup>'

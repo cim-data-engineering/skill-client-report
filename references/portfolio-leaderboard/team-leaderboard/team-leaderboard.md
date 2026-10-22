@@ -31,7 +31,7 @@ One board per team ranking, in the order the rankings come. Each is a small rank
 **Each board** reads in three steps, the leader first. In a portfolio of three sites or fewer no board carries the climber:
 
 1. **Leader**: rank 1, its row set large. The trophy and the movement in the rank column, the company's logo in its tile and in its own colours, the name, then the meta line the ranking gives its leader with the value and unit: "Site A + 3 sites" for a company, "Company A · Site A" for a person: the busiest site, and "+ {N} sites" where there are more. The meta line clamps to two lines
-2. **Biggest climber**: the one challenger, the row under the leader: "Biggest climber", the company logo, the name and "↑{places} to {place now}", "↑2 to 10th". It is the largest climb among ranks 2 to 10, so it is never the leader and always on the board. Those tied on the climb go to the one placed highest. Where no one below the leader climbed, the row reads "None", muted
+2. **Biggest climber**: the one challenger, the row under the leader: "Biggest climber", the company logo, the name with its site line under it, as the pack's, and "↑{places} to {place now}", "↑2 to 10th". It is the largest climb among ranks 2 to 10, so it is never the leader and always on the board. Those tied on the climb go to the one placed highest. Where no one below the leader climbed, the row reads "None", muted
 3. **Chasing pack**: ranks 2 to 10, each with rank, company logo, name, movement and value, a step smaller, and under each name its site line in muted text: the busiest site, then "+ {N} sites", "Site A + 2 sites". A long site name is cut short and the count kept. Every board's pack carries one, so the rows sit level across the boards
 
 **Display:**

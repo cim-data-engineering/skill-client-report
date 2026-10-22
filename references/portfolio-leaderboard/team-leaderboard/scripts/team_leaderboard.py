@@ -58,6 +58,8 @@ def board(ctx, ranking):
         c = pio.climber(ranked[:SHOWN], moves)
         if c and "tiles" in ranking:
             c["tile"] = ranking["tiles"].get(c["key"]) or {}
+        if c and c["key"] in (ranking.get("sites") or {}):
+            c["site"] = ranking["sites"][c["key"]]
         b["climber"] = dict(c, name=names[c["key"]], link=links.get(c["key"])) if c else None
     return b, len(ranked), shoutout(ranking, ranked[0][1]) if ranked else None
 

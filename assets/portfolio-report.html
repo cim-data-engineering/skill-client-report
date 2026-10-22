@@ -78,6 +78,9 @@ section.lead{padding:28px 56px 24px}
 .climb.co .cwho{grid-column:3}
 .climb .clogo{grid-column:2;grid-row:2;align-self:center}
 .climb .cup{grid-column:-2;align-self:center;padding-left:8px;font-size:.75rem;font-weight:600;color:var(--on-success-container);white-space:nowrap;font-variant-numeric:tabular-nums}
+/* on a team board, the climber's site line under its name, its logo and climb centred beside both */
+.climb .sub{grid-column:-3;grid-row:3}
+.climb:has(.sub) .clogo,.climb:has(.sub) .cup{grid-row:2 / span 2}
 /* the chasing pack: the table body, set a step smaller */
 table.rk{width:100%;table-layout:fixed;align-self:start}
 table.rk col.c-rank{width:24px}
@@ -332,7 +335,7 @@ td.nb.none{color:var(--text-muted)}
     <div class="rkcol">
       <div class="rkhead"><h3 class="rkt">Assignees</h3><span>Jun - Aug</span></div>
       <div class="leader co"><span class="rkmark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg><span class="mv up">&uarr;1</span></span><span class="who"><span class="logo none" title="Kestrel Air Services">KA</span></span><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9101&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity&amp;assignee_ids=00000000-0000-4000-8000-0000000000a1" class="lname"><span class="sn">Mara Okafor</span>&nbsp;<span class="chev">&rsaquo;</span></a><span class="lmeta">Kestrel Air Services &middot; 12 Harbour Lane</span><span class="lval">11<span>actions</span></span></div>
-      <div class="climb co"><span class="rkmark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><p class="clab">Biggest climber</p><span class="clogo"><span class="tlogo none"></span></span><p class="cwho"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity&amp;assignee_ids=00000000-0000-4000-8000-0000000000a2">Imogen Reyes</a></p><span class="cup">&uarr;1 to 4th</span></div>
+      <div class="climb co"><span class="rkmark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg></span><p class="clab">Biggest climber</p><span class="clogo"><span class="tlogo none"></span></span><p class="cwho"><a href="https://ace.cimenviro.com/reports/tickets?site_ids=9104&amp;start_date=2026-06-01T00:00:00.000&amp;end_date=2026-08-31T00:00:00.000&amp;grouping=user_entity&amp;assignee_ids=00000000-0000-4000-8000-0000000000a2">Imogen Reyes</a></p><span class="cup">&uarr;1 to 4th</span><span class="sub"><span class="s">Parkview Centre</span></span></div>
       <table class="rk two">
         <colgroup><col class="c-rank"><col class="c-logo"><col><col class="c-mv"><col class="c-pv"></colgroup>
         <tbody>
