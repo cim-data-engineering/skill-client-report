@@ -7,7 +7,6 @@ fill_report.py scaffolds the chosen sections from it and fills them from the bun
 so a report carries only the parts it was asked for.
 
     scaffold  copy the shell, the always-on parts and the selected sections
-    part      print one part's markup, to add a section to a report already built
     check     look for sample data, sample links and markers left behind
     parts     list part names and sizes
 
@@ -326,19 +325,6 @@ def check_portfolio(args):
     print("ok: no sample data, placeholders, markers or dashes left.")
 
 
-def cmd_part(args):
-    """One part on its own, for adding a section to a report that already exists.
-    Re-scaffolding would throw away the filled-in report; this does not."""
-    sections = [x.strip() for x in args.sections.split(",") if x.strip()] \
-        if args.sections not in (None, "all") else list(SECTION_PARTS)
-    resolve(sections)
-    for name, lines in read_parts():
-        if name == args.name:
-            sys.stdout.write("\n".join(render(lines, sections)) + "\n")
-            return
-    sys.exit("unknown part: %s — run `parts` to list them" % args.name)
-
-
 def cmd_parts(args):
     use_mode(args.mode)
     for name, lines in read_parts():
@@ -354,11 +340,6 @@ if __name__ == "__main__":
     s.add_argument("--sections", help="comma-separated: %s (default all)" % ", ".join(SECTION_PARTS))
     s.add_argument("--out", required=True)
     s.set_defaults(func=cmd_scaffold)
-    o = sub.add_parser("part", help="print one part's markup, for a report already built")
-    o.add_argument("name")
-    o.add_argument("--sections", help="the report's full section list, so the part's "
-                                      "conditional blocks resolve the same way (default all)")
-    o.set_defaults(func=cmd_part)
     c = sub.add_parser("check", help="find sample data, placeholders or markers left behind")
     c.add_argument("report")
     c.set_defaults(func=cmd_check)

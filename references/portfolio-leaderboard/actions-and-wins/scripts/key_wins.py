@@ -32,12 +32,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
-NAME = "key-wins"
 MAX_WINS = 10
 MAX_SHORTLIST = 25     # tickets read in full: enough to find ten wins, few enough to read
 TOP = 60               # candidates the digest prints, best first, a third of them kept for work in flight
 SEVERITY = ["safety", "reliability", "comfort", "energy", "water", "other"]
-AGENT = io.AGENT
 SYSTEM_NAMES = {n.lower() for n in io.SYSTEM_ACCOUNTS.values()}
 BULK_SECONDS = 120     # closures at one site within two minutes of each other are one close-out
 IMAGE = {"image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp"}
@@ -74,7 +72,7 @@ def calls(ctx):
 def system(name):
     """A comment author that is CIM's system rather than a person: an agent, or a system account by name."""
     name = (name or "").strip()
-    return bool(AGENT.match(name)) or name.lower() in SYSTEM_NAMES
+    return bool(io.AGENT.match(name)) or name.lower() in SYSTEM_NAMES
 
 
 def human(r):
@@ -375,7 +373,7 @@ def contact_sheets(root, plan, files):
 
 
 # ── assembly, at fill time ──────────────────────────────────────────────────
-def assemble(ctx, work, facts):
+def assemble(ctx, work):
     """wins.json -> the bundle's wins, each with its site, plus the Key wins date line and
     anything to say in chat. Finished repairs lead work in flight; within each, the order
     is wins.json's."""

@@ -70,16 +70,16 @@ def board(ctx, size, unit, ranking):
     if pio.climbers(ctx):                 # a portfolio of three sites or fewer shows no climber tier
         c = pio.climber(ranked[:SHOWN], moves)
         b["climber"] = dict(c, name=name(c["key"]), link=links.get(c["key"])) if c else None
-    return b, (ranked[0][1] if ranked else None), len(ranked), {k for _, k in ranked}
+    return b, (ranked[0][1] if ranked else None), len(ranked)
 
 
 def build(ctx, work, shared):
     size, unit, _ = pio.sizes(ctx, shared["facts"])
     made = [board(ctx, size, unit, r) for r in shared.get("rankings") or []]
-    built = [(b, sid) for b, sid, _, _ in made if b["rows"]]
+    built = [(b, sid) for b, sid, _ in made if b["rows"]]
     if not built:
         return {"drop": [NAME]}
-    counts = sorted({n for b, _, n, _ in made if b["rows"]})
+    counts = sorted({n for b, _, n in made if b["rows"]})
     # each leader's building photo, fetched once however many boards it leads
     links, photos = {}, {}
     for b, sid in built:

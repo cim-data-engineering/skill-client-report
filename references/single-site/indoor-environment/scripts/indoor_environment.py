@@ -10,7 +10,6 @@ from collections import defaultdict
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
-NAME = "indoor-environment"
 HANDS_ON = ["thermal_zones"]      # known at plan time, so the overview fetches no zones of its own
 BANDS = [(92.0, "Excellent"), (85.0, "Good"), (75.0, "Average")]
 PAGE = 80

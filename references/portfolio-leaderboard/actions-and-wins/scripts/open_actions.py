@@ -105,7 +105,6 @@ def link(ctx, since, site_ids, grouping, assignee_ids=()):
 
 def raised(ctx, age_ms):
     """The day an action open `age_ms` was raised, counting back from the issue date."""
-    from datetime import timedelta
     return (io.d(ctx["today"]) - timedelta(days=int((age_ms or 0) // DAY_MS) + 1)).isoformat()
 
 

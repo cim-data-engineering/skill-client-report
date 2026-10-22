@@ -28,7 +28,7 @@ fill    Merges <dir>/wins.json into the bundle, fills the report and runs the
         check.
 
 Each section is a folder under references/<mode>/ holding its reference and its
-scripts; MODES below is the whole registry, one entry per report. A module exposes
+scripts; the registry below names each report's sections, their folders and order. A module exposes
 calls(ctx), more(ctx, work) and build(ctx, work, shared). plan.json names the mode,
 and one without a mode is single-site.
 """
@@ -100,9 +100,7 @@ PORTFOLIO_MODULES = {"overview": ("portfolio-leaderboard/overview", "overview"),
                                                 "sustainability_ratings")}
 PORTFOLIO_ORDER = ["equipment-health", "indoor-environment", "actions-resolved", "sustainability-ratings",
                    "open-actions", "key-wins", "site-leaderboard", "team-leaderboard", "overview"]
-MODES = {"single-site": {"options": OPTIONS, "modules": MODULES, "order": ORDER, "auto": AUTO},
-         "portfolio": {"options": {}, "modules": PORTFOLIO_MODULES, "order": PORTFOLIO_ORDER,
-                       "auto": PORTFOLIO_ORDER}}
+MODES = {"single-site": {"modules": MODULES}, "portfolio": {"modules": PORTFOLIO_MODULES}}
 
 
 def mode_of(ctx):
@@ -501,11 +499,11 @@ def cmd_fill(a):
     if "key-wins" in sections:
         kw = module("key-wins")
         got = kw.load_wins(work)
-        if not got or not got[0]:
+        if not got:
             sections.remove("key-wins")
             chat.append("Key wins left out: no win qualified. Say what you read and rejected, per key-wins.md.")
         else:
-            merge(data, kw.assemble(ctx, work, site_facts(work)))
+            merge(data, kw.assemble(ctx, work))
     data["sections"] = ",".join(sections)
     chat = data.pop("chat", []) + chat
     data.pop("drop", None)
@@ -545,7 +543,7 @@ def fill_portfolio(a, work):
             sections.remove("key-wins")
             chat.append("Key wins left out: no win qualified. Say what you read and rejected, per key-wins.md.")
         else:
-            merge(data, kw.assemble(ctx, work, module("overview", "portfolio").facts(ctx, work)))
+            merge(data, kw.assemble(ctx, work))
     data["sections"] = ",".join(sections)
     # the client logo is read now, so a logo added to or taken out of the plan shows on the next fill
     logo = ctx.get("client_logo")

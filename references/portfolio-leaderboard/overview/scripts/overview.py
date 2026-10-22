@@ -18,7 +18,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
-NAME = "overview"
 CHUNK = 100
 COUNT_CHUNK = 10              # an unfiltered equipment count across many more sites runs past the gateway's timeout
 LOGO_PX = 288                                     # the slot is 72px tall: four times that keeps it sharp in print

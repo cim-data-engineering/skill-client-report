@@ -17,7 +17,6 @@ from statistics import median
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
-NAME = "alerts-resolved"
 STAT4 = ["open", "in_progress", "closed", "on_hold"]           # every status but Not Doing
 BANDS = [(99.0, "Excellent"), (95.0, "Good"), (90.0, "Average")]
 EYEBROW = "Monthly actions raised vs resolved"
@@ -134,7 +133,7 @@ def sittings(stamps):
 
 
 def build(ctx, work, shared):
-    tm, (q0, q1), (t0, t1) = ctx["trend_months"], ctx["quarter"], ctx["trend"]
+    tm, (q0, q1), (t0, _) = ctx["trend_months"], ctx["quarter"], ctx["trend"]
     tz = ctx["site"]["timezone"]
     count = lambda f: (work.get(f).first() or {}).get("ticket_count", 0)
     raised = [count("ar/raised-%s.json" % m[:7]) for m in tm]

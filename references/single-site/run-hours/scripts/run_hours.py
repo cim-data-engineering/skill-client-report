@@ -20,7 +20,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
-NAME = "run-hours"
 DIR = "runhours"                     # under peak/, where the runhours_*.py scripts keep their files
 EARLIER = DIR + "/earlier"           # the latest full week with data, when the latest week lacks it
 

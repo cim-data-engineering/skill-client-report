@@ -15,7 +15,6 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
-NAME = "overview"
 
 
 def calls(ctx):
@@ -82,7 +81,6 @@ def build(ctx, work, shared):
     feet = io.in_feet(site.get("country"))
     size, unit = io.area(facts.get("building_size"), feet), "ft²" if feet else "m²"
     brand = ctx.get("brand") or {}
-    shared["site_facts"] = facts
     window = reporting_window(ctx, shared.get("partial"))
     return {
         "masthead": {

@@ -29,7 +29,6 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
-NAME = "key-wins"
 SEVERITY = ["safety", "reliability", "comfort", "energy", "water", "other"]
 SYSTEM_NAMES = {n.lower() for n in io.SYSTEM_ACCOUNTS.values()}
 BULK_RUN, BULK_GAP = 3, 120     # three or more closures, each within two minutes of the one before: a bulk close-out
@@ -343,7 +342,7 @@ def contact_sheets(root, plan, files):
 
 
 # ── assembly, at fill time ──────────────────────────────────────────────────
-def assemble(ctx, work, facts):
+def assemble(ctx, work):
     """wins.json -> the bundle's wins, plus the Key wins statement and date line and
     anything to say in chat."""
     wins = load_wins(work)

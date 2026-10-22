@@ -211,18 +211,6 @@ def days_in(ctx, m):
     return (add_months(d(m), 1) - d(m)).days
 
 
-def period_days(ctx):
-    """Days the reporting period covers, the quarter's first day to the last day it holds."""
-    return (d(ctx["through"]) - d(ctx["quarter"][0])).days + 1
-
-
-def month_count(ctx):
-    """The reporting period in months: the quarter's three, plus the share of the month to
-    date that has passed."""
-    m = ctx.get("to_date")
-    return 3 + (days_in(ctx, m) / (add_months(d(m), 1) - d(m)).days if m else 0)
-
-
 def month_label(ctx, m):
     """'September', or 'October to date' for the month to date."""
     return month(m) + (" to date" if m == ctx.get("to_date") else "")

@@ -14,11 +14,7 @@ from datetime import date
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 def xs(n):
-    """Month column centres. Six months are the DESIGN.md positions; a window
-    trimmed for a newly onboarded site spreads evenly over the same plot width,
-    and a single month sits in the middle of it."""
-    if n == 6:
-        return [80, 190, 300, 410, 520, 630]
+    """Month column centres, spread evenly over the plot width; a single month sits in the middle."""
     if n == 1:
         return [355]
     step = (630 - 80) / (n - 1) if n > 1 else 0
@@ -112,12 +108,11 @@ def set_links(s, links):
 
 
 # ── heatmaps ────────────────────────────────────────────────────────────────
-def heatmap(d, months, to_date=False):
+def heatmap(d):
     """A month to date closes the columns: its header says so, and its cells band like the
-    rest, since a score is a rate over whatever days exist. A section that trims its window
-    for a newly onboarded site hands on its own months; with one month there is no change
+    rest, since a score is a rate over whatever days exist. With one month there is no change
     to show, so the Chg column goes. A month with no score is a dash, the site row's too."""
-    months, to_date = d.get("months", months), d.get("to_date", to_date)
+    months, to_date = d["months"], d["to_date"]
     dp, t, counts = d["dp"], d["bands"], d.get("counts", [])
     moves = len(months) > 1
     head = ['        <th class="lv">%s</th>' % d["label"]]
@@ -161,26 +156,16 @@ def to_date_marks(months, to_date):
     return band, sub
 
 
-def chart_months(d, months, to_date):
-    """The months a chart draws and its values over them. A section that trims its window for a
-    newly onboarded site hands on its own months, its values one per month and None where a
-    month returned nothing. A series handed on without months holds the window's latest months."""
-    v = list(d["values"])
-    if "months" in d:
-        return d["months"], d.get("to_date", to_date), v
-    return months, to_date, [None] * (len(months) - len(v)) + v
-
-
 def text_w(t):
     """About how wide a value label prints, in px: the face is sans at 11px, semibold."""
     return sum(3.2 if ch in ".,:" else 9.6 if ch in "MW" else 6.6 for ch in t)
 
 
-def line_chart(d, months, to_date=False):
+def line_chart(d):
     """Y range spans the data and whichever thresholds are drawn, plus padding. Each point sits
     over its own month, and a month with no score leaves a gap in the line. A month to date
     closes the line dashed, on an open point: its score can still move."""
-    months, to_date, v = chart_months(d, months, to_date)
+    months, to_date, v = d["months"], d["to_date"], list(d["values"])
     th, dp = d["thresholds"], d["dp"]
     C = xs(len(months))
     vals = [val for val in v if val is not None]
@@ -256,14 +241,13 @@ def line_chart(d, months, to_date=False):
             % (d["alt"], "\n".join(band + out + sub)))
 
 
-def grouped_bar(d, months, to_date=False):
-    """A month to date sits in a tinted column: its bars count only the days so far. A section
-    that trims its window hands on its own months, one bar pair for each."""
-    months, to_date = d.get("months", months), d.get("to_date", to_date)
+def grouped_bar(d):
+    """A month to date sits in a tinted column: its bars count only the days so far."""
+    months, to_date = d["months"], d["to_date"]
     a, b = d["a"], d["b"]
     # Compact labels keep long values from colliding; the bundle may supply its own.
-    la = d.get("labels_a") or [d.get("fmt_a", "%s") % v for v in a]
-    lb = d.get("labels_b") or [d.get("fmt_b", "%s") % v for v in b]
+    la = d.get("labels_a") or ["%s" % v for v in a]
+    lb = d.get("labels_b") or ["%s" % v for v in b]
     # Two units (checks against dollars) take a scale each; one unit (actions raised
     # against resolved) shares one, or a 17 draws as tall as a 69.
     top = lambda vs: max([v or 0 for v in vs] + [1])     # a month with no data (None) draws no bar
@@ -450,13 +434,13 @@ def photo_row(photos, base, out=None, name="win"):
 # The section scripts hand over every mechanical string by name, so nothing has to
 # find the scaffold's sample text first. Each slot is located by the markup around it.
 def sub_one(s, pattern, repl, what):
-    s2, n = re.subn(pattern, lambda m: repl(m), s, count=1, flags=re.S)
+    s2, n = re.subn(pattern, repl, s, count=1, flags=re.S)
     if not n:
         sys.exit("fill: no %s in the scaffold" % what)
     return s2
 
 
-def after_eyebrow(s, eyebrow, tag_open, tag_close, text, what):
+def after_eyebrow(s, eyebrow, tag_open, tag_close, text):
     """Rewrite the first `tag_open...tag_close` after a section eyebrow."""
     i = s.find('<p class="eyebrow">%s</p>' % eyebrow)
     if i == -1:
@@ -481,18 +465,18 @@ def fill_slots(s, D):
         for label, key in (("Reporting period", "period"), ("Author", "author"), ("Issued", "issued")):
             s = sub_one(s, r"<dt>%s</dt><dd>[^<]*</dd>" % label,
                         lambda _, label=label, key=key: "<dt>%s</dt><dd>%s</dd>" % (label, m[key]), label)
-        s = after_eyebrow(s, "Analytics overview", "<h2>", "</h2>", "What we monitor at %s" % site, "overview")
+        s = after_eyebrow(s, "Analytics overview", "<h2>", "</h2>", "What we monitor at %s" % site)
     o = D.get("overview")
     if o:
-        s = after_eyebrow(s, "Analytics overview", '<p class="h2note">', "</p>", o["as_at"], "as at")
+        s = after_eyebrow(s, "Analytics overview", '<p class="h2note">', "</p>", o["as_at"])
         for label, value in o["stats"].items():
             s = sub_one(s, r'<p class="k">%s</p><p class="n">.*?</p>' % re.escape(label),
                         lambda _, label=label, value=value: '<p class="k">%s</p><p class="n">%s</p>' % (label, value),
                         "the %s stat" % label)
     for eyebrow, text in D.get("statements", {}).items():
-        s = after_eyebrow(s, eyebrow, "<h2>", "</h2>", text, eyebrow)
+        s = after_eyebrow(s, eyebrow, "<h2>", "</h2>", text)
     for eyebrow, text in D.get("datelines", {}).items():
-        s = after_eyebrow(s, eyebrow, '<p class="h2note">', "</p>", text, eyebrow)
+        s = after_eyebrow(s, eyebrow, '<p class="h2note">', "</p>", text)
     for key, inner in D.get("notes", {}).items():
         i = s.find("<li><strong>%s" % key)
         if i != -1:
@@ -528,25 +512,6 @@ def main():
     s = open(tmp, encoding="utf-8").read()
     os.unlink(tmp)
 
-    months = D["months"]
-    to_date = months.get("to_date", False)
-
-    # global swaps first: the sample site id and window live in every link
-    for old, new in D.get("global_replace", []):
-        s = s.replace(old, new)
-
-    # every occurrence: window wording recurs across the trend sections
-    for old, new in D.get("replace_all", []):
-        if old not in s:
-            sys.exit("fill: replace_all anchor not found: %.70s" % old)
-        s = s.replace(old, new)
-
-    # exactly one occurrence: a second match means the anchor is not specific enough
-    for old, new in D.get("replace", []):
-        if s.count(old) != 1:
-            sys.exit("fill: anchor matched %d times: %.70s" % (s.count(old), old))
-        s = s.replace(old, new)
-
     # named slots: masthead, overview, statements, date lines, notes, run hours
     s = fill_slots(s, D)
 
@@ -574,9 +539,9 @@ def main():
 
     # heatmaps
     if "equipment_health" in D:
-        s = swap(s, '<th class="ct">Equip</th>', heatmap(D["equipment_health"], months["quarter"], to_date))
+        s = swap(s, '<th class="ct">Equip</th>', heatmap(D["equipment_health"]))
     if "comfort" in D:
-        s = swap(s, '<th class="lv">Level</th>', heatmap(D["comfort"], months["quarter"], to_date))
+        s = swap(s, '<th class="lv">Level</th>', heatmap(D["comfort"]))
 
     # charts
     for key, anchor, kind in (("trend_eh", "Site equipment health score", "line"),
@@ -589,8 +554,7 @@ def main():
         if c is None:                     # a trend too short to draw: the section left it out
             s = drop_chart(s, anchor)
             continue
-        svg = (line_chart(c, months["trend"], to_date) if kind == "line"
-               else grouped_bar(c, months["trend"], to_date))
+        svg = line_chart(c) if kind == "line" else grouped_bar(c)
         s = swap_svg(s, anchor, svg)
         if c.get("note"):
             s = note(s, c["note_after"], c["note"])

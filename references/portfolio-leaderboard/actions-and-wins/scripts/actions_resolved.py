@@ -16,7 +16,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
-NAME = "actions-resolved"
 STAT4 = ["open", "in_progress", "closed", "on_hold"]           # every status but Not Doing
 COUNT_CHUNK, PAGE, COMMENTS = 20, 1000, 100      # COMMENTS: comments read per action, newest first
 CIM = 1                                           # CIM's company id in PEAK: its people are never ranked
