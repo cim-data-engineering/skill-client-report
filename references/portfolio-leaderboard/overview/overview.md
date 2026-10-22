@@ -12,7 +12,7 @@ Nothing on the page. In chat, say what the script prints: any site with no data 
 - Title: {Client} portfolio. The HTML title is "{Client} {Leaderboard month} Performance Leaderboard": "Northwind Estates September 2026 Performance Leaderboard"
 - Prepared by: {Company name} - {Company service name} · Powered by PEAK. The company name is `name` in `BRAND.md`, CIM by default; the service name is `service-name`, Data Driven Operations by default. Powered by PEAK stays in every brand
 - Metadata row: Sites, Author, Issued
-  - **Sites**: the sites with data somewhere in the report: a score, an action resolved, an open P1-2 action, a rating or a key win. A site with none is left out of the count and named in chat; its equipment, sensors and rules still count in the scorecards
+  - **Sites**: the sites with data, the figure it takes: each site the report shows data for. A site with none is left out of the count and named in chat; its equipment, sensors and rules still count in the scorecards
   - **Author**: the full name of the logged-in PEAK MCP user, from `who_am_i`
   - **Issued**: the issue date, the earliest local date across the sites, so the leaderboard month has closed at every one
 - The AI disclaimer, verbatim, below the metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
@@ -36,7 +36,7 @@ The analytics overview's stat cards, as a scorecard strip with no section header
 - PEAK stores every site's building size in square metres, US sites included
 - A site in the United States reads in square feet: the stored figure × 10.7639, rounded to the nearest 100 ft². A size is converted, never relabelled
 - The portfolio takes the unit most of its floor area reads in, and the script names in chat any site shown in a unit other than its own
-- A site with no building size counts in no size total, and in no sustainability ratings portfolio row, the one row weighted by size. The script names it in chat
+- A site with no building size counts in no size total. The script names it in chat
 
 ## Data
 

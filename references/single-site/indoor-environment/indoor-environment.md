@@ -31,7 +31,7 @@ Section link, labelled "See live indoor environment dashboard", over the quarter
 Thermal comfort by level, or by zone for a single-level site  
 Date: the quarter. Share of zone readings inside the comfort band set for the site during working hours, by level, in building order
 
-Heatmap table on the same `heatmap` component as the equipment health snapshot. One row per site level, a score column for each month of the reporting period, the month to date last and headed "to date" where the report carries one, cell value the thermal comfort score to 1dp, closing with a signed change column.
+Heatmap table on the `heatmap` component. One row per site level, a score column for each month of the reporting period, the month to date last and headed "to date" where the report carries one, cell value the thermal comfort score to 1dp, closing with a signed change column.
 
 | Column        | Reference                                            |
 | ------------- | ---------------------------------------------------- |
@@ -49,7 +49,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 - Zones counts the zone temperature points configured for comfort scoring. The site row totals the levels shown, and that total is the thermal zones figure the section hands on. A level whose points returned no score in the quarter has no row and counts in neither
 - Chg signed with a direction glyph. Green up, red down, muted when flat
 - Sort levels in building order, highest level first, then ground, then basements, not by Chg. The reader is looking for where in the building comfort is drifting, and the Chg column carries the direction
-- Close with a site row at the bottom, same style as the equipment health snapshot
+- Close with a site row at the bottom, separated from the level rows
 - Site row comes from the site rollup, so it will not equal the average of the level rows. Do not reconcile them
 - One level means the level row and the site row are the same figure, so list the zones as the rows instead, from the zone call in Fetch, headed "Thermal comfort by zone". One row per zone, each month the mean of its points' scores. Show each zone's average temperature over its points where the Zones count would go, since a count of 1 says nothing, and the site's average in the site row. Label rows by zone name, adding the unit's letter where one name covers several zones
 - Truncate level name with ellipsis, do not wrap rows
@@ -63,7 +63,7 @@ Heatmap table on the same `heatmap` component as the equipment health snapshot. 
 Where comfort has been heading  
 Date: the six complete months ending with the quarter, and the month to date where the report carries one
 
-Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in monthly equipment health, against the thermal comfort benchmark thresholds.
+Chart: Site thermal comfort score. Monthly line chart. Render the two nearest thermal comfort benchmark thresholds and label them: one either side where the series sits inside a band, otherwise the threshold it crosses plus the next one out, so the reader can see which months fall on which side.
 
 **Display:**
 
@@ -71,7 +71,7 @@ Chart: Site thermal comfort score. A monthly line chart built like Chart 1 in mo
 - Add chart title
 - The score is the same `site` series as the snapshot site row, so the months they share must agree
 - Each value sits over its own month; a month with no score leaves a gap in the line
-- Thermal comfort swings harder than equipment health, so let the Y axis follow the data rather than reusing the equipment health scale
+- Thermal comfort swings hard, so the Y axis follows the data, scaled to fit both thresholds
 
 **Links:**
 
@@ -103,8 +103,12 @@ All in the main batch: `search_indoor_environment(metric:"temperature")` at thre
 
 ## Newly onboarded sites
 
-Per SKILL.md, [Newly onboarded sites](../../../SKILL.md#newly-onboarded-sites):
+A site that went live inside the windows has less history than they ask for, and the section covers what exists.
 
 - A `site` × `month` series that starts after the trend window's first month went live in its first scored month. Comfort rows carry no counts to date the day, so that month is dropped unless nothing follows it
-- Every figure, the trend and the date lines take the months kept, the headline from a follow-up `site` × `all` over them, and the section hands on the first month kept and the go-live month
-- One month: no movement and no Chg column, rows lowest score first. Under three points: no trend, so no monthly thermal comfort section
+- Every figure, the trend and the date lines take the months kept, whole months only apart from the month to date, the headline from a follow-up `site` × `all` over them, and the section hands on the first month kept and the go-live month
+- The snapshot carries only the months kept, so it is only as wide as the data
+- A movement needs two months. One month: no movement and no Chg column, rows lowest score first
+- A trend needs three points. Under three: no trend, so no monthly thermal comfort section
+- A level that began scoring after the site did draws its earlier months and its Chg as dashes with no fill, so the row keeps the table's width. Say in chat when it began scoring
+- A gap in the middle of the series is an outage, not onboarding: the chart plots the months that exist and leaves the gap visible; say so in chat

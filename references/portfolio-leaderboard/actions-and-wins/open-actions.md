@@ -37,11 +37,12 @@ Two lists side by side, Sites then Assignees, each under a board head with "Open
 | --- | --- |
 | Rank | Position by open P1-2 actions, most first |
 | Logo | Assignees only: the person's company logo, grey; empty for no company |
-| Name | The site name with its region label in brackets, per [How sections fit together](../../../SKILL.md#how-sections-fit-together), or the person's name with their company after it, each a link with a chevron; under it a bar on the list's own scale, the most open filling it, split by age open with the oldest first |
+| Name | The site name with its region label in brackets, or the person's name with their company after it, each a link with a chevron; under it a bar on the list's own scale, the most open filling it, split by age open with the oldest first |
 | Count | Open P1-2 actions |
 
 **Rows and ranking:**
 
+- Region label: the site's state, or its country where the portfolio spans countries; none where every site shares one, or where the name already ends in brackets
 - Most first, ties alphabetical by name; the top 10 on each list
 - Sites: every site with data, those holding none at 0, with no bar and no link
 - Assignees: everyone holding one, CIM, the client's managing agents and AI agents included. An action counts once for each person holding it. Actions held by nobody are one row, "No assignee", with no link; an account with no name in PEAK is "Unnamed assignee"

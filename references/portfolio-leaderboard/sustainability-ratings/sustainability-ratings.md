@@ -35,7 +35,7 @@ Above the table, a legend: ↑ "Up from the rating before" in green, ↓ "Down f
 
 | Column | Content |
 | --- | --- |
-| Site | The site name with its region label in muted brackets, per [How sections fit together](../../../SKILL.md#how-sections-fit-together), linked to that site's ratings dashboard |
+| Site | The site name with its region label in muted brackets, linked to that site's ratings dashboard |
 | Size | Building size, in the portfolio's unit, named in the header |
 | One per measure | Each measure that holds a current rating at any site, headed with the measure's name. Energy, indoor environment and water lead in that order; any other measure follows alphabetically |
 
@@ -54,6 +54,7 @@ Above the table, a legend: ↑ "Up from the rating before" in green, ↓ "Down f
 
 **Display:**
 
+- Region label: the site's state, or its country where the portfolio spans countries; none where every site shares one, or where the name already ends in brackets
 - Up is `on-success-container`, down `on-error-container`, per the rating table component in DESIGN.md
 - Under the table, the source line: "Source: sustainability ratings recorded in PEAK. The portfolio row is weighted by building size."
 

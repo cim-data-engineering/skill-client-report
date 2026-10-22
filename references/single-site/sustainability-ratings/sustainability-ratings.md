@@ -35,7 +35,7 @@ One card per measure, three at most, side by side.
 
 **Display:**
 
-- The change chip is the delta chip, by whether the change is good: positive when the rating rose, muted when it held or fell. No red, the same rule as operational impact: a fall is stated in the glyph and the word, not colour coded
+- The change chip is the delta chip, by whether the change is good: positive when the rating rose, muted when it held or fell. No red: a fall is stated in the glyph and the word, not colour coded
 - The Expired chip is the neutral rating chip: grey, and always the word
 - A measure with only one rating has no previous to compare, so its card carries no change chip
 - No intensity, usage or area figures. The card answers where the building stands and which way it moved

@@ -52,16 +52,22 @@ Write `wins.json` in that order. The script keeps finished repairs ahead of work
 
 ## Voice
 
-[Writing the narrative](../../../SKILL.md#writing-the-narrative) governs every sentence in the report. It matters most here, and wins add two rules of their own:
+Every win is written by the partner's engineer to the owner. Write like a building performance engineer, not a marketer.
 
 - Write as the engineer on the job: what was wrong, what has been done and by whom, where it stands. Then stop
 - Say what was done, not what it demonstrates. "Replaced the belts and had it running the next morning" beats "restored reliability to the unit"
-
-No en or em dash anywhere in a heading or body: the portfolio page carries none, and the fill refuses one.
+- Use numbers as evidence and round them sensibly. 79%, not 79.08%
+- Explain a known cause plainly, and say when something is still open or needs a follow-up. Never imply an issue is resolved unless the tickets say so
+- Facts carry it, so drop the summing-up line that tells the reader what to think
+- No superlatives, no congratulation, no editorial framing. Past tense, active, plain words. Not "leveraged", "robust", "significant", "it is worth noting", "demonstrates"
+- No en or em dash anywhere in a heading or body: the portfolio page carries none, and the fill refuses one. A full stop, a comma or a colon does the same work
+- Nor the other tells: "not just X, but Y", rhetorical questions, a list of three where two would do, a sentence that opens by restating the one before it, stacked hedges like "may potentially"
+- Never describe the report itself or how it was made. The reader wants the buildings, not the method
 
 ## Display
 
-- Each card carries its site above the impact tag, as an eyebrow: the site name with its region label in muted brackets, per [How sections fit together](../../../SKILL.md#how-sections-fit-together). The script sets it from the win's tickets
+- Each card carries its site above the impact tag, as an eyebrow: the site name with its region label in muted brackets. The script sets it from the win's tickets
+- Region label: the site's state, or its country where the portfolio spans countries; none where every site shares one, or where the name already ends in brackets
 - Heading names the outcome, or the finding where the work is still live, plus the equipment type and name
 - Under the heading, the level the equipment serves, so the reader can place the win in the building. It is the win's `level`, PEAK's level name as it stands, and a list where the equipment spans levels. Left off where PEAK holds no real level for the equipment
 - Tag the win with its impact, above the heading: one of `energy`, `comfort`, `reliability`, `water`, `safety`, `other`. It renders as a small uppercase word with a coloured dot, and the word is what states the impact; the dot only speeds up scanning down the page

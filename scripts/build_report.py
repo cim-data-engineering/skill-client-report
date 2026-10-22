@@ -165,7 +165,7 @@ def sample_strings():
                 r'<h3>([^<]+)</h3>', r'<title>([^<]+)</title>',
                 # h2note and chartnote are deliberately absent — they carry window and
                 # method wording that is correct for every report and recurs legitimately.
-                # So are leaderboard companies: the sample's are real PEAK companies,
+                # So are leaderboard companies: the sample's are PEAK's demo companies,
                 # which any report can carry.
                 # An operational impact row is matched whole, figure to sentence: the
                 # sentence alone is a template a real site can repeat word for word.

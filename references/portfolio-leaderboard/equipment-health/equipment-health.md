@@ -28,7 +28,7 @@ One row per site with a score in the quarter, ranked by its score for the leader
 | Column | Content |
 | --- | --- |
 | Rank | Position by the leaderboard month's score; the trophy replaces 1 |
-| Site | The site name with its region label in muted brackets, "88 Example St (NSW)", per [How sections fit together](../../../SKILL.md#how-sections-fit-together) |
+| Site | The site name with its region label in muted brackets, "88 Example St (NSW)" |
 | Size | Building size, in the portfolio's unit, named in the header |
 | Equip | Equipment with a scored rule in the quarter |
 | Rules | Scored rules in the quarter |
@@ -48,6 +48,7 @@ One row per site with a score in the quarter, ranked by its score for the leader
 
 **Display:**
 
+- Region label: the site's state, or its country where the portfolio spans countries; none where every site shares one, or where the name already ends in brackets
 - Color cells per the equipment score benchmark, by band, on the printed value, with the band key above the table naming the thresholds
 - Scores to 1dp. Only the closing month column carries weight, per the `heatmap` component
 - A month a site had no score shows a dash with no fill, and Chg is a dash when either end is missing

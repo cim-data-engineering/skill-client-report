@@ -37,7 +37,7 @@ SOFT_PX = 300     # below this a tile has under 1.5x its printed size, and print
 MAX_PHOTOS = 4
 # Section and chart-source links, keyed by bundle slot and found in the scaffold
 # by the link text that follows them. Each one is built by its section's script;
-# see the links rules in SKILL.md. Row links ride on their rows and ticket links
+# see the Links block in its reference. Row links ride on their rows and ticket links
 # on their wins, so neither is a slot here.
 LINK_SLOTS = {"equipment_health": "See live equipment health dashboard",
               "comfort": "See live indoor environment dashboard",
@@ -71,7 +71,7 @@ def swap(s, anchor, new, end='</table>'):
 
 
 def initials(name):
-    """'Johnson Controls (JCI)' -> 'JC', 'Honeywell' -> 'H', 'CIM' -> 'CIM': a missing logo's stand-in."""
+    """'Kestrel Air Services (KAS)' -> 'KA', 'Linwood' -> 'L', 'CIM' -> 'CIM': a missing logo's stand-in."""
     words = [w for w in re.findall(r"[A-Za-z0-9]+", re.sub(r"\(.*?\)", "", name))
              if w.lower() not in ("and", "of", "the", "pty", "ltd", "limited", "inc", "co")]
     if len(words) == 1 and words[0].isupper() and len(words[0]) <= 3:

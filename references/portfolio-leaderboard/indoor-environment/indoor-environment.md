@@ -28,7 +28,7 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 | Column | Content |
 | --- | --- |
 | Rank | Position by the leaderboard month's score; the trophy replaces 1 |
-| Site | The site name with its region label in muted brackets, per [How sections fit together](../../../SKILL.md#how-sections-fit-together) |
+| Site | The site name with its region label in muted brackets |
 | Size | Building size, in the portfolio's unit, named in the header |
 | Levels | Levels that returned a comfort score in the quarter |
 | Zones | Zone temperature points on those levels |
@@ -49,6 +49,7 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 
 **Display:**
 
+- Region label: the site's state, or its country where the portfolio spans countries; none where every site shares one, or where the name already ends in brackets
 - Color cells per the thermal comfort benchmark, by band, on the printed value, with the band key above the table naming the thresholds
 - Scores to 1dp. Only the closing month column carries weight, per the `heatmap` component
 - A month a site had no score shows a dash with no fill, and Chg is a dash when either end is missing

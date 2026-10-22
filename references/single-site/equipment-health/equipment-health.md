@@ -49,7 +49,7 @@ Each rule replaces a manual inspection at a set frequency by priority: P1 daily 
 Health by equipment type
 Date: the quarter
 
-Heatmap table of monthly equipment health scores, one row per equipment type, a score column for each month of the reporting period in the masthead, the quarter's three and then the month to date where the report carries one, headed "to date", plus two count columns the thermal comfort heatmap does not carry.
+Heatmap table of monthly equipment health scores, one row per equipment type, a score column for each month of the reporting period, the quarter's three and then the month to date where the report carries one, headed "to date", plus two count columns.
 
 | Column         | Reference                                              |
 | -------------- | ------------------------------------------------------ |
@@ -105,12 +105,16 @@ Under it, a chart note carrying the labor cost avoided notes item word for word,
 
 ## Newly onboarded sites
 
-Per SKILL.md, [Newly onboarded sites](../../../SKILL.md#newly-onboarded-sites):
+A site that went live inside the windows has less history than they ask for, and the section covers what exists.
 
 - A `site` × `month` series that starts after the trend window's first month went live in its first scored month. Its checks per rule, against the next month's pace, date the day; at nine tenths of that pace or more it ran from the 1st
-- The go-live month is dropped unless it ran from the 1st or nothing follows it. Every figure, chart and date line takes the months kept, the headline from a follow-up `site` × `all` over them, and the section hands on the first month kept and the go-live date
-- One month: no movement and no Chg column, rows lowest score first. Under three points: no Chart 1, and the section is titled "The trend so far"
-- Chat names a month scored off under half the rules of each month beside it, or off none, as an outage; a rule count that rises or falls by half again from one month to the next is a coverage change, on its own line
+- The go-live month is dropped unless it ran from the 1st or nothing follows it. Every figure, chart and date line takes the months kept, whole months only apart from the month to date, the headline from a follow-up `site` × `all` over them, and the section hands on the first month kept and the go-live date
+- The snapshot carries only the months kept, so it is only as wide as the data
+- A movement needs two months. One month: no movement and no Chg column, rows lowest score first, so the plant needing attention leads
+- A trend needs three points, since two drawn as a line invite the reader to extend it. Under three: no Chart 1, and the section is titled "The trend so far"
+- The labor cost model prorates over the days actually monitored, never the calendar quarter
+- An equipment type whose rules began scoring after the site did draws its earlier months and its Chg as dashes with no fill, so the row keeps the table's width. Say in chat when its rules began scoring
+- A gap in the middle of the series is an outage, not onboarding, and so is a month scored off a fraction of the usual rules. The chart plots the months that exist and leaves the gap visible. Chat names a month scored off under half the rules of each month beside it, or off none, as an outage; a rule count that rises or falls by half again from one month to the next is a coverage change, on its own line
 
 ## Notes band items
 

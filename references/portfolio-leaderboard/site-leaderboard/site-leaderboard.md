@@ -18,7 +18,7 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 
 | Part | Content |
 | --- | --- |
-| Head | the ranking's label and its months as a table header: "Equipment health" with "Sep", "Actions resolved" with "Jul - Sep" |
+| Head | the ranking's label and its months as a table header: "Sep" for a board on the month, "Jul - Sep" for one on the quarter |
 | Value | the site's figure now, at the ranking's decimals, with the ranking's unit after the leader's: "99.6 %", "105 actions" |
 | Movement | against the site's place on last month's board |
 
@@ -30,7 +30,7 @@ One board per ranking, in the order the rankings come. Each is a small ranked ta
 
 **Each board** reads in three steps, the leader first. In a portfolio of three sites or fewer, where a climb is mostly two sites swapping places, no board carries the climber:
 
-1. **Leader**: rank 1, its row set large under the building's photo, cropped to a wide band. The trophy and the movement in the rank column, the site name, then "{region} · {building size}" with the value and unit, the region label per [How sections fit together](../../../SKILL.md#how-sections-fit-together), either part left off where it is empty. A leader with no photo in PEAK gets a plain panel with a building mark, and the script names it in chat
+1. **Leader**: rank 1, its row set large under the building's photo, cropped to a wide band. The trophy and the movement in the rank column, the site name, then "{region} · {building size}" with the value and unit, either part left off where it is empty. The region is the site's state, or its country where the portfolio spans countries, and empty where every site shares one or where the name already ends in brackets. A leader with no photo in PEAK gets a plain panel with a building mark, and the script names it in chat
 2. **Biggest climber**: the one challenger, the row under the leader: "Biggest climber", the site name, and "↑{places} to {place now}", "↑2 to 5th". It is the largest climb among ranks 2 to 10, so it is never the leader and always on the board. Sites tied on the climb go to the one placed highest. Where no one below the leader climbed, the row reads "None", muted
 3. **Chasing pack**: ranks 2 to 10, each with rank, site name, movement and value, a step smaller
 
