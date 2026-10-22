@@ -35,13 +35,13 @@ Work in one directory, `report/` below.
 
 1. **Resolve the site and the sections** per [Sections](#sections). Call `search_sites(keyword:"<site>", include_working_hours:true)` and `who_am_i` together, and save the `search_sites` response as `report/site.json`. Nothing else is fetched before the sections settle
    - **Portfolio**: save the client's `search_sites` pages as `report/sites.json`, `report/sites-2.json` and on, or the one `search_sites(site_ids:[...])` response for sites named one by one, and call `who_am_i`
-2. **Plan**: `python3 scripts/report.py plan report --site report/site.json --author "<who_am_i user_name>" --sections <names>`, the names comma-separated with no spaces (`--sections equipment-health,run-hours`) and left off for the full report. It fixes the windows and prints every call the sections need, each with the file under `report/peak/` its response is saved as
+2. **Plan**: `python3 scripts/report.py plan report --site report/site.json --author "<who_am_i user_name>" --sections <names>`, the names comma-separated with no spaces (`--sections equipment-health,run-hours`) and left off for the full report. It fixes the windows and prints every call the sections need, each with the file under `report/peak/` its response is saved as. Planning a folder again on the same issue date keeps each saved response whose call is unchanged and clears the rest; a new issue date clears them all
    - **Portfolio**: `python3 scripts/report.py plan report --sites report/sites.json [report/sites-2.json ...] --client "<name>" --author "<who_am_i user_name>"`, with `--client-logo <file>` for a supplied logo and `--site-ids <id> ...` to keep only some sites. It keeps the active sites and splits each call across the sites a tool takes at once
 3. **Fetch**: make every printed call in one parallel batch, exactly as printed; a portfolio plan can print a hundred, so send those in batches of about twenty. Save each response the plan lists to save as its file, an offloaded one by copying the file you were handed, an inline one written exactly as returned. The calls marked read, never saved, are the key win candidate pulls: read them where they come back and never save them, since they carry what people wrote on the tickets. Then `python3 scripts/report.py next report`, and make whatever it prints the same way until it says there are no more calls
    - A call that fails with a 5xx or a timeout is made again exactly as printed; if it keeps failing, stop and say which call and what it returned. After a dropped PEAK connection, `next` lists the calls still unsaved; if the server does not come back, say so and stop, since everything saved keeps
-   - `next` reads every saved response back first, and stops on one that does not parse, holds more or fewer rows than its pagination says, or carries a site outside the report: save that one again from the tool's output. `report.py verify report` runs the same check alone
+   - `next` reads every saved response back first, and stops on one that does not parse, holds PEAK's error instead of data, holds more or fewer rows than its pagination says, or carries a site outside the report: save that one again from the tool's output. `report.py verify report` runs the same check alone
 4. **Bundle**: `python3 scripts/report.py bundle report` writes every figure into `report/data.json`, prints anything to say in chat at hand-over, then the next step
-5. **Key wins**, when Actions and key wins is in: choose and write `report/wins.json` by `references/single-site/actions-and-wins/key-wins.md`; `next` then prints the impact and photo calls. Once those are saved, run `python3 references/single-site/actions-and-wins/scripts/key_wins.py photos report` straight away, since the photo links lapse twenty minutes after the call, then `next` again for the level call. Look at the contact sheet made per win, and add your picks to `wins.json`
+5. **Key wins**, when Actions and key wins is in: choose and write `report/wins.json` by `references/single-site/actions-and-wins/key-wins.md`, `[]` when no win qualifies; `next` then prints the impact and photo calls. Once those are saved, run `python3 references/single-site/actions-and-wins/scripts/key_wins.py photos report` straight away, since the photo links lapse twenty minutes after the call, then `next` again for the level call. Look at the contact sheet made per win, and add your picks to `wins.json`
    - **Portfolio**: follow `references/portfolio-leaderboard/actions-and-wins/key-wins.md`, which reads the candidates in two passes, a shortlist then the shortlist in full, and uses its own `scripts/key_wins.py photos`
 6. **Fill and check**: `python3 scripts/report.py fill report` fills the report, saves every photo tile, and runs the check. Look at the tiles. Then say in chat whatever it lists, name the sections left out, and hand over the file
 
@@ -53,7 +53,7 @@ Ask before fetching anything, with one `AskUserQuestion` call and one multi-sele
 
 | Choice | `--sections` name | Folder under `references/single-site/` | Adds |
 | --- | --- | --- | --- |
-| Equipment health | `equipment-health` | `equipment-health/` | the equipment health score, automated checks and labor cost avoided rows; health by equipment type; the score and checks trends |
+| Equipment health | `equipment-health` | `equipment-health/` | the equipment health score, automated checks and labour cost avoided rows; health by equipment type; the score and checks trends |
 | Indoor environment | `indoor-environment` | `indoor-environment/` | the thermal comfort row, comfort by level, the six month comfort trend |
 | Actions and key wins | `actions-and-wins` | `actions-and-wins/` | the faults resolved row with verified recovery, six months of raised vs resolved, who closed the work, and the key wins: repairs made plus live work the owner should see |
 | Equipment run hours | `run-hours` | `run-hours/` | when each unit of plant ran across the latest full Monday-to-Sunday week, against the site's working hours |
@@ -63,7 +63,7 @@ Actions and key wins is one choice with two references, `alerts-resolved.md` and
 - Everything is in by default: a dismissed prompt or an unanswered question gets the full report
 - Skip the prompt when the invocation names the sections ("/client-report Skyline Tower: equipment health and key wins only"), and state the resolved list in your reply instead
 - A section that is out is never fetched, and leaves behind no empty section, header, link or note. The scripts handle the parts they know about; check the wins yourself
-- Three things can come up empty after the fetch: Actions and key wins when nothing was resolved, Key wins alone when no win qualifies, and run hours when no plant carries a sensor that shows it running. The scripts leave the section out and print why; say so in chat, not on the page
+- Four things can come up empty after the fetch: equipment health or indoor environment when PEAK holds no score for the site in the quarter, Actions and key wins when nothing was resolved, Key wins alone when no win qualifies, and run hours when no plant carries a sensor that shows it running. The scripts leave the section out and print why; say so in chat, not on the page
 - Where only the masthead and the analytics overview survive, say so before handing the file over rather than shipping it as a review
 
 **Automatic:** `sustainability-ratings`, a card per NABERS energy, indoor environment and water rating and its history. `report.py plan` adds it to every report and its script leaves it out when PEAK holds no current rating. Never offer it, and say nothing about it in chat.
@@ -89,7 +89,7 @@ Never asks which sections to include. Every section is planned and fetched, and 
 
 Each reference owns its section: what it shows, its rules, calls, notes band items, anchor and chat lines. It names what it hands on and takes by the figure, never by the section at the other end, and cites only `DESIGN.md` component names. Placement, figure flow and build order live here and in the registry at the top of `scripts/report.py`; a section builds after every section whose figures it takes. Every equipment count leaves out the system types 21, 37, 69, 70, 87, 105 and 114, the platform checking itself rather than building plant.
 
-**Single-site page:** page one holds the masthead, the analytics overview and operational impact; then sustainability ratings, the equipment health and indoor environment snapshots, their monthly trends, equipment run hours, monthly alerts and the actions leaderboard, key wins, and the notes band. A section that is out leaves no gap. Impact rows run equipment health score, thermal comfort, automated checks, labor cost avoided, faults resolved; notes run in page order, the reporting window last.
+**Single-site page:** page one holds the masthead, the analytics overview and operational impact; then sustainability ratings, the equipment health and indoor environment snapshots, their monthly trends, equipment run hours, monthly alerts and the actions leaderboard, key wins, and the notes band. A section that is out leaves no gap. Impact rows run equipment health score, thermal comfort, automated checks, labour cost avoided, faults resolved; notes run in page order, the reporting window last.
 
 | Figure | Handed on by | Taken by |
 | --- | --- | --- |
@@ -98,6 +98,8 @@ Each reference owns its section: what it shows, its rules, calls, notes band ite
 | Thermal zones on the levels that scored | indoor environment, at plan time | the analytics overview |
 | Partial figures over a month to date | equipment health, alerts resolved | the reporting window note |
 | First month kept and go-live | equipment health, indoor environment | the masthead reporting period |
+| Trend start: the first month kept | equipment health, indoor environment | the raised vs resolved chart's first month |
+| Nothing resolved | alerts resolved | key wins, which drops with it |
 
 **Portfolio page:** page one holds the masthead, the scorecard strip and the site leaderboard, page two the team leaderboard, and the other sections follow in the [Portfolio](#portfolio) table's order.
 

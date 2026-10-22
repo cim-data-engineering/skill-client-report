@@ -16,7 +16,7 @@ A portfolio can hold more candidates than anyone can read, so you read them in t
  {"tickets": ["00000000-0000-4000-8000-000000000002", "00000000-0000-4000-8000-000000000003"], "state": "in_flight", "heading": "...", "body": "..."}]
 ```
 
-   `tickets` are full ticket ids, every ticket the win stands on, all at one site. `state` is `fixed` or `in_flight`. `heading` and `body` are plain text, escaped at fill; `**` is the only markup. Where the tickets reference a saving, the body states it, per **Display**
+   `tickets` are full ticket ids, every ticket the win stands on, all at one site: the fill stops on a win whose tickets span sites. `state` is `fixed` or `in_flight`. `heading` and `body` are plain text, escaped at fill; `**` is the only markup. Where the tickets reference a saving, the body states it, per **Display**
 3. `report.py next` prints the impact and photo calls for those tickets. Once they are saved, run `key_wins.py photos report` straight away, since the photo links lapse twenty minutes after the call, then `report.py next` again for the level call
 4. Look at the one numbered contact sheet per win, choose by **Photos** below, and add the picks to each win: `"photos": ["w1-2", {"pick": "w1-4", "focus": [0.7, 0.4], "zoom": 2}]`. A win with nothing worth showing gets none
 5. After `report.py fill`, look at every tile in `report/tiles/`: a crop can cut off the very detail that earned the photo its place. Adjust `focus` and `zoom` and fill again

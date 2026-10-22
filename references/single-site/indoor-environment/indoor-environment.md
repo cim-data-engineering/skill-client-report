@@ -4,7 +4,7 @@ Owns the operational impact thermal comfort row, the indoor environment health s
 
 ## What you write
 
-Nothing. Levels with configured points but no score this quarter are in neither the table nor the thermal zones figure. The script names them to say in chat, not on the page.
+Nothing. Levels with configured points but no score this quarter are in neither the table nor the thermal zones figure. The script names them to say in chat, not on the page. With no comfort score for the site in the quarter, the section is left out, the thermal zones figure it hands on is 0, and the script says so in chat.
 
 ## Operational impact row
 
@@ -51,7 +51,7 @@ Heatmap table on the `heatmap` component. One row per site level, a score column
 - Sort levels in building order, highest level first, then ground, then basements, not by Chg. The reader is looking for where in the building comfort is drifting, and the Chg column carries the direction
 - Close with a site row at the bottom, separated from the level rows
 - Site row comes from the site rollup, so it will not equal the average of the level rows. Do not reconcile them
-- One level means the level row and the site row are the same figure, so list the zones as the rows instead, from the zone call in Fetch, headed "Thermal comfort by zone". One row per zone, each month the mean of its points' scores. Show each zone's average temperature over its points where the Zones count would go, since a count of 1 says nothing, and the site's average in the site row. Label rows by zone name, adding the unit's letter where one name covers several zones
+- One level means the level row and the site row are the same figure, so list the zones as the rows instead, from the zone call in Fetch, headed "Thermal comfort by zone". One row per zone, each month the mean of its points' scores. Show each zone's average temperature over its points where the Zones count would go, since a count of 1 says nothing, and the site's average in the site row. Label rows by zone name, adding the last two characters of each zone's id where one name covers several zones
 - Truncate level name with ellipsis, do not wrap rows
 
 **Links:**
@@ -110,5 +110,5 @@ A site that went live inside the windows has less history than they ask for, and
 - The snapshot carries only the months kept, so it is only as wide as the data
 - A movement needs two months. One month: no movement and no Chg column, rows lowest score first
 - A trend needs three points. Under three: no trend, so no monthly thermal comfort section
-- A level that began scoring after the site did draws its earlier months and its Chg as dashes with no fill, so the row keeps the table's width. Say in chat when it began scoring
-- A gap in the middle of the series is an outage, not onboarding: the chart plots the months that exist and leaves the gap visible; say so in chat
+- A level that began scoring after the site did draws its earlier months and its Chg as dashes with no fill, so the row keeps the table's width
+- A gap in the middle of the series is an outage, not onboarding: the chart plots the months that exist and leaves the gap visible. Chat says how many months of comfort history the site has against the six the trend covers

@@ -2,7 +2,7 @@
 
 Which point stands for a unit running. The recipe reads every point on the site's in-scope equipment and sorts it by name with the rules below, at run time — so this is a guide, not a list to keep complete. A point PEAK added last week is read the same way as one added years ago, and nothing here names a metadata id.
 
-`references/single-site/run-hours/scripts/runhours_plan.py` parses these tables on every run: edit a table and the next run follows it, with no second copy in code. `references/single-site/run-hours/run-hours.md` does not need this file at run time — open it to change a rule.
+`references/single-site/run-hours/scripts/runhours_plan.py` parses and checks these tables on every run: edit a table and the next run follows it, with no second copy in code. A table needs its columns, a `---` separator under its header and rows of the header's width; a flag is `yes` or empty, a Page is one of the three below, a code appears once and a Rank is a whole number. A mistake stops the run with the file and line. `references/single-site/run-hours/run-hours.md` does not need this file at run time — open it to change a rule.
 
 ## Equipment types
 

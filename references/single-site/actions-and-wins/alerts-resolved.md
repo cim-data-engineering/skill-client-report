@@ -8,13 +8,13 @@ The two answer the same question from either end: how much fault work the site t
 
 Nothing. The script fills the chart and the leaderboard.
 
-A window with nothing resolved means no section. With no alert closed in the quarter the recovery rate has no denominator; with no action resolved in the six months "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. Either one leaves out the section, its operational impact row, its notes items and its partial figures in the reporting window note. The script says in chat which it was, with the counts left unshown. Key wins goes with it. A newly onboarded site is where this happens.
+A window with nothing resolved means no section. With no alert closed in the quarter the recovery rate has no denominator; with no action resolved in the six months "who closed the work" has no answer, and a leaderboard of people sitting on zero is not one. Either one leaves out the section, its operational impact row, its notes items and its partial figures in the reporting window note. The script says in chat which it was, with the counts left unshown, and hands on that nothing was resolved, so key wins drops too. A newly onboarded site is where this happens.
 
 ## Operational impact row
 
 | Rating chip                        | Metric label                                | Value                                                                                       | Subtitle                                                                                                                                           |
 | ---------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| See below alert recovery benchmark | x faults resolved with x% verified recovery | Resolved alerts with status closed over the quarter, on rules still running | Median time to resolve of x days. Based on the alert's linked action creation and resolution date, not the alert's own creation and resolution date |
+| See below alert recovery benchmark | x faults resolved with x% verified recovery | Resolved alerts with status closed over the quarter, on rules still running | Median time to resolve of x days, or hours under a day. Based on the alert's linked action creation and resolution date, not the alert's own creation and resolution date. With no action resolved in the quarter: "No action was resolved in the quarter to time." |
 
 ## Alert recovery benchmark
 
@@ -41,7 +41,7 @@ Grouped bars by month.
 ## Actions leaderboard
 
 Who closed the work
-Date: the 6 month window
+Date: the 6 month window, the full six months its counts cover, even where the chart above starts later for a newly onboarded site
 
 | Column          | Reference                                |
 | --------------- | ---------------------------------------- |
@@ -64,6 +64,7 @@ Date: the 6 month window
 - Exclude CIM's own system accounts from the leaderboard: CIM Support, the CIM API logins and the AI agents (Agent Hannah, or any other agent). `peak_io.system_account` decides by PEAK user id, from the list in `peak_io.SYSTEM_ACCOUNTS`, with the agent name rule for agents added later. CIM's people rank like anyone else, and so do contractors' shared logins, such as a dispatch desk or a generic BMS account. The excluded accounts' actions still count in raised vs resolved and faults resolved. No need to call this out in the report
 - Each assignee sits beside their company's logo in a square tile, as PEAK shows it. The script fetches each logo once from its `logo_url` and embeds it. A company without one gets its initials instead, and the script names it to say in chat
 - Truncate assignee and company name with ellipsis, do not wrap rows
+- Where no one outside CIM's system accounts resolved or holds an action, the board is left out and the chart above it stays; the script says so in chat
 
 **Links:**
 

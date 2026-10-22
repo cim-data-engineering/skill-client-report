@@ -10,7 +10,7 @@ Nothing on the page. In chat, say what the script prints: any leader with no bui
 
 Eyebrow: the leaderboard month, "September 2026"  
 Statement: Site leaderboard  
-Date line: "Each board ranks the sites on one measure, with moves since {the month before}.", then each ranking's note once, then, where a board ranks more than 10, "Top 10 of {N} sites on each board.", N being the sites the boards rank, a range "12 to 14" where the boards differ.
+Date line: "Each board ranks the sites on one measure, with moves since {the month before}.", then the note of each ranking drawn, once, then, where a board ranks more than 10, "Top 10 of {N} sites on each board.", N being the sites the boards that are cut rank, a range "12 to 14" where they differ, and "on the boards that rank more" in place of "on each board" where only some are cut.
 
 ## Boards
 

@@ -7,6 +7,7 @@ What to check before committing a change to this skill. How the skill works is i
 - `SKILL.md` orchestrates: which report, build order, sections and their wiring. It points down to the references, never the other way
 - `references/<report>/<section>/` owns one section: business logic a person can read and maintain, and a Data block of the exact MCP calls, so a run spends nothing on discovery. A reference links nothing above or beside it; naming a `DESIGN.md` component is fine
 - The scripts make every figure, row, link and line of text on the page. Change output in the script, never in a filled report
+- `scripts/` is the shared platform: `peak_io` and `portfolio_io` read responses, page calls and format, `wins_io` holds the key wins core, and the fill scripts draw the page. Code two or more sections use lives there; code one section uses lives in its folder. A section folder lifts into another skill together with `scripts/`
 - `DESIGN.md` and `BRAND.md` hold the look only: tokens, components and print rules, no business logic
 
 ## Before you commit
