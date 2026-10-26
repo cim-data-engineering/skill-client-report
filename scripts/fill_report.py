@@ -4,10 +4,10 @@
     python3 scripts/fill_report.py data.json --out report.html
 
 Everything mechanical lives here: heatmap rows and their band colours, chart
-geometry recomputed from each series' own range, the leaderboard, the wins and
-their photos, the platform links and every masthead slot. The wins are
-written by the model and passed in through the bundle; nothing in this file
-invents prose.
+geometry recomputed from each series' own range, the leaderboard and its
+shoutout, the wins and their photos, the platform links and every masthead
+slot. The wins are written by the model and passed in through the bundle;
+nothing in this file invents prose.
 """
 import argparse, base64, html, io, json, os, re, subprocess, sys, tempfile
 from datetime import date
@@ -538,6 +538,7 @@ TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="c
           '<path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>'
           '<path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>'
           '<path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>')
+CLAP = '<span class="clap" aria-hidden="true">&#x1F44F;</span>'
 CHARTS = (("trend_eh", "Site equipment health score", "line"),
           ("trend_checks", "Automated health checks", "bar"),
           ("trend_comfort", "Site thermal comfort score", "line"),
@@ -636,6 +637,15 @@ def fill_leaderboard(s, entries):
     return s[:t0] + "\n" + "\n".join(rows) + "\n    " + s[s.index("</tbody>", t0):]
 
 
+def fill_shoutout(s, shout):
+    """The leader's shoutout button beside the actions leaderboard's title, in place of the sample's; none
+    without one."""
+    m = re.search(r'    <a data-sample="shoutout" class="shout".*?</a>\n', s)
+    new = ('    <a class="shout" href="%s">%s%s</a>\n' % (href(shout["url"]), CLAP, html.escape(shout["text"]))
+           if shout else "")
+    return s[:m.start()] + new + s[m.end():]
+
+
 def win_block(w, base, photos_out):
     """One win card. One photo sits beside the text; two to four run in a row under the heading."""
     photos = w.get("photos") or []
@@ -713,6 +723,7 @@ def main():
         s = fill_ratings(s, D["ratings"])
     if D.get("leaderboard"):
         s = fill_leaderboard(s, D["leaderboard"])
+        s = fill_shoutout(s, D.get("shoutout"))
     elif "leaderboard" in D:              # nobody to rank: the board goes, the chart above it stays
         s = drop_section(s, "Who closed the work")
     if "wins" in D:

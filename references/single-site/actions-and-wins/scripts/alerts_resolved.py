@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Actions resolved and the leaderboard: the faults resolved impact row, six
-months of raised vs resolved, and who closed the work. Every number printed is a
-count from count_tickets or a pagination.total; rows only add what a count
-cannot, the median and company names and logos. See
+months of raised vs resolved, and who closed the work, with a shoutout for its
+leader. Every number printed is a count from count_tickets or a pagination.total;
+rows only add what a count cannot, the median, company names and logos, and the
+ticket the leader's first name and email are read off. See
 references/single-site/actions-and-wins/alerts-resolved.md.
 """
 import os
@@ -47,7 +48,7 @@ def calls(ctx):
     out += [
         io.gql("ar/resolved-rows.json", "tickets.tickets",
                dict(esc(ctx), resolved_at_local_start=t0 + "T00:00:00", resolved_at_local_end=t1 + "T00:00:00", limit=1000),
-               ["age", "resolved_at", "status_id"] + COMPANY),
+               ["ticket_id", "age", "resolved_at", "status_id"] + COMPANY),
         # Open now: the company of anyone holding open work and nothing resolved.
         io.gql("ar/open-rows.json", "tickets.tickets", dict(esc(ctx), status_ids=[1, 3, 7], limit=1000), OPEN_FIELDS),
         io.call("ar/alerts-closed.json", "search_alert_tickets", site_ids=[sid], status="closed",
@@ -60,7 +61,22 @@ def calls(ctx):
 
 
 def more(ctx, work):
-    return io.pages_due(work, [c for c in calls(ctx) if c["file"] in ("ar/resolved-rows.json", "ar/open-rows.json")])
+    due = io.pages_due(work, [c for c in calls(ctx) if c["file"] in ("ar/resolved-rows.json", "ar/open-rows.json")])
+    if due or work.has("ar/leader.json"):
+        return due
+    # the leader's first name and email, for the shoutout: one ticket they resolved whose assignees all have
+    # names, since one without fails the pull
+    ranked = standings(work)
+    if not ranked or not ranked[0][1]["resolved"]:
+        return []                         # no one resolved an action that counts: no leader to thank
+    names = {r["assignee_id"]: r.get("assignee_name")
+             for f in ("ar/resolved-by-assignee.json", "ar/open-by-assignee.json")
+             for r in work.get(f).rows if r.get("assignee_id")}
+    lead = ranked[0][0]
+    named = [r for r in io.rows(work, "ar/resolved-rows.json") if r.get("status_id") != 8 and r.get("ticket_id")
+             and lead in {a.get("id") for a in r.get("assignees") or []}
+             and all(names.get(a["id"]) for a in r.get("assignees") or [] if a.get("id"))]
+    return [io.leader_pull(ctx["site"]["site_id"], named[0]["ticket_id"])] if named else []
 
 
 def sittings(stamps):
@@ -92,9 +108,23 @@ def drop_reason(faults, resolved, open_now):
             "quarter and the %s open now are not shown." % (io.plural(faults, "alert"), io.plural(open_now, "action")))
 
 
-def board(work, rows):
-    """(leaderboard, companies with no logo): each assignee's actions resolved and open now, CIM's own
-    system accounts left out, ranked by resolved then completion rate, each beside their company's logo."""
+def standings(work):
+    """[(assignee id, entry)]: each assignee's actions resolved and open now, CIM's own system accounts left
+    out, ranked by resolved then completion rate."""
+    entries = {}
+    for f, key in (("ar/resolved-by-assignee.json", "resolved"), ("ar/open-by-assignee.json", "open")):
+        for r in work.get(f).rows:
+            aid, name = r.get("assignee_id"), " ".join((r.get("assignee_name") or "").split())
+            if not aid or io.system_account(aid, name):     # CIM's own system accounts never rank
+                continue
+            e = entries.setdefault(aid, {"name": name, "company": "", "resolved": 0, "open": 0})
+            e[key] += r.get("ticket_count") or 0
+    rate = lambda e: e["resolved"] / (e["resolved"] + e["open"]) if e["resolved"] + e["open"] else 0
+    return sorted(entries.items(), key=lambda x: (-x[1]["resolved"], -rate(x[1]), x[1]["name"]))
+
+
+def board(ranked, rows):
+    """(leaderboard, companies with no logo): the standings, each beside their company's logo."""
     company, logo_url = {}, {}
     for r in rows:
         for a in r.get("assignees") or []:
@@ -103,16 +133,10 @@ def board(work, rows):
                 company.setdefault(a["id"], ent["name"])
                 if ent.get("logo_url"):
                     logo_url.setdefault(ent["name"], ent["logo_url"])
-    entries = {}
-    for f, key in (("ar/resolved-by-assignee.json", "resolved"), ("ar/open-by-assignee.json", "open")):
-        for r in work.get(f).rows:
-            aid, name = r.get("assignee_id"), " ".join((r.get("assignee_name") or "").split())
-            if not aid or io.system_account(aid, name):     # CIM's own system accounts never rank
-                continue
-            e = entries.setdefault(aid, {"name": name, "company": company.get(aid, ""), "resolved": 0, "open": 0})
-            e[key] += r.get("ticket_count") or 0
-    rate = lambda e: e["resolved"] / (e["resolved"] + e["open"]) if e["resolved"] + e["open"] else 0
-    leaderboard = sorted(entries.values(), key=lambda e: (-e["resolved"], -rate(e), e["name"]))
+    leaderboard = []
+    for aid, e in ranked:
+        e["company"] = company.get(aid, "")
+        leaderboard.append(e)
     names = list(dict.fromkeys(e["company"] for e in leaderboard if e["company"]))
     logos = io.fetch_logos({n: logo_url[n] for n in names if n in logo_url})
     for e in leaderboard:
@@ -146,7 +170,8 @@ def build(ctx, work, shared):
     shared.setdefault("partial", []).append("action counts")      # only once the section stays
 
     res_rows = io.rows(work, "ar/resolved-rows.json")
-    leaderboard, unlogged = board(work, res_rows + io.rows(work, "ar/open-rows.json"))
+    ranked = standings(work)
+    leaderboard, unlogged = board(ranked, res_rows + io.rows(work, "ar/open-rows.json"))
     pct_rec = recovered / faults * 100
     chip = io.band(pct_rec, BANDS)
     med = median_text(res_rows, q0, q1, tz)
@@ -183,6 +208,10 @@ def build(ctx, work, shared):
                     "is left out.")
     links = {"leaderboard": "%s/reports/tickets?site_ids=%s&start_date=%sT00:00:00.000&end_date=%sT00:00:00.000"
                             "&grouping=assignee" % (host, site["site_id"], t0, ctx["through"])} if leaderboard else {}
+    # the leader's shoutout, where they resolved an action and PEAK gave their first name and email
+    lead = ranked[0][0] if ranked and ranked[0][1]["resolved"] else None
+    first, email = io.leader_contact(work).get(lead, ("", ""))
+    shout = io.shoutout(first, email, site["site_name"].strip()) if first and email else None
     return {
         "impact": impact,
         "alerts": {"a": raised, "b": resolved, "scale": "shared",
@@ -192,6 +221,7 @@ def build(ctx, work, shared):
                              io.listing(map(str, resolved)))
                           + io.to_date_note(ctx, tm)},
         "leaderboard": leaderboard,
+        "shoutout": shout,
         "links": links,
         "datelines": {
             EYEBROW: chart_line,

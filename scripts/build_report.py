@@ -246,6 +246,10 @@ def cmd_check(args):
     if 'data-sample="ratings"' in text:
         errors.append("sample sustainability ratings still in the report — fill them from the bundle's ratings")
 
+    # So is the shoutout button; the fill swaps in the leader's, or none.
+    if 'data-sample="shoutout"' in text:
+        errors.append("sample shoutout still in the report — fill it from the bundle's shoutout")
+
     # A heatmap trimmed for a short-history site has to lose the same columns
     # from its header and from every row, so a ragged table means a missed row.
     for t in re.findall(r'<table class="hm">(.*?)</table>', text, re.S):

@@ -7,16 +7,12 @@ draws the team rankings in `shared`, so it builds after the sections that hand t
 """
 import os
 import sys
-from urllib.parse import quote, urlencode
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
+import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
 SHOWN = 10
-# The shoutout form: whom it thanks (their email), their site and the comment come prefilled;
-# the sender fills in their own email.
-SHOUTOUT_FORM = "https://airtable.com/app11XTZy9PtGOZwf/shrwYEpydoRJ62FzK"
-COMMENT = "Nice job!"
 
 
 def calls(ctx):
@@ -30,11 +26,7 @@ def more(ctx, work):
 def shoutout(ranking, key):
     """The button thanking this one on the shoutout form, where the ranking carries their shoutout."""
     s = (ranking.get("shoutouts") or {}).get(key)
-    if not s:
-        return None
-    query = urlencode([("prefill_assignee_shoutout_name", s["email"]), ("prefill_assignee_shoutout_site", s["site"]),
-                       ("prefill_comment", COMMENT)], quote_via=quote)
-    return {"text": "Send %s a shoutout" % s["first"], "url": "%s?%s" % (SHOUTOUT_FORM, query)}
+    return io.shoutout(s["first"], s["email"], s["site"]) if s else None
 
 
 def board(ctx, ranking):

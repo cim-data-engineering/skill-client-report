@@ -17,6 +17,7 @@ import re
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timezone
+from urllib.parse import quote, urlencode
 
 MONTHS = ["January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December"]
@@ -209,6 +210,36 @@ def system_account(user_id, name=None):
     """True for an account that is CIM's system rather than a person: one of SYSTEM_ACCOUNTS, or an
     agent by name. Contractors' shared logins (a dispatch desk, a BMS controls account) rank."""
     return bool(user_id and str(user_id) in SYSTEM_ACCOUNTS) or bool(name and AGENT.match(name))
+
+
+# ── shoutout ────────────────────────────────────────────────────────────────
+# The shoutout form: whom it thanks (their email), their site and the comment come prefilled;
+# the sender fills in their own email.
+SHOUTOUT_FORM = "https://airtable.com/app11XTZy9PtGOZwf/shrwYEpydoRJ62FzK"
+SHOUTOUT_COMMENT = "Great work topping the leaderboard"
+LEADER = ["ticket_id", "assignees.id", "assignees.firstname", "assignees.email"]
+
+
+def leader_pull(site_id, ticket_id):
+    """The leader's first name and email, off one ticket of theirs whose assignees all have names, since PEAK
+    refuses the whole pull when any has none. Optional: a refusal leaves no shoutout."""
+    return dict(gql("ar/leader.json", "tickets.tickets", {"type": "escalated", "site_ids": [site_id],
+                                                          "ticket_ids": [ticket_id], "ticket_archived": False,
+                                                          "limit": 1}, LEADER), optional=True)
+
+
+def leader_contact(work):
+    """{id: (first name, email)} off the leader pull, empty when it was not made or PEAK refused it."""
+    got = work.get("ar/leader.json", optional=True) if work.has("ar/leader.json") else None
+    return {a.get("id"): ((a.get("firstname") or "").strip(), (a.get("email") or "").strip())
+            for r in (got.rows if got else []) for a in r.get("assignees") or [] if a.get("id")}
+
+
+def shoutout(first, email, site):
+    """The button thanking a leader on the shoutout form."""
+    query = urlencode([("prefill_assignee_shoutout_name", email), ("prefill_assignee_shoutout_site", site),
+                       ("prefill_comment", SHOUTOUT_COMMENT)], quote_via=quote)
+    return {"text": "Send %s a shoutout" % first, "url": "%s?%s" % (SHOUTOUT_FORM, query)}
 
 
 # ── time zones ──────────────────────────────────────────────────────────────

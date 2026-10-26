@@ -75,6 +75,13 @@ section:last-of-type{border-bottom:0}
 .sechead{margin:0 0 24px}
 h2{font-family:var(--display);font-size:2rem;font-weight:600;line-height:1.2;letter-spacing:-.014em;color:var(--text-heading);margin:0}
 .h2note{font-size:.875rem;color:var(--text-muted);margin:6px 0 0}
+/* the shoutout: the report's one button, beside a leaderboard's title, over the leader it thanks */
+.sechead:has(> .shout){display:grid;grid-template-columns:1fr auto;column-gap:24px}
+.sechead:has(> .shout) .eyebrow{grid-area:1/1}
+.sechead:has(> .shout) h2{grid-area:2/1}
+.sechead:has(> .shout) .h2note{grid-area:3/1/4/3}
+.shout{grid-area:1/2/3/3;align-self:end;margin-bottom:4px;display:inline-flex;align-items:center;gap:8px;height:36px;box-sizing:border-box;padding:0 16px 0 13px;border-radius:999px;background:var(--primary);color:var(--surface);font-size:.8125rem;font-weight:600;line-height:1;white-space:nowrap}
+.shout .clap{flex:none;font-size:1rem}
 .charttitle{font-family:var(--display);font-size:1.0625rem;font-weight:600;line-height:1.35;color:var(--text-heading);margin:0 0 14px}
 
 /* Analytics overview stat grid — tracks are weighted to each stat's widest line so every label and figure holds one line */
@@ -823,6 +830,7 @@ L06</title>AC-07 &rsaquo;</text></a><text class="rh-where" x="162" y="15.0" text
     <p class="eyebrow">Actions leaderboard</p>
     <h2>Who closed the work</h2>
     <p class="h2note">Actions resolved March – August 2026, ranked by resolved. Completion rate is resolved ÷ (resolved + currently open); open now as at 1 September 2026.</p>
+    <a data-sample="shoutout" class="shout" href="https://airtable.com/app11XTZy9PtGOZwf/shrwYEpydoRJ62FzK?prefill_assignee_shoutout_name=daniel.reyes%40cim.example&amp;prefill_assignee_shoutout_site=Skyline%20Tower&amp;prefill_comment=Great%20work%20topping%20the%20leaderboard"><span class="clap" aria-hidden="true">&#x1F44F;</span>Send Daniel a shoutout</a>
   </div>
   <table>
     <thead>

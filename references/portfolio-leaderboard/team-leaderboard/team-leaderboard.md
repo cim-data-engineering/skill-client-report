@@ -52,7 +52,7 @@ One board per team ranking, in the order the rankings come. Each is a small rank
 
 A button beside the title, "Send Mara a shoutout", thanking the leader of the first board whose ranking carries shoutouts, the assignees'. Only the leader gets one, never the climber. It opens the shoutout form with whom it thanks, their busiest site and a comment filled in, and the sender adds their own email:
 
-`https://airtable.com/app11XTZy9PtGOZwf/shrwYEpydoRJ62FzK?prefill_assignee_shoutout_name={{email}}&prefill_assignee_shoutout_site={{site_name}}&prefill_comment=Nice%20job%21`
+`https://airtable.com/app11XTZy9PtGOZwf/shrwYEpydoRJ62FzK?prefill_assignee_shoutout_name={{email}}&prefill_assignee_shoutout_site={{site_name}}&prefill_comment=Great%20work%20topping%20the%20leaderboard`
 
 - The email is the leader's, and goes in the link only, never in the page's text
 - A leader with no shoutout gets no button

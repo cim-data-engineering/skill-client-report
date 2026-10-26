@@ -21,8 +21,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from fill_report import (EXTERNAL, IMPACTS, LEFT, MAX_PHOTOS, RIGHT, band, chg, href, initials,  # noqa: E402
-                         photo_row, scaffold, stat_cards, win_groups)
+from fill_report import (CLAP, EXTERNAL, IMPACTS, LEFT, MAX_PHOTOS, RIGHT, band, chg, href,  # noqa: E402
+                         initials, photo_row, scaffold, stat_cards, win_groups)
 
 TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
           'stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place">'
@@ -33,7 +33,6 @@ TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="c
 CLIMB = ('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
          'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>'
          '<polyline points="16 7 22 7 22 13"/></svg>')
-CLAP = '<span class="clap" aria-hidden="true">&#x1F44F;</span>'
 DASHES = re.compile("[\u2013\u2014]|&ndash;|&mdash;")
 REGION = re.compile(r"[ \t]*<!-- fill: ([a-z-]+) -->\n(.*?)[ \t]*<!-- /fill: \1 -->\n?", re.S)
 # A link out of the report, to PEAK or the shoutout form, that does not already name its target

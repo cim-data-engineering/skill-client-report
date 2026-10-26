@@ -27,7 +27,6 @@ NOTE = "A resolved action only counts for rankings if the assignee commented on 
 FIELDS = ["ticket_id", "site_id", "status_id", "assignees.id", "assignees.entity.id", "assignees.entity.name",
           "assignees.entity.logo_url",
           {"path": "comments", "args": {"user_only": True, "limit": COMMENTS}, "sub_fields": ["author_id"]}]
-LEADER = ["ticket_id", "assignees.id", "assignees.firstname", "assignees.email"]
 
 
 def pulls(ctx):
@@ -63,10 +62,7 @@ def more(ctx, work):
              and all(p["names"].get(a["id"]) for a in act["holders"] if a["id"])]
     if not named:
         return []
-    act = named[0]
-    return [dict(io.gql("ar/leader.json", "tickets.tickets", {"type": "escalated", "site_ids": [act["site"]],
-                                                              "ticket_ids": [act["ticket"]], "ticket_archived": False,
-                                                              "limit": 1}, LEADER), optional=True)]
+    return [io.leader_pull(named[0]["site"], named[0]["ticket"])]
 
 
 def commented(rows, nm):
@@ -157,13 +153,6 @@ def where(at, site_name):
     return " ".join(x for x in pio.busiest(at, site_name) if x)
 
 
-def leader_contact(work):
-    """{id: (first name, email)} off the leader pull, empty when it was not made or PEAK refused it."""
-    got = work.get("ar/leader.json", optional=True) if work.has("ar/leader.json") else None
-    return {a.get("id"): ((a.get("firstname") or "").strip(), (a.get("email") or "").strip())
-            for r in (got.rows if got else []) for a in r.get("assignees") or [] if a.get("id")}
-
-
 def build(ctx, work, shared):
     p = people(ctx, work)
     now, then, who, ranks = p["acts"], p["then_acts"], p["who"], p["ranks"]
@@ -202,7 +191,7 @@ def build(ctx, work, shared):
         "links": {c: tickets_link(ctx, sorted(co_sites[c]), "site", sorted(co_people[c])) for c in co_now}})
 
     # people: each assignee's actions resolved and their sites
-    contact = leader_contact(work)
+    contact = io.leader_contact(work)
     p_now = {k: v for k, v in p["now"].items() if v}
     shared.setdefault("team_rankings", []).append({
         "label": "Assignees", "noun": "assignees", "window": "quarter", "unit": "actions", "note": NOTE,
