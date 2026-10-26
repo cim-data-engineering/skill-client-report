@@ -209,7 +209,7 @@ def open_actions(d):
     its head, the name over a bar on the list's own scale split by age, oldest first, and the count at
     the end."""
     out = []
-    if d.get("backlog") and len(d["backlog"]["values"]) > 1:
+    if d.get("backlog"):
         out.append(backlog_chart(d["backlog"]))
     out.append('  <div class="opgrid">')
     for p in d["panels"]:
@@ -246,11 +246,12 @@ BL_VIEW, BL_BASE, BL_H = 150, 112, 78
 
 def backlog_chart(d):
     """A bar a month end on one scale, split by age open as the list bars are, oldest at the base, the
-    total on top; the last bar is the issue month, counted as at the issue date."""
+    total on top; the last bar is the issue month, counted as at the issue date. A single bar sits in
+    the middle."""
     months, vals, stacks = d["months"], d["values"], d["stacks"]
     n = len(months)
     step = (RIGHT - LEFT - 40) / max(n - 1, 1)
-    C = [LEFT + 20 + step * i for i in range(n)]
+    C = [LEFT + 20 + step * i for i in range(n)] if n > 1 else [(LEFT + RIGHT) / 2]
     w = min(44, step * (0.55 if n > 8 else 0.4))
     top = max(vals + [1]) * 1.08
     out = []

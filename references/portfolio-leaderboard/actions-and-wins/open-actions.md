@@ -1,6 +1,6 @@
 # Open P1-2 actions
 
-Owns the open P1-2 actions section: the portfolio's open P1-2 backlog at each month end over the past year, then the sites and the people holding the most priority 1 and 2 actions open now, most first, each split by how long its actions have been open. It is not a leaderboard: no trophy, no movement and no award. Scaffold part: `open-actions`. Script: `scripts/open_actions.py`, which builds every row, figure and link below.
+Owns the open P1-2 actions section: the portfolio's open P1-2 backlog at each month end over the past year, from the month its first P1-2 action was raised, then the sites and the people holding the most priority 1 and 2 actions open now, most first, each split by how long its actions have been open. It is not a leaderboard: no trophy, no movement and no award. Scaffold part: `open-actions`. Script: `scripts/open_actions.py`, which builds every row, figure and link below.
 
 ## What you write
 
@@ -21,13 +21,14 @@ Legend under it: "≥60d", "30-60d", "<30d", one swatch each, keying the chart a
 
 ## Backlog chart
 
-Under the legend, chart title "Backlog at month end": a stacked bar for each of the eleven month ends before the issue month, then the issue month, twelve in all, on one scale. Each bar splits by age open on the day, in the lists' shades, 60 days or more at the base, with its total on top.
+Under the legend, chart title "Backlog at month end": a stacked bar for each of the eleven month ends before the issue month, from the first month, then the issue month, twelve at most, on one scale. Each bar splits by age open on the day, in the lists' shades, 60 days or more at the base, with its total on top.
 
+- **First month**: the month the portfolio's first P1-2 action was raised, open or closed, at any site. Month ends before it are left out; a month end from it on with nothing open shows 0
 - **Month end**: every action open as the month closed, on the definition above: raised before the first of the next month, and not closed before it. Its age is counted to the month's last day
 - **The issue month**: the backlog as at the issue date, the count the lists add up to, labelled by its month alone
 - PEAK keeps no priority or status history, so a month end is rebuilt from today's records: an action raised as P3 and later raised to P1 counts at P1 in every month it was open
 - It is shorter than the monthly charts, so it and both lists hold one page. Both lists' rows are as tall as an assignee's three lines, so the two sit level
-- It is left out with fewer than two bars
+- With the issue month alone, its one bar sits in the middle
 
 ## Lists
 
@@ -66,11 +67,12 @@ All in the main batch:
 | Each open P1-2 action, its age, when it was raised and who holds it | `tickets.tickets` (`type:"escalated"`, `ticket_archived:false`, every `site_ids`, `status_ids:[1,3,7]`, `priority_ids:[1,2]`), `limit:1000` |
 | Each assignee's name | `count_tickets(ticket_types:["escalated"], aggregate_entities:["assignee"], statuses:["open","in_progress","on_hold"], priorities:[1,2])`, 20 sites a call: `assignee_name` by `assignee_id` |
 | Each P1-2 action closed since the first month end | `tickets.tickets` (`type:"escalated"`, `ticket_archived:false`, every `site_ids`, `status_ids:[6]`, `priority_ids:[1,2]`, `resolved_at_local_start` the first of the month after the first month end), `limit:1000`, selecting `ticket_id`, `site_id`, `created_at` and `resolved_at` only |
+| The first P1-2 action raised | `tickets.tickets` (`type:"escalated"`, `ticket_archived:false`, every `site_ids`, `status_ids:[1,3,6,7]`, `priority_ids:[1,2]`, `orderBy:"created_at_ASC"`), `limit:1`, selecting `site_id` and `created_at` only |
 
 - The ticket pull selects only `ticket_id`, `site_id`, `status_id`, `age`, `created_at`, and `assignees` with `id`, `entity.name` and `entity.logo_url`: how long each action has been open and who holds it, never what anyone wrote. No names: PEAK refuses the whole pull when one assignee has none, so names come from the count by assignee
 - `report.py next` pages both pulls from their first page's total, 1000 rows a page
 - Every list count and age split comes from the open pull, so each bar always adds up to its count
-- The month ends come from the two pulls, each date read in its site's own time. The last bar is the open pull's own count, so it always equals the lists. Not doing and archived actions are left out, as everywhere else
+- The month ends come from the two pulls, from the first action's month, each date read in its site's own time. The last bar is the open pull's own count, so it always equals the lists. Not doing and archived actions are left out, as everywhere else
 - Each shown company's logo is fetched once from the link on its assignees and embedded; a company without one gets its initials
 
 **Hands on:** the sites with data: each site holding an open P1-2 action. **Takes:** the sites with data marked before it builds, listed at 0.

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Open P1-2 actions: the portfolio's open P1-2 backlog at each month end over the past year, then
-the sites and the people holding the most priority 1 and 2 actions open now, most first, each split
-by how long the actions have been open, and each name opening its PEAK ticket report. Not a
-leaderboard: no moves and no award. See references/portfolio-leaderboard/actions-and-wins/open-actions.md.
+"""Open P1-2 actions: the portfolio's open P1-2 backlog at each month end over the past year, from the
+month its first P1-2 action was raised, then the sites and the people holding the most priority 1 and 2
+actions open now, most first, each split by how long the actions have been open, and each name opening
+its PEAK ticket report. Not a leaderboard: no moves and no award. See references/portfolio-leaderboard/actions-and-wins/open-actions.md.
 """
 import os
 import sys
@@ -28,6 +28,8 @@ FIELDS = ["ticket_id", "site_id", "status_id", "age", "created_at", "assignees.i
           "assignees.entity.logo_url"]
 # The closed actions say only when each was raised and closed.
 CLOSED_FIELDS = ["ticket_id", "site_id", "created_at", "resolved_at"]
+# The first action says only where and when it was raised.
+FIRST_FIELDS = ["site_id", "created_at"]
 
 
 def pulls(ctx):
@@ -54,10 +56,18 @@ def closed_pulls(ctx):
                                "resolved_at_local_start": since + "T00:00:00"}, CLOSED_FIELDS))
 
 
+def first_pulls(ctx):
+    """The first P1-2 action raised, open or closed: the backlog starts at its month."""
+    return pio.split(ctx, "op/first.json", len(ctx["sites"]), lambda f, ids: io.gql(
+        f, "tickets.tickets", {"type": "escalated", "site_ids": ids, "ticket_archived": False, "limit": 1,
+                               "status_ids": [1, 3, 6, 7], "priority_ids": PRIORITIES,
+                               "orderBy": "created_at_ASC"}, FIRST_FIELDS))
+
+
 def calls(ctx):
     return pulls(ctx) + pio.split(ctx, "op/assignees.json", COUNT_CHUNK, lambda f, ids: io.call(
         f, "count_tickets", site_ids=ids, ticket_types=["escalated"], aggregate_entities=["assignee"],
-        statuses=["open", "in_progress", "on_hold"], priorities=PRIORITIES)) + closed_pulls(ctx)
+        statuses=["open", "in_progress", "on_hold"], priorities=PRIORITIES)) + closed_pulls(ctx) + first_pulls(ctx)
 
 
 def more(ctx, work):
@@ -65,17 +75,21 @@ def more(ctx, work):
 
 
 def backlog(ctx, work, open_rows):
-    """The open P1-2 backlog at each month end, then as at the issue date under the issue month, each
-    split by age open on the day: [60 days or more, 30 to 60, under 30]. A month end holds every
-    action raised before the first of the next month and not closed by then."""
+    """The open P1-2 backlog at each month end from the month the first P1-2 action was raised, then as
+    at the issue date under the issue month, each split by age open on the day: [60 days or more, 30 to
+    60, under 30]. A month end holds every action raised before the first of the next month and not
+    closed by then."""
     tz = {s["site_id"]: s.get("timezone") for s in ctx["sites"]}
     day = lambda r, k: io.d(io.local_day(r[k], tz.get(r["site_id"]) or "UTC"))
     rows = [(day(r, "created_at"), None) for r in open_rows if r.get("created_at")]
     rows += [(day(r, "created_at"), day(r, "resolved_at")) for r in pio.rows(work, "op/closed.json")
              if r.get("created_at") and r.get("resolved_at")]
+    first = min([raised_on for raised_on, _ in rows]
+                + [day(r, "created_at") for r in pio.rows(work, "op/first.json") if r.get("created_at")])
+    kept = [(m, end) for m, end in month_ends(ctx) if first < end]
     today = io.d(ctx["today"])
-    ends = [end for _, end in month_ends(ctx)] + [today + timedelta(days=1)]
-    months = [io.mon(m.isoformat()) for m, _ in month_ends(ctx)] + [io.mon(date(today.year, today.month, 1).isoformat())]
+    ends = [end for _, end in kept] + [today + timedelta(days=1)]
+    months = [io.mon(m.isoformat()) for m, _ in kept] + [io.mon(date(today.year, today.month, 1).isoformat())]
     stacks = []
     for end in ends:
         ages = [0, 0, 0]
@@ -85,9 +99,10 @@ def backlog(ctx, work, open_rows):
         stacks.append(ages)
     values = [sum(a) for a in stacks]
     told = ", ".join("%s %d" % (m, v) for m, v in zip(months, values))
+    over = months[0] if len(months) == 1 else "%s to %s" % (months[0], months[-1])
     return {"months": months, "values": values, "stacks": stacks,
-            "alt": "Stacked bar chart of open priority 1 and 2 actions at each month end by age open, %s to %s: %s."
-                   % (months[0], months[-1], told)}
+            "alt": "Stacked bar chart of open priority 1 and 2 actions at each month end by age open, %s: %s."
+                   % (over, told)}
 
 
 def link(ctx, since, site_ids, grouping, assignee_ids=()):
