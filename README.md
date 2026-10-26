@@ -24,4 +24,4 @@ A PEAK skill that builds a client-facing building performance report as a print-
 - **13 Aug 2026**: First release. Equipment health, thermal comfort, actions leaderboard and key wins
 - **15 Oct 2026**: Equipment run hours, and photos in key wins
 - **19 Oct 2026**: Sustainability ratings
-- **Upcoming**: Portfolio leaderboard
+- **26 Oct 2026**: Portfolio leaderboard
