@@ -12,6 +12,7 @@
 # sits at assets/brand-example/BRAND.example.md.
 
 # ── Identity ────────────────────────────────────────────────────────────
+# Defaults: CIM, Data Driven Operations. "Powered by PEAK" stays in every brand.
 # name: Automated Controls
 # service-name: Smart Building Operations
 
@@ -69,19 +70,11 @@ with working logo files beside it).
 | Partner-owned (edit freely)      | Upstream-owned (never edit)        |
 | :------------------------------- | :--------------------------------- |
 | `BRAND.md`                       | `DESIGN.md`                        |
-| `assets/brand/*`                 | `SKILL.md`                         |
-| `assets/fonts/*` (licensed)      | `assets/reference-report.html`     |
+| `assets/brand/*`                 | `SKILL.md`, `AGENTS.md`            |
+| `assets/fonts/*` (licensed)      | `references/`, `scripts/`          |
+|                                  | `assets/reference-report.html`, `assets/portfolio-report.html` |
 |                                  | `assets/logo.svg`, `assets/logo-white.svg`, `assets/trophy.svg` |
 
 Editing upstream-owned files forfeits clean merges: this repo keeps improving, and
 a fork that only touches the partner-owned column can `git merge` upstream at any
 time without conflicts.
-
-## Rules the generator applies
-
-- Missing file, or a key left commented → the CIM default. No partial surprises.
-- Keys outside the whitelist above are ignored.
-- When `secondary` is overridden, the screen shadow re-derives as that hue at 8%
-  opacity (the `shadow` token role in DESIGN.md).
-- `Powered by PEAK` is always kept and cannot be removed.
-- Unbranded (default) reports keep `Prepared by CIM — Data Driven Operations`.

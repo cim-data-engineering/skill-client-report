@@ -9,17 +9,34 @@ verbatim. The payload can arrive wrapped in an MCP text block, bare
 all three. Standard library only, so the scripts run wherever the skill is
 unpacked.
 """
+import base64
+import http.client
 import json
 import os
-from datetime import date
+import re
+import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date, datetime, timezone
+from urllib.parse import quote, urlencode
 
 MONTHS = ["January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December"]
 
 
 # ── saved responses ─────────────────────────────────────────────────────────
+class PeakRefusal(ValueError):
+    """A saved response that is PEAK's error rather than data."""
+
+
+def text_block(obj):
+    """True for an MCP text block, {"type": "text", "text": "..."}, as against a row that holds a text field."""
+    return isinstance(obj, dict) and isinstance(obj.get("text"), str) and (
+        obj.get("type") == "text" or set(obj) == {"text"})
+
+
 class Response:
-    """One saved call: its rows, pagination total, platform_link and has_more."""
+    """One saved call: its rows, pagination total, platform_link and has_more. Raises PeakRefusal
+    for an error saved as data, and ValueError for text that does not parse."""
 
     def __init__(self, payload):
         self.raw = payload
@@ -27,16 +44,16 @@ class Response:
         self.has_more = False
         obj = payload
         for _ in range(4):                       # shapes nest at most twice
-            if isinstance(obj, list) and obj and isinstance(obj[0], dict) and "text" in obj[0]:
+            if isinstance(obj, list) and obj and text_block(obj[0]):
                 obj = json.loads(obj[0]["text"])
                 continue
-            if isinstance(obj, dict) and "text" in obj and "results" not in obj:
+            if text_block(obj):
                 obj = json.loads(obj["text"])
                 continue
             break
         if isinstance(obj, dict):
             if obj.get("errors") or obj.get("status") == "error":
-                raise ValueError("the saved response is an error, not data: %.200s" % json.dumps(obj))
+                raise PeakRefusal("the saved response is an error, not data: %.200s" % json.dumps(obj))
             pg = obj.get("pagination") or {}
             self.total, self.has_more = pg.get("total"), bool(pg.get("has_more"))
             self.link = obj.get("platform_link") or None
@@ -47,7 +64,8 @@ class Response:
         return self.rows[0] if self.rows else None
 
 
-def read(path):
+def read(path, optional=False):
+    """The saved response at path. An optional call PEAK refused reads as None."""
     try:
         with open(path, encoding="utf-8") as fh:
             text = fh.read()
@@ -55,18 +73,32 @@ def read(path):
         raise SystemExit("missing response %s: make its call and save the response there (%s)" % (path, e))
     try:
         return Response(json.loads(text))
+    except PeakRefusal as e:
+        if optional:
+            return None
+        raise SystemExit("%s is not a saved PEAK response: %s" % (path, e))
     except ValueError as e:
         raise SystemExit("%s is not a saved PEAK response: %s" % (path, e))
 
 
 class Work:
-    """The report's working directory: plan.json, and the responses under peak/."""
+    """The report's working directory: plan.json, calls.json, and the responses under peak/."""
 
     def __init__(self, root):
         self.root = root
         self.peak = os.path.join(root, "peak")
+        self._calls = None
         with open(os.path.join(root, "plan.json"), encoding="utf-8") as fh:
             self.ctx = json.load(fh)
+        self.ctx["dir"] = os.path.abspath(root)     # plan.json's paths are relative to the folder it is in
+
+    @property
+    def calls(self):
+        """Every call planned so far, follow-up pages included: the record of which files a pull spans."""
+        if self._calls is None:
+            path = os.path.join(self.root, "calls.json")
+            self._calls = json.load(open(path, encoding="utf-8")) if os.path.isfile(path) else []
+        return self._calls
 
     def path(self, name):
         return os.path.join(self.peak, name)
@@ -74,8 +106,55 @@ class Work:
     def has(self, name):
         return os.path.isfile(self.path(name))
 
-    def get(self, name):
-        return read(self.path(name))
+    def get(self, name, optional=False):
+        return read(self.path(name), optional)
+
+
+# ── paging ──────────────────────────────────────────────────────────────────
+def call_args(c):
+    """A call's own arguments: a GraphQL call carries them inside its args."""
+    return c["args"]["args"] if isinstance(c["args"].get("args"), dict) else c["args"]
+
+
+def start_of(c):
+    return call_args(c).get("start_index") or 0
+
+
+def at_offset(c, file, start):
+    args = c["args"]
+    nested = isinstance(args.get("args"), dict)
+    return dict(c, file=file, args=dict(args, args=dict(args["args"], start_index=start)) if nested
+                else dict(args, start_index=start))
+
+
+def pages_due(work, calls):
+    """The follow-up pages the saved calls ask for, from each first page's total, a page every `limit`
+    rows: <file>-<offset>.json. Pages already saved are left out."""
+    out = []
+    for c in calls:
+        step = call_args(c).get("limit")
+        if not step or step < 2 or not work.has(c["file"]):
+            continue
+        first = work.get(c["file"])
+        if not first.has_more:
+            continue
+        for s in range(step, first.total or 0, step):
+            f = c["file"].replace(".json", "-%d.json" % s)
+            if not work.has(f):
+                out.append(at_offset(c, f, s))
+    return out
+
+
+def pages(work, file):
+    """A call's file, then the follow-up pages calls.json lists for it, in offset order."""
+    pat = re.compile(re.escape(file[:-len(".json")]) + r"-(\d+)\.json")
+    more = sorted((start_of(c), c["file"]) for c in work.calls if pat.fullmatch(c["file"]) and start_of(c))
+    return [file] + [f for _, f in more]
+
+
+def rows(work, file):
+    """Every row of a call across its pages."""
+    return [r for f in pages(work, file) for r in work.get(f).rows]
 
 
 def call(file, tool, **args):
@@ -86,6 +165,115 @@ def call(file, tool, **args):
 
 def gql(file, query, args, fields):
     return call(file, "execute_graphql_query", query_name=query, args=args, fields=fields)
+
+
+# The BACER's equipment type, SYS-BACER: the device that reads the building's BMS into PEAK. Its rules check
+# the platform's own link to the building, not plant, so every equipment and rule count and every equipment
+# health score leaves it out. Every other type counts, system ones such as the meters included.
+BACER = 105
+
+
+def rollup(rows, *keys):
+    """Equipment health rows grouped by equipment type, rolled up over `keys` as PEAK rolls up a site, the
+    BACER left out: each score the mean of its types' weighted by their rules, the checks, rules and equipment
+    summed (each piece of equipment has one type, so its types' distinct equipment add up)."""
+    out = {}
+    for r in rows:
+        n = r.get("task_count") or 0
+        if r.get("metadata_type_id") == BACER or not n:
+            continue
+        k = tuple(r.get(x) for x in keys)
+        o = out.setdefault(k, dict(zip(keys, k), score=0.0, total_executions=0, task_count=0, equipment_count=0))
+        o["score"] += (r.get("score") or 0) * n
+        o["total_executions"] += r.get("total_executions") or 0
+        o["task_count"] += n
+        o["equipment_count"] += r.get("equipment_count") or 0
+    for o in out.values():
+        o["score"] /= o["task_count"]
+    return list(out.values())
+
+
+# ── who ranks ───────────────────────────────────────────────────────────────
+# CIM's own system accounts, by PEAK user id: support, the API logins and the AI agents. Their actions
+# count wherever work is measured, but they never rank as people. PEAK has no system-account flag.
+SYSTEM_ACCOUNTS = {
+    "4ddcfd76-f5f0-46f3-863a-2bf90ce22469": "CIM Support",
+    "e28a4b09-a670-4954-823b-72e411e7cc2d": "CIM Engineering API",
+    "d266f1a8-4822-4235-b174-aebce72328e8": "Engineering Read-Only CIM API User",
+    "7ba072a9-ada6-4f2b-82d3-b86cbc71558c": "Agent Hannah Escalations",
+    "ceb1f491-e901-4369-8708-2a38bbc4e9ea": "Agent Hana v1.0",
+}
+AGENT = re.compile(r"^\s*agent\b", re.I)          # the AI review agents, whatever company they sit under
+
+
+def system_account(user_id, name=None):
+    """True for an account that is CIM's system rather than a person: one of SYSTEM_ACCOUNTS, or an
+    agent by name. Contractors' shared logins (a dispatch desk, a BMS controls account) rank."""
+    return bool(user_id and str(user_id) in SYSTEM_ACCOUNTS) or bool(name and AGENT.match(name))
+
+
+# ── shoutout ────────────────────────────────────────────────────────────────
+# The shoutout form: whom it thanks (their email), their site and the comment come prefilled;
+# the sender fills in their own email.
+SHOUTOUT_FORM = "https://airtable.com/app11XTZy9PtGOZwf/shrwYEpydoRJ62FzK"
+SHOUTOUT_COMMENT = "Great work topping the leaderboard"
+LEADER = ["ticket_id", "assignees.id", "assignees.firstname", "assignees.email"]
+
+
+def leader_pull(site_id, ticket_id):
+    """The leader's first name and email, off one ticket of theirs whose assignees all have names, since PEAK
+    refuses the whole pull when any has none. Optional: a refusal leaves no shoutout."""
+    return dict(gql("ar/leader.json", "tickets.tickets", {"type": "escalated", "site_ids": [site_id],
+                                                          "ticket_ids": [ticket_id], "ticket_archived": False,
+                                                          "limit": 1}, LEADER), optional=True)
+
+
+def leader_contact(work):
+    """{id: (first name, email)} off the leader pull, empty when it was not made or PEAK refused it."""
+    got = work.get("ar/leader.json", optional=True) if work.has("ar/leader.json") else None
+    return {a.get("id"): ((a.get("firstname") or "").strip(), (a.get("email") or "").strip())
+            for r in (got.rows if got else []) for a in r.get("assignees") or [] if a.get("id")}
+
+
+def shoutout(first, email, site):
+    """The button thanking a leader on the shoutout form."""
+    query = urlencode([("prefill_assignee_shoutout_name", email), ("prefill_assignee_shoutout_site", site),
+                       ("prefill_comment", SHOUTOUT_COMMENT)], quote_via=quote)
+    return {"text": "Send %s a shoutout" % first, "url": "%s?%s" % (SHOUTOUT_FORM, query)}
+
+
+# ── time zones ──────────────────────────────────────────────────────────────
+# Legacy IANA names PEAK still stores on some sites, each mapped to the zone it links to. Slim tzdata
+# builds ship without the links, so ZoneInfo("Australia/Queensland") fails there.
+LEGACY_ZONES = {
+    "Australia/ACT": "Australia/Sydney", "Australia/Canberra": "Australia/Sydney",
+    "Australia/NSW": "Australia/Sydney", "Australia/North": "Australia/Darwin",
+    "Australia/Queensland": "Australia/Brisbane", "Australia/South": "Australia/Adelaide",
+    "Australia/Tasmania": "Australia/Hobart", "Australia/Victoria": "Australia/Melbourne",
+    "Australia/West": "Australia/Perth", "Australia/Yancowinna": "Australia/Broken_Hill",
+    "Australia/LHI": "Australia/Lord_Howe",
+    "US/Eastern": "America/New_York", "US/Central": "America/Chicago", "US/Mountain": "America/Denver",
+    "US/Pacific": "America/Los_Angeles", "US/Arizona": "America/Phoenix", "US/Alaska": "America/Anchorage",
+    "US/Hawaii": "Pacific/Honolulu", "US/East-Indiana": "America/Indiana/Indianapolis",
+    "US/Michigan": "America/Detroit",
+    "Canada/Eastern": "America/Toronto", "Canada/Central": "America/Winnipeg",
+    "Canada/Mountain": "America/Edmonton", "Canada/Pacific": "America/Vancouver",
+    "Canada/Atlantic": "America/Halifax", "Canada/Newfoundland": "America/St_Johns",
+    "GB": "Europe/London", "GB-Eire": "Europe/London", "Eire": "Europe/Dublin", "NZ": "Pacific/Auckland",
+    "Singapore": "Asia/Singapore", "Hongkong": "Asia/Hong_Kong", "PRC": "Asia/Shanghai", "Japan": "Asia/Tokyo",
+    "Brazil/East": "America/Sao_Paulo",
+}
+
+
+def zone(name):
+    """The ZoneInfo for a site's time zone, legacy names read as the zone they link to."""
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+    name = (name or "").strip() or "UTC"
+    try:
+        return ZoneInfo(LEGACY_ZONES.get(name, name))
+    except (ZoneInfoNotFoundError, ValueError):
+        raise SystemExit("unknown time zone %r on the site in PEAK: add it to LEGACY_ZONES in scripts/peak_io.py"
+                         % name)
 
 
 # ── windows ─────────────────────────────────────────────────────────────────
@@ -138,18 +326,6 @@ def days_in(ctx, m):
     return (add_months(d(m), 1) - d(m)).days
 
 
-def period_days(ctx):
-    """Days the reporting period covers, the quarter's first day to the last day it holds."""
-    return (d(ctx["through"]) - d(ctx["quarter"][0])).days + 1
-
-
-def month_count(ctx):
-    """The reporting period in months: the quarter's three, plus the share of the month to
-    date that has passed."""
-    m = ctx.get("to_date")
-    return 3 + (days_in(ctx, m) / (add_months(d(m), 1) - d(m)).days if m else 0)
-
-
 def month_label(ctx, m):
     """'September', or 'October to date' for the month to date."""
     return month(m) + (" to date" if m == ctx.get("to_date") else "")
@@ -164,16 +340,80 @@ def and_to_date(ctx, lead=", and "):
 
 
 # ── formats ─────────────────────────────────────────────────────────────────
-# the site's currency as PEAK names it: (code, labour rate per hour for the region, symbol)
-CURRENCIES = {"australian dollar": ("AUD", 150, "$"), "us dollar": ("USD", 100, "$"),
-              "united states dollar": ("USD", 100, "$"), "new zealand dollar": ("NZD", 150, "$"),
-              "british pound": ("GBP", 75, "£"), "pound sterling": ("GBP", 75, "£"),
-              "canadian dollar": ("CAD", 150, "$"), "euro": ("EUR", 100, "€")}
+# the site's currency as PEAK names it (every MonetaryCurrencyEnum value): (code, symbol). The symbol
+# prints straight before the figure, so a code that reads as a word carries its own space.
+CURRENCIES = {"australian dollar": ("AUD", "$"), "us dollar": ("USD", "$"),
+              "united states dollar": ("USD", "$"), "new zealand dollar": ("NZD", "$"),
+              "british pound": ("GBP", "£"), "pound sterling": ("GBP", "£"),
+              "canadian dollar": ("CAD", "$"), "euro": ("EUR", "€"),
+              "singapore dollar": ("SGD", "S$"), "swiss franc": ("CHF", "CHF "),
+              "swedish krona": ("SEK", "SEK "), "brazilian real": ("BRL", "R$"),
+              "chinese yuan": ("CNY", "¥"), "indonesian rupiah": ("IDR", "Rp ")}
 
 
 def currency(facts):
-    """(code, labour rate per hour, symbol) for a site, from its site facts."""
-    return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", 100, "$"))
+    """(code, symbol) for a site, from its site facts."""
+    return CURRENCIES.get((facts.get("monetary_currency") or "").strip().lower(), ("USD", "$"))
+
+
+def plural(n, noun):
+    """'1 call', '3 calls'."""
+    return "%d %s%s" % (n, noun, "" if n == 1 else "s")
+
+
+def band(v, bands):
+    """The benchmark label a score falls in: bands is [(threshold, label)], highest first; below them all, Poor."""
+    for t, label in bands:
+        if v >= t:
+            return label
+    return "Poor"
+
+
+def host(*sites):
+    """The PEAK host links are built on: the first of the sites with a site_link."""
+    for s in sites:
+        m = re.match(r"https?://[^/]+", s.get("site_link") or "")
+        if m:
+            return m.group(0)
+    return "https://ace.cimenviro.com"
+
+
+def fetch_logos(urls):
+    """{company: data URI} for each company logo PEAK links, embedded so the report stays one
+    file. A logo that cannot be fetched is left out, and the company's initials stand in."""
+    def get(item):
+        name, url = item
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "client-report"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                kind, body = r.headers.get_content_type(), r.read()
+        except (OSError, ValueError, http.client.HTTPException):
+            return name, None
+        if not kind.startswith("image/"):
+            return name, None
+        return name, "data:%s;base64,%s" % (kind, base64.b64encode(body).decode())
+    with ThreadPoolExecutor(8) as pool:
+        return dict(pool.map(get, urls.items()))
+
+
+# ── building size ───────────────────────────────────────────────────────────
+# PEAK stores every site's building size in square metres, US sites included. US sites show square feet,
+# converted.
+FEET = ("united states", "usa", "us", "united states of america")
+SQFT_PER_SQM = 10.7639
+
+
+def in_feet(country):
+    """True where building sizes read in square feet: the United States."""
+    return (country or "").strip().lower() in FEET
+
+
+def area(m2, feet):
+    """A PEAK building size (m²) in the unit the page shows: m² as stored, or square feet converted
+    and rounded to the nearest 100 ft², the precision the stored figures were entered at."""
+    if m2 is None:
+        return None
+    return round(m2 * SQFT_PER_SQM / 100) * 100 if feet else m2
 
 
 def mon(s):
@@ -201,34 +441,29 @@ def day_long(s):
     return "%d %s %d" % (x.day, MONTHS[x.month - 1], x.year)
 
 
+def utc(ts):
+    """A PEAK timestamp, '2026-10-12T03:15:00Z', as an aware datetime; one with no offset is UTC."""
+    t = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    return t if t.tzinfo else t.replace(tzinfo=timezone.utc)
+
+
+def local_day(ts, tz):
+    """A PEAK UTC timestamp as the site's own date, 'YYYY-MM-DD'."""
+    return utc(ts).astimezone(zone(tz)).date().isoformat()
+
+
 def day_short(s):
     x = d(s)
     return "%d %s %d" % (x.day, MONTHS[x.month - 1][:3], x.year)
 
 
-def period(first, last_incl, short=False):
+def period(first, last_incl, short=False, dash="–"):
     """'1 July – 30 September 2026' (short: '1 Jul – 30 Sep 2026')."""
     a, b = d(first), d(last_incl)
     n = (lambda m: MONTHS[m - 1][:3]) if short else (lambda m: MONTHS[m - 1])
     if a.year == b.year:
-        return "%d %s – %d %s %d" % (a.day, n(a.month), b.day, n(b.month), b.year)
-    return "%d %s %d – %d %s %d" % (a.day, n(a.month), a.year, b.day, n(b.month), b.year)
-
-
-def compact(n, dp=2):
-    """1834812 -> '1.83M', 7340 -> '7.3k'."""
-    if n >= 1e6:
-        return "%.*fM" % (dp, n / 1e6)
-    if n >= 1e3:
-        return "%.1fk" % (n / 1e3)
-    return "%d" % n
-
-
-def words(n, dp=2):
-    """1834812 -> '1.83 million', for running text."""
-    if n >= 1e6:
-        return "%.*f million" % (dp, n / 1e6)
-    return "{:,}".format(int(round(n)))
+        return "%d %s %s %d %s %d" % (a.day, n(a.month), dash, b.day, n(b.month), b.year)
+    return "%d %s %d %s %d %s %d" % (a.day, n(a.month), a.year, dash, b.day, n(b.month), b.year)
 
 
 def listing(items):
@@ -244,7 +479,62 @@ def pct(score, dp):
     return round(score * 100, dp)
 
 
+def months_text(ctx, months, lead=", and "):
+    """'August – September 2026, and October to date', 'September 2026' or 'October 2026 to date'."""
+    whole_months = whole(ctx, months)
+    if not whole_months:
+        return "%s %d to date" % (month(months[0]), d(months[0]).year)
+    head = (span(whole_months[0], whole_months[-1]) if len(whole_months) > 1
+            else "%s %d" % (month(whole_months[0]), d(whole_months[0]).year))
+    return head + (and_to_date(ctx, lead) if months[-1] == ctx.get("to_date") else "")
+
+
 # ── charts and rows shared by the sections ──────────────────────────────────
+def kept_months(ctx, on):
+    """(first month kept, the quarter's months from it, the trend's months from it). A site that went
+    live inside the windows keeps the months it was monitored in full; any other keeps them all."""
+    start = on["start"] if on else ctx["trend_months"][0]
+    return start, [m for m in ctx["quarter_months"] if m >= start], [m for m in ctx["trend_months"] if m >= start]
+
+
+def hand_on_start(shared, start, kq, on):
+    """Hand on where a section's months start: the trend window, the reporting period, and the go-live."""
+    shared.setdefault("trend_start", []).append(start)
+    shared.setdefault("period_start", []).append(kq[0])
+    if on:
+        shared.setdefault("live_since", []).append({"month": on["month"], "day": on["day"]})
+
+
+def site_scores(site_m, months):
+    """The site score for each month, as a percentage to 1dp, None for a month with none."""
+    return [pct(site_m[m[:7]]["score"], 1) if m[:7] in site_m else None for m in months]
+
+
+def score_row(ctx, score, bands, kq, site_q, cap, row):
+    """An operational impact score row: its benchmark chip, the score, and the move from the period's
+    first scored month to its last. A movement needs two months."""
+    got = [(m, v) for m, v in zip(kq, site_q) if v is not None]
+    if len(got) > 1:
+        delta, sub = movement(got[0][1], got[-1][1], 1, month(got[0][0]), month_label(ctx, got[-1][0]))
+    else:
+        delta, sub = None, "Scored over %s." % month_label(ctx, kq[0])
+    chip = band(score, bands)
+    return dict({"chip": chip, "chip_class": "pos" if chip in ("Excellent", "Good") else "warn",
+                 "fig": "%.1f%%" % score, "cap": cap, "sub": sub, "row": row}, **({"delta": delta} if delta else {}))
+
+
+def trend_line(ctx, kt, site_m, bands, what):
+    """(the monthly site score chart, the months that scored). A trend needs three points, so with
+    fewer there is no chart."""
+    values = site_scores(site_m, kt)
+    pts = [(m, v) for m, v in zip(kt, values) if v is not None]
+    if len(pts) < 3:
+        return None, pts
+    th = thresholds([v for _, v in pts], bands)
+    return {"values": values, "months": [mon(m) for m in kt], "to_date": kt[-1] == ctx["to_date"],
+            "thresholds": th, "dp": 1,
+            "alt": line_alt(ctx, what, [m for m, _ in pts], [v for _, v in pts], th, 1)}, pts
+
 def thresholds(values, bands):
     """The two benchmark lines Chart 1 draws: one either side where the series sits
     inside a band, otherwise the threshold it crosses plus the next one out."""

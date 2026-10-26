@@ -7,13 +7,16 @@ fill_report.py scaffolds the chosen sections from it and fills them from the bun
 so a report carries only the parts it was asked for.
 
     scaffold  copy the shell, the always-on parts and the selected sections
-    part      print one part's markup, to add a section to a report already built
     check     look for sample data, sample links and markers left behind
     parts     list part names and sizes
 
     python3 scripts/build_report.py scaffold --sections equipment-health,key-wins \
         --out skyline-q3.html
     python3 scripts/build_report.py check skyline-q3.html
+
+--mode portfolio does the same for the portfolio report from
+assets/portfolio-report.html, which takes the reference report's <style> block and
+masthead logo at scaffold time, so both reports carry one compiled design system.
 """
 
 import argparse, os, re, sys
@@ -33,6 +36,20 @@ SECTION_PARTS = {
 # around rows the sections own, so it only stands if one of them is in.
 ROW_SECTIONS = ["equipment-health", "indoor-environment", "alerts-resolved"]
 PART_IF = {"operational-impact": ROW_SECTIONS, "notes": ROW_SECTIONS + ["run-hours"]}
+# The portfolio report's scaffold and its part maps. Every section is in unless it
+# dropped itself, and no part depends on another section.
+PORTFOLIO = {"ref": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "assets", "portfolio-report.html"),
+             "always": ["shell", "masthead", "scorecards", "close"],
+             "section_parts": {"site-leaderboard": ["site-leaderboard"],
+                               "team-leaderboard": ["team-leaderboard"],
+                               "equipment-health": ["equipment-health"],
+                               "indoor-environment": ["indoor-environment"],
+                               "actions-resolved": [],
+                               "open-actions": ["open-actions"],
+                               "key-wins": ["key-wins"],
+                               "sustainability-ratings": ["sustainability-ratings"]},
+             "part_if": {}}
+SHARED = REF                         # the reference report, whose stylesheet and logo the portfolio takes
 PART_RE = re.compile(r"^\s*<!-- part: ([a-z-]+) -->\s*$")
 IF_RE = re.compile(r"^\s*<!-- if: ([a-z-, ]+) -->\s*$")
 ENDIF_RE = re.compile(r"^\s*<!-- endif -->\s*$")
@@ -97,7 +114,25 @@ def tidy(lines):
     return text.split("\n")
 
 
+def use_mode(mode):
+    """Point the scaffold, the part maps and the check at one report's scaffold."""
+    global REF, ALWAYS, SECTION_PARTS, PART_IF
+    if mode == "portfolio":
+        REF, ALWAYS = PORTFOLIO["ref"], PORTFOLIO["always"]
+        SECTION_PARTS, PART_IF = PORTFOLIO["section_parts"], PORTFOLIO["part_if"]
+
+
+def shared_parts():
+    """The reference report's <style> block and masthead logo. The portfolio page carries
+    no en or em dash, so the stylesheet's comments take a hyphen instead."""
+    src = open(SHARED, encoding="utf-8").read()
+    style = re.search(r"<style>.*?</style>", src, re.S).group(0)
+    logo = re.search(r"[ \t]*<svg class=\"logo\".*?</svg>", src, re.S).group(0)
+    return re.sub("[\u2013\u2014]", "-", style), logo
+
+
 def cmd_scaffold(args):
+    use_mode(args.mode)
     sections = [s.strip() for s in args.sections.split(",") if s.strip()] \
         if args.sections not in (None, "all") else list(SECTION_PARTS)
     keep = resolve(sections)
@@ -105,6 +140,11 @@ def cmd_scaffold(args):
     for name, lines in read_parts():
         if name in keep:
             body += render(lines, sections)
+    if args.mode == "portfolio":
+        style, logo = shared_parts()
+        text = "\n".join(body)
+        text = text.replace("<!-- style: reference-report -->", style).replace("  <!-- logo: reference-report -->", logo)
+        body = text.split("\n")
     open(args.out, "w", encoding="utf-8").write("\n".join(body))
     dropped = [s for s in SECTION_PARTS if s not in sections]
     print("wrote %s — %d lines" % (args.out, len(body)))
@@ -124,7 +164,7 @@ def sample_strings():
                 r'<h3>([^<]+)</h3>', r'<title>([^<]+)</title>',
                 # h2note and chartnote are deliberately absent — they carry window and
                 # method wording that is correct for every report and recurs legitimately.
-                # So are leaderboard companies: the sample's are real PEAK companies,
+                # So are leaderboard companies: the sample's are PEAK's demo companies,
                 # which any report can carry.
                 # An operational impact row is matched whole, figure to sentence: the
                 # sentence alone is a template a real site can repeat word for word.
@@ -147,6 +187,8 @@ def sample_strings():
 
 
 def cmd_check(args):
+    if args.mode == "portfolio":
+        return check_portfolio(args)
     text = open(args.report, encoding="utf-8").read()
     errors, warnings = [], []
 
@@ -184,7 +226,7 @@ def cmd_check(args):
     kw = text.find('<p class="eyebrow">Key wins</p>')
     if kw != -1 and not re.search(r'class="win[ "]', text[kw:text.find("</section>", kw)]):
         errors.append("Key wins section carries no wins — delete the section rather "
-                      "than shipping the heading (references/actions-and-wins/key-wins.md)")
+                      "than shipping the heading (references/single-site/actions-and-wins/key-wins.md)")
 
     # A win photo has to travel inside the file. An attachment link is signed and
     # short-lived, so a photo left as a link breaks soon after the report is sent.
@@ -194,7 +236,7 @@ def cmd_check(args):
             errors.append("placeholder photo tile still in the report — fill the wins from the bundle")
         elif not src.startswith("data:"):
             errors.append("win photo linked rather than embedded: %.60s… — download it and pass "
-                          "the file to fill_report.py (references/actions-and-wins/key-wins.md)" % src)
+                          "the file to fill_report.py (references/single-site/actions-and-wins/key-wins.md)" % src)
 
     # The run hours sample chart is a placeholder; the script draws the real one.
     if 'data-sample="run-hours"' in text:
@@ -203,6 +245,10 @@ def cmd_check(args):
     # So are the sustainability ratings sample cards and charts; the fill draws the real ones.
     if 'data-sample="ratings"' in text:
         errors.append("sample sustainability ratings still in the report — fill them from the bundle's ratings")
+
+    # So is the shoutout button; the fill swaps in the leader's, or none.
+    if 'data-sample="shoutout"' in text:
+        errors.append("sample shoutout still in the report — fill it from the bundle's shoutout")
 
     # A heatmap trimmed for a short-history site has to lose the same columns
     # from its header and from every row, so a ragged table means a missed row.
@@ -225,20 +271,73 @@ def cmd_check(args):
     print("ok — no sample data, placeholders or markers left.")
 
 
-def cmd_part(args):
-    """One part on its own, for adding a section to a report that already exists.
-    Re-scaffolding would throw away the filled-in report; this does not."""
-    sections = [x.strip() for x in args.sections.split(",") if x.strip()] \
-        if args.sections not in (None, "all") else list(SECTION_PARTS)
-    resolve(sections)
-    for name, lines in read_parts():
-        if name == args.name:
-            sys.stdout.write("\n".join(render(lines, sections)) + "\n")
-            return
-    sys.exit("unknown part: %s — run `parts` to list them" % args.name)
+def check_portfolio(args):
+    """The same promises for the portfolio report: no marker, placeholder or sample left,
+    no site id in the text, no empty key wins, photos embedded, no en or em dash, and
+    every ranked heatmap as wide in its rows as in its header."""
+    use_mode("portfolio")
+    text = open(args.report, encoding="utf-8").read()
+    src = open(REF, encoding="utf-8").read()
+    errors, warnings = [], []
+    for marker in ("<!-- part:", "<!-- if:", "<!-- endif", "<!-- fill:", "<!-- /fill:", "<!-- style:", "<!-- logo:"):
+        if marker in text:
+            errors.append("marker left in the output: %s" % marker)
+    for m in set(re.findall(r"\{\{[^}]+\}\}", text)) | set(re.findall(r"\{[a-z_]+_id\}", text)):
+        errors.append("unresolved placeholder: %s" % m)
+    for m in sorted(set(re.findall(r'data-sample="([a-z-]+)"', text))):
+        errors.append("sample %s still in the report: fill it from the bundle" % m)
+    found, own = set(), set()
+    # Company and assignee names are left out: a sample company or person can share a name with a
+    # real one, and the team boards' data-sample marker already catches them unfilled.
+    names = re.sub(r"<!-- fill: team-boards -->.*?<!-- /fill: team-boards -->", "", src, flags=re.S)
+    for pat in (r'<h3>([^<]+)</h3>', r'<div class="win[^"]*"[^>]*>.*?<p>(.+?)</p>'):
+        found |= {m.group(1) for m in re.finditer(pat, names, re.S)}
+    # The sample is the Demo Starcourt Mall portfolio, so its site names, title and platform links are
+    # right in a report for it: they only warn, as the reference site's do in the single-site check.
+    for pat in (r'<span class="sn">([^<]+)</span>', r'<title>([^<]+)</title>', r'<h1>([^<]+)</h1>'):
+        own |= {m.group(1) for m in re.finditer(pat, names)}
+    own |= {h for h in re.findall(r'href="([^"]+)"', src) if "cimenviro.com" in h}
+    hits = sorted(x for x in found if len(x.strip()) >= 5 and x in text)
+    for h in hits[:20]:
+        errors.append("sample data still in the report: %s" % " ".join(re.sub(r"<[^>]+>", " ", h).split())[:90])
+    mine = [x for x in own if len(x.strip()) >= 5 and x in text]
+    if mine:
+        warnings.append("%d of the sample portfolio's own site names, title or links appear: fine only if this "
+                        "report really is for the Demo Starcourt Mall portfolio" % len(mine))
+    visible = re.sub(r'\s(?:href|src)="[^"]*"', "", text)
+    for m in sorted(set(re.findall(r"Site\s+\d+", visible))):
+        errors.append("site id in visible text: %s, a system id the reader has no use for" % m)
+    dashes = re.findall("[\u2013\u2014]|&ndash;|&mdash;", text)
+    if dashes:
+        errors.append("%d en or em dash(es) in the report: the portfolio page uses a hyphen" % len(dashes))
+    kw = text.find('<p class="eyebrow">Key wins</p>')
+    if kw != -1 and not re.search(r'class="win[ "]', text[kw:text.find("</section>", kw)]):
+        errors.append("Key wins section carries no wins: delete the section rather than shipping the heading "
+                      "(references/portfolio-leaderboard/actions-and-wins/key-wins.md)")
+    for src_ in sorted(set(re.findall(r'<figure><img src="([^"]*)"', text))):
+        if not src_.startswith("data:image/jpeg"):
+            errors.append("win photo not embedded as JPEG: %.60s" % src_)
+    for t in re.findall(r'<table class="hm wide">(.*?)</table>', text, re.S):
+        cols = len(re.findall(r'<th class="mo"', t))
+        widths = {len(re.findall(r'<td class="c[ "]', r)) for r in re.findall(r"<tr[^>]*>.*?</tr>", t, re.S)} - {0}
+        if widths - {cols}:
+            errors.append("ranked heatmap has %d month columns but rows with %s" % (cols, sorted(widths)))
+    # each section by its eyebrow, or by its title where the eyebrow is a month
+    month = re.compile(r"[A-Z][a-z]+ \d{4}$")
+    heads = [(m.start(), m.group(2) if month.match(m.group(1)) and m.group(2) else m.group(1))
+             for m in re.finditer(r'<p class="eyebrow">([^<]+)</p>(?:\s*<h2>([^<]+)</h2>)?', text)]
+    print("sections present: %s" % ", ".join(h for _, h in heads))
+    for w in warnings:
+        print("warn:  %s" % w)
+    for e in errors:
+        print("ERROR: %s" % e)
+    if errors:
+        sys.exit("\n%d problem(s): the report is not ready to hand over." % len(errors))
+    print("ok: no sample data, placeholders, markers or dashes left.")
 
 
 def cmd_parts(args):
+    use_mode(args.mode)
     for name, lines in read_parts():
         owner = next((s for s, ps in SECTION_PARTS.items() if name in ps), None) \
             or ("any of " + ", ".join(PART_IF[name]) if name in PART_IF else "always")
@@ -252,15 +351,12 @@ if __name__ == "__main__":
     s.add_argument("--sections", help="comma-separated: %s (default all)" % ", ".join(SECTION_PARTS))
     s.add_argument("--out", required=True)
     s.set_defaults(func=cmd_scaffold)
-    o = sub.add_parser("part", help="print one part's markup, for a report already built")
-    o.add_argument("name")
-    o.add_argument("--sections", help="the report's full section list, so the part's "
-                                      "conditional blocks resolve the same way (default all)")
-    o.set_defaults(func=cmd_part)
     c = sub.add_parser("check", help="find sample data, placeholders or markers left behind")
     c.add_argument("report")
     c.set_defaults(func=cmd_check)
     p = sub.add_parser("parts", help="list parts and which section owns each")
     p.set_defaults(func=cmd_parts)
+    for q in (s, c, p):
+        q.add_argument("--mode", choices=["single-site", "portfolio"], default="single-site")
     a = ap.parse_args()
     a.func(a)
