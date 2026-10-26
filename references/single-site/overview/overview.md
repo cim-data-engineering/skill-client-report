@@ -4,7 +4,7 @@ The parts every single-site report carries: the masthead, the analytics overview
 
 ## What you write
 
-Nothing. The script fills every slot from the saved responses and the figures it takes: the site's name and photo, the reporting period, the author, the issue date, the five overview figures, the operational impact date line and the reporting window note when there is a month to date.
+Nothing. The script fills every slot from the saved responses and the figures it takes: the site's name and photo, the reporting period, the author, the issue date, the overview figures, the operational impact date line and the reporting window note when there is a month to date.
 
 ## Masthead
 
@@ -25,14 +25,15 @@ Date: As at {issue date}
 | Display metric | Reference |
 | --- | --- |
 | Building size | m² as PEAK stores it; ft² for US sites, converted |
-| Equipment | Total equipment, less the BACER |
+| Equipment | Equipment with a rule scored in the quarter, less the BACER |
 | Sensors | Total sensors |
-| Rules | Total rules status running, less the BACER's |
-| Thermal zones | Zone temperature points on the levels that scored in the quarter |
+| Rules | Rules scored in the quarter, less the BACER's |
+| Thermal zones | Zones with a comfort reading in the quarter |
 
-All five render whatever sections are chosen. This is the monitoring footprint, not a summary of the sections below it.
+All five render whatever sections are chosen, except an Equipment, Rules or Thermal zones card with nothing scored behind it, which is left out. Those three count what scored, not what is deployed.
 
 - **Building size**: PEAK stores it in square metres for every site. A US site shows square feet, converted and rounded to the nearest 100 ft²
+- **Equipment** and **Rules**: the scored equipment and rules it takes when they are handed on, so they always equal the equipment health site row; counted here, off the same calls, only when none are
 - **Thermal zones**: the figure it takes when one is handed on, so it always equals the comfort site row; counted here, off the same calls, only when none is
 
 ## Operational impact
@@ -64,13 +65,12 @@ All in the main batch:
 | Need | Call |
 | --- | --- |
 | Name, photo, building size, currency, comfort band | `platform.sites` with those fields; the currency sets the labour rate |
-| Rules running | `search_rules(task_state:"running", limit:1)`, its `pagination.total`, less that of `tasks.tasks` (`primary_metadata_type_ids:[105]`, `task_state:true`, `limit:1`), the BACER's running rules: `search_rules` has no type filter |
 | Sensors | `search_favourites(limit:1)`, its `pagination.total` |
-| Equipment | `search_equipment(limit:1)` twice, plain and filtered to the BACER, type 105, the second total subtracted from the first |
-| Thermal zones, only when none is handed on | `count_indoor_environment_zones` by level and `search_indoor_environment` level × all over the quarter: points on the levels that scored |
+| Equipment and Rules, only when none are handed on | `search_equipment_health_scores` `metadata_type` × `all` with `select_equipment_count` over the quarter: equipment and rules summed over the types, the BACER left out |
+| Thermal zones, only when none is handed on | `search_indoor_environment` `zone` × `all` over the quarter, `limit:80`, paged by `report.py next`: distinct zones |
 
 The author comes from `who_am_i`, passed to `report.py plan` as `--author`, and the company and service names from `BRAND.md`.
 
 **Hands on:** the site facts, its name, photo, building size and currency, before any section builds.
 
-**Takes:** the operational impact rows and the notes band items the sections hand on; the thermal zones figure; the names of the figures shown that run partial over the month to date, which the reporting window note lists; and each section's first month kept and go-live, for a site that went live inside the windows.
+**Takes:** the operational impact rows and the notes band items the sections hand on; the scored equipment and rules and the thermal zones figure; the names of the figures shown that run partial over the month to date, which the reporting window note lists; and each section's first month kept and go-live, for a site that went live inside the windows.

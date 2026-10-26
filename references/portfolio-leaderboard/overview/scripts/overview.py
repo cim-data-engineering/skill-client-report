@@ -5,8 +5,8 @@ See references/portfolio-leaderboard/overview/overview.md.
 Imported by scripts/report.py through the same three hooks every section has:
 calls() before the fetch, more() for any follow-up round, build() to turn the saved
 responses into the bundle. facts() hands the site facts to every section before any
-of them builds. It takes the thermal zones figure from `shared`, so it builds after
-the section that hands it on.
+of them builds. It takes the scored equipment, rules and thermal zones from `shared`,
+so it builds after the sections that hand them on.
 """
 import base64
 import html
@@ -20,7 +20,7 @@ import peak_io as io  # noqa: E402
 import portfolio_io as pio  # noqa: E402
 
 CHUNK = 100
-COUNT_CHUNK = 10              # an unfiltered equipment count across many more sites runs past the gateway's timeout
+COUNT_CHUNK = 10              # an unfiltered sensor count across many more sites runs past the gateway's timeout
 LOGO_PX = 288                                     # the slot is 72px tall: four times that keeps it sharp in print
 
 
@@ -31,13 +31,7 @@ def calls(ctx):
                                             ["site_id", "site_name", "building_size", "monetary_currency", "state",
                                              "country", "photo_url", "thermal_comfort_min_temp",
                                              "thermal_comfort_max_temp", "thermal_comfort_margin"]))
-            + count("overview/rules.json", "search_rules", task_state="running", limit=1)
-            + pio.split(ctx, "overview/rules-bacer.json", COUNT_CHUNK, lambda f, ids: io.gql(
-                f, "tasks.tasks", {"site_ids": ids, "primary_metadata_type_ids": [io.BACER], "task_state": True,
-                                   "limit": 1}, ["task_id"]))
-            + count("overview/sensors.json", "search_favourites", limit=1)
-            + count("overview/equipment.json", "search_equipment", limit=1)
-            + count("overview/equipment-bacer.json", "search_equipment", metadata_type_ids=[io.BACER], limit=1))
+            + count("overview/sensors.json", "search_favourites", limit=1))
 
 
 def more(ctx, work):
@@ -102,10 +96,17 @@ def build(ctx, work, shared):
     size, unit, moved = pio.sizes(ctx, shared["facts"])
     known = [v for v in size.values() if v]
     brand = ctx.get("brand") or {}
-    zones = shared.get("thermal_zones")
-    if zones is None:
-        zones = shared.get("zones_configured", 0)
-    eq = pio.total(work, "overview/equipment.json") - pio.total(work, "overview/equipment-bacer.json")
+    stats = {
+        "Portfolio size": (pio.num(sum(known)) + " <span>%s</span>" % unit) if known else "-",
+        "Equipment": "{:,}".format(shared.get("scored_equipment") or 0),
+        "Sensors": "{:,}".format(pio.total(work, "overview/sensors.json")),
+        "Rules": "{:,}".format(shared.get("scored_rules") or 0),
+        "Thermal zones": "{:,}".format(shared.get("thermal_zones") or 0),
+    }
+    for label, key in (("Equipment", "scored_equipment"), ("Rules", "scored_rules"),
+                       ("Thermal zones", "thermal_zones")):
+        if not shared.get(key):
+            stats.pop(label)                          # nothing scored behind it: the card is left out
 
     chat = []
     shown = shared.get("shown_sites") or set()
@@ -132,14 +133,7 @@ def build(ctx, work, shared):
         },
         "overview": {
             "label": "What we monitor across the %s portfolio, as at %s" % (ctx["client"], io.day_long(ctx["today"])),
-            "stats": {
-                "Portfolio size": (pio.num(sum(known)) + " <span>%s</span>" % unit) if known else "-",
-                "Equipment": "{:,}".format(eq),
-                "Sensors": "{:,}".format(pio.total(work, "overview/sensors.json")),
-                "Rules running": "{:,}".format(pio.total(work, "overview/rules.json")
-                                               - pio.total(work, "overview/rules-bacer.json")),
-                "Thermal zones": "{:,}".format(zones),
-            },
+            "stats": stats,
         },
         "chat": chat,
     }

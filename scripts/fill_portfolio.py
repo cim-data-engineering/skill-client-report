@@ -22,7 +22,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from fill_report import (EXTERNAL, IMPACTS, LEFT, MAX_PHOTOS, RIGHT, band, chg, href, initials,  # noqa: E402
-                         photo_row, scaffold, win_groups)
+                         photo_row, scaffold, stat_cards, win_groups)
 
 TROPHY = ('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" '
           'stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="First place">'
@@ -391,9 +391,7 @@ def fill_slots(s, D):
     o = D["overview"]
     s = sub_one(s, r'<section class="overview strip" aria-label="[^"]*">',
                 '<section class="overview strip" aria-label="%s">' % esc(o["label"]), "scorecard strip")
-    for label, value in o["stats"].items():
-        s = sub_one(s, r'<p class="k">%s</p><p class="n">.*?</p>' % re.escape(label),
-                    '<p class="k">%s</p><p class="n">%s</p>' % (label, value), "the %s stat" % label)
+    s = stat_cards(s, o["stats"])
     for eyebrow, text in D.get("statements", {}).items():
         s = after_eyebrow(s, eyebrow, "<h2>", "</h2>", text)
     for eyebrow, text in D.get("datelines", {}).items():

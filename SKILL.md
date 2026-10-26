@@ -95,7 +95,8 @@ Each reference owns its section: what it shows, its rules, calls, notes band ite
 | --- | --- | --- |
 | Site facts: name, photo, building size, currency | the overview, before any section builds | every section |
 | Impact rows and notes band items | equipment health, indoor environment, alerts resolved; run hours a note | the overview's frames |
-| Thermal zones on the levels that scored | indoor environment, at plan time | the analytics overview |
+| Scored equipment and rules | equipment health, at plan time | the analytics overview |
+| Thermal zones that scored | indoor environment, at plan time | the analytics overview |
 | Partial figures over a month to date | equipment health, alerts resolved | the reporting window note |
 | First month kept and go-live | equipment health, indoor environment | the masthead reporting period |
 | Trend start: the first month kept | equipment health, indoor environment | the raised vs resolved chart's first month |
@@ -108,7 +109,8 @@ Each reference owns its section: what it shows, its rules, calls, notes band ite
 | Site facts: building size, currency, state, country, photo link, comfort band | the overview, before any section builds | every section |
 | A ranking: each site's figure now and on last month's board, with its label, link, window, unit and note, and the sites too small to lead | equipment health, indoor environment, actions resolved, in that order | the site leaderboard, a board each |
 | A team ranking: the same over companies or people, with logos, each one's site line, the leader's meta line and shoutout | actions resolved, companies then assignees | the team leaderboard, a board each |
-| Thermal zones on the levels that scored, and every configured point | indoor environment | the scorecards |
+| Scored equipment and rules | equipment health | the scorecards |
+| Thermal zone points that scored | indoor environment | the scorecards |
 | Sites with data | equipment health, indoor environment, actions resolved, sustainability ratings, open P1-2 actions, then each key win's site at fill | the masthead's Sites count; open P1-2 actions, for the sites holding none |
 
 ### Windows

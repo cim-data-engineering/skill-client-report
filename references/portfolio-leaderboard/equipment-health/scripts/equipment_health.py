@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Equipment health by site: the ranked heatmap and its portfolio row, and the sites'
-leaderboard month scores handed on as a ranking. See
+"""Equipment health by site: the ranked heatmap and its portfolio row, with the sites'
+leaderboard month scores handed on as a ranking and its equipment and rules totals as
+the scored equipment and rules figures. See
 references/portfolio-leaderboard/equipment-health/equipment-health.md for what each
 figure means; this module is that reference's arithmetic.
 """
@@ -22,12 +23,11 @@ CHUNK = 6
 
 def calls(ctx):
     q0, q1 = ctx["quarter"]
-    eh = lambda name, size, ent, per: pio.split(ctx, name, size, lambda f, ids: io.call(
+    eh = lambda name, size, ent, per, **kw: pio.split(ctx, name, size, lambda f, ids: io.call(
         f, "search_equipment_health_scores", site_ids=ids, aggregate_entities=ent, aggregate_period=per,
-        local_start_date=q0, local_end_date=q1))
+        local_start_date=q0, local_end_date=q1, **kw))
     return (eh("eh/type-month.json", CHUNK, ["metadata_type"], "month")
-            + eh("eh/type-all.json", CHUNK, ["metadata_type"], "all")
-            + eh("eh/equipment-all.json", CHUNK, ["equipment"], "all"))
+            + eh("eh/type-all.json", CHUNK, ["metadata_type"], "all", select_equipment_count=True))
 
 
 def more(ctx, work):
@@ -44,12 +44,9 @@ def build(ctx, work, shared):
     for r in io.rollup(pio.rows(work, "eh/type-month.json"), "site_id", "date"):
         scores[r["site_id"]][month_of(r)] = r["score"] * 100
         rules_by_month[r["site_id"]][month_of(r)] = r["task_count"]
-    rules, equip = defaultdict(int), defaultdict(set)
+    rules, equip = defaultdict(int), defaultdict(int)
     for r in io.rollup(pio.rows(work, "eh/type-all.json"), "site_id"):
-        rules[r["site_id"]] = r["task_count"]
-    for r in pio.rows(work, "eh/equipment-all.json"):
-        if r.get("metadata_type_id") != io.BACER:
-            equip[r["site_id"]].add(r["equipment_id"])
+        rules[r["site_id"]], equip[r["site_id"]] = r["task_count"], r["equipment_count"]
 
     months, scored, missing = pio.quarter_scores(ctx, scores)
     if not scored:
@@ -66,14 +63,16 @@ def build(ctx, work, shared):
                         % (host, sid, ctx["quarter"][0], ctx["through"]))
     rows = [{"rank": k, "name": s["site_name"].strip(), "state": pio.region(ctx, s), "link": link(s["site_id"]),
              "size": pio.num(size[s["site_id"]]),
-             "counts": ["{:,}".format(len(equip[s["site_id"]])), "{:,}".format(rules[s["site_id"]])],
+             "counts": ["{:,}".format(equip[s["site_id"]]), "{:,}".format(rules[s["site_id"]])],
              "months": months[s["site_id"]], "low": s["site_id"] in low} for k, s in order]
     sids = [s["site_id"] for s in scored]
     portfolio, change, left = pio.portfolio_months({sid: scores[sid] for sid in sids}, [m[:7] for m in qm])
+    shared["scored_equipment"] = sum(equip[sid] for sid in sids)
+    shared["scored_rules"] = sum(rules[sid] for sid in sids)
     heat = {"unit": unit, "dp": 1, "bands": BANDS, "counts": ["Equip", "Rules"], "rows": rows,
             "portfolio": {"size": pio.size_total(size, sids),
-                          "counts": ["{:,}".format(sum(len(equip[sid]) for sid in sids)),
-                                     "{:,}".format(sum(rules[sid] for sid in sids))],
+                          "counts": ["{:,}".format(shared["scored_equipment"]),
+                                     "{:,}".format(shared["scored_rules"])],
                           "months": portfolio, "change": change}}
     if low:
         heat["note"] = "* %s, ranked after the other sites." % LOW_NOTE

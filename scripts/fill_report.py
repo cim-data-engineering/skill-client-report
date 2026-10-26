@@ -452,6 +452,26 @@ def sub_one(s, pattern, repl, what):
     return s2
 
 
+def stat_cards(s, stats):
+    """Fill the overview's stat cards from {label: figure}, and leave out each card the bundle does not
+    name: a figure with nothing scored behind it has no card."""
+    m = re.search(r'<div class="statgrid">.*?\n\s*</div>\n', s, re.S)
+    if not m:
+        sys.exit("fill: no stat cards in the scaffold")
+    found = set()
+
+    def card(c):
+        indent, label = c.groups()
+        found.add(label)
+        if label not in stats:
+            return ""
+        return '%s<div class="stat"><p class="k">%s</p><p class="n">%s</p></div>\n' % (indent, label, stats[label])
+    grid = re.sub(r'([ \t]*)<div class="stat"><p class="k">([^<]+)</p><p class="n">.*?</p></div>\n', card, m.group(0))
+    for label in set(stats) - found:
+        sys.exit("fill: no %s stat in the scaffold" % label)
+    return s[:m.start()] + grid + s[m.end():]
+
+
 def after_eyebrow(s, eyebrow, tag_open, tag_close, text):
     """Rewrite the first `tag_open...tag_close` in the section an eyebrow heads. A section out of this
     report is passed over; an eyebrow the reference report does not carry names no slot, and stops."""
@@ -487,10 +507,7 @@ def fill_slots(s, D):
     o = D.get("overview")
     if o:
         s = after_eyebrow(s, "Analytics overview", '<p class="h2note">', "</p>", o["as_at"])
-        for label, value in o["stats"].items():
-            s = sub_one(s, r'<p class="k">%s</p><p class="n">.*?</p>' % re.escape(label),
-                        lambda _, label=label, value=value: '<p class="k">%s</p><p class="n">%s</p>' % (label, value),
-                        "the %s stat" % label)
+        s = stat_cards(s, o["stats"])
     for eyebrow, text in D.get("statements", {}).items():
         s = after_eyebrow(s, eyebrow, "<h2>", "</h2>", text)
     for eyebrow, text in D.get("datelines", {}).items():

@@ -22,6 +22,7 @@ def calls(ctx):
                                                 local_start_date=a, local_end_date=b, **kw)
     return [
         ie("ie/level-month.json", "level", "month", q0, q1, limit=PAGE),
+        ie("ie/zone-all.json", "zone", "all", q0, q1, limit=PAGE),
         ie("ie/site-month.json", "site", "month", t0, t1),
         ie("ie/site-all.json", "site", "all", q0, q1),
         io.call("ie/zones-by-level.json", "count_indoor_environment_zones", metric="temperature",
@@ -34,7 +35,7 @@ def level_rows(work):
 
 
 def more(ctx, work):
-    out = io.pages_due(work, [c for c in calls(ctx) if c["file"] == "ie/level-month.json"])
+    out = io.pages_due(work, [c for c in calls(ctx) if c["file"] in ("ie/level-month.json", "ie/zone-all.json")])
     if out:
         return out
     sid, (q0, q1) = ctx["site"]["site_id"], ctx["quarter"]
@@ -52,12 +53,18 @@ def more(ctx, work):
     if quiet:
         zn = io.call("ie/levels-unscored.json", "search_zones", site_ids=[sid], level_ids=sorted(quiet), limit=250)
         out += io.pages_due(work, [zn]) if work.has(zn["file"]) else [zn]
-    # a site that went live inside the quarter takes its headline score over the months it kept
+    # a site that went live inside the quarter takes its headline score over the months it kept,
+    # and its zones over the same months, so the snapshot counts only what scored in its columns
     on = onboarding(ctx, site_months(work))
-    if on and on["start"] > q0 and not work.has("ie/site-all-live.json"):
-        out.append(io.call("ie/site-all-live.json", "search_indoor_environment", metric="temperature",
-                           site_ids=[sid], aggregate_entity="site", aggregate_period="all",
-                           local_start_date=on["start"], local_end_date=q1))
+    if on and on["start"] > q0:
+        if not work.has("ie/site-all-live.json"):
+            out.append(io.call("ie/site-all-live.json", "search_indoor_environment", metric="temperature",
+                               site_ids=[sid], aggregate_entity="site", aggregate_period="all",
+                               local_start_date=on["start"], local_end_date=q1))
+        zl = io.call("ie/zone-all-live.json", "search_indoor_environment", metric="temperature", site_ids=[sid],
+                     aggregate_entity="zone", aggregate_period="all", local_start_date=on["start"],
+                     local_end_date=q1, limit=PAGE)
+        out += io.pages_due(work, [zl]) if work.has(zl["file"]) else [zl]
     return out
 
 
@@ -158,7 +165,7 @@ def unscored_chat(work):
 
 def build(ctx, work, shared):
     if not work.get("ie/site-all.json").first():
-        shared["thermal_zones"] = 0                   # zone points on the levels that scored: none did
+        shared["thermal_zones"] = 0                   # zones that scored: none did
         return {"drop": True, "chat": ["Indoor environment is left out: PEAK holds no thermal comfort score for the "
                                        "site in the quarter."]}
     shared.setdefault("partial", [])                  # its scores show the month to date and stand as they are
@@ -183,7 +190,12 @@ def build(ctx, work, shared):
         unit = r.get("unit") or unit
         if month_of(r) in keep and r.get("zone_value") is not None:
             temps[r["level_id"]].append(r["zone_value"])
-    zones = {r["level_id"]: r.get("included_point_count") or 0 for r in work.get("ie/zones-by-level.json").rows}
+    # Zones: the zones with a comfort reading over the months shown, by level
+    in_level = defaultdict(set)
+    for r in io.rows(work, "ie/zone-all-live.json" if kq != qm and work.has("ie/zone-all-live.json")
+                     else "ie/zone-all.json"):
+        in_level[r["level_id"]].add(r["zone_id"])
+    zones = {l: len(z) for l, z in in_level.items()}
     shown = [l for l in by_level if any(m[:7] in by_level[l] for m in kq)]
     one = len(kq) == 1                                # one month: the lowest score leads
     single = len(by_level) == 1
@@ -240,8 +252,8 @@ def build(ctx, work, shared):
                 "<strong>Thermal comfort score.</strong> Comfort band set per zone in PEAK, %s. The site row is "
                 "PEAK's site-level score, not an average of the rows below." % band_text,
             "Zones":
-                "<strong>Zones.</strong> Zone temperature points configured for comfort scoring. Levels with no "
-                "score in the period are excluded here and from the thermal zones figure in the analytics overview.",
+                "<strong>Zones.</strong> Zones with a comfort reading in the period. Levels with none are excluded "
+                "here and from the thermal zones figure in the analytics overview.",
         },
         "chat": chat,
     }

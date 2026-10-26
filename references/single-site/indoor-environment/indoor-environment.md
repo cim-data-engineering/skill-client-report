@@ -36,7 +36,7 @@ Heatmap table on the `heatmap` component. One row per site level, a score column
 | Column        | Reference                                            |
 | ------------- | ---------------------------------------------------- |
 | Level         | Site levels that returned a comfort score            |
-| Zones         | Thermal zones configured on that level               |
+| Zones         | Zones on that level with a comfort reading           |
 | Month columns | Thermal comfort score for that month x.x%            |
 | Chg           | Last month column minus the first, in pp x.x         |
 
@@ -46,7 +46,7 @@ Heatmap table on the `heatmap` component. One row per site level, a score column
 - Score to 1dp. The benchmark bands sit far from the data here, so 1dp cannot round across a band edge
 - Emphasise only the closing month column, per the `heatmap` component
 - Zones as a plain numeral, left of the score columns, never colored and never barred. It sizes the level, so the reader knows whether a swing covers two zones or twenty
-- Zones counts the zone temperature points configured for comfort scoring. The site row totals the levels shown, and that total is the thermal zones figure the section hands on. A level whose points returned no score in the quarter has no row and counts in neither
+- Zones counts the zones that returned a comfort reading over the months shown. The site row totals the levels shown, and that total is the thermal zones figure the section hands on. A level whose points returned no score in the quarter has no row and counts in neither
 - Chg signed with a direction glyph. Green up, red down, muted when flat
 - Sort levels in building order, highest level first, then ground, then basements, not by Chg. The reader is looking for where in the building comfort is drifting, and the Chg column carries the direction
 - Close with a site row at the bottom, separated from the level rows
@@ -81,22 +81,23 @@ Chart: Site thermal comfort score. Monthly line chart. Render the two nearest th
 ## Notes band items
 
 - **Thermal comfort score.** Comfort band set per zone in PEAK, typically 21–24.9 °C (68–79 °F). The site row is PEAK's site-level score, not an average of the rows below
-- **Zones.** Zone temperature points configured for comfort scoring. Levels with no score in the period are excluded here and from the thermal zones figure in the analytics overview
+- **Zones.** Zones with a comfort reading in the period. Levels with none are excluded here and from the thermal zones figure in the analytics overview
 
 ## Data
 
-All in the main batch: `search_indoor_environment(metric:"temperature")` at three groupings, and `count_indoor_environment_zones`.
+All in the main batch: `search_indoor_environment(metric:"temperature")` at four groupings, and `count_indoor_environment_zones`.
 
 | Call | Window | Feeds |
 | --- | --- | --- |
 | `level` × `month`, `limit:80` | quarter | the snapshot grid; paged by `report.py next` when levels × 3 passes 80 |
+| `zone` × `all`, `limit:80` | quarter | the Zones column and the thermal zones figure; paged by `report.py next` |
 | `site` × `month` | 6 months | the snapshot closing row (the quarter's months) and the trend |
 | `site` × `all` | quarter | the headline score |
-| `count_indoor_environment_zones`, `aggregate_entity:"level"` | current configuration | the Zones column and the thermal zones figure |
+| `count_indoor_environment_zones`, `aggregate_entity:"level"` | current configuration | the levels with points but no score, for chat |
 | `search_zones` for levels with points but no score, `limit:250`, a follow-up paged by `report.py next` | current configuration | their names, for chat |
-| `site` × `all`, a follow-up for a site that went live in the quarter | months kept | the headline score |
+| `site` × `all` and `zone` × `all`, follow-ups for a site that went live in the quarter | months kept | the headline score and the Zones column |
 
-- The Zones column joins the count's `included_point_count` to the level rows on `level_id`, and a level the count does not return counts 0. Summed over the levels shown, it is the site row and the thermal zones figure. Never page zone rows to count them, and never substitute `search_zones`, `platform.levels` or `platform.zones`: they list zone objects, not zone temperature points
+- The Zones column counts distinct `zone_id` among each level's zone rows, a row per point that returned a reading, so a zone with two points counts once. Summed over the levels shown, it is the site row and the thermal zones figure. Never count zones from `search_zones`, `platform.levels`, `platform.zones` or `count_indoor_environment_zones`: they list configured zones, not zones that returned a reading
 - A single-level site is the one follow-up: `next` asks for `zone` × `month` rows, which carry `zone_name` and `zone_value`
 - Levels sort into building order from their names: a name with no readable floor first, then numbered floors highest first, ground (G, GND, GRD, Ground), then basements (B1, Basement 2, or a signed level such as "Level -2"; a hyphen with no space before it is a separator). A building PEAK names oddly is worth a line in chat
 - The level count carries no names, so chat names unscored levels from a `search_zones` follow-up
@@ -106,7 +107,7 @@ All in the main batch: `search_indoor_environment(metric:"temperature")` at thre
 A site that went live inside the windows has less history than they ask for, and the section covers what exists.
 
 - A `site` × `month` series that starts after the trend window's first month went live in its first scored month. Comfort rows carry no counts to date the day, so that month is dropped unless nothing follows it
-- Every figure, the trend and the date lines take the months kept, whole months only apart from the month to date, the headline from a follow-up `site` × `all` over them, and the section hands on the first month kept and the go-live month
+- Every figure, the trend and the date lines take the months kept, whole months only apart from the month to date, the headline from a follow-up `site` × `all` over them and the Zones from a follow-up `zone` × `all`, and the section hands on the first month kept and the go-live month
 - The snapshot carries only the months kept, so it is only as wide as the data
 - A movement needs two months. One month: no movement and no Chg column, rows lowest score first
 - A trend needs three points. Under three: no trend, so no monthly thermal comfort section

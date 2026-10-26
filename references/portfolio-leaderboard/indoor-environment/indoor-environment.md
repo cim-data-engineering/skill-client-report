@@ -1,6 +1,6 @@
 # Indoor environment
 
-Owns the thermal comfort by site table and its portfolio row, and hands on the sites' leaderboard month scores as a ranking and the zone points as the thermal zones figure. Scaffold part: `indoor-environment`. Script: `scripts/indoor_environment.py`, which builds every row, cell and link below.
+Owns the thermal comfort by site table and its portfolio row, and hands on the sites' leaderboard month scores as a ranking and the zone points that scored as the thermal zones figure. Scaffold part: `indoor-environment`. Script: `scripts/indoor_environment.py`, which builds every row, cell and link below.
 
 ## What you write
 
@@ -31,7 +31,7 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 | Site | The site name with its region label in muted brackets |
 | Size | Building size, in the portfolio's unit, named in the header |
 | Levels | Levels that returned a comfort score in the quarter |
-| Zones | Zone temperature points on those levels |
+| Zones | Zone temperature points that returned a comfort score in the quarter |
 | Target | The site's default comfort band in PEAK, "21-24.9", in the site's own unit, named under the heading, or in each cell where the sites' units differ. A dash where PEAK holds none |
 | Month columns | The site's thermal comfort score for each month of the quarter |
 | Chg | Last month column minus the first, 1dp, signed with a glyph |
@@ -68,7 +68,7 @@ One row per site with a comfort score in the quarter, ranked by its score for th
 **Hands on:**
 
 - **A ranking** labelled Thermal comfort, under the anchor `cf-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%", and the sites with too few zones to lead, for the reason "Low zone count"
-- **Thermal zones**: the Zones total, and every zone temperature point configured across the sites for a quarter in which no site scored
+- **Thermal zones**: the Zones total
 - **Sites with data**: each site with a comfort score in the quarter
 
 ## Data
@@ -79,10 +79,9 @@ All in the main batch, every call with `metric:"temperature"`:
 | --- | --- | --- |
 | `search_indoor_environment`, `site` × `month`, `limit:80`, 100 sites a call | quarter | the month cells, the board and its movement |
 | `search_indoor_environment`, `level` × `all`, `limit:80`, 100 sites a call | quarter | Levels: each site's levels that returned a score |
-| `count_indoor_environment_zones`, `aggregate_entity:"level"`, 10 sites a call | current configuration | Zones, joined to the scored levels on `level_id` |
+| `search_indoor_environment`, `zone` × `all`, `limit:1`, a call a site | quarter | Zones: the `pagination.total`, a row per point that returned a score |
 
-- Both `search_indoor_environment` calls page at 80 rows: `report.py next` asks for each further page from the first page's total
-- The zone count returns every level in one response, which PEAK refuses past 40,000 characters, so it takes ten sites a call
-- Zones counts `included_point_count`, points configured for comfort scoring. A level that returned no score counts in neither column. Never count zone objects from `search_zones`, `platform.levels` or `platform.zones`: they are not zone temperature points
-- With no comfort score at any site the section drops, and still hands on every configured point across the sites, off the same zone count
+- Both `level` and `site` calls page at 80 rows: `report.py next` asks for each further page from the first page's total
+- Zones takes a call a site because PEAK holds no dated zone count, and a one-row page's total counts the site's points without fetching them. A zone with two points counts twice. Never count zones from `search_zones`, `platform.levels`, `platform.zones` or `count_indoor_environment_zones`: they list configured zones, not points that returned a score
+- With no comfort score at any site the section drops and hands on no thermal zones
 - Target needs no call of its own: it is `thermal_comfort_min_temp` and `thermal_comfort_max_temp` from the site facts, in the unit the site's level rows carry, else °F for a US site and °C otherwise

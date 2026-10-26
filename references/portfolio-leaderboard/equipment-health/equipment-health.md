@@ -64,7 +64,7 @@ One row per site with a score in the quarter, ranked by its score for the leader
   `https://ace.cimenviro.com/dashboard/equipment-health?site_ids={{site_id}}&start_date={{quarter_start}}T00:00:00.000&end_date={{quarter_end}}T00:00:00.000`
 - The section carries the anchor `eh-by-site`
 
-**Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%", and the sites with too few rules to lead, for the reason "Low rules count"; and the sites with data, each site with a score in the quarter.
+**Hands on:** a ranking labelled Equipment health, under the anchor `eh-by-site`, by month: each site's score for the leaderboard month and for the month before, to 1dp, in the unit "%", and the sites with too few rules to lead, for the reason "Low rules count"; the scored equipment and rules, the portfolio row's Equip and Rules; and the sites with data, each site with a score in the quarter.
 
 ## Data
 
@@ -73,11 +73,11 @@ All in the main batch: `search_equipment_health_scores` over the quarter with ev
 | `aggregate_entities` | `aggregate_period` | Feeds |
 | --- | --- | --- |
 | `metadata_type` | `month` | each site's month, rolled up from its types: the month cells, the board and its movement, and each month's scored rules for the outage check |
-| `metadata_type` | `all` | Rules: `task_count` summed per site over every type but the BACER |
-| `equipment` | `all` | Equip: distinct `equipment_id` per site, the BACER left out |
+| `metadata_type`, with `select_equipment_count` | `all` | Equip and Rules: `equipment_count` and `task_count` summed per site over every type but the BACER |
 
 - Six sites a call. Every grouping scans each rule's month rows for its sites, about 10,000 a site over a quarter and three times that at the largest, and PEAK refuses a call that would scan more than 200,000
 - `metadata_type` groups within each site already, so it carries `site_id` and takes no `site` beside it
+- `select_equipment_count` adds each type's distinct `equipment_count` to its row, so no per-equipment call is needed. It scores only rules on a piece of equipment, as the equipment health dashboard does
 - `local_end_date` is exclusive and every bound a month boundary: the quarter runs to the first of the issue month
 - Distinct counts come from an `all` call, never by summing months. Scores never sum: a site's cell is its types' scores weighted by their rules, the BACER left out, as PEAK rolls up a site, and the portfolio row is the plain average of those
 - A site's scored rules in a month below half of its busiest month is what the script names in chat

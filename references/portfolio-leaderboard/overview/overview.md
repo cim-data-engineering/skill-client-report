@@ -12,7 +12,7 @@ Nothing on the page. In chat, say what the script prints: any site with no data 
 - Title: {Client} portfolio. The HTML title is "{Client} {Leaderboard month} Performance Leaderboard": "Northwind Estates September 2026 Performance Leaderboard"
 - Prepared by: {Company name} - {Company service name} · Powered by PEAK. The company name is `name` in `BRAND.md`, CIM by default; the service name is `service-name`, Data Driven Operations by default. Powered by PEAK stays in every brand
 - Metadata row: Sites, Author, Issued
-  - **Sites**: the sites with data, the figure it takes: each site the report shows data for. A site with none is left out of the count and named in chat; its equipment, sensors and rules still count in the scorecards
+  - **Sites**: the sites with data, the figure it takes: each site the report shows data for. A site with none is left out of the count and named in chat; its sensors still count in the scorecards
   - **Author**: the full name of the logged-in PEAK MCP user, from `who_am_i`
   - **Issued**: the issue date, the earliest local date across the sites, so the leaderboard month has closed at every one
 - The AI disclaimer, verbatim, below the metadata row: "AI was used to help compile this report. All figures, analysis and recommendations were human-reviewed."
@@ -21,15 +21,15 @@ Nothing on the page. In chat, say what the script prints: any site with no data 
 
 ## Scorecard strip
 
-The analytics overview's stat cards, as a scorecard strip with no section header. Each figure is the sum of the per-site figures.
+The analytics overview's stat cards, as a scorecard strip with no section header. Each figure is the sum of the per-site figures. An Equipment, Rules or Thermal zones card with nothing scored behind it is left out.
 
 | Card | Figure |
 | --- | --- |
 | Portfolio size | The sites' building sizes summed, in the portfolio's unit |
-| Equipment | Equipment at every site, less the BACERs |
+| Equipment | The scored equipment it takes: equipment with a rule scored in the quarter, the equipment health portfolio row's Equip |
 | Sensors | Sensors at every site |
-| Rules running | Rules with status running at every site, less the BACERs' |
-| Thermal zones | The thermal zones figure it takes: zone temperature points on the levels that scored in the quarter, or every configured point where no site scored |
+| Rules | The scored rules it takes: rules scored in the quarter, the equipment health portfolio row's Rules |
+| Thermal zones | The thermal zones figure it takes: zone temperature points that returned a comfort score in the quarter, the thermal comfort portfolio row's Zones |
 
 **Sizes and units:**
 
@@ -40,18 +40,16 @@ The analytics overview's stat cards, as a scorecard strip with no section header
 
 ## Data
 
-All in the main batch, the site facts 100 sites a call and each count 10, since an unfiltered count across many more sites runs past the gateway's timeout:
+All in the main batch, the site facts 100 sites a call and the sensor count 10, since an unfiltered count across many more sites runs past the gateway's timeout:
 
 | Need | Call |
 | --- | --- |
 | Building size, currency, state, country, building photo link, default comfort band | `platform.sites` with `site_ids`, the band as `thermal_comfort_min_temp`, `thermal_comfort_max_temp` and `thermal_comfort_margin`, in the site's own unit |
-| Rules running | `search_rules(task_state:"running", limit:1)` with `site_ids`, its `pagination.total`, less that of `tasks.tasks` (`primary_metadata_type_ids:[105]`, `task_state:true`, `limit:1`) with `site_ids`, the BACERs' running rules: `search_rules` has no type filter |
 | Sensors | `search_favourites(limit:1)` with `site_ids`, its `pagination.total` |
-| Equipment | `search_equipment(limit:1)` with `site_ids` twice, plain and filtered to the BACER, type 105, the second total subtracted from the first |
 
 - The totals of a split call add across its chunks
 - The client name comes from `--client`, the author from `who_am_i` passed as `--author`, and the company and service names from `BRAND.md`
 
 **Hands on:** the site facts, each site's building size, currency, state, country, building photo link and default comfort band, before any section builds.
 
-**Takes:** the thermal zones figure, and the sites with data.
+**Takes:** the scored equipment and rules, the thermal zones figure, and the sites with data.

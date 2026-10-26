@@ -74,7 +74,10 @@ IMPACT_ORDER = ["equipment-health-score", "thermal-comfort", "automated-checks",
 # What sections hand on to each other, through `shared`, by the figure's name; no section
 # names another, and each builds after every section whose figures it takes.
 #   site_facts / facts  the site's, or each site's, platform row, seeded before any section builds
-#   thermal_zones       zone points on the levels that scored (zones_configured: every configured point)
+#   scored_equipment    equipment with a scored rule in the equipment health table's months, its summary row
+#   scored_rules        rules scored in the same months, its summary row
+#   thermal_zones       zones with a comfort reading in the thermal comfort table's months (portfolio: zone
+#                       points), its summary row
 #   rankings            [{label, anchor | links, window: "month" | "quarter", now, start, dp, unit, low,
 #                       low_note}], one board each: now on the leaderboard month or the quarter ending on it,
 #                       start on the window last month's leaderboard ranked; each name jumps to the anchor, or

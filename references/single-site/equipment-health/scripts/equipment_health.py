@@ -11,6 +11,7 @@ from collections import defaultdict
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "..", "scripts"))
 import peak_io as io  # noqa: E402
 
+HANDS_ON = ["scored_equipment", "scored_rules"]   # known at plan time, so the overview fetches no counts of its own
 BANDS = [(99.0, "Excellent"), (97.0, "Good"), (90.0, "Average")]
 # Labour model: annual minutes saved per scored rule, by priority id, priced at the region's hourly rate
 # by currency code over a 7.5-hour working day.
@@ -24,25 +25,24 @@ MONEY = {"AUD": "dollars", "USD": "dollars", "NZD": "dollars", "CAD": "dollars",
 
 def calls(ctx):
     sid, (q0, q1), (t0, t1) = ctx["site"]["site_id"], ctx["quarter"], ctx["trend"]
-    eh = lambda f, ent, per, a, b: io.call(f, "search_equipment_health_scores", site_ids=[sid],
-                                          aggregate_entities=ent, aggregate_period=per,
-                                          local_start_date=a, local_end_date=b)
+    eh = lambda f, ent, per, a, b, **kw: io.call(f, "search_equipment_health_scores", site_ids=[sid],
+                                                aggregate_entities=ent, aggregate_period=per,
+                                                local_start_date=a, local_end_date=b, **kw)
     return [
         io.gql("eh/types.json", "platform.metadata_types", {"limit": 400}, ["type_id", "type"]),
         eh("eh/type-month.json", ["metadata_type"], "month", t0, t1),
-        eh("eh/type-all.json", ["metadata_type"], "all", q0, q1),
-        eh("eh/equipment-all.json", ["equipment"], "all", q0, q1),
+        eh("eh/type-all.json", ["metadata_type"], "all", q0, q1, select_equipment_count=True),
         eh("eh/type-priority-month.json", ["metadata_type", "priority"], "month", t0, t1),
     ]
 
 
 def more(ctx, work):
-    # A site that went live inside the quarter takes its headline score over the months it kept
+    # A site that went live inside the quarter takes its headline score and its counts over the months it kept
     on = onboarding(ctx, site_months(work))
     if on and on["start"] > ctx["quarter"][0] and not work.has("eh/type-all-live.json"):
         return [io.call("eh/type-all-live.json", "search_equipment_health_scores", site_ids=[ctx["site"]["site_id"]],
                         aggregate_entities=["metadata_type"], aggregate_period="all", local_start_date=on["start"],
-                        local_end_date=ctx["quarter"][1])]
+                        local_end_date=ctx["quarter"][1], select_equipment_count=True)]
     return []
 
 
@@ -91,18 +91,15 @@ def month_of(r):
     return (r.get("date") or "")[:7]
 
 
-def snapshot(ctx, work, kq, site_q, link):
-    """The heatmap: a row per equipment type with a scored rule, its equipment and rules counted, sorted by
-    change across the period (one month: the lowest leads), closed by the site row."""
+def snapshot(ctx, work, kq, site_q, link, live):
+    """The heatmap: a row per equipment type with a scored rule, its equipment and rules counted over the
+    months it shows, sorted by change across the period (one month: the lowest leads), closed by the site row."""
     names = {r["type_id"]: r["type"] for r in work.get("eh/types.json").rows}
     scores = defaultdict(dict)
     for r in work.get("eh/type-month.json").rows:
         scores[r["metadata_type_id"]][month_of(r)] = r
-    equip = defaultdict(set)
-    for r in work.get("eh/equipment-all.json").rows:
-        equip[r["metadata_type_id"]].add(r["equipment_id"])
     rows = []
-    for r in work.get("eh/type-all.json").rows:
+    for r in work.get("eh/type-all-live.json" if live else "eh/type-all.json").rows:
         tid = r["metadata_type_id"]
         if tid == io.BACER:
             continue
@@ -111,7 +108,7 @@ def snapshot(ctx, work, kq, site_q, link):
             continue
         rows.append({"name": names.get(tid, "Type %d" % tid), "type_id": tid,
                      "link": link + "&equipment_type_ids=%d" % tid,
-                     "counts": [len(equip.get(tid, ())), r.get("task_count") or 0], "months": months})
+                     "counts": [r.get("equipment_count") or 0, r.get("task_count") or 0], "months": months})
     if len(kq) > 1:
         chg = lambda r: (r["months"][-1] - r["months"][0]) if None not in (r["months"][0], r["months"][-1]) else -1e9
         rows.sort(key=lambda r: (-chg(r), -(r["months"][-1] or 0), r["name"]))   # ties: the higher score leads
@@ -194,6 +191,7 @@ def datelines(ctx, kq, kt):
 def build(ctx, work, shared):
     quarter = io.rollup(work.get("eh/type-all.json").rows)
     if not quarter:
+        shared["scored_equipment"] = shared["scored_rules"] = 0     # nothing scored, so nothing counted
         return {"drop": True, "chat": ["Equipment health is left out: PEAK holds no equipment health score for the "
                                        "site in the quarter."]}
     shared.setdefault("partial", []).extend(["automated checks", "labour cost avoided"])
@@ -208,10 +206,11 @@ def build(ctx, work, shared):
                                                               ctx["through"]))
     link = dashboard(kq[0])
     site_q = io.site_scores(site_m, kq)
-    heat = snapshot(ctx, work, kq, site_q, link)
+    live = kq != ctx["quarter_months"] and work.has("eh/type-all-live.json")
+    heat = snapshot(ctx, work, kq, site_q, link, live)
+    shared["scored_equipment"], shared["scored_rules"] = heat["site"]["counts"]
 
     # operational impact rows
-    live = kq != ctx["quarter_months"] and work.has("eh/type-all-live.json")
     score = io.pct((io.rollup(work.get("eh/type-all-live.json").rows) if live else quarter)[0]["score"], 1)
     named = ((shared.get("site_facts") or {}).get("monetary_currency") or "").strip()
     code, sym = io.currency(shared.get("site_facts") or {})
@@ -219,7 +218,7 @@ def build(ctx, work, shared):
     checks_m, mins_m, cost_m, rules_m = by_month(ctx, work, kt, per_hr)
     full = lambda m: (io.add_months(io.d(m), 1) - io.d(m)).days
     checks = sum(checks_m[m] for m in kq)
-    rules = quarter[0]["task_count"]
+    rules = heat["site"]["counts"][1]
     mins, cost, days = sum(mins_m[m] for m in kq), sum(cost_m[m] for m in kq), sum(io.days_in(ctx, m) for m in kq)
     impact = [
         io.score_row(ctx, score, BANDS, kq, site_q, "equipment health maintained", "equipment-health-score"),

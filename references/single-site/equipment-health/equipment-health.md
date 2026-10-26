@@ -54,8 +54,8 @@ Heatmap table of monthly equipment health scores, one row per equipment type, a 
 | Column         | Reference                                              |
 | -------------- | ------------------------------------------------------ |
 | Equipment type | Equipment types with at least one scored rule          |
-| Equipment      | Total equipment count of that type with a scored rule  |
-| Rules          | Total scored rules on that type                        |
+| Equipment      | Equipment of that type with a rule scored in the months shown |
+| Rules          | Rules scored on that type in the months shown          |
 | Month columns  | Equipment health score for that month x.x%             |
 | Chg            | Last month column minus the first, in pp x.x           |
 
@@ -68,7 +68,7 @@ Heatmap table of monthly equipment health scores, one row per equipment type, a 
 - Chg signed with a direction glyph. Green up, red down, muted when flat
 - Sort by Chg descending, so the biggest improvement leads and any decline closes
 - Close with a site row, separated from the sort
-- Site row is the type rows' scores weighted by their rules, as PEAK rolls up a site, so it will not equal their plain average. Do not reconcile them. Its Equipment and Rules are the totals of the rows shown, so those two columns do add up
+- Site row is the type rows' scores weighted by their rules, as PEAK rolls up a site, so it will not equal their plain average. Do not reconcile them. Its Equipment and Rules are the totals of the rows shown, so those two columns do add up, and they are the scored equipment and rules the section hands on to the analytics overview
 - Display all equipment types, not a sample
 - Truncate equipment type name with ellipsis, do not wrap rows
 - Equipment health rules count can differ to overall site rules count as rules can trigger alerts but not score
@@ -108,7 +108,7 @@ Under it, a chart note carrying the labour cost avoided notes item word for word
 A site that went live inside the windows has less history than they ask for, and the section covers what exists.
 
 - A site series that starts after the trend window's first month went live in its first scored month. Its checks per rule, against the next month's pace, date the day; at nine tenths of that pace or more it ran from the 1st
-- The go-live month is dropped unless it ran from the 1st or nothing follows it. Every figure, chart and date line takes the months kept, whole months only apart from the month to date, the headline from a follow-up `metadata_type` × `all` over them, and the section hands on the first month kept and the go-live date
+- The go-live month is dropped unless it ran from the 1st or nothing follows it. Every figure, chart and date line takes the months kept, whole months only apart from the month to date, the headline, the Equipment and the Rules from a follow-up `metadata_type` × `all` over them, and the section hands on the first month kept and the go-live date
 - The snapshot carries only the months kept, so it is only as wide as the data
 - A movement needs two months. One month: no movement and no Chg column, rows lowest score first, so the plant needing attention leads
 - A trend needs three points, since two drawn as a line invite the reader to extend it. Under three: no Chart 1. Wherever the months were trimmed, the section is titled "The trend so far"
@@ -127,13 +127,12 @@ All in the main batch. Type names come from `platform.metadata_types`, selecting
 | `aggregate_entities` | `aggregate_period` | Window   | Feeds                                            |
 | -------------------- | ------------------ | -------- | ------------------------------------------------ |
 | `metadata_type`      | `month`            | 6 months | heatmap cells (the quarter's months), and rolled up, the snapshot site row and Chart 1 |
-| `metadata_type`      | `all`              | quarter  | the Rules count, and rolled up, the headline score and the scored rules in the checks row |
-| `equipment`          | `all`              | quarter  | the Equipment count, distinct equipment per type |
+| `metadata_type`, with `select_equipment_count` | `all` | quarter | the Equipment and Rules counts, the Rules total the scored rules in the checks row, and rolled up, the headline score |
 | `metadata_type`, `priority` | `month`     | 6 months | rolled up by priority, Chart 2 bars, and the checks and labour cost rows, summed over the reporting period |
-| `metadata_type`      | `all`              | months kept | follow-up, a site that went live in the quarter: rolled up, the headline score |
+| `metadata_type`, with `select_equipment_count` | `all` | months kept | follow-up, a site that went live in the quarter: the Equipment and Rules counts, and rolled up, the headline score |
 
 - `local_end_date` is exclusive, so the scripts pass the first of the month after the window's last month, the month to date included, which then holds whatever exists so far. A mid-month bound is refused for scanning too many rows
-- The type rows carry rules but no equipment count, and PEAK does not group by `metadata_type` and `equipment` together, so the Equipment column counts distinct `equipment_id` per type off the `equipment` rows, which return their type
+- `select_equipment_count` adds each type's distinct `equipment_count` to its row, so no per-equipment call is needed. It scores only rules on a piece of equipment, as the equipment health dashboard does
 - Executions sum across priorities for the checks total, and the per-priority split drives the labour model, each month priced over its own days; the checks and labour cost rows add up the same monthly figures Chart 2 draws
 - Distinct equipment and rule counts come from an `all` call, never by summing months: it counts distinct across the whole window, so it is legitimately higher than any single month. Scores never sum
 - Every site figure rolls up from the type rows with the BACER left out: each score the mean of its types' weighted by their rules, which is how PEAK rolls up a site, the checks and rules summed

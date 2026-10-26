@@ -4,10 +4,10 @@ impact and notes frames. See references/single-site/overview/overview.md.
 
 Imported by scripts/report.py, which hands each section module the same three
 hooks: calls() before the fetch, more() for any follow-up round, build() to turn
-the saved responses into the bundle. It takes the thermal zones figure from `shared`
-when a section hands one on, and for a site that went live inside the windows the
-first month the sections kept and when their scores start, so it builds after the
-sections.
+the saved responses into the bundle. It takes the scored equipment, rules and thermal
+zones from `shared` when sections hand them on, and for a site that went live inside
+the windows the first month the sections kept and when their scores start, so it
+builds after the sections.
 """
 import html
 import os
@@ -24,22 +24,18 @@ def calls(ctx):
         io.gql("overview/site.json", "platform.sites", {"site_id": sid},
                ["site_name", "photo_url", "building_size", "monetary_currency",
                 "thermal_comfort_min_temp", "thermal_comfort_max_temp"]),
-        io.call("overview/rules.json", "search_rules", site_ids=[sid], task_state="running", limit=1),
         io.call("overview/sensors.json", "search_favourites", site_ids=[sid], limit=1),
-        io.call("overview/equipment.json", "search_equipment", site_ids=[sid], limit=1),
-        io.gql("overview/rules-bacer.json", "tasks.tasks",
-               {"site_ids": [sid], "primary_metadata_type_ids": [io.BACER], "task_state": True, "limit": 1},
-               ["task_id"]),
-        io.call("overview/equipment-bacer.json", "search_equipment", site_ids=[sid],
-                metadata_type_ids=[io.BACER], limit=1),
     ]
+    if "scored_equipment" not in handed_on(ctx):
+        # With no section handing them on, the overview counts the equipment and rules that scored in the quarter.
+        out.append(io.call("overview/types-scored.json", "search_equipment_health_scores", site_ids=[sid],
+                           aggregate_entities=["metadata_type"], aggregate_period="all", local_start_date=q0,
+                           local_end_date=q1, select_equipment_count=True))
     if "thermal_zones" not in handed_on(ctx):
-        # With no section handing thermal zones on, the overview counts them: points on the levels that scored.
-        out += [io.call("overview/zones-by-level.json", "count_indoor_environment_zones",
-                        metric="temperature", site_ids=[sid], aggregate_entity="level"),
-                io.call("overview/levels-scored.json", "search_indoor_environment", metric="temperature",
-                        site_ids=[sid], aggregate_entity="level", aggregate_period="all",
-                        local_start_date=q0, local_end_date=q1, limit=80)]
+        # With no section handing thermal zones on, the overview counts them: zones with a reading in the quarter.
+        out.append(io.call("overview/zones-scored.json", "search_indoor_environment", metric="temperature",
+                           site_ids=[sid], aggregate_entity="zone", aggregate_period="all",
+                           local_start_date=q0, local_end_date=q1, limit=80))
     return out
 
 
@@ -51,7 +47,7 @@ def handed_on(ctx):
 def more(ctx, work):
     if "thermal_zones" in handed_on(ctx):
         return []
-    return io.pages_due(work, [c for c in calls(ctx) if c["file"] == "overview/levels-scored.json"])
+    return io.pages_due(work, [c for c in calls(ctx) if c["file"] == "overview/zones-scored.json"])
 
 
 def facts_site(work):
@@ -65,19 +61,31 @@ def build(ctx, work, shared):
     q0, qlast = min(shared.get("period_start") or [ctx["quarter"][0]]), ctx["through"]
     total = lambda f: work.get(f).total or 0
 
+    if "scored_equipment" in shared:
+        equipment, rules = shared["scored_equipment"], shared["scored_rules"]
+    else:
+        types = io.rollup(work.get("overview/types-scored.json").rows)
+        equipment, rules = (types[0]["equipment_count"], types[0]["task_count"]) if types else (0, 0)
     if "thermal_zones" in shared:
         zones = shared["thermal_zones"]
     else:
-        counts = {r["level_id"]: r.get("included_point_count") or 0
-                  for r in work.get("overview/zones-by-level.json").rows}
-        scored = {r["level_id"] for r in io.rows(work, "overview/levels-scored.json")}
-        zones = sum(counts.get(l, 0) for l in scored)
+        zones = len({r["zone_id"] for r in io.rows(work, "overview/zones-scored.json")})
 
     # PEAK stores building size in m² for every site; a US site shows it in ft², converted
     feet = io.in_feet(site.get("country"))
     size, unit = io.area(facts.get("building_size"), feet), "ft²" if feet else "m²"
     brand = ctx.get("brand") or {}
     window = reporting_window(ctx, shared.get("partial"))
+    stats = {
+        "Building size": ("{:,}".format(int(round(size))) + " <span>%s</span>" % unit) if size else "&ndash;",
+        "Equipment": "{:,}".format(equipment),
+        "Sensors": "{:,}".format(total("overview/sensors.json")),
+        "Rules": "{:,}".format(rules),
+        "Thermal zones": "{:,}".format(zones),
+    }
+    for label, n in (("Equipment", equipment), ("Rules", rules), ("Thermal zones", zones)):
+        if not n:
+            stats.pop(label)                          # nothing scored behind it: the card is left out
     return {
         "masthead": {
             "site_name": name,
@@ -91,13 +99,7 @@ def build(ctx, work, shared):
         },
         "overview": {
             "as_at": "As at %s" % io.day_long(ctx["today"]),
-            "stats": {
-                "Building size": ("{:,}".format(int(round(size))) + " <span>%s</span>" % unit) if size else "&ndash;",
-                "Equipment": "{:,}".format(total("overview/equipment.json") - total("overview/equipment-bacer.json")),
-                "Sensors": "{:,}".format(total("overview/sensors.json")),
-                "Rules running": "{:,}".format(total("overview/rules.json") - total("overview/rules-bacer.json")),
-                "Thermal zones": "{:,}".format(zones),
-            },
+            "stats": stats,
         },
         "datelines": {"Operational impact": io.period(q0, qlast)},
         "notes": {"The reporting window": "<strong>The reporting window.</strong> " + window} if window else {},

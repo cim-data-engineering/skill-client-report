@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Thermal comfort by site: the ranked heatmap and its portfolio row, with the sites'
-leaderboard month scores handed on as a ranking and the zone points as the thermal
-zones figure. See
+leaderboard month scores handed on as a ranking and the zone points that scored as
+the thermal zones figure. See
 references/portfolio-leaderboard/indoor-environment/indoor-environment.md.
 """
 import os
@@ -16,7 +16,6 @@ ANCHOR = "cf-by-site"
 BANDS = [92, 85, 75]
 LOW_ZONES, LOW_NOTE = 20, "Low zone count"      # too few zones to lead: ranked after the other sites
 CHUNK, PAGE = 100, 80
-ZONE_CHUNK = 10              # the zone count returns a row per level and refuses a response over 40,000 characters
 
 
 def paged(ctx):
@@ -28,8 +27,11 @@ def paged(ctx):
 
 
 def calls(ctx):
-    return paged(ctx) + pio.split(ctx, "ie/zones-by-level.json", ZONE_CHUNK, lambda f, ids: io.call(
-        f, "count_indoor_environment_zones", metric="temperature", site_ids=ids, aggregate_entity="level"))
+    # Zones: each site's zone points with a reading, the pagination total of a one-row page, a call a site
+    q0, q1 = ctx["quarter"]
+    return paged(ctx) + pio.split(ctx, "ie/zones-scored.json", 1, lambda f, ids: io.call(
+        f, "search_indoor_environment", metric="temperature", site_ids=ids, aggregate_entity="zone",
+        aggregate_period="all", local_start_date=q0, local_end_date=q1, limit=1))
 
 
 def more(ctx, work):
@@ -48,11 +50,9 @@ def build(ctx, work, shared):
     for r in pio.rows(work, "ie/level-all.json"):
         levels[r["site_id"]].add(r["level_id"])
         units.setdefault(r["site_id"], r.get("unit"))
-    points = {}
-    for r in pio.rows(work, "ie/zones-by-level.json"):
-        points[r["level_id"]] = (r["site_id"], r.get("included_point_count") or 0)
-    zones = lambda sid: sum(points.get(l, (sid, 0))[1] for l in levels[sid])
-    shared["zones_configured"] = sum(n for _, n in points.values())
+    files = set(pio.chunk_files(work, "ie/zones-scored.json"))
+    points = {io.call_args(c)["site_ids"][0]: work.get(c["file"]).total or 0 for c in work.calls if c["file"] in files}
+    zones = lambda sid: points.get(sid, 0)
 
     months, scored, missing = pio.quarter_scores(ctx, scores)
     if not scored:
