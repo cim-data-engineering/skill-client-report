@@ -286,17 +286,24 @@ def check_portfolio(args):
         errors.append("unresolved placeholder: %s" % m)
     for m in sorted(set(re.findall(r'data-sample="([a-z-]+)"', text))):
         errors.append("sample %s still in the report: fill it from the bundle" % m)
-    found = set()
+    found, own = set(), set()
     # Company and assignee names are left out: a sample company or person can share a name with a
     # real one, and the team boards' data-sample marker already catches them unfilled.
     names = re.sub(r"<!-- fill: team-boards -->.*?<!-- /fill: team-boards -->", "", src, flags=re.S)
-    for pat in (r'<span class="sn">([^<]+)</span>', r'<h3>([^<]+)</h3>',
-                r'<title>([^<]+)</title>', r'<h1>([^<]+)</h1>', r'<div class="win[^"]*"[^>]*>.*?<p>(.+?)</p>'):
+    for pat in (r'<h3>([^<]+)</h3>', r'<div class="win[^"]*"[^>]*>.*?<p>(.+?)</p>'):
         found |= {m.group(1) for m in re.finditer(pat, names, re.S)}
-    found |= {h for h in re.findall(r'href="([^"]+)"', src) if "cimenviro.com" in h}
+    # The sample is the Demo Starcourt Mall portfolio, so its site names, title and platform links are
+    # right in a report for it: they only warn, as the reference site's do in the single-site check.
+    for pat in (r'<span class="sn">([^<]+)</span>', r'<title>([^<]+)</title>', r'<h1>([^<]+)</h1>'):
+        own |= {m.group(1) for m in re.finditer(pat, names)}
+    own |= {h for h in re.findall(r'href="([^"]+)"', src) if "cimenviro.com" in h}
     hits = sorted(x for x in found if len(x.strip()) >= 5 and x in text)
     for h in hits[:20]:
         errors.append("sample data still in the report: %s" % " ".join(re.sub(r"<[^>]+>", " ", h).split())[:90])
+    mine = [x for x in own if len(x.strip()) >= 5 and x in text]
+    if mine:
+        warnings.append("%d of the sample portfolio's own site names, title or links appear: fine only if this "
+                        "report really is for the Demo Starcourt Mall portfolio" % len(mine))
     visible = re.sub(r'\s(?:href|src)="[^"]*"', "", text)
     for m in sorted(set(re.findall(r"Site\s+\d+", visible))):
         errors.append("site id in visible text: %s, a system id the reader has no use for" % m)
