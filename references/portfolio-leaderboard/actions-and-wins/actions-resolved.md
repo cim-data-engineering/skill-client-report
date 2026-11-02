@@ -4,19 +4,20 @@ Owns the actions resolved ticket pulls and counts, and hands them on as rankings
 
 ## What you write
 
-Nothing on the page. In chat, say what the script prints: any company shown with its initials for want of a logo, and any account PEAK holds no name or company for, by its user id, for ops to name in PEAK.
+Nothing on the page. In chat, say what the script prints: how many of the quarter's resolved actions were left out as close-outs, any company shown with its initials for want of a logo, and any account PEAK holds no name or company for, by its user id, for ops to name in PEAK.
 
 ## Definitions
 
 - **Resolved**: an action resolved in the quarter, in any status but Not Doing
 - **Actions, not alerts**: every count is of action tickets, one per action, never the alerts behind them
 - **Commented**: an action counts only for the assignees who commented on it, and for its site when any of them did
+- **Close-out**: an action whose only comment is six words or fewer naming a recovery, fit-out, tenant or vacancy, such as "Recovered status" or "Tenant fitout", counts for no one. An action with two or more comments is never read for this
 - **Who resolved it**: the action's assignees. An action counts once for each company holding it and once for each person
 - **Who ranks**: people and contractors' shared logins, such as a dispatch desk, never CIM's people (company id 1) or CIM's system accounts, on any of these rankings. `peak_io.system_account` picks out the system accounts, by the user ids in `peak_io.SYSTEM_ACCOUNTS` (CIM Support, the CIM API logins and the AI agents) and any name starting "Agent", since the rows carry no email. An account PEAK holds no name and no company for is left off both team rankings; one with a company but no name ranks as "Unnamed assignee"
 
 ## Hands on
 
-Each ranking runs over the quarter and moves against the quarter a month earlier, as whole numbers in the unit "actions". Anyone who resolved none in a window has no figure on it, so they are off the board now, or New on it where they resolved none a month earlier. Each carries the note "A resolved action only counts for rankings if the assignee commented on it." for the date line. Handed on only when any action counts in the quarter.
+Each ranking runs over the quarter and moves against the quarter a month earlier, as whole numbers in the unit "actions". Anyone who resolved none in a window has no figure on it, so they are off the board now, or New on it where they resolved none a month earlier. Each carries the note "A resolved action only counts for rankings if the assignee commented on it, other than a lone close-out note such as "Recovered"." for the date line. Handed on only when any action counts in the quarter.
 
 - **Sites with data**: each site with an action that counts in the quarter
 - **A ranking** labelled Actions resolved: each site's actions resolved. Each site opens its PEAK ticket report over the quarter, grouped by assignee
@@ -31,16 +32,18 @@ The reports are PEAK's ticket report over the quarter, one `site_ids` per site a
 
 ## Data
 
-All in the main batch but the leader pull:
+All in the main batch but the single-comment pulls and the leader pull:
 
 | Need | Call |
 | --- | --- |
 | Each person's name | `count_tickets(ticket_types:["escalated"], aggregate_entities:["assignee"], statuses:["open","in_progress","closed","on_hold"])` resolved over the quarter and over the quarter a month earlier, 20 sites a call: `assignee_name` by `assignee_id` |
 | Who resolved each action | `tickets.tickets` (`type:"escalated"`, `ticket_archived:false`, `has_comments:true`, every `site_ids`) resolved over the quarter, `limit:1000` |
 | Who resolved each action a month earlier | the same, resolved over the quarter a month earlier |
-| The Assignees leader's first name and email | once the pulls are whole, `report.py next` prints one `tickets.tickets` on one ticket of the leader's whose assignees all have names, selecting `ticket_id` and `assignees` with `id`, `firstname` and `email`: `ar/leader.json` |
+| The one comment on each action that has only one | once the pulls are whole, `report.py next` prints `tickets.tickets` on the counted actions with one comment, each window's, by `ticket_ids` and their `site_ids`, 200 a call, selecting `ticket_id` and `comments` (`user_only:true`, `limit:1`) with `text`: `ar/single-{k}.json` and `ar/single-prev-{k}.json` |
+| The Assignees leader's first name and email | once the single-comment pulls are saved, `report.py next` prints one `tickets.tickets` on one ticket of the leader's whose assignees all have names, selecting `ticket_id` and `assignees` with `id`, `firstname` and `email`: `ar/leader.json` |
 
 - The ticket pulls select only `ticket_id`, `site_id`, `status_id`, `assignees` with `id`, `entity.id`, `entity.name` and `entity.logo_url`, and `comments` (`user_only:true`, `limit:100`) with `author_id`: who holds each action, their company and who commented, never what anyone wrote. No names or emails: PEAK refuses the whole pull when one assignee has none, so names come from the counts by assignee
+- The single-comment pulls are the only saved files holding what anyone wrote: one comment per action, read only to find the close-outs
 - `report.py next` pages each pull from its first page's total, 1000 rows a page
 - Every figure is counted from the ticket rows, since `count_tickets` cannot tell who commented. `has_comments:true` leaves out the actions that cannot count
 - Rows with status Not Doing are dropped from the pulls
