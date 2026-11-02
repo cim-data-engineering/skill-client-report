@@ -182,7 +182,8 @@ def save_rule(root):
 PORTFOLIO_SAVE = ("Save each response under %s/peak/ as the file named: an offloaded one by copying the file you "
                   "were handed (cp), an inline one by writing it to its file exactly as returned, one file per "
                   "response. Every response to save holds counts, scores, ids, and the names and titles PEAK "
-                  "keeps on its records: never what anyone wrote on a ticket.")
+                  "keeps on its records: never what anyone wrote on a ticket, but the one comment on an action "
+                  "that has only one.")
 
 
 READ_RULE = ("Read these where they come back and never save them: they carry what people wrote on the "

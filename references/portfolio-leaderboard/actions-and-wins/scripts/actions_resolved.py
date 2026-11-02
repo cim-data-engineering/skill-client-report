@@ -3,11 +3,13 @@
 its own. Hands on each site's actions resolved over the quarter and over the quarter a month
 earlier as a ranking, and each company's and each person's as team rankings, every name with
 its PEAK ticket report. An action counts only for its assignees outside CIM who commented on it,
-and for its site when any of them did: the ticket rows say who holds each action and who commented,
-so every figure is counted from them, and a count by assignee names them. See
+and for its site when any of them did, unless its only comment is a close-out: the ticket rows say
+who holds each action and who commented, and a follow-up pull reads the comment where there is only
+one, so every figure is counted from them, and a count by assignee names them. See
 references/portfolio-leaderboard/actions-and-wins/actions-resolved.md.
 """
 import os
+import re
 import sys
 from collections import defaultdict
 
@@ -19,7 +21,8 @@ STAT4 = ["open", "in_progress", "closed", "on_hold"]           # every status bu
 COUNT_CHUNK, PAGE, COMMENTS = 20, 1000, 100      # COMMENTS: comments read per action, newest first
 CIM = 1                                           # CIM's company id in PEAK: its people are never ranked
 UNNAMED = "Unnamed assignee"
-NOTE = "A resolved action only counts for rankings if the assignee commented on it."
+NOTE = ("A resolved action only counts for rankings if the assignee commented on it, other than a lone "
+        "close-out note such as \"Recovered\".")
 # The rows say only who holds each action and who commented on it: ids, each assignee's company with its
 # id and logo link, and each comment's author. PEAK refuses the whole pull when any assignee has no name or
 # email recorded, so names come from a count by assignee, which leaves such a name empty, and the leader's
@@ -27,6 +30,11 @@ NOTE = "A resolved action only counts for rankings if the assignee commented on 
 FIELDS = ["ticket_id", "site_id", "status_id", "assignees.id", "assignees.entity.id", "assignees.entity.name",
           "assignees.entity.logo_url",
           {"path": "comments", "args": {"user_only": True, "limit": COMMENTS}, "sub_fields": ["author_id"]}]
+# The one comment on each counted action with only one, SINGLE_CHUNK actions a call: the only text saved.
+# A close-out is that comment at CLOSEOUT_WORDS words or fewer naming a recovery, fit-out, tenant or vacancy.
+SINGLE_CHUNK, CLOSEOUT_WORDS = 200, 6
+SINGLE = ["ticket_id", {"path": "comments", "args": {"user_only": True, "limit": 1}, "sub_fields": ["text"]}]
+CLOSEOUT = re.compile(r"recover|fit\s*-?\s*out|tenant|vacan", re.I)
 
 
 def pulls(ctx):
@@ -47,8 +55,33 @@ def calls(ctx):
             + pulls(ctx))
 
 
+def singles(ctx, work):
+    """Once the pulls are whole: the one comment on each counted action with only one, a window at a time."""
+    nm, out = names(work), []
+    for rows, name in (("ar/resolved-rows.json", "ar/single"), ("ar/resolved-prev-rows.json", "ar/single-prev")):
+        acts = commented([r for r in pio.rows(work, rows) if len(r.get("comments") or []) == 1], nm)
+        for k, part in enumerate(pio.chunks(acts, SINGLE_CHUNK), 1):
+            out.append(io.gql("%s-%d.json" % (name, k), "tickets.tickets",
+                              {"type": "escalated", "site_ids": sorted({a["site"] for a in part}),
+                               "ticket_ids": [a["ticket"] for a in part], "ticket_archived": False,
+                               "limit": len(part)}, SINGLE))
+    return out
+
+
+def closeouts(work, name):
+    """Ticket ids whose one comment is a close-out, off the single-comment pulls."""
+    out = set()
+    for r in pio.rows(work, name):
+        text = " ".join(((r.get("comments") or [{}])[0].get("text") or "").split())
+        if len(text.split()) <= CLOSEOUT_WORDS and CLOSEOUT.search(text):
+            out.add(r["ticket_id"])
+    return out
+
+
 def more(ctx, work):
     due = io.pages_due(work, pulls(ctx))
+    if not due:
+        due = [c for c in singles(ctx, work) if not work.has(c["file"])]
     if due or work.has("ar/leader.json"):
         return due
     # the Assignees leader's first name and email, for the shoutout: one ticket of theirs whose assignees
@@ -65,9 +98,10 @@ def more(ctx, work):
     return [io.leader_pull(named[0]["site"], named[0]["ticket"])]
 
 
-def commented(rows, nm):
+def commented(rows, nm, closed_out=frozenset()):
     """held() actions keeping, as their assignees, only the people outside CIM who commented on each, CIM's
-    system accounts and agents never; an action left with none is dropped. holders keeps every assignee."""
+    system accounts and agents never; an action left with none, or in closed_out, is dropped. holders keeps
+    every assignee."""
     authors = {r["ticket_id"]: {c.get("author_id") for c in r.get("comments") or []} for r in rows}
     out = []
     for act in pio.held(rows):
@@ -75,7 +109,7 @@ def commented(rows, nm):
         act["assignees"] = [a for a in act["holders"]
                             if a["id"] and a["id"] in authors[act["ticket"]] and a["company_id"] != CIM
                             and not io.system_account(a["id"], nm.get(a["id"]))]
-        if act["assignees"]:
+        if act["assignees"] and act["ticket"] not in closed_out:
             out.append(act)
     return out
 
@@ -112,9 +146,9 @@ def tally(actions, key):
 def people(ctx, work):
     """Who resolved what, the quarter and last month's board: each person's commented actions, sites and
     company, CIM and accounts PEAK holds no name or company for left out of the ranking."""
-    nm = names(work)
-    now = commented(pio.rows(work, "ar/resolved-rows.json"), nm)
-    then = commented(pio.rows(work, "ar/resolved-prev-rows.json"), nm)
+    nm, shut = names(work), closeouts(work, "ar/single.json")
+    now = commented(pio.rows(work, "ar/resolved-rows.json"), nm, shut)
+    then = commented(pio.rows(work, "ar/resolved-prev-rows.json"), nm, closeouts(work, "ar/single-prev.json"))
     who, blank = {}, defaultdict(set)
     for act in then + now:                # each person's name and company as the quarter shows them
         for a in act["assignees"]:
@@ -131,7 +165,7 @@ def people(ctx, work):
     p_now, p_sites = tally(now, key)
     p_then, _ = tally(then, key)
     every = set(p_now) | set(p_then)
-    return {"names": nm, "who": who, "acts": now, "then_acts": then, "blank": blank, "ranks": ranks,
+    return {"names": nm, "who": who, "acts": now, "then_acts": then, "blank": blank, "ranks": ranks, "shut": shut,
             "every": every, "sites": p_sites,
             "now": {p: len(p_now.get(p, ())) or None for p in every},
             "then": {p: len(p_then.get(p, ())) or None for p in every},
@@ -205,6 +239,9 @@ def build(ctx, work, shared):
                       for k in p_now if k in contact and all(contact[k])}})
 
     chat = []
+    if p["shut"]:
+        chat.append("%d of the quarter's resolved actions were left out of the rankings, their only comment a "
+                    "close-out such as \"Recovered\"." % len(p["shut"]))
     unlogged = sorted(c for c in co_now if not logos.get(c))
     if unlogged:
         chat.append("Initials stand in for the logos of %s, with none in PEAK or none that could be fetched."
