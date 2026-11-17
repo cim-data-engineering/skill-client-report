@@ -6,30 +6,20 @@ When each unit of plant ran across one week, against the site's working hours: M
 
 ## What you write
 
-Nothing. Report in chat, not on the page: units left off the chart and why (only an enable or schedule, no points in PEAK, plant alarms but no run point), equipment types the signals reference does not cover yet, and any units beyond the first pass of 100. The script lists them to say in chat.
+Nothing. Report in chat, not on the page: units left off the chart and why (only an enable or schedule, no points in PEAK, none of the metadata listed for their type, a Common or HLI record). The script lists them to say in chat.
 
 ## Scope
 
 - **The week**: the latest full Monday-to-Sunday week before the issue date, in site local time. The window step converts local midnights to UTC, daylight saving included
 - **Missing data**: where no run point reported in that week, or every point that logs at a fixed interval went quiet together for 12 hours or more, the site's data feed stopped rather than the plant, and the week is not whole. The section then shows the latest full week before the data stopped, dated "the latest full week with complete data", provided it falls inside the reporting period: the week the data stopped in where it lost under 12 hours at its end, else the week before. A stretch shorter than that stays hatched. That earlier week is checked the same way, and where it is not whole either, its gaps are hatched, its date line drops "with complete data" and chat says so. Where the earlier week falls outside the period, the latest week is drawn with its gap hatched, or the section is left out when the week holds nothing; the script says which, to say in chat
 - **Working hours** come from the site in PEAK, each day its own; a closed day has no working-hours column and all its running is outside hours. All days closed or all `00:00` stops the plan step: ask the user what hours to assess against, never guess, and run `report.py plan` again with `--hours "Mon-Fri 08:00-18:00, Sat 09:00-13:00"`. An end of `00:00` there is midnight, so `Mon-Sun 00:00-00:00` is open all day
-- **Equipment**: every type in `run-hours-signals.md`, central plant first, then field units. VAVs, chilled beams, lighting, lifts and meters stay out
-- **Sensors only**: a row is drawn only from a sensor that reports the unit running, a run status, a speed, current or power reading, or a compressor status. An enable, command or occupancy schedule says what the unit was told to do, not that it ran
-- **First pass**: up to 100 units, central plant always whole, each other type whole or not at all. The report draws the first pass only and makes no later pass: the rest is named in chat, with the count of units the page draws, and never offered as a further fetch
+- **Equipment**: every type in the Central plant and Field units tables of `run-hours-signals.md`, central plant first, then field units. A type not in the tables, such as VAVs, chilled beams, lighting, lifts and meters, stays out
+- **Listed metadata only**: a row is drawn only from the metadata listed for its equipment type. An enable, command or occupancy schedule says what the unit was told to do, not that it ran, so none is listed. A record with Common or HLI in its name is not a unit and is not drawn
+- **Every unit**: every unit with listed metadata is drawn, however many
 
-## Which point draws the row
+## Which metadata draws the row
 
-Each unit brings up to two sensors, its status and an analog (speed, frequency, current, power), picked by `run-hours-signals.md`, which `runhours_plan.py` parses and checks on every run.
-
-| The unit has | The row is drawn from |
-| --- | --- |
-| Status and analog, both changing | Whichever shows less running. The usual faults (a status stuck on, an enable mapped as status, a speed idling above zero) all add hours, so the smaller count is the genuine one, unless one switched on at most once all week beside one that switched on three or more times |
-| Status and analog, one held all week | The one that changes |
-| Status and analog, both held | Status when they agree; hatched when they don't, or when the status is a speed state held at a running value |
-| Status only | Status. On all week is kept and noted as unverified |
-| Analog or speed state only | The analog. Held at one running value all week is hatched |
-| Only a compressor status | The compressor, noted: it cannot show whether the fan ran |
-| Only an enable, command or schedule, or no history | Not drawn; noted |
+`run-hours-signals.md` lists the metadata each equipment type fetches and sets the rules, which `runhours_plan.py` parses and checks on every run. The row is drawn from the metadata with the fewest running hours. A reading off or zero all week is left out while another reading changes. A leaving water temperature is used only alongside a reading. Where nothing changed all week, all off is drawn off, all on is drawn on and noted as unverified, and a mix is hatched.
 
 A reading holds for up to an hour, or one and a half times the point's own interval. A longer silence is hatched, never drawn as off. Collector restarts that write 0 to every point at once are left out.
 
@@ -37,16 +27,16 @@ A reading holds for up to an hour, or one and a half times the point's own inter
 
 - One chart per page of plant, **Central plant** then **Field units**, each static SVG the script draws in the report's tokens. A page with no rows is left out
 - Each chart is a table of SVG strips, one per unit, with the day header as its `thead`, so a chart that runs onto another printed page breaks between units and repeats the header there
-- Groups by equipment type, in the order of the signals reference's types table; rows by level, then name in natural order
+- Groups by equipment type, in the order of the rows in `run-hours-signals.md`; rows by level, then name in natural order
 - A grey working-hours column on each day, headed with the day and its hours; "closed" where it has none
 - Bars in muted grey during working hours, `warning` outside them, hatched where there is no reliable data. Legend above the chart, as on the other charts
-- Each unit name links to its PEAK chart for the same week with working hours on, built by the build step: no tool returns that page. Add chevron indicating link >, the name in `primary` like every other link
+- Each unit name links to its PEAK chart for the same week with working hours on, split by unit, opening every metadata fetched for the unit, the one the row is drawn from first. The build step builds it: no tool returns that page. Add chevron indicating link >, the name in `primary` like every other link
 - Level and zone sit right-aligned before the week where they fit; the full name, the point drawn and the location are in the hover
 
 ## Notes band item
 
-- **Run hours.** Which signals draw a row and which win when they disagree. The script writes it
+- **Run hours.** Which metadata draw a row and which wins when they disagree. The script writes it
 
 ## Data
 
-`report.py plan` runs `runhours_plan.py window` and adds its calls to the main batch: a `platform.equipment` discovery pull with every in-scope unit's points nested, and two `limit:1` census counts. `report.py next` runs `runhours_plan.py plan` over the saved discovery pages and prints the `platform.history` calls. History responses are large and come back as files, so they are copied, never written out. Each is checked against its own call: a file holding another call's points stops the build, since it would hatch units silently. Once they are saved, `next` builds the week to check it is whole. Where it is not, and the stop cannot be read off the week itself, it prints one `platform.history` `latest` call on a sample of the site's run points, bounded to the week's start, for the newest reading before it; then the discovery and history calls for the earlier week, kept under `runhours/earlier/`. `report.py bundle` runs `runhours_build.py` on whichever week was settled and draws the result.
+`report.py plan` runs `runhours_plan.py window` and adds its call to the main batch: a `platform.equipment` discovery pull with every in-scope unit's points nested. `report.py next` runs `runhours_plan.py plan` over the saved discovery pages and prints the `platform.history` calls. History responses are large and come back as files, so they are copied, never written out. Each is checked against its own call: a file holding another call's points stops the build, since it would hatch units silently. Once they are saved, `next` builds the week to check it is whole. Where it is not, and the stop cannot be read off the week itself, it prints one `platform.history` `latest` call on a sample of the site's run points, bounded to the week's start, for the newest reading before it; then the discovery and history calls for the earlier week, kept under `runhours/earlier/`. `report.py bundle` runs `runhours_build.py` on whichever week was settled and draws the result.
