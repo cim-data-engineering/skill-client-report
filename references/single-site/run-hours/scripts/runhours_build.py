@@ -4,10 +4,10 @@ run(); the command line does the same and prints the notes.
 
     python3 runhours_build.py <workdir>
 
-Reads <workdir>/window.json and plan.json and the first pass's history, history-1-<n>.json
-for each of the plan's chunks, decides each unit's row (status or analog, whichever shows
-less running) and writes <workdir>/agg.json, the renderer's only input, with the notes to
-state with the view.
+Reads <workdir>/window.json and plan.json and the history, history-<n>.json for each of
+the plan's chunks, draws each unit's row from its listed metadata with the fewest running
+hours, and writes <workdir>/agg.json, the renderer's only input, with the notes to state
+with the view.
 """
 import argparse
 import json
@@ -29,9 +29,7 @@ WEEK            = 7 * SLOTS_PER_DAY
 BRIDGE_SLOTS    = 4      # a gap up to an hour holds the last reading; longer is hatched ...
 HOLD_FACTOR     = 1.5    # ... unless the point reports less often: then 1.5 times its usual interval
 ANALOG_ON_SHARE = 0.05   # an analog is ON above 5% of its own weekly maximum
-DISAGREE_HOURS  = 2.0    # status and analog this far apart (and 10%) get a note
-ONE_OFF_RUNS    = 1      # a signal that switched on this often or less ...
-PATTERN_RUNS    = 3      # ... gives way to one that switched on at least this often
+DISAGREE_HOURS  = 2.0    # metadata this far apart (and 10%) get a note
 CHANGE_LOG_SHARE = 0.5   # a point with readings in under half the week's slots ...
 CHANGE_READINGS = 0.8    # ... where this share of readings differ from the one before logs on change
 RESET_POINTS    = 10     # a sweep of this many points or more all reading 0 at once ...
@@ -41,8 +39,10 @@ SHARED_GAP_UNITS = 3     # a data gap this many units share is named once, with 
 FEED_GAP_HOURS  = 12     # every periodic point silent this long at once: the site's feed, so the week is not whole
 NAMES_IN_NOTE   = 8      # list names in a note up to this many, then just count
 GENERIC_ZONE    = re.compile(r"(zone|area|default|all|general|none|n/?a|unassigned|site|building)\s*\d*", re.I)
-SIGNAL_WORDS    = {"status": "run status", "state": "speed state", "analog": "speed or other analog",
-                   "compressor": "compressor status"}
+SIGNAL_WORDS    = {"status": "run status", "state": "speed state", "analog": "speed, current or power",
+                   "temp": "leaving water temperature"}
+TEMP_MIN_RANGE  = 5.0    # a leaving water temperature that moves less than this all week (°C) is not used ...
+TEMP_MIN_RANGE_F = 9.0   # ... or this (°F) for metadata in Fahrenheit
 
 
 # ---- Slots -------------------------------------------------------------------
@@ -180,6 +180,8 @@ def read_point(rec, point):
     if not rec:
         return None
     slots, series = rec["slots"], rec["series"]
+    if point["role"] == "temp":
+        return read_temperature(slots, series, point)
     raw = [slots[s][0] if s in slots else None for s in range(WEEK)]
     last = [slots[s][1] if s in slots else None for s in range(WEEK)]
     distinct = set(series)
@@ -201,6 +203,23 @@ def read_point(rec, point):
             "sparse": every if hold > BRIDGE_SLOTS and not on_change else None}
 
 
+def read_temperature(slots, series, point):
+    """A leaving water temperature shows running at or above the midpoint of its weekly range.
+
+    Not used when the range is under 5 °C (9 °F for metadata in Fahrenheit): the water never heated or cooled.
+    """
+    lo, hi = min(series), max(series)
+    floor = TEMP_MIN_RANGE_F if "fahrenheit" in point["name"].lower() else TEMP_MIN_RANGE
+    if hi - lo < floor:
+        return None
+    mid = (lo + hi) / 2
+    raw = [slots[s][1] if s in slots else None for s in range(WEEK)]
+    hold, every = hold_slots(slots)
+    on = [None if v is None else v >= mid for v in bridge(raw, raw, hold)]
+    return {"on": on, "stuck": False, "held": None, "hours": sum(1 for x in on if x) / 4,
+            "runs": len(ranges(on, True)), "on_change": False, "sparse": None}
+
+
 def ranges(flags, want):
     """Merged [start, end) slot ranges where flags[i] is `want` (True for ON, None for a gap)."""
     out, start = [], None
@@ -213,75 +232,49 @@ def ranges(flags, want):
     return out
 
 
-def common_hours(a, b):
-    """Hours ON for each of two points, over the slots both reported."""
-    both = [(x, y) for x, y in zip(a["on"], b["on"]) if x is not None and y is not None]
-    return sum(1 for x, _ in both if x) / 4, sum(1 for _, y in both if y) / 4
-
-
 # ---- The row decision ----------------------------------------------------------
 class Row:
     """What decide() settled for one unit."""
 
-    def __init__(self, point=None, reading=None, other=None, nodata=None, split=None, held=None):
+    def __init__(self, point=None, reading=None, other=None, nodata=None, split=None, left_out=(), flat=False):
         self.point, self.reading, self.other = point, reading, other
-        self.nodata, self.split, self.held = nodata, split, held
-
-
-def held_running(point, reading):
-    """A speed or speed state held at one running value all week: it shows a setting, not when it ran.
-
-    A true status held on is different — it says the unit ran — and is kept, named as unverified.
-    """
-    if not reading["stuck"]:
-        return False
-    if point["role"] == "analog":
-        return reading["held"] > 0
-    return bool(point.get("state")) and reading["hours"] > 0
+        self.nodata, self.split = nodata, split
+        self.left_out, self.flat = list(left_out), flat
 
 
 def decide(unit, points):
-    """Which sensor draws the row, following the decision table in references/single-site/run-hours/run-hours.md."""
-    got = {p["role"]: (p, points.get(str(p["fav_id"]))) for p in unit["pull"]}
-    sp, sr = got.get("status", (None, None))
-    ap, ar = got.get("analog", (None, None))
-    if sp and ap and sr and ar:
-        return both_signals(sp, sr, ap, ar)
-    p, r = (sp, sr) if sr else (ap, ar) if ar else (unit["pull"][0], points.get(str(unit["pull"][0]["fav_id"])))
-    if not r:
-        return Row(nodata="No data this week")
-    if held_running(p, r):
-        what = "one state" if p.get("state") else "one value"
-        return Row(nodata=f"{p['name']} held {what} all week, so run time is unknown", held=p)
-    return Row(p, r)
+    """Which metadata draws the row, following references/single-site/run-hours/run-hours-signals.md.
 
-
-def both_signals(sp, sr, ap, ar):
-    """Status beside analog: set aside a held one; else whichever shows less running.
-
-    A signal that switched on no more than once all week, beside one that
-    switched on at least three times, has stopped following the unit: a speed on
-    for 15 minutes all week beside a status that ran thirteen times. It gives way
-    however little it shows.
+    The unit is drawn from the metadata with the fewest running periods. A reading off or zero
+    all week is left out while another reading changes. A temperature is used only alongside a
+    reading, and its changes do not make a stuck-off reading be left out. When nothing changed:
+    all off is drawn off, all on is drawn on (unverified), a mix has no reliable data.
     """
-    if not sr["stuck"] and not ar["stuck"]:
-        hs, ha = common_hours(sr, ar)
-        small, large = ((ap, ar), (sp, sr)) if ha < hs else ((sp, sr), (ap, ar))
-        one_off = small[1]["runs"] <= ONE_OFF_RUNS and large[1]["runs"] >= PATTERN_RUNS
-        chosen, other = (large, small) if one_off else (small, large)
-        gap = abs(hs - ha)
-        split = (sp, hs, ap, ha, one_off and small[0]) if gap >= max(DISAGREE_HOURS, 0.1 * max(hs, ha)) else None
-        return Row(chosen[0], chosen[1], other[0], split=split)
-    if sr["stuck"] and not ar["stuck"]:
-        return Row(ap, ar, sp)
-    if ar["stuck"] and not sr["stuck"]:
-        return Row(sp, sr, ap)
-    if sp.get("state") and held_running(sp, sr):       # a speed state held running beside a held speed: two settings
-        return Row(nodata=f"{sp['name']} held one state all week, so run time is unknown", held=sp)
-    if (sr["hours"] > 0) == (ar["hours"] > 0):          # both held, and they agree
-        return Row(sp, sr, ap)
-    return Row(nodata=f"{sp['name']} and {ap['name']} each held one value all week and disagree, "
-                      "so run time is unknown")
+    got = [(p, points.get(str(p["fav_id"]))) for p in unit["pull"]]
+    got = [(p, r) for p, r in got if r]
+    reads = [(p, r) for p, r in got if p["role"] != "temp"]
+    temps = [(p, r) for p, r in got if p["role"] == "temp"] if reads else []
+    if not reads:
+        return Row(nodata="No data this week")
+    moving = [(p, r) for p, r in reads if not r["stuck"]]
+    left_out = [p for p, r in reads if r["stuck"] and r["hours"] == 0 and moving]
+    keep = [(p, r) for p, r in reads if p not in left_out]
+    if not moving and not temps:
+        if len({r["hours"] > 0 for _, r in reads}) > 1:
+            names = " and ".join(p["name"] for p, _ in reads[:3])
+            return Row(nodata=f"{names} each held one value all week and disagree, so run time is unknown")
+        other = reads[1][0] if len(reads) > 1 else None
+        return Row(reads[0][0], reads[0][1], other, flat=True)
+    cands = keep + temps
+    both = [i for i in range(WEEK) if all(r["on"][i] is not None for _, r in cands)]
+    hours = [sum(1 for i in both if r["on"][i]) / 4 for _, r in cands]
+    lo = min(range(len(cands)), key=lambda i: (hours[i], i))
+    hi = max(range(len(cands)), key=lambda i: hours[i])
+    other = cands[hi][0] if hi != lo else (cands[1 - lo][0] if len(cands) > 1 else None)
+    split = None
+    if hi != lo and hours[hi] - hours[lo] >= max(DISAGREE_HOURS, 0.1 * hours[hi]):
+        split = (cands[lo][0], hours[lo], cands[hi][0], hours[hi])
+    return Row(cands[lo][0], cands[lo][1], other, split=split, left_out=left_out)
 
 
 def feed_gap(readings):
@@ -322,13 +315,6 @@ def units_text(n):
     return io.plural(n, "unit")
 
 
-def held_text(point, reading):
-    """'on', 'off' or 'at 47.5' for a point that held one value all week."""
-    if point["role"] == "analog":
-        return f"at {reading['held']:g}"
-    return "on" if reading["hours"] else "off"
-
-
 def moment(window, local):
     """'Thu 17 08:00' for a local time in the week."""
     labels = {d["date"]: d["label"] for d in window["days"]}
@@ -356,9 +342,14 @@ def by_type(units):
 
 
 def chart_link(window, unit, favs):
-    return (f"{window['link_host']}/charts?split=false&splitbyunit=false&splitbyequip=false"
+    """favs: fav ids, or (equipment_id, fav_id) pairs for metadata on another record (a shared Common one)."""
+    groups = {}
+    for f in favs:
+        eid, fid = f if isinstance(f, tuple) else (unit["equipment_id"], f)
+        groups.setdefault(eid, []).append(fid)
+    return (f"{window['link_host']}/charts?split=true&splitbyunit=true&splitbyequip=false"
             f"&start={window['link_start']}&end={window['link_end']}&workinghours=true"
-            f"&fav-{unit['equipment_id']}={','.join(str(f) for f in favs)}")
+            + "".join(f"&fav-{eid}={','.join(str(x) for x in ids)}" for eid, ids in groups.items()))
 
 
 def signal_kind(point):
@@ -395,12 +386,12 @@ def where(unit):
 
 # ---- Build -------------------------------------------------------------------
 def load_history(work, plan):
-    """The first pass's history rows, one history-1-<n>.json per chunk of the plan, de-duplicated on
+    """The week's history rows, one history-<n>.json per chunk of the plan, de-duplicated on
     (point, time). A file holding points outside its own chunk was saved from another call's
     response, which would silently hatch units, so it stops the build."""
     kept = {}
-    for n, chunk in enumerate((c for c in plan["chunks"] if c["pass"] == 1), 1):
-        name = f"history-1-{n}.json"
+    for n, chunk in enumerate(plan["chunks"], 1):
+        name = f"history-{n}.json"
         want = {str(f) for f in chunk["fav_ids"]}
         rows = [r for r in io.read(str(work / name)).rows if isinstance(r, dict)]
         foreign = {str(r.get("fav_id")) for r in rows} - want
@@ -413,13 +404,13 @@ def load_history(work, plan):
 
 
 def build(window, plan, rows):
-    units = [u for u in plan["units"] if u["pass"] == 1]
+    units = plan["units"]
     readings, resets = slot_readings(rows, window)
     points = {str(p["fav_id"]): read_point(readings.get(str(p["fav_id"])), p)
               for u in units for p in u["pull"]}
 
-    notes = {"split": [], "held_other": [], "unverified": [], "clock": [], "off": [], "compressor": [],
-             "held": [], "on_change": [], "sparse": [], "nodata": [], "gaps": [], "drawn": Counter()}
+    notes = {"split": [], "held_other": [], "unverified": [], "off": [], "temp": [],
+             "on_change": [], "sparse": [], "nodata": [], "gaps": [], "drawn": Counter()}
     pages, prev = {}, None
     for u in (u for u in units if u["pull"]):
         d = decide(u, points)
@@ -428,36 +419,33 @@ def build(window, plan, rows):
                                    and prev["level"] != u["level"])}
         row["where"], row["where_full"] = where(u)
         prev = u
-        favs = [p["fav_id"] for p in u["pull"]]
+
+        def fav(p):
+            return (p["equipment_id"], p["fav_id"]) if p.get("equipment_id") else p["fav_id"]
+        favs = [fav(p) for p in u["pull"]]
         if d.point:
-            favs = [d.point["fav_id"]] + ([d.other["fav_id"]] if d.other else [])
+            favs = [fav(d.point)] + [fav(p) for p in u["pull"] if p["fav_id"] != d.point["fav_id"]]
             row["point"] = d.point["name"]
             row["runs"] = ranges(d.reading["on"], True)
             row["gaps"] = ranges(d.reading["on"], None)
-            kind = signal_kind(d.point)
-            notes["drawn"][kind] += 1
+            notes["drawn"][signal_kind(d.point)] += 1
             if d.split:
-                sp, hs, ap, ha, one_off = d.split
-                why = f"; {one_off['name']} switched on only once" if one_off else ""
-                notes["split"].append(f"{u['name']} ({sp['name']} {hs:g} h, {ap['name']} {ha:g} h, "
-                                      f"drew {d.point['name']}{why})")
-            other = points.get(str(d.other["fav_id"])) if d.other else None
-            if other and other["stuck"] and not d.reading["stuck"]:
-                notes["held_other"].append(f"{u['name']} ({d.other['name']} held {held_text(d.other, other)})")
-            if d.reading["hours"] and False not in d.reading["on"] and not (other and not other["stuck"]):
-                notes["clock" if u.get("around_the_clock") else "unverified"].append(u["name"])
+                sp, hs, ap, ha = d.split
+                notes["split"].append(f"{u['name']} ({sp['name']} {hs:g} h, {ap['name']} {ha:g} h)")
+            for p in d.left_out:
+                notes["held_other"].append(f"{u['name']} ({p['name']})")
+            if d.point["role"] == "temp":
+                notes["temp"].append(u["name"] + (f" (from {d.point['shared']})" if d.point.get("shared") else ""))
+            if d.flat and d.reading["hours"]:
+                notes["unverified"].append(u["name"])
             if not row["runs"]:
                 notes["off"].append(u["name"])
-            if kind == "compressor":
-                notes["compressor"].append(u["name"])
             if d.reading["on_change"]:
                 notes["on_change"].append(u["name"])
             if d.reading["sparse"]:
                 notes["sparse"].append((u["name"], d.reading["sparse"]))
             if row["gaps"]:
                 notes["gaps"].append((u["name"], row["gaps"]))
-        elif d.held:
-            notes["held"].append(u["name"])
         else:
             notes["nodata"].append(f"{u['name']} ({d.nodata.rstrip('.')})")
         row["href"] = chart_link(window, u, favs)
@@ -475,29 +463,25 @@ def build(window, plan, rows):
 
 def note_lines(window, plan, units, notes, resets):
     lines = [working_hours_note(window)]
-    drawn, hatched = notes["drawn"], len(notes["held"]) + len(notes["nodata"])
+    drawn, hatched = notes["drawn"], len(notes["nodata"])
     kinds = ", ".join(f"{SIGNAL_WORDS[r]} {drawn[r]}" for r in SIGNAL_WORDS if drawn[r])
-    lines.append((f"Rows drawn from: {kinds}" if kinds else "No row could be drawn from a sensor")
+    lines.append((f"Rows drawn from: {kinds}" if kinds else "No row could be drawn from the listed metadata")
                  + (f"; {hatched} hatched, no reliable data." if hatched else "."))
     if notes["split"]:
-        lines.append(f"Status and analog disagreed at {units_text(len(notes['split']))}, each drawn "
-                     f"from the one showing less running unless the other switched on only once: "
-                     f"{listing(notes['split'])}.")
+        lines.append(f"Metadata disagreed at {units_text(len(notes['split']))}, each drawn from the one "
+                     f"with the fewest running hours: {listing(notes['split'])}.")
     if notes["held_other"]:
-        lines.append("One signal held at one value all week while the other changes, so the row follows "
-                     f"the one that changes: {listing(notes['held_other'])}.")
-    if notes["held"]:
-        lines.append(f"Speed held at one setting all week, so run time is unknown and the row is hatched: "
-                     f"{listing(notes['held'])}.")
+        lines.append("Left out as off or zero all week while another reading of the unit changed: "
+                     f"{listing(notes['held_other'])}.")
+    if notes["temp"]:
+        lines.append("Drawn from the leaving water temperature, which showed less running than the unit's "
+                     "readings (a shared Common temperature shows when the plant ran, not which unit): "
+                     f"{listing(notes['temp'])}.")
     if notes["unverified"]:
-        lines.append("On all week with no second signal that changes to check it against, so possibly a "
-                     f"stuck status or a speed that never reads off: {listing(notes['unverified'])}.")
-    if notes["clock"]:
-        lines.append("On all week, as a unit serving a comms, server or computer room normally is: "
-                     f"{listing(notes['clock'])}.")
+        lines.append("On in every reading all week, with nothing that changed to check it against, so "
+                     f"unverified: {listing(notes['unverified'])}.")
     if notes["off"]:
-        lines.append("Off in every reading all week, so the unit did not run or its sensor is stuck off: "
-                     f"{listing(notes['off'])}.")
+        lines.append(f"Off in every reading all week, so drawn as off: {listing(notes['off'])}.")
     if notes["on_change"]:
         lines.append(f"Logged on change of value rather than every 15 minutes, so each reading holds until "
                      f"the next: {listing(notes['on_change'])}.")
@@ -509,9 +493,6 @@ def note_lines(window, plan, units, notes, resets):
                      "times its interval and the bar edges are only that exact. "
                      + "; ".join(f"Every {interval_text(slots)}: {listing(names)}"
                                  for slots, names in sorted(every.items())) + ".")
-    if notes["compressor"]:
-        lines.append(f"Compressor status only, so they show when the compressor ran, not whether the "
-                     f"fan did: {listing(notes['compressor'])}.")
     if notes["nodata"]:
         lines.append(f"Hatched, no reliable data: {listing(notes['nodata'])}.")
     if resets:
@@ -529,10 +510,6 @@ def note_lines(window, plan, units, notes, resets):
         hit = [u for u in skipped if u["why"] == why]
         if hit:
             lines.append(note(hit, listing, by_type))
-    if plan.get("unknown_units"):
-        lines.append(f"{units_text(plan['unknown_units'])} at the site are of a type the run-hours reference "
-                     "does not cover yet, not drawn: PEAK has added a type. List the site's equipment "
-                     "types to name it, and add it to references/single-site/run-hours/run-hours-signals.md.")
     return lines
 
 

@@ -1,172 +1,85 @@
-# Run-hours signals
+# Run hours signals
 
-Which point stands for a unit running. The recipe reads every point on the site's in-scope equipment and sorts it by name with the rules below, at run time — so this is a guide, not a list to keep complete. A point PEAK added last week is read the same way as one added years ago, and nothing here names a metadata id.
+For each equipment type, this file lists the PEAK metadata used to work out when a unit was running, and the rules that turn that metadata into the bars on the run hours chart. Equipment types not listed are not included in the run hours view.
 
-`references/single-site/run-hours/scripts/runhours_plan.py` parses and checks these tables on every run: edit a table and the next run follows it, with no second copy in code. A table needs its columns, a `---` separator under its header and rows of the header's width; a flag is `yes` or empty, a Page is one of the three below, a code appears once and a Rank is a whole number. A mistake stops the run with the file and line. `references/single-site/run-hours/run-hours.md` does not need this file at run time — open it to change a rule.
+## How run hours are worked out
 
-## Equipment types
+1. **Fetch** the metadata the unit has from its equipment type's row in [Central plant](#central-plant) or [Field units](#field-units).
+2. **Count** the 15-minute periods in the week in which each metadata shows running, as defined in [When a metadata shows running](#when-a-metadata-shows-running).
+3. **Take the lowest.** The unit is drawn from the metadata with the fewest running periods, because every listed metadata shows running whenever the unit runs.
+4. **Leave out stuck metadata.** A metadata that is off or zero all week is left out while another of the unit's metadata, other than a temperature, changes.
+5. **Nothing changed.** If none of the unit's metadata changed all week, the unit is drawn off when all of it is off, drawn on and noted as unverified when all of it is on, and shown as no reliable data otherwise.
 
-In-scope types, in the order the view draws them and the first pass fetches them: central plant before field units, then by system, then top to bottom.
+The chart link for each unit opens every metadata fetched for it, the one the unit is drawn from first.
 
-| Page | System | Code | Equipment type | Name word | Compressor is the unit | Heating is the unit | Also never |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| Central plant | Cooling | CH | Chiller | CH | yes | | |
-| Central plant | Cooling | CT | Cooling Tower | CT | | | |
-| Central plant | Cooling | CWP | Condenser Water Pumps | CWP | | | |
-| Central plant | Cooling | PCHWP | Primary Chilled Water Pumps | PCHWP | | | |
-| Central plant | Cooling | SCHW | Secondary Chilled Water System | SCHWP | | | |
-| Central plant | Cooling | SCHWP | Secondary Chilled Water Pumps | | | | |
-| Central plant | Cooling | TCW | Tenant Condenser Water | TCWP | | | |
-| Central plant | Cooling | DAC | Dry Air Cooler | DAC | | | |
-| Central plant | Cooling | DACP | Dry Air Cooler Pump | DACP | | | |
-| Central plant | Cooling | UFCS | Under-Floor Cooling System | | | | |
-| Central plant | Heating | HWB | Boiler | BLR, HWB | | yes | |
-| Central plant | Heating | SB | Steam Boiler | SB | | yes | |
-| Central plant | Heating | CHaP | Combined Heating & Power | CHP | | yes | |
-| Central plant | Heating | HE | Heat Exchanger | HE, HX | | | |
-| Central plant | Heating | PHWP | Primary Hot Water Pumps | PHWP, PHHWP | | | |
-| Central plant | Heating | SHW | Secondary Hot Water System | SHWP, SHHWP | | | |
-| Central plant | Heating | UFHWS | Under-Floor Heating System | | | | |
-| Central plant | Hot water | CAL | Calorifier | CAL | | yes | |
-| Central plant | Hot water | DHWT | Domestic Hot Water | DHWP | | yes | |
-| Central plant | Hot water | SWH | Solar Water Heater | SWH | | yes | |
-| Central plant | Air | AHU | Air Handling Units | AHU | | | Heat Pump, Heat Recovery |
-| Central plant | Air | HRU | Heat Recovery Unit | HRU | | | |
-| Central plant | Air | AIR HX | Air to Air Heat Exchanger | | | | |
-| Central plant | Air | ECO-HR | Econet Heat Recovery Unit | | | | |
-| Central plant | Air | SAF | Supply Air Fan | SAF | | | |
-| Central plant | Air | TL | Thermal Labyrinth | TL | | | |
-| Central plant | Air | EC | Evaporative Cooler | EC | | | |
-| Central plant | Air | CPV | Car Park Ventilation | CPV | | | |
-| Central plant | Water | DCW | Domestic Cold Water | DCWP | | | |
-| Central plant | Water | CWB | Cold Water Booster Pumps | CWBP | | | |
-| Central plant | Water | HYD | Hydraulic Pump | HYD | | | |
-| Central plant | Water | MISC-Pump | Miscellaneous Pump | | | | |
-| Field units | Packaged | PAC | Packaged Air Conditioning Units | PAC, RTU | | | Heat Recovery |
-| Field units | Packaged | HP | Heat Pump | HP | yes | | |
-| Field units | Packaged | VRV | Variable Refrigerant Volume Systems | VRV, VRF | yes | | |
-| Field units | Packaged | MSS | Multi Split Systems | | | | |
-| Field units | Packaged | SS | Split Systems | | | | |
-| Field units | Packaged | CRAC | Computer Room Air Conditioning Unit | CRAC | | | |
-| Field units | Packaged | ACC | Air Cooled Condensers | ACC | | | |
-| Field units | Terminal | FCU | Fan Coil Units | FCU | | | Heat Pump, Heat Recovery |
-| Field units | Terminal | UH | Unit Heater | UH | | | |
-| Field units | Terminal | ACRTN | Air Curtain | | | | |
-| Field units | Extract | KF | Kitchen Fans | KEF, KSAF | | | |
-| Field units | Extract | EAF | Exhaust Air Fans | EAF, EF | | | |
+## When a metadata shows running
 
-- **Page** follows what the type serves: the whole building or a large area is central plant, one space or tenancy is a field unit. A type that could go either way — a heat pump feeding a plant loop — is placed by what it usually serves; move its row if a client's buildings differ.
-- **Name word** is a word in an equipment name that means this type, anywhere in the name and glued to its number or not — `B2 FCU 210-1`, `KEF11-1`, `Common - SHWP - 2`. It is read only to group a unit with the type its name says, and only between the types **Regrouped by name** allows.
-- **Compressor is the unit** is `yes` where the compressor running is the unit running, so a compressor status counts as a status. Elsewhere it is a last resort: a PAC's compressor cycles while its fan runs on.
-- **Heating is the unit** is `yes` where heating is what the unit is for, so the heating words that **Never a run signal** sets aside on a fan — a burner, an immersion heater, a heating status — are this unit's own: a boiler with only `Burner Status` is drawn from it.
-- **Also never** adds words that disqualify a point on this type only, on top of **Never a run signal** — an AHU's heat-pump or heat-recovery status is not its fan.
-
-A type in neither this table nor **Never charted** is unclassified: its units are left off the chart and counted in the notes, so a new PEAK type shows up as a gap to fill here rather than as plant quietly missing. Between them the two tables list every type in PEAK's catalogue; add a row when PEAK adds one.
-
-## Regrouped by name
-
-A unit whose name says one type while PEAK says another is drawn under its name's type only where that pair is here — the mix-ups that recur across clients. A name that also names PEAK's own type keeps it. Every other disagreement is left as PEAK has it: the first word of a name is as often a building or plantroom code (`CH AHU-12`, `EC Boiler-01` for an energy centre) or a heating circuit (`CT Heating Pump 2`, constant temperature) as a type, and a pump named for what it serves (`AHU-CHWP-10`) is still a pump.
-
-| Code | Takes units PEAK types as | Seen as |
-| --- | --- | --- |
-| FCU | AHU, PAC | `FCU-1-01`, `B2 FCU 210-1` typed AHU; `FCU-3-02` typed PAC |
-| AHU | PAC, FCU | `AHU-01` typed PAC |
-| PAC | AHU, FCU | `PAC-1` typed AHU |
-| CRAC | AHU, PAC, FCU | `CRAC-1` typed PAC |
-| VRV | PAC, FCU, AHU | `VRF-L3-01` typed PAC |
-| KF | EAF | `KEF-1` typed EAF |
-| SCHW | PCHWP, SCHWP | `SCHWP-2` typed PCHWP |
-| PCHWP | SCHW, SCHWP | `PCHWP-1` typed SCHW |
-| SHW | PHWP | `SHWP-1` typed PHWP |
-| PHWP | SHW | `PHWP-1` typed SHW |
-| TCW | CWP | `TCWP-1` typed CWP |
-| CWP | TCW | `CWP-1` typed TCW |
-
-## Never charted
-
-| Codes | Why |
+| Metadata | Shows running when |
 | --- | --- |
-| VAV, UFAD, ACB | Box- and floor-level terminals and chilled beams are not a run-hours signal, and a site has hundreds: none has a fan or compressor of its own, so the AHU serving them is charted instead |
-| LT, ELVTR, ELVTR-GRP, VT | Lighting and lifts — only when the user asks |
-| PSM, SYS-PM, GM, SYS-GM, WM, SYS-WM, TEM, SM, CAM | Meters — only when the user asks |
-| VSD | A drive is read through the equipment it drives, where its speed is a signal like any other |
-| BLD, ZN, People, SYS-BACER, SYS-WEAT, UNASSIGN, DMS, CIM, BAC-STATUS | Building and platform records, not plant |
-| GEN, GT, UPS, COMP, PS, FIP, GsD, BFX, CPL, Door, FT, INCP, LN, PRA, RWT, STM-TRAP, THST, TUN, WT, FCBD, Ref, CFT, SWBD | Not HVAC or hot-water plant |
-| BT, CEN, NV, PCB | No moving part to run |
+| Status: name ends in Status, Running or Flow Status | its value is 1 (on); for a status numbered from 1, whose values are 1 and 2, its value is 2 |
+| Multi-state status: name ends in (MSV) | its value is above its off state, which is 0 if the value is 0 at any time in the week and 1 otherwise |
+| Speed, frequency, current, power, load, firing rate or velocity | its value is above 5% of its highest value in the week |
+| Leaving water temperature | its value is at or above the midpoint between its lowest and highest values in the week. Never used on its own, nor when those values differ by less than 5 °C (9 °F) |
 
-## Roles
+A value applies until the next one, for up to one hour, or up to 1.5 times the metadata's usual reporting interval if it reports less often than every 15 minutes. A longer gap is shown as no data, not as off.
 
-Each point takes at most one role, from how its name ends. The recipe compares a unit's status with its analog and keeps whichever shows less running, and a compressor status only where neither exists. A command is never drawn — it says what the unit was told to do, not that it ran — but a unit with only commands is named as such in the notes.
+A metadata name with a unit in brackets, such as (MSV), (Hz), (RPM), (Fahrenheit) or %, is the same metadata as the name without it. Speeds, currents and powers are judged against their own highest value, so their units do not matter.
 
-| Role | Name ends with, best first | What it is |
+## Metadata to fetch
+
+A metadata belongs in an equipment type's list only if it reads running at every time the equipment runs. Compressor metadata does not, because the compressor cycles while the unit runs. This covers compressor metadata on fan units, a chiller's Compressor Status, and one stage of a multi-compressor chiller (names starting Chiller Compressor). Neither does metadata for a second fan or pump that can stop while the unit runs, such as an air handling unit's return fan. Enables and commands are not listed: they record whether the unit was allowed to run, not whether it ran.
+
+Only actual units are drawn. A record with Common in its name covers several units, and one with HLI in its name repeats a chiller, so neither is drawn. A unit with no leaving water temperature of its own still uses the one on its type's Common record, when the site has exactly one. A unit with FCU in its name is treated as a Fan Coil Unit, whatever its equipment type in PEAK.
+
+To add a metadata, put its exact PEAK name in its equipment type's row, after checking in a PEAK chart that it reads running at every time the equipment runs.
+
+## Central plant
+
+| Equipment type | Short code | Metadata to fetch |
 | --- | --- | --- |
-| status | Status, Running | The unit reporting that it runs |
-| analog | Speed Feedback, Speed, Frequency, Hz, RPM, Speed Command, Current, Amps, Amperage, Power, Velocity, Fan Output, Load, Output | A measure of the moving part, zero when it stops |
-| command | Command, Enable, Occupancy | What the unit was told to do; never draws a row |
+| Air Handling Units | AHU | Unit Supply Air Fan Status · Unit Supply Air Fan Speed · Unit Power · Unit Supply Air Flow Status · Unit Supply Air Fan Frequency · Unit Supply Air Fan Speed Hz · Unit ON/OFF Status · Unit Supply Air Fan Speed RPM · Unit Supply Air Fan Current · Unit Supply Air Fan Power · Unit Supply Air Fan Speed Feedback · Unit Supply Air Velocity |
+| Supply Air Fan | SAF | Supply Air Fan Status · Supply Air Fan Speed · Supply Air Fan Flow Status · Supply Air Fan Frequency · Supply Air Fan Current |
+| Chiller | CH | Chiller Status · Chiller Load · Chiller Current · Chiller VSD Frequency · Chiller HLI Status · Chiller Speed · VSD Status |
+| Cooling Tower | CT | Cooling Tower Fan Status · Cooling Tower Fan Speed · Cooling Tower Fan Speed Feedback · VSD Operating Frequency · VSD Speed |
+| Primary Chilled Water Pumps | PCHWP | Primary Chilled Water Pump Status · Primary Chilled Water Pump Speed · Primary Chilled Water Pump Flow Status · Primary Chilled Water Pump Frequency · Primary Chilled Water Pump Current · Primary Chilled Water Pump Power · Primary Chilled Water Pump Speed Feedback · VSD Speed |
+| Car Park Ventilation | CPV | Car Park Exhaust Air Fan Status · Car Park Supply Air Fan Status · Car Park Exhaust Air Fan Speed · Car Park Supply Air Fan Speed · Car Park Exhaust Air Fan Speed Feedback · Car Park Supply Air Fan Speed Feedback |
+| Condenser Water Pumps | CWP | Condenser Water Pump Status · Condenser Water Pump Speed · Condenser Water Pump Flow Status · Condenser Water Pump Current · Condenser Water Pump Power · Condenser Water Pump Speed Feedback · Condenser Water Pump Variable Speed Drive Status · VSD Speed · VSD Operating Frequency |
+| Primary Hot Water Pumps | PHWP | Primary Hot Water Pump Status · Primary Hot Water Pump Speed · Primary Hot Water Pump Flow Status · Primary Hot Water Pump Current · Primary Hot Water Pump Frequency · Primary Hot Water Pump Power · Primary Hot Water Pump Speed Feedback · VSD Speed |
+| Boiler | HWB | Hot Water Boiler Status · Hot Water Boiler Load · Hot Water Boiler Firing Rate · Hot Water Common Leaving Temperature · Hot Water Leaving Temperature |
+| Secondary Chilled Water System | SCHW | Secondary Chilled Water Pump Status · Secondary Chilled Water Pump Speed · Secondary Chilled Water Pump Flow Status · Chilled Water Pump Frequency · Secondary Chilled Water Pump Speed Feedback · VSD Speed |
+| Tenant Condenser Water | TCW | Tenant Condenser Water Pump Status · Tenant Condenser Water Pump Speed · Tenant Cooling Tower Fan Status · Tenant Cooling Tower Fan Speed · Tenant Condenser Water Recirculating Pump Status · Tenant Condenser Water Pump Current · Tenant Condenser Water Pump Speed Feedback |
+| Secondary Hot Water System | SHW | Secondary Hot Water Pump Status · Secondary Hot Water Pump Speed · Secondary Hot Water Pump Flow Status · Secondary Hot Water Pump Current · Secondary Hot Water Pump Speed Feedback · VSD Speed |
+| Heat Exchanger | HE | HE Secondary Water Pump Speed · HE Secondary Water Pump Status · HE Primary Water Pump Speed · HE Primary Water Pump Status · Heat Exchanger Secondary Load · HE Load · HE Secondary Water Pump Speed Feedback |
+| Under-Floor Heating System | UFHWS | In-Floor System Pump Status · In-Floor Heating Current · In-Floor System Status · Under-Floor Heating Fan Speed · Under-Floor Heating Fan Status |
+| Hydraulic Pump | HYD | Hydraulic Pump Status |
+| Domestic Hot Water | DHWT | Domestic Hot Water Pump Status · Domestic Hot Water Status · Domestic Hot Water Pump Speed · Domestic Hot Water Leaving Temperature · Domestic Hot Water Pump Current · Domestic Hot Water Pump Flow Status |
+| Calorifier | CAL | Calorifier Heating Status · Calorifier Hot Water Common Leaving Temperature · Calorifier Hot Water Leaving Temperature · Calorifier Load · Calorifier Primary Water Leaving Temperature |
+| Cold Water Booster Pumps | CWB | Cold Water Booster Pump Status · Cold Water Booster Pump Speed |
+| Miscellaneous Pump | MISC-Pump | Miscellaneous Pump Status |
+| Heat Recovery Unit | HRU | Heat Recovery Unit Fan Speed · Heat Recovery Unit Fan Status |
+| Dry Air Cooler | DAC | Dry Air Cooler Current · Dry Air Cooler Fan Speed · Dry Air Cooler Fan Status · Dry Air Cooler Power |
+| Domestic Cold Water | DCW | Domestic Cold Water Pump Speed · Domestic Cold Water Pump Status |
+| Air to Air Heat Exchanger | AIR HX | AIR HX Supply Air Fan Status · AIR HX Supply Air Fan Speed |
+| Steam Boiler | SB | Steam Boiler Status · Steam Boiler Supply Temperature |
+| Econet Heat Recovery Unit | ECO-HR | Econet Heat Recovery Pump Speed · AHU Heat Recovery Pump Speed |
+| Solar Water Heater | SWH | Solar Water Heater Leaving Temperature · Solar Water Heater Pump Status |
+| Combined Heating & Power | CHaP | CHP Electrical Power · CHP Engine Run Status · CHP Primary Flow Temperature · CHP Running |
+| Dry Air Cooler Pump | DACP | Dry Air Cooler Pump Speed · Dry Air Cooler Pump Status |
+| Evaporative Cooler | EC | Evaporative Cooler Status |
+| Thermal Labyrinth | TL | Thermal Labyrinth Supply Air Fan Speed · Thermal Labyrinth Supply Air Fan Status |
+| Under-Floor Cooling System | UFCS | In-Floor Cooling System Pump Flow Status · In-Floor Cooling System Pump Status |
 
-- The longest ending that matches decides — `Speed Command` ranks after `RPM`, not with `Speed`. Brackets and a trailing unit are ignored: `Speed (Hz)` is `Speed`, `Load %` is `Load`.
-- A name marked `(MSV)` is a state, not a measure, so an `(MSV)` speed stands in as the unit's status (off, low, high). A speed state held at one running state all week shows the speed the unit is set to, not when it ran, and its row is hatched: a fan coil's `Fan Speed (MSV)` can sit at 3 all week while its enable switches with the day. A plain point beats its `(MSV)` twin.
-- The state numbering is read from the week: a speed state that reports 0 counts from 0, so 0 is off and 1 is the lowest speed; one that never reports 0 counts from 1, the BACnet convention, so 1 is off.
-- **Load** and **Output** count only when the name names no component — `Chiller Load`, `Hot Water Boiler Load`. A coil's or a system's load can read zero while the fan runs, and the least-run-time comparison would then pick it.
-- A status that names a compressor becomes the **compressor** role unless the type says **Compressor is the unit**; on those other types an analog or command naming a compressor is skipped.
+## Field units
 
-## Never a run signal
-
-A point whose name contains any of these, as whole words and in any case, is skipped whatever it ends with — except on a type the **Except where** column names, where that row does not apply. **Marks plant** rows tell the notes apart: a unit left undrawn that still reports one of them is plant whose running is not integrated, where one with only sensors and setpoints is usually a shared or zone record.
-
-| Name contains | Why | Except where | Marks plant |
-| --- | --- | --- | --- |
-| Filter, Alarm, Fault, Trip, Lockout, Overload, Safety, Shutdown, Leak, Detector, Maintenance | Protection and health, not running | | yes |
-| Setpoint, Set Point, Set-point, Minimum, Maximum, Limit, Reset, Potential, Full Load, Highest, Lowest | Targets, limits and ratings | | |
-| Damper, Valve, Coil, Wheel, Humidifier, Duct Heater, Fan Heater, Crankcase Heater, Basin Heater, Preheat, Reheat, Baseboard, Steam Supply, Desiccant, Regeneration | A different component from the one that runs | | |
-| Burner, Immersion Heater, Electric Heater, Gas Heater, Heater Status, Heater Enable, Heater Output, Heater Stage | A heater beside the unit, cycling on its own | Heating is the unit | |
-| Mode, Call, Demand, Stage, Lead, Lag, Schedule Status, After Hours, Optimum, Setback, Economy, Purge, Shed, Available, Thermo, Terminal, Startup, Anti | What the controls want or allow, not what ran | | |
-| High Speed, Low Speed, Medium Speed, High Fan, Low Fan, Medium Fan | One stage of a multi-speed fan, which misses the others | | |
-| Building, Plant, System Flow, Cooling Load, Heating Load, Secondary Chilled Water Load | Plant-wide, not this unit | | |
-| Heat Status, Heat Enable, Heating Enable, Heat Output | Heating stages, which cycle while the fan runs | Heating is the unit | |
-| Cool Status, Cool Enable, Cooling Enable, Thermal Power | Cooling stages, which cycle while the fan runs | | |
-| Temperature, Pressure, Humidity, Dew, Enthalpy, CO2, Level, Energy, Consumption, Cost, Efficiency | Conditions and totals | | |
-| Count, Number Of, Starts, Hours, Duration, Timer, Delay | Tallies | | |
-| Manual, Local, Override, Hand/Auto, Switch, Contact, Position, Select, Isolation, Bypass, Confirmation | Hand controls and positions | | |
-| Frost, Fire, Smoke, Defrost, Door, Wind, Outside Air Velocity, Condenser Speed, Compressor Enable, Direction, Dehumidification, Dehumidifier, Humidistat, Equipment Status, Air Flow Rate, Input Status, Measurement, Data Status, Wet/Dry, Snow, UV, Light, Communication, Communications, Comms, Stagnation | End like a run signal without being one | | |
-
-## Which point wins
-
-When a unit has several points in one role, the one naming its main moving part wins. The most specific (longest) phrase in the name decides — `Return Air Fan Status` is return air, not fan — and when two phrases are equally long the name takes the less preferred rank, so `Pump Flow Status` ranks as flow.
-
-| Rank | Component named | Examples |
+| Equipment type | Short code | Metadata to fetch |
 | --- | --- | --- |
-| 1 | Supply Air Fan, Supply Fan, Indoor Fan | Unit Supply Air Fan Status, PAC Supply Air Fan Speed |
-| 2 | (none — the unit itself) | Chiller Status, Unit ON/OFF Status, Hot Water Boiler Load |
-| 3 | Fan, Pump, Compressor | Cooling Tower Fan Status, Primary Chilled Water Pump Speed |
-| 4 | Flow, Supply Air Flow | Primary Chilled Water Pump Flow Status |
-| 5 | Return Air, VSD | Unit Return Air Fan Status, VSD Speed % |
-| 6 | Exhaust Air, Exhaust Fan, Extract | Unit Exhaust Air Fan Status |
-| 7 | Outside Air, Relief | Unit Outside Air Fan Status |
-| 8 | Condenser Fan, Condenser Water Fan, Condenser Status, Condenser Pump | PAC Condenser Fan Status |
-
-Two endings rank last whatever they name: **Occupancy**, a schedule rather than an instruction to this unit, comes after any enable or command; **Load** and **Output**, indirect measures, come after any speed, current or power. A point that only an **Except where** lets through ranks last in its role too: a boiler's `Burner Status` draws the row only where no boiler status is mapped beside it. Within a rank: the ending's place in **Roles**, then the plain point before its `(MSV)` twin, then the shorter name.
-
-## Runs around the clock
-
-A unit drawn on all week, with no second signal that changes to check it against, is named in the notes as possibly a stuck switch — unless it serves a space conditioned day and night for what is in it, where running all week is its job. Those are listed on a line of their own. Words match whole, in any case, in the unit's name or its zone's.
-
-| Codes | Name or zone contains | Why |
-| --- | --- | --- |
-| CRAC | | A computer room unit cools IT equipment, which never stops |
-| | Comms, Communication, Communications, Server, Data Room, Data Hall, Data Centre, Data Center, MDF | A unit named for a comms or server room, or zoned in one, conditions it continuously |
-
-`Comms` matches only as a whole word, never inside `Common`. `MER` is left out: it is as often a mechanical equipment room, a plantroom, as a telecoms one.
-
-## What the rules pick
-
-Illustrative, from the live catalogue — this table is not parsed.
-
-| Equipment | Status | Analog | Command (named in the notes, never drawn) |
-| --- | --- | --- | --- |
-| Chiller | Chiller Status | Chiller Speed, else Chiller Current, else Chiller Load | Chiller Enable |
-| AHU | Unit Supply Air Fan Status | Unit Supply Air Fan Speed Feedback, else Speed | Unit Supply Air Fan Command, else Enable |
-| PAC | PAC Supply Air Fan Status | PAC Supply Air Fan Speed Feedback, else Speed | PAC Supply Air Fan Enable |
-| FCU | FCU Supply Air Fan Status | FCU Supply Air Fan Speed | FCU Supply Air Fan Enable |
-| Pump | Primary Chilled Water Pump Status | Primary Chilled Water Pump Speed Feedback, else Speed | Primary Chilled Water Pump Enable |
-| Boiler | Hot Water Boiler Status | Hot Water Boiler Load | Hot Water Boiler Enable |
+| Packaged Air Conditioning Units | PAC | PAC Supply Air Fan Status · PAC Supply Air Fan Speed · PAC Indoor Fan Status · PAC Supply Air Fan Current · PAC Supply Air Fan Speed Feedback · PAC Supply Air Flow Status |
+| Exhaust Air Fans | EAF | Exhaust Air Fan Status · Exhaust Air Fan Speed · Exhaust Air Fan Flow Status · Exhaust Air Fan Current · Exhaust Air Fan Frequency · Exhaust Air Fan Power · Exhaust Air Fan Speed Feedback · Exhaust Air Fan Speed RPM |
+| Fan Coil Units | FCU | FCU Supply Air Fan Status · FCU Supply Air Fan Speed · FCU Power · FCU Supply Air Fan Current · FCU Supply Air Fan Frequency · FCU Supply Air Fan Power · FCU Supply Air Fan Speed RPM · FCU Supply Air Flow Status · FCU Supply Air Velocity |
+| Computer Room Air Conditioning Unit | CRAC | CRAC Fan Status · CRAC Fan Speed · CRAC Supply Air Fan Speed |
+| Heat Pump | HP | Heat Pump Status · Heat Pump Current · Heat Pump Fan Status · Heat Pump Load · Heat Pump Power |
+| Kitchen Fans | KF | Kitchen Exhaust Fan Status · Kitchen Supply Air Fan Status · Kitchen Exhaust Fan Frequency · Kitchen Exhaust Fan Speed · Kitchen Supply Air Fan Frequency · Kitchen Supply Air Fan Speed |
+| Air Curtain | ACRTN | Air Curtain Fan Speed · Air Curtain Fan Status |
+| Unit Heater | UH | Unit Heater Fan Current · Unit Heater Fan Status |
+| Air Cooled Condensers | ACC | Condenser Unit Status |
+| Variable Refrigerant Flow Systems | VRF | VRF Outdoor Unit Power · VRF Outdoor Unit Status · VRF Unit Fan Speed · VRF Unit Fan Status |

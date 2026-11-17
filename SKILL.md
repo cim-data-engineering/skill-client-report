@@ -63,7 +63,7 @@ Actions and key wins is one choice with two references, `alerts-resolved.md` and
 - Everything is in by default: a dismissed prompt or an unanswered question gets the full report
 - Skip the prompt when the invocation names the sections ("/client-report Skyline Tower: equipment health and key wins only"), and state the resolved list in your reply instead
 - A section that is out is never fetched, and leaves behind no empty section, header, link or note. The scripts handle the parts they know about; check the wins yourself
-- Four things can come up empty after the fetch: equipment health or indoor environment when PEAK holds no score for the site in the quarter, Actions and key wins when nothing was resolved, Key wins alone when no win qualifies, and run hours when no plant carries a sensor that shows it running. The scripts leave the section out and print why; say so in chat, not on the page
+- Four things can come up empty after the fetch: equipment health or indoor environment when PEAK holds no score for the site in the quarter, Actions and key wins when nothing was resolved, Key wins alone when no win qualifies, and run hours when no unit has the metadata listed for its type. The scripts leave the section out and print why; say so in chat, not on the page
 - Where only the masthead and the analytics overview survive, say so before handing the file over rather than shipping it as a review
 
 **Automatic:** `sustainability-ratings`, a card per NABERS energy, indoor environment and water rating and its history. `report.py plan` adds it to every report and its script leaves it out when PEAK holds no current rating. Never offer it, and say nothing about it in chat.
