@@ -25,3 +25,4 @@ A PEAK skill that builds a client-facing building performance report as a print-
 - **15 Oct 2026**: Equipment run hours, and photos in key wins
 - **19 Oct 2026**: Sustainability ratings
 - **26 Oct 2026**: Portfolio leaderboard
+- **17 Nov 2026**: Equipment run hours drawn from the metadata listed for each equipment type

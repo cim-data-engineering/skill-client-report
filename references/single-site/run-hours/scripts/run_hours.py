@@ -46,8 +46,8 @@ def load(work, rel, name):
 
 
 def window(ctx, peak, rel, monday=None):
-    """Fix one week in <peak>/<rel>/ and return its discovery and census calls. The latest full
-    week unless `monday` names an earlier one."""
+    """Fix one week in <peak>/<rel>/ and return its discovery call. The latest full week unless
+    `monday` names an earlier one."""
     site_file = os.path.join(ctx["dir"], ctx["site_file"])
     _, calls = rp.make_window(site_file, os.path.join(peak, rel), ctx["site"]["site_id"], ctx["today"], monday,
                               ctx.get("hours"))
@@ -75,13 +75,10 @@ def week_calls(ctx, work, rel):
             return missing
     rh = work.path(rel)
     if not os.path.isfile(os.path.join(rh, "plan.json")):
-        census = work.path(DIR)
-        rp.make_plan(rh, [work.path(c["file"]) for c in discoveries(work, rel)],
-                     [os.path.join(census, "census-all.json"), os.path.join(census, "census-known.json")])
+        rp.make_plan(rh, [work.path(c["file"]) for c in discoveries(work, rel)])
     plan, win = load(work, rel, "plan.json"), load(work, rel, "window.json")
-    chunks = [c for c in plan["chunks"] if c["pass"] == 1]
-    return [as_call(rel, dict(rp.week_call(win, c["fav_ids"]), file="history-1-%d.json" % i))
-            for i, c in enumerate(chunks, 1) if not work.has("%s/history-1-%d.json" % (rel, i))]
+    return [as_call(rel, dict(rp.week_call(win, c["fav_ids"]), file="history-%d.json" % i))
+            for i, c in enumerate(plan["chunks"], 1) if not work.has("%s/history-%d.json" % (rel, i))]
 
 
 def stopped(ctx, work, rel):
@@ -89,7 +86,7 @@ def stopped(ctx, work, rel):
     nothing in it could ever draw, the call that finds the time when only the reading before
     the week can say, else the local time, or "never" when no point has reported at all."""
     plan, win = load(work, rel, "plan.json"), load(work, rel, "window.json")
-    if any(c["pass"] == 1 for c in plan["chunks"]):
+    if plan["chunks"]:
         gap = rb.run(work.path(rel)).get("feed_gap")
         if not gap:
             return None
@@ -128,7 +125,7 @@ def more(ctx, work):
                    "monday": monday.isoformat() if monday else None, "outside": outside}, fh)
     if when is None or outside:
         return []
-    return [c for c in window(ctx, work.peak, EARLIER, monday.isoformat()) if "census" not in c["file"]]
+    return window(ctx, work.peak, EARLIER, monday.isoformat())
 
 
 # ── drawing ─────────────────────────────────────────────────────────────────
@@ -245,17 +242,16 @@ def build(ctx, work, shared):
     if stop and stop != "never":
         t = datetime.fromisoformat(stop)
         stop = "%s %d %s" % (t.strftime("%a"), t.day, t.strftime("%b %Y %H:%M"))
-    if not any(c["pass"] == 1 for c in plan["chunks"]):
+    if not plan["chunks"]:
         why = "%s %s" % (rp.nothing_to_draw(plan), " ".join(rp.summary_lines(plan)))
         if plan.get("outage") and stop:
-            why = ("None of the units with a run point logged any history in %s, and %s, so no full week in "
+            why = ("None of the units with listed metadata logged any history in %s, and %s, so no full week in "
                    "the reporting period has data. The site's data feed looks down." % (
                        window["label"], "they have never reported" if stop == "never"
                        else "they last reported %s" % stop))
         return {"drop": True, "chat": ["Run hours is left out, with nothing to draw: " + why]}
     agg = rb.run(work.path(rel))
     whole = rel != EARLIER or not agg.get("feed_gap")       # the earlier week is checked as the latest one was
-    later = [u for u in plan["units"] if u.get("pass") == 2 and u.get("pull")]
     chat = ["Run hours: " + " ".join(agg["notes"])] if agg["notes"] else []
     latest = load(work, DIR, "window.json")["label"]
     if rel == EARLIER:
@@ -268,18 +264,15 @@ def build(ctx, work, shared):
     elif stop:
         chat.append("Run hours draws %s with its gap hatched: the site's data stopped at %s, and the full week "
                     "before that falls outside the reporting period." % (latest, stop))
-    if later:
-        drawn = sum(len(g["rows"]) for p in agg["pages"] for g in p["groups"])
-        chat.append("Run hours draws %d units. Its first pass holds up to %d and takes each type whole, so the %d "
-                    "beyond it are not drawn; the report makes no later pass." % (drawn, rp.CAP_UNITS, len(later)))
     return {
         "run_hours": {"html": render(agg)},
         "datelines": {"Equipment run hours":
                       "%s, the latest full week%s, against the site's working hours. Bars are exact to 15 minutes."
                       % (window["label"], " with complete data" if rel == EARLIER and whole else "")},
         "notes": {"Run hours":
-                  "<strong>Run hours.</strong> Drawn from run status or a speed, current or power reading. Enables "
-                  "and schedules are not used, as they show commanded state only. Where signals disagree, the lower "
+                  "<strong>Run hours.</strong> Drawn from the metadata listed for each equipment type: a run status, "
+                  "a speed, current or power reading, or for heating plant the leaving water temperature. Enables "
+                  "and schedules are not used, as they show commanded state only. Where metadata disagree, the lower "
                   "runtime is used."},
         "chat": chat,
     }
